@@ -71,6 +71,14 @@ class BaseManager(object):
         except KeyError:
             pass
 
+    def get_rooms(self, sid, namespace):
+        """Return the rooms a client is in."""
+        r = []
+        for room_name, room in six.iteritems(self.rooms[namespace]):
+            if room_name is not None and sid in room and room[sid]:
+                r.append(room_name)
+        return r
+
     def emit(self, event, data, namespace, room=None, skip_sid=None,
              callback=None):
         """Emit a message to a single client, a room, or all the clients

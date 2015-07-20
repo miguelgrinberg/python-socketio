@@ -107,6 +107,14 @@ class TestBaseManager(unittest.TestCase):
     def test_close_invalid_room(self):
         self.bm.close_room('/foo', 'bar')
 
+    def test_rooms(self):
+        self.bm.connect('123', '/foo')
+        self.bm.enter_room('123', '/foo', 'bar')
+        r = self.bm.get_rooms('123', '/foo')
+        self.assertEqual(len(r), 2)
+        self.assertIn('123', r)
+        self.assertIn('bar', r)
+
     def test_emit_to_sid(self):
         self.bm.connect('123', '/foo')
         self.bm.connect('456', '/foo')

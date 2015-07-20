@@ -236,6 +236,16 @@ class Server(object):
         self.logger.info('room %s is closing [%s]', room, namespace)
         self.manager.close_room(namespace, room)
 
+    def rooms(self, sid, namespace=None):
+        """Return the rooms a client is in.
+
+        :param sid: Session ID of the client.
+        :param namespace: The Socket.IO namespace for the event. If this
+                          argument is omitted the default namespace is used.
+        """
+        namespace = namespace or '/'
+        return self.manager.get_rooms(sid, namespace)
+
     def handle_request(self, environ, start_response):
         """Handle an HTTP request from the client.
 

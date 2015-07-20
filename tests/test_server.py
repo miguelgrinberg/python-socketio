@@ -94,6 +94,18 @@ class TestServer(unittest.TestCase):
         s.close_room('room')
         s.manager.close_room.assert_called_once_with('/', 'room')
 
+    def test_rooms(self, eio):
+        mgr = mock.MagicMock()
+        s = server.Server(client_manager_class=mgr)
+        s.rooms('123', namespace='/foo')
+        s.manager.get_rooms.assert_called_once_with('123', '/foo')
+
+    def test_rooms_default_namespace(self, eio):
+        mgr = mock.MagicMock()
+        s = server.Server(client_manager_class=mgr)
+        s.rooms('123')
+        s.manager.get_rooms.assert_called_once_with('123', '/')
+
     def test_handle_request(self, eio):
         s = server.Server()
         s.handle_request('environ', 'start_response')
