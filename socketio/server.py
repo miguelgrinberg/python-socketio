@@ -290,12 +290,13 @@ class Server(object):
     def _handle_connect(self, sid, namespace):
         """Handle a client connection request."""
         namespace = namespace or '/'
+        self.manager.connect(sid, namespace)
         if self._trigger_event('connect', namespace, sid,
                                self.environ[sid]) is False:
+            self.manager.disconnect(sid, namespace)
             self._send_packet(sid, packet.Packet(packet.ERROR,
                                                  namespace=namespace))
         else:
-            self.manager.connect(sid, namespace)
             self._send_packet(sid, packet.Packet(packet.CONNECT,
                                                  namespace=namespace))
 

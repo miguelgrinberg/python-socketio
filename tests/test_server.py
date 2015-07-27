@@ -167,7 +167,8 @@ class TestServer(unittest.TestCase):
         s.on('connect', handler)
         s._handle_eio_connect('123', 'environ')
         handler.assert_called_once_with('123', 'environ')
-        self.assertEqual(s.manager.connect.call_count, 0)
+        self.assertEqual(s.manager.connect.call_count, 1)
+        self.assertEqual(s.manager.disconnect.call_count, 1)
         s.eio.send.assert_called_once_with('123', '4', binary=False)
 
     def test_handle_connect_namespace_rejected(self, eio):
@@ -177,7 +178,8 @@ class TestServer(unittest.TestCase):
         s.on('connect', handler, namespace='/foo')
         s._handle_eio_connect('123', 'environ')
         s._handle_eio_message('123', '0/foo')
-        self.assertEqual(s.manager.connect.call_count, 1)
+        self.assertEqual(s.manager.connect.call_count, 2)
+        self.assertEqual(s.manager.disconnect.call_count, 1)
         s.eio.send.assert_any_call('123', '4/foo', binary=False)
 
     def test_handle_disconnect(self, eio):
