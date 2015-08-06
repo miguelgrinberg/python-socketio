@@ -27,14 +27,14 @@ class BaseManager(object):
         self._clean_rooms()
 
     def connect(self, sid, namespace):
-        """Record a client connection to a namespace."""
+        """Register a client connection to a namespace."""
         self.enter_room(sid, namespace, None)
         self.enter_room(sid, namespace, sid)
 
     def disconnect(self, sid, namespace):
-        """Record a client disconnect event."""
+        """Register a client disconnect event."""
         if namespace == '/':
-            namespace_list = list(six.iterkeys(self.rooms))
+            namespace_list = list(self.get_namespaces())
         else:
             namespace_list = [namespace]
         for n in namespace_list:

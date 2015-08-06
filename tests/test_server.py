@@ -345,6 +345,21 @@ class TestServer(unittest.TestCase):
         self.assertRaises(ValueError, s._handle_eio_message, '123',
                           '32["foo",2]')
 
+    def test_disconnect_all(self, eio):
+        s = server.Server()
+        s._handle_eio_connect('123', 'environ')
+        s._handle_eio_message('123', '0/foo')
+        s.disconnect('123')
+        s.eio.send.assert_any_call('123', '1/foo', binary=False)
+        s.eio.send.assert_any_call('123', '1', binary=False)
+
+    def test_disconnect_namespace(self, eio):
+        s = server.Server()
+        s._handle_eio_connect('123', 'environ')
+        s._handle_eio_message('123', '0/foo')
+        s.disconnect('123', namespace='/foo')
+        s.eio.send.assert_any_call('123', '1/foo', binary=False)
+
     def test_logger(self, eio):
         s = server.Server(logger=False)
         self.assertEqual(s.logger.getEffectiveLevel(), logging.ERROR)

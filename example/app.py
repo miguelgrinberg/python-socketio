@@ -77,9 +77,15 @@ def send_room_message(sid, message):
                   room=message['room'], namespace='/test')
 
 
+@socketio.on('disconnect request', namespace='/test')
+def disconnect_request(sid):
+    socketio.disconnect(sid, namespace='/test')
+
+
 @socketio.on('connect', namespace='/test')
 def test_connect(sid, environ):
-    socketio.emit('my response', {'data': 'Connected', 'count': 0}, room=sid)
+    socketio.emit('my response', {'data': 'Connected', 'count': 0}, room=sid,
+                  namespace='/test')
 
 
 @socketio.on('disconnect', namespace='/test')

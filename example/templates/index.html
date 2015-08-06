@@ -9,11 +9,11 @@
             namespace = '/test';
             var socket = io.connect('http://' + document.domain + ':' + location.port + namespace);
 
-            socket.on('my response', function(msg) {
-                $('#log').append('<br>Received: ' + msg.data);
-            });
             socket.on('connect', function() {
                 socket.emit('my event', {data: 'I\'m connected!'});
+            });
+            socket.on('my response', function(msg) {
+                $('#log').append('<br>Received: ' + msg.data);
             });
 
             // event handler for server sent data
@@ -78,6 +78,9 @@
     <form id="close" method="POST" action="#">
         <input type="text" name="close_room" id="close_room" placeholder="Room Name">
         <input type="submit" value="Close Room">
+    </form>
+    <form id="disconnect" method="POST" action="#">
+        <input type="submit" value="Disconnect">
     </form>
     <h2>Receive:</h2>
     <div><p id="log"></p></div>

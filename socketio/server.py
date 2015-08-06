@@ -246,6 +246,23 @@ class Server(object):
         namespace = namespace or '/'
         return self.manager.get_rooms(sid, namespace)
 
+    def disconnect(self, sid, namespace=None):
+        """Disconnect a client.
+
+        :param sid: Session ID of the client.
+        :param namespace: The Socket.IO namespace to disconnect. If this
+                          argument is omitted the default namespace is used.
+        """
+        self.logger.info('Disconnecting %s]', sid)
+        if namespace is None or namespace == '/':
+            for namespace in self.manager.get_namespaces():
+                self._send_packet(sid, packet.Packet(packet.DISCONNECT,
+                                                     namespace=namespace))
+        else:
+            self._send_packet(sid, packet.Packet(packet.DISCONNECT,
+                                                 namespace=namespace))
+        self.manager.disconnect(sid, namespace=namespace)
+
     def handle_request(self, environ, start_response):
         """Handle an HTTP request from the client.
 
