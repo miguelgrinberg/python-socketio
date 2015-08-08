@@ -31,19 +31,18 @@ class BaseManager(object):
         self.enter_room(sid, namespace, None)
         self.enter_room(sid, namespace, sid)
 
+    def is_connected(self, sid, namespace):
+        return sid in self.rooms[namespace][None] and \
+            self.rooms[namespace][None][sid]
+
     def disconnect(self, sid, namespace):
-        """Register a client disconnect event."""
-        if namespace == '/':
-            namespace_list = list(self.get_namespaces())
-        else:
-            namespace_list = [namespace]
-        for n in namespace_list:
-            rooms = []
-            for room_name, room in six.iteritems(self.rooms[n]):
-                if sid in room:
-                    rooms.append(room_name)
-            for room in rooms:
-                self.leave_room(sid, n, room)
+        """Register a client disconnect from a namespace."""
+        rooms = []
+        for room_name, room in six.iteritems(self.rooms[namespace]):
+            if sid in room:
+                rooms.append(room_name)
+        for room in rooms:
+            self.leave_room(sid, namespace, room)
 
     def enter_room(self, sid, namespace, room):
         """Add a client to a room."""

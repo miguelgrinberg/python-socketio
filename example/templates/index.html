@@ -12,6 +12,9 @@
             socket.on('connect', function() {
                 socket.emit('my event', {data: 'I\'m connected!'});
             });
+            socket.on('disconnect', function() {
+                $('#log').append('<br>Disconnected');
+            });
             socket.on('my response', function(msg) {
                 $('#log').append('<br>Received: ' + msg.data);
             });

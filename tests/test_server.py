@@ -14,7 +14,7 @@ from socketio import server
 class TestServer(unittest.TestCase):
     def test_create(self, eio):
         mgr = mock.MagicMock()
-        s = server.Server({'foo': 'bar'}, mgr, binary=True)
+        s = server.Server(mgr, binary=True, foo='bar')
         mgr.assert_called_once_with(s)
         eio.assert_called_once_with(**{'foo': 'bar'})
         self.assertEqual(s.eio.on.call_count, 3)
@@ -345,12 +345,10 @@ class TestServer(unittest.TestCase):
         self.assertRaises(ValueError, s._handle_eio_message, '123',
                           '32["foo",2]')
 
-    def test_disconnect_all(self, eio):
+    def test_disconnect(self, eio):
         s = server.Server()
         s._handle_eio_connect('123', 'environ')
-        s._handle_eio_message('123', '0/foo')
         s.disconnect('123')
-        s.eio.send.assert_any_call('123', '1/foo', binary=False)
         s.eio.send.assert_any_call('123', '1', binary=False)
 
     def test_disconnect_namespace(self, eio):
@@ -367,3 +365,7 @@ class TestServer(unittest.TestCase):
         self.assertEqual(s.logger.getEffectiveLevel(), logging.INFO)
         s = server.Server(logger='foo')
         self.assertEqual(s.logger, 'foo')
+
+    def test_engineio_logger(self, eio):
+        server.Server(engineio_logger='foo')
+        eio.assert_called_once_with(**{'logger': 'foo'})

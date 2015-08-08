@@ -28,9 +28,15 @@ class Server(object):
                    ``bytes`` values are treated as binary.  This option has no
                    effect on Python 3, where text and binary payloads are
                    always automatically discovered.
+    :param kwargs: Connection parameters for the underlying Engine.IO server.
 
-    This ``engineio_options`` dictionary can include the following settings:
+    The Engine.IO configuration supports the following settings:
 
+    :param async_mode: The library used for asynchronous operations. Valid
+                       options are "threading", "eventlet" and "gevent". If
+                       this argument is not given, "eventlet" is tried first,
+                       then "gevent", and finally "threading". The websocket
+                       transport is only supported in "eventlet" mode.
     :param ping_timeout: The time in seconds that the client waits for the
                          server to respond before disconnecting.
     :param ping_interval: The interval in seconds at which the client pings
@@ -49,16 +55,19 @@ class Server(object):
                                  default.
     :param cors_credentials: Whether credentials (cookies, authentication) are
                              allowed in requests to this server.
-    :param logger: To enable Engine.IO logging set to ``True`` or pass a logger
-                   object to use. To disable logging set to ``False``.
+    :param engineio_logger: To enable Engine.IO logging set to ``True`` or pass
+                            a logger object to use. To disable logging set to
+                            ``False``.
     """
-    def __init__(self, engineio_options=None, client_manager_class=None,
-                 logger=False, binary=False):
+    def __init__(self, client_manager_class=None, logger=False, binary=False,
+                 **kwargs):
         if client_manager_class is None:
             client_manager_class = base_manager.BaseManager
         self.manager = client_manager_class(self)
-        if engineio_options is None:
-            engineio_options = {}
+        engineio_options = kwargs
+        engineio_logger = engineio_options.pop('engineio_logger', None)
+        if engineio_logger is not None:
+            engineio_options['logger'] = engineio_logger
         self.eio = engineio.Server(**engineio_options)
         self.eio.on('connect', self._handle_eio_connect)
         self.eio.on('message', self._handle_eio_message)
@@ -253,14 +262,11 @@ class Server(object):
         :param namespace: The Socket.IO namespace to disconnect. If this
                           argument is omitted the default namespace is used.
         """
-        self.logger.info('Disconnecting %s]', sid)
-        if namespace is None or namespace == '/':
-            for namespace in self.manager.get_namespaces():
-                self._send_packet(sid, packet.Packet(packet.DISCONNECT,
-                                                     namespace=namespace))
-        else:
-            self._send_packet(sid, packet.Packet(packet.DISCONNECT,
-                                                 namespace=namespace))
+        namespace = namespace or '/'
+        self.logger.info('Disconnecting %s [%s]', sid, namespace)
+        self._send_packet(sid, packet.Packet(packet.DISCONNECT,
+                                             namespace=namespace))
+        self._trigger_event('disconnect', namespace, sid)
         self.manager.disconnect(sid, namespace=namespace)
 
     def handle_request(self, environ, start_response):
@@ -325,12 +331,12 @@ class Server(object):
         else:
             namespace_list = [namespace]
         for n in namespace_list:
-            if n != '/':
+            if n != '/' and self.manager.is_connected(sid, n):
                 self._trigger_event('disconnect', n, sid)
                 self.manager.disconnect(sid, n)
                 if sid in self.callbacks and n in self.callbacks[sid]:
                     del self.callbacks[sid][n]
-        if namespace == '/':
+        if namespace == '/' and self.manager.is_connected(sid, namespace):
             self._trigger_event('disconnect', '/', sid)
             self.manager.disconnect(sid, '/')
             if sid in self.callbacks:

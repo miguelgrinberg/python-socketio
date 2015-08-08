@@ -40,7 +40,13 @@ class TestBaseManager(unittest.TestCase):
         self.bm.connect('123', '/foo')
         self.bm.connect('456', '/')
         self.bm.connect('456', '/foo')
+        self.assertTrue(self.bm.is_connected('123', '/'))
+        self.assertTrue(self.bm.is_connected('123', '/foo'))
         self.bm.disconnect('123', '/')
+        self.assertFalse(self.bm.is_connected('123', '/'))
+        self.assertTrue(self.bm.is_connected('123', '/foo'))
+        self.bm.disconnect('123', '/foo')
+        self.assertFalse(self.bm.is_connected('123', '/foo'))
         self.bm._clean_rooms()
         self.assertEqual(self.bm.rooms['/'], {None: {'456': True},
                                               '456': {'456': True}})
@@ -53,7 +59,9 @@ class TestBaseManager(unittest.TestCase):
         self.bm.connect('456', '/')
         self.bm.connect('456', '/foo')
         self.bm.disconnect('123', '/')
+        self.bm.disconnect('123', '/foo')
         self.bm.disconnect('123', '/')
+        self.bm.disconnect('123', '/foo')
         self.bm._clean_rooms()
         self.assertEqual(self.bm.rooms['/'], {None: {'456': True},
                                               '456': {'456': True}})
