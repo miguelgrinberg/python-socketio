@@ -248,28 +248,43 @@ Gevent
 ~~~~~~
 
 `Gevent <http://gevent.org>`_ is another asynchronous framework based on
-coroutines, very similar to eventlet. Only the long-polling transport is
-currently available when using gevent.
+coroutines, very similar to eventlet. An Socket.IO server deployed with
+gevent has access to the long-polling transport. If project
+`gevent-websocket <https://bitbucket.org/Jeffrey/gevent-websocket/>`_ is
+installed, the WebSocket transport is also available.
 
 Instances of class ``socketio.Server`` will automatically use gevent for
 asynchronous operations if the library is installed and eventlet is not
 installed. To request gevent to be selected explicitly, the ``async_mode``
 option can be given in the constructor::
 
-    eio = socketio.Server(async_mode='gevent')
+    sio = socketio.Server(async_mode='gevent')
 
 A server configured for gevent is deployed as a regular WSGI application,
 using the provided ``socketio.Middleware``::
 
-    app = socketio.Middleware(eio)
+    app = socketio.Middleware(sio)
     from gevent import pywsgi
     pywsgi.WSGIServer(('', 8000), app).serve_forever()
 
-An alternative to running the eventlet WSGI server as above is to use
+If the WebSocket transport is installed, then the server must be started as
+follows::
+
+    from gevent import pywsgi
+    from geventwebsocket.handler import WebSocketHandler
+    app = socketio.Middleware(sio)
+    pywsgi.WSGIServer(('', 8000), app,
+                      handler_class=WebSocketHandler).serve_forever()
+
+An alternative to running the gevent WSGI server as above is to use
 `gunicorn <gunicorn.org>`_, a fully featured pure Python web server. The
 command to launch the application under gunicorn is shown below::
 
     $ gunicorn -k gevent -w 1 module:app
+
+Or to include WebSocket::
+
+    $ gunicorn -k geventwebsocket.gunicorn.workers.GeventWebSocketWorker -w 1 module: app
 
 Same as with eventlet, due to limitations in its load balancing algorithm,
 gunicorn can only be used with one worker process, so the ``-w 1`` option is
@@ -315,6 +330,9 @@ When using the threading mode, it is important to ensure that the WSGI server
 can handle multiple concurrent requests using threads, since a client can have
 up to two outstanding requests at any given time. The Werkzeug server is
 single-threaded by default, so the ``threaded=True`` option is required.
+
+Note that servers that use worker processes instead of threads, such as
+gunicorn, do not support a Socket.IO server configured in threading mode.
 
 Multi-process deployments
 ~~~~~~~~~~~~~~~~~~~~~~~~~

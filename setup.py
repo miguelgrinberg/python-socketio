@@ -25,8 +25,7 @@ setup(
     platforms='any',
     install_requires=[
         'six>=1.9.0',
-        'eventlet>=0.17.4',
-        'python-engineio>=0.5.0'
+        'python-engineio>=0.6.0'
     ],
     tests_require=[
         'mock',
