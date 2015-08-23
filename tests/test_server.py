@@ -361,8 +361,13 @@ class TestServer(unittest.TestCase):
     def test_logger(self, eio):
         s = server.Server(logger=False)
         self.assertEqual(s.logger.getEffectiveLevel(), logging.ERROR)
+        s.logger.setLevel(logging.NOTSET)
         s = server.Server(logger=True)
         self.assertEqual(s.logger.getEffectiveLevel(), logging.INFO)
+        s.logger.setLevel(logging.WARNING)
+        s = server.Server(logger=True)
+        self.assertEqual(s.logger.getEffectiveLevel(), logging.WARNING)
+        s.logger.setLevel(logging.NOTSET)
         s = server.Server(logger='foo')
         self.assertEqual(s.logger, 'foo')
 
