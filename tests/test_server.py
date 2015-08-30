@@ -1,3 +1,4 @@
+import json
 import logging
 import unittest
 
@@ -7,11 +8,16 @@ if six.PY3:
 else:
     import mock
 
+from socketio import packet
 from socketio import server
 
 
 @mock.patch('engineio.Server')
 class TestServer(unittest.TestCase):
+    def tearDown(self):
+        # restore JSON encoder, in case a test changed it
+        packet.Packet.json = json
+
     def test_create(self, eio):
         mgr = mock.MagicMock()
         s = server.Server(mgr, binary=True, foo='bar')
@@ -374,3 +380,28 @@ class TestServer(unittest.TestCase):
     def test_engineio_logger(self, eio):
         server.Server(engineio_logger='foo')
         eio.assert_called_once_with(**{'logger': 'foo'})
+
+    def test_custom_json(self, eio):
+        # Warning: this test cannot run in parallel with other tests, as it
+        # changes the JSON encoding/decoding functions
+
+        class CustomJSON(object):
+            @staticmethod
+            def dumps(*args, **kwargs):
+                return '*** encoded ***'
+
+            @staticmethod
+            def loads(*args, **kwargs):
+                return '+++ decoded +++'
+
+        server.Server(json=CustomJSON)
+        eio.assert_called_once_with(**{'json': CustomJSON})
+
+        pkt = packet.Packet(packet_type=packet.EVENT,
+                            data={six.text_type('foo'): six.text_type('bar')})
+        self.assertEqual(pkt.encode(), '2*** encoded ***')
+        pkt2 = packet.Packet(encoded_packet=pkt.encode())
+        self.assertEqual(pkt2.data, '+++ decoded +++')
+
+        # restore the default JSON module
+        packet.Packet.json = json

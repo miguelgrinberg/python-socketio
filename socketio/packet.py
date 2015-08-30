@@ -1,5 +1,5 @@
 import functools
-import json
+import json as _json
 
 import six
 
@@ -11,6 +11,9 @@ packet_names = ['CONNECT', 'DISCONNECT', 'EVENT', 'ACK', 'ERROR',
 
 class Packet(object):
     """Socket.IO packet."""
+
+    json = _json
+
     def __init__(self, packet_type=EVENT, data=None, namespace=None, id=None,
                  binary=None, encoded_packet=None):
         self.packet_type = packet_type
@@ -54,7 +57,7 @@ class Packet(object):
         if data is not None:
             if needs_comma:
                 encoded_packet += ','
-            encoded_packet += json.dumps(data, separators=(',', ':'))
+            encoded_packet += self.json.dumps(data, separators=(',', ':'))
         if attachments is not None:
             encoded_packet = [encoded_packet] + attachments
         return encoded_packet
@@ -90,7 +93,7 @@ class Packet(object):
                 self.id = self.id * 10 + int(ep[0])
                 ep = ep[1:]
         if ep:
-            self.data = json.loads(ep)
+            self.data = self.json.loads(ep)
         return attachment_count
 
     def reconstruct_binary(self, attachments):

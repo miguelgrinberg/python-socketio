@@ -28,6 +28,10 @@ class Server(object):
                    ``bytes`` values are treated as binary.  This option has no
                    effect on Python 3, where text and binary payloads are
                    always automatically discovered.
+    :param json: An alternative json module to use for encoding and decoding
+                 packets. Custom json modules must have ``dumps`` and ``loads``
+                 functions that are compatible with the standard library
+                 versions.
     :param kwargs: Connection parameters for the underlying Engine.IO server.
 
     The Engine.IO configuration supports the following settings:
@@ -60,7 +64,7 @@ class Server(object):
                             ``False``.
     """
     def __init__(self, client_manager_class=None, logger=False, binary=False,
-                 **kwargs):
+                 json=None, **kwargs):
         if client_manager_class is None:
             client_manager_class = base_manager.BaseManager
         self.manager = client_manager_class(self)
@@ -68,6 +72,9 @@ class Server(object):
         engineio_logger = engineio_options.pop('engineio_logger', None)
         if engineio_logger is not None:
             engineio_options['logger'] = engineio_logger
+        if json is not None:
+            packet.Packet.json = json
+            engineio_options['json'] = json
         self.eio = engineio.Server(**engineio_options)
         self.eio.on('connect', self._handle_eio_connect)
         self.eio.on('message', self._handle_eio_message)
