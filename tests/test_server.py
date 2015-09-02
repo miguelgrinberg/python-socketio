@@ -144,6 +144,13 @@ class TestServer(unittest.TestCase):
         s._emit_internal('123', u'my event', b'my binary data')
         self.assertEqual(s.eio.send.call_count, 2)
 
+    def test_transport(self, eio):
+        s = server.Server()
+        s.eio.transport = mock.MagicMock(return_value='polling')
+        s._handle_eio_connect('foo', 'environ')
+        self.assertEqual(s.transport('foo'), 'polling')
+        s.eio.transport.assert_called_once_with('foo')
+
     def test_handle_connect(self, eio):
         mgr = mock.MagicMock()
         s = server.Server(client_manager_class=mgr)

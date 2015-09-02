@@ -278,6 +278,16 @@ class Server(object):
         self._trigger_event('disconnect', namespace, sid)
         self.manager.disconnect(sid, namespace=namespace)
 
+    def transport(self, sid):
+        """Return the name of the transport used by the client.
+
+        The two possible values returned by this function are ``'polling'``
+        and ``'websocket'``.
+
+        :param sid: The session of the client.
+        """
+        return self.eio.transport(sid)
+
     def handle_request(self, environ, start_response):
         """Handle an HTTP request from the client.
 
