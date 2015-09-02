@@ -150,7 +150,7 @@ class Server(object):
             return set_handler
         set_handler(handler)
 
-    def emit(self, event, data, room=None, skip_sid=None, namespace=None,
+    def emit(self, event, data=None, room=None, skip_sid=None, namespace=None,
              callback=None):
         """Emit a custom event to one or more connected clients.
 

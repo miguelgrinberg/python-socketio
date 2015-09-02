@@ -1,0 +1,64 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Socket.IO Latency</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+  </head>
+  <body>
+    <h1>Socket.IO Latency <span id="latency"></span></h1>
+    <h2 id="transport">(connecting)</h2>
+    <canvas id="chart" height="200"></canvas>
+
+    <script src="//cdnjs.cloudflare.com/ajax/libs/jquery/2.1.4/jquery.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/smoothie/1.27.0/smoothie.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/socket.io/1.3.6/socket.io.min.js"></script>
+    <script>
+      // socket
+      var socket = io.connect('http://' + document.domain + ':' + location.port);
+      var char = $('chart').get(0);
+      socket.on('connect', function() {
+          if (chart.getContext) {
+              render();
+              window.onresize = render;
+          }
+          send();
+      });
+      socket.on('pong', function() {
+          var latency = new Date - last;
+          $('#latency').text(latency + 'ms');
+          if (time)
+              time.append(+new Date, latency);
+          setTimeout(send, 100);
+      });
+      socket.on('disconnect', function() {
+          if (smoothie)
+              smoothie.stop();
+          $('#transport').text('(disconnected)');
+      });
+
+      var last;
+      function send() {
+          last = new Date;
+          socket.emit('ping');
+          $('#transport').text(socket.io.engine.transport.name);
+      }
+
+      // chart
+      var smoothie;
+      var time;
+      function render() {
+          if (smoothie)
+              smoothie.stop();
+          chart.width = document.body.clientWidth;
+          smoothie = new SmoothieChart();
+          smoothie.streamTo(chart, 1000);
+          time = new TimeSeries();
+          smoothie.addTimeSeries(time, {
+              strokeStyle: 'rgb(255, 0, 0)',
+              fillStyle: 'rgba(255, 0, 0, 0.4)',
+              lineWidth: 2
+          });
+      }
+    </script>
+  </body>
+</html>
