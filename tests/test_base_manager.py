@@ -12,7 +12,6 @@ from socketio import base_manager
 class TestBaseManager(unittest.TestCase):
     def setUp(self):
         mock_server = mock.MagicMock()
-        mock_server.rooms = {}
         self.bm = base_manager.BaseManager(mock_server)
 
     def test_connect(self):
@@ -77,6 +76,40 @@ class TestBaseManager(unittest.TestCase):
         self.bm.disconnect('456', '/foo')
         self.bm._clean_rooms()
         self.assertEqual(self.bm.rooms, {})
+
+    def test_disconnect_with_callbacks(self):
+        self.bm.connect('123', '/')
+        self.bm.connect('123', '/foo')
+        self.bm._generate_ack_id('123', '/', 'f')
+        self.bm._generate_ack_id('123', '/foo', 'g')
+        self.bm.disconnect('123', '/foo')
+        self.assertNotIn('/foo', self.bm.callbacks['123'])
+        self.bm.disconnect('123', '/')
+        self.assertNotIn('123', self.bm.callbacks)
+
+    def test_trigger_callback(self):
+        self.bm.connect('123', '/')
+        self.bm.connect('123', '/foo')
+        cb = mock.MagicMock()
+        id1 = self.bm._generate_ack_id('123', '/', cb)
+        id2 = self.bm._generate_ack_id('123', '/foo', cb)
+        self.bm.trigger_callback('123', '/', id1, ['foo'])
+        self.bm.trigger_callback('123', '/foo', id2, ['bar', 'baz'])
+        self.assertEqual(cb.call_count, 2)
+        cb.assert_any_call('foo')
+        cb.assert_any_call('bar', 'baz')
+
+    def test_invalid_callback(self):
+        self.bm.connect('123', '/')
+        cb = mock.MagicMock()
+        id = self.bm._generate_ack_id('123', '/', cb)
+        self.assertRaises(ValueError, self.bm.trigger_callback,
+                          '124', '/', id, ['foo'])
+        self.assertRaises(ValueError, self.bm.trigger_callback,
+                          '123', '/foo', id, ['foo'])
+        self.assertRaises(ValueError, self.bm.trigger_callback,
+                          '123', '/', id + 1, ['foo'])
+        self.assertEqual(cb.call_count, 0)
 
     def test_get_namespaces(self):
         self.assertEqual(list(self.bm.get_namespaces()), [])
@@ -184,6 +217,16 @@ class TestBaseManager(unittest.TestCase):
         self.bm.server._emit_internal.assert_any_call('789', 'my event',
                                                       {'foo': 'bar'}, '/foo',
                                                       None)
+
+    def test_emit_with_callback(self):
+        self.bm.connect('123', '/foo')
+        self.bm.server._generate_ack_id.return_value = 11
+        self.bm.emit('my event', {'foo': 'bar'}, namespace='/foo',
+                     callback='cb')
+        self.bm.server._emit_internal.assert_called_once_with('123',
+                                                              'my event',
+                                                              {'foo': 'bar'},
+                                                              '/foo', 11)
 
     def test_emit_to_invalid_room(self):
         self.bm.emit('my event', {'foo': 'bar'}, namespace='/', room='123')

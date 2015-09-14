@@ -1,4 +1,3 @@
-import itertools
 import logging
 
 import engineio
@@ -83,7 +82,6 @@ class Server(object):
 
         self.environ = {}
         self.handlers = {}
-        self.callbacks = {}
 
         self._binary_packet = None
         self._attachment_count = 0
@@ -304,12 +302,8 @@ class Server(object):
         """
         return self.eio.handle_request(environ, start_response)
 
-    def _emit_internal(self, sid, event, data, namespace=None, callback=None):
+    def _emit_internal(self, sid, event, data, namespace=None, id=None):
         """Send a message to a client."""
-        if callback is not None:
-            id = self._generate_ack_id(sid, namespace, callback)
-        else:
-            id = None
         if six.PY2 and not self.binary:
             binary = False  # pragma: nocover
         else:
@@ -353,13 +347,9 @@ class Server(object):
             if n != '/' and self.manager.is_connected(sid, n):
                 self._trigger_event('disconnect', n, sid)
                 self.manager.disconnect(sid, n)
-                if sid in self.callbacks and n in self.callbacks[sid]:
-                    del self.callbacks[sid][n]
         if namespace == '/' and self.manager.is_connected(sid, namespace):
             self._trigger_event('disconnect', '/', sid)
             self.manager.disconnect(sid, '/')
-            if sid in self.callbacks:
-                del self.callbacks[sid]
             if sid in self.environ:
                 del self.environ[sid]
 
@@ -390,33 +380,12 @@ class Server(object):
         """Handle ACK packets from the client."""
         namespace = namespace or '/'
         self.logger.info('received ack from %s [%s]', sid, namespace)
-        self._trigger_callback(sid, namespace, id, data)
+        self.manager.trigger_callback(sid, namespace, id, data)
 
     def _trigger_event(self, event, namespace, *args):
         """Invoke an application event handler."""
         if namespace in self.handlers and event in self.handlers[namespace]:
             return self.handlers[namespace][event](*args)
-
-    def _generate_ack_id(self, sid, namespace, callback):
-        """Generate a unique identifier for an ACK packet."""
-        namespace = namespace or '/'
-        if sid not in self.callbacks:
-            self.callbacks[sid] = {}
-        if namespace not in self.callbacks[sid]:
-            self.callbacks[sid][namespace] = {0: itertools.count(1)}
-        id = six.next(self.callbacks[sid][namespace][0])
-        self.callbacks[sid][namespace][id] = callback
-        return id
-
-    def _trigger_callback(self, sid, namespace, id, data):
-        """Invoke an application callback."""
-        namespace = namespace or '/'
-        try:
-            callback = self.callbacks[sid][namespace][id]
-        except KeyError:
-            raise ValueError('Unknown callback')
-        del self.callbacks[sid][namespace][id]
-        callback(*data)
 
     def _handle_eio_connect(self, sid, environ):
         """Handle the Engine.IO connection event."""

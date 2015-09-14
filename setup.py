@@ -29,6 +29,7 @@ setup(
     ],
     tests_require=[
         'mock',
+        'pbr<1.7.0',   # temporary, to workaround bug in 1.7.0
     ],
     test_suite='tests',
     classifiers=[

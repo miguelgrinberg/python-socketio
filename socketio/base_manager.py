@@ -1,3 +1,5 @@
+import itertools
+
 import six
 
 
@@ -14,6 +16,7 @@ class BaseManager(object):
         self.server = server
         self.rooms = {}
         self.pending_removals = []
+        self.callbacks = {}
 
     def get_namespaces(self):
         """Return an iterable with the active namespace names."""
@@ -43,6 +46,10 @@ class BaseManager(object):
                 rooms.append(room_name)
         for room in rooms:
             self.leave_room(sid, namespace, room)
+        if sid in self.callbacks and namespace in self.callbacks[sid]:
+            del self.callbacks[sid][namespace]
+            if len(self.callbacks[sid]) == 0:
+                del self.callbacks[sid]
 
     def enter_room(self, sid, namespace, room):
         """Add a client to a room."""
@@ -86,8 +93,31 @@ class BaseManager(object):
             return
         for sid in self.get_participants(namespace, room):
             if sid != skip_sid:
-                self.server._emit_internal(sid, event, data, namespace,
-                                           callback)
+                if callback is not None:
+                    id = self.server._generate_ack_id(sid, namespace, callback)
+                else:
+                    id = None
+                self.server._emit_internal(sid, event, data, namespace, id)
+
+    def trigger_callback(self, sid, namespace, id, data):
+        """Invoke an application callback."""
+        try:
+            callback = self.callbacks[sid][namespace][id]
+        except KeyError:
+            raise ValueError('Unknown callback')
+        del self.callbacks[sid][namespace][id]
+        callback(*data)
+
+    def _generate_ack_id(self, sid, namespace, callback):
+        """Generate a unique identifier for an ACK packet."""
+        namespace = namespace or '/'
+        if sid not in self.callbacks:
+            self.callbacks[sid] = {}
+        if namespace not in self.callbacks[sid]:
+            self.callbacks[sid][namespace] = {0: itertools.count(1)}
+        id = six.next(self.callbacks[sid][namespace][0])
+        self.callbacks[sid][namespace][id] = callback
+        return id
 
     def _clean_rooms(self):
         """Remove all the inactive room participants."""

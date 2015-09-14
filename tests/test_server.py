@@ -127,8 +127,8 @@ class TestServer(unittest.TestCase):
 
     def test_emit_internal_with_callback(self, eio):
         s = server.Server()
-        s._emit_internal('123', 'my event', 'my data', namespace='/foo',
-                         callback='cb')
+        id = s.manager._generate_ack_id('123', '/foo', 'cb')
+        s._emit_internal('123', 'my event', 'my data', namespace='/foo', id=id)
         s.eio.send.assert_called_once_with('123',
                                            '2/foo,1["my event","my data"]',
                                            binary=False)
@@ -323,40 +323,25 @@ class TestServer(unittest.TestCase):
 
     def test_send_with_ack(self, eio):
         s = server.Server()
-        cb = mock.MagicMock()
         s._handle_eio_connect('123', 'environ')
-        s._emit_internal('123', 'my event', ['foo'], callback=cb)
-        s._emit_internal('123', 'my event', ['bar'], callback=cb)
+        cb = mock.MagicMock()
+        id1 = s.manager._generate_ack_id('123', '/', cb)
+        id2 = s.manager._generate_ack_id('123', '/', cb)
+        s._emit_internal('123', 'my event', ['foo'], id=id1)
+        s._emit_internal('123', 'my event', ['bar'], id=id2)
         s._handle_eio_message('123', '31["foo",2]')
         cb.assert_called_once_with('foo', 2)
-        self.assertIn('123', s.callbacks)
-        s._handle_disconnect('123', '/')
-        self.assertNotIn('123', s.callbacks)
 
     def test_send_with_ack_namespace(self, eio):
         s = server.Server()
-        cb = mock.MagicMock()
         s._handle_eio_connect('123', 'environ')
         s._handle_eio_message('123', '0/foo')
+        cb = mock.MagicMock()
+        id = s.manager._generate_ack_id('123', '/foo', cb)
         s._emit_internal('123', 'my event', ['foo'], namespace='/foo',
-                         callback=cb)
+                         id=id)
         s._handle_eio_message('123', '3/foo,1["foo",2]')
         cb.assert_called_once_with('foo', 2)
-        self.assertIn('/foo', s.callbacks['123'])
-        s._handle_eio_disconnect('123')
-        self.assertNotIn('123', s.callbacks)
-
-    def test_invalid_callback(self, eio):
-        s = server.Server()
-        cb = mock.MagicMock()
-        s._handle_eio_connect('123', 'environ')
-        s._emit_internal('123', 'my event', ['foo'], callback=cb)
-        self.assertRaises(ValueError, s._handle_eio_message, '124',
-                          '31["foo",2]')
-        self.assertRaises(ValueError, s._handle_eio_message, '123',
-                          '3/foo,1["foo",2]')
-        self.assertRaises(ValueError, s._handle_eio_message, '123',
-                          '32["foo",2]')
 
     def test_disconnect(self, eio):
         s = server.Server()
