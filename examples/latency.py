@@ -3,7 +3,7 @@ from flask import Flask, render_template
 import socketio
 
 # set this to 'threading', 'eventlet', or 'gevent'
-async_mode = 'eventlet'
+async_mode = 'threading'
 
 sio = socketio.Server(async_mode=async_mode)
 app = Flask(__name__)

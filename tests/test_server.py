@@ -20,9 +20,9 @@ class TestServer(unittest.TestCase):
 
     def test_create(self, eio):
         mgr = mock.MagicMock()
-        s = server.Server(mgr, binary=True, foo='bar')
-        mgr.assert_called_once_with(s)
+        s = server.Server(client_manager=mgr, binary=True, foo='bar')
         eio.assert_called_once_with(**{'foo': 'bar'})
+        self.assertEqual(s.manager, mgr)
         self.assertEqual(s.eio.on.call_count, 3)
         self.assertEqual(s.binary, True)
 
@@ -44,7 +44,7 @@ class TestServer(unittest.TestCase):
 
     def test_emit(self, eio):
         mgr = mock.MagicMock()
-        s = server.Server(client_manager_class=mgr)
+        s = server.Server(client_manager=mgr)
         s.emit('my event', {'foo': 'bar'}, 'room', '123', namespace='/foo',
                callback='cb')
         s.manager.emit.assert_called_once_with('my event', {'foo': 'bar'},
@@ -52,63 +52,63 @@ class TestServer(unittest.TestCase):
 
     def test_emit_default_namespace(self, eio):
         mgr = mock.MagicMock()
-        s = server.Server(client_manager_class=mgr)
+        s = server.Server(client_manager=mgr)
         s.emit('my event', {'foo': 'bar'}, 'room', '123', callback='cb')
         s.manager.emit.assert_called_once_with('my event', {'foo': 'bar'}, '/',
                                                'room', '123', 'cb')
 
     def test_send(self, eio):
         mgr = mock.MagicMock()
-        s = server.Server(client_manager_class=mgr)
+        s = server.Server(client_manager=mgr)
         s.send('foo', 'room', '123', namespace='/foo', callback='cb')
         s.manager.emit.assert_called_once_with('message', 'foo', '/foo',
                                                'room', '123', 'cb')
 
     def test_enter_room(self, eio):
         mgr = mock.MagicMock()
-        s = server.Server(client_manager_class=mgr)
+        s = server.Server(client_manager=mgr)
         s.enter_room('123', 'room', namespace='/foo')
         s.manager.enter_room.assert_called_once_with('123', '/foo', 'room')
 
     def test_enter_room_default_namespace(self, eio):
         mgr = mock.MagicMock()
-        s = server.Server(client_manager_class=mgr)
+        s = server.Server(client_manager=mgr)
         s.enter_room('123', 'room')
         s.manager.enter_room.assert_called_once_with('123', '/', 'room')
 
     def test_leave_room(self, eio):
         mgr = mock.MagicMock()
-        s = server.Server(client_manager_class=mgr)
+        s = server.Server(client_manager=mgr)
         s.leave_room('123', 'room', namespace='/foo')
         s.manager.leave_room.assert_called_once_with('123', '/foo', 'room')
 
     def test_leave_room_default_namespace(self, eio):
         mgr = mock.MagicMock()
-        s = server.Server(client_manager_class=mgr)
+        s = server.Server(client_manager=mgr)
         s.leave_room('123', 'room')
         s.manager.leave_room.assert_called_once_with('123', '/', 'room')
 
     def test_close_room(self, eio):
         mgr = mock.MagicMock()
-        s = server.Server(client_manager_class=mgr)
+        s = server.Server(client_manager=mgr)
         s.close_room('room', namespace='/foo')
         s.manager.close_room.assert_called_once_with('/foo', 'room')
 
     def test_close_room_default_namespace(self, eio):
         mgr = mock.MagicMock()
-        s = server.Server(client_manager_class=mgr)
+        s = server.Server(client_manager=mgr)
         s.close_room('room')
         s.manager.close_room.assert_called_once_with('/', 'room')
 
     def test_rooms(self, eio):
         mgr = mock.MagicMock()
-        s = server.Server(client_manager_class=mgr)
+        s = server.Server(client_manager=mgr)
         s.rooms('123', namespace='/foo')
         s.manager.get_rooms.assert_called_once_with('123', '/foo')
 
     def test_rooms_default_namespace(self, eio):
         mgr = mock.MagicMock()
-        s = server.Server(client_manager_class=mgr)
+        s = server.Server(client_manager=mgr)
         s.rooms('123')
         s.manager.get_rooms.assert_called_once_with('123', '/')
 
@@ -153,7 +153,7 @@ class TestServer(unittest.TestCase):
 
     def test_handle_connect(self, eio):
         mgr = mock.MagicMock()
-        s = server.Server(client_manager_class=mgr)
+        s = server.Server(client_manager=mgr)
         handler = mock.MagicMock()
         s.on('connect', handler)
         s._handle_eio_connect('123', 'environ')
@@ -163,7 +163,7 @@ class TestServer(unittest.TestCase):
 
     def test_handle_connect_namespace(self, eio):
         mgr = mock.MagicMock()
-        s = server.Server(client_manager_class=mgr)
+        s = server.Server(client_manager=mgr)
         handler = mock.MagicMock()
         s.on('connect', handler, namespace='/foo')
         s._handle_eio_connect('123', 'environ')
@@ -175,7 +175,7 @@ class TestServer(unittest.TestCase):
 
     def test_handle_connect_rejected(self, eio):
         mgr = mock.MagicMock()
-        s = server.Server(client_manager_class=mgr)
+        s = server.Server(client_manager=mgr)
         handler = mock.MagicMock(return_value=False)
         s.on('connect', handler)
         s._handle_eio_connect('123', 'environ')
@@ -186,7 +186,7 @@ class TestServer(unittest.TestCase):
 
     def test_handle_connect_namespace_rejected(self, eio):
         mgr = mock.MagicMock()
-        s = server.Server(client_manager_class=mgr)
+        s = server.Server(client_manager=mgr)
         handler = mock.MagicMock(return_value=False)
         s.on('connect', handler, namespace='/foo')
         s._handle_eio_connect('123', 'environ')
@@ -197,7 +197,7 @@ class TestServer(unittest.TestCase):
 
     def test_handle_disconnect(self, eio):
         mgr = mock.MagicMock()
-        s = server.Server(client_manager_class=mgr)
+        s = server.Server(client_manager=mgr)
         handler = mock.MagicMock()
         s.on('disconnect', handler)
         s._handle_eio_connect('123', 'environ')
@@ -208,7 +208,7 @@ class TestServer(unittest.TestCase):
 
     def test_handle_disconnect_namespace(self, eio):
         mgr = mock.MagicMock()
-        s = server.Server(client_manager_class=mgr)
+        s = server.Server(client_manager=mgr)
         s.manager.get_namespaces = mock.MagicMock(return_value=['/', '/foo'])
         handler = mock.MagicMock()
         s.on('disconnect', handler)
@@ -223,7 +223,7 @@ class TestServer(unittest.TestCase):
 
     def test_handle_disconnect_only_namespace(self, eio):
         mgr = mock.MagicMock()
-        s = server.Server(client_manager_class=mgr)
+        s = server.Server(client_manager=mgr)
         s.manager.get_namespaces = mock.MagicMock(return_value=['/', '/foo'])
         handler = mock.MagicMock()
         s.on('disconnect', handler)
@@ -238,7 +238,7 @@ class TestServer(unittest.TestCase):
 
     def test_handle_disconnect_unknown_client(self, eio):
         mgr = mock.MagicMock()
-        s = server.Server(client_manager_class=mgr)
+        s = server.Server(client_manager=mgr)
         s._handle_eio_disconnect('123')
 
     def test_handle_event(self, eio):
@@ -287,7 +287,7 @@ class TestServer(unittest.TestCase):
 
     def test_handle_event_with_ack_tuple(self, eio):
         mgr = mock.MagicMock()
-        s = server.Server(client_manager_class=mgr)
+        s = server.Server(client_manager=mgr)
         handler = mock.MagicMock(return_value=(1, '2', True))
         s.on('my message', handler)
         s._handle_eio_message('123', '21000["my message","a","b","c"]')
@@ -297,7 +297,7 @@ class TestServer(unittest.TestCase):
 
     def test_handle_event_with_ack_list(self, eio):
         mgr = mock.MagicMock()
-        s = server.Server(client_manager_class=mgr)
+        s = server.Server(client_manager=mgr)
         handler = mock.MagicMock(return_value=[1, '2', True])
         s.on('my message', handler)
         s._handle_eio_message('123', '21000["my message","a","b","c"]')
@@ -307,7 +307,7 @@ class TestServer(unittest.TestCase):
 
     def test_handle_event_with_ack_binary(self, eio):
         mgr = mock.MagicMock()
-        s = server.Server(client_manager_class=mgr, binary=True)
+        s = server.Server(client_manager=mgr, binary=True)
         handler = mock.MagicMock(return_value=b'foo')
         s.on('my message', handler)
         s._handle_eio_message('123', '21000["my message","foo"]')

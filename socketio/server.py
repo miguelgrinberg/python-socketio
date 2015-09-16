@@ -13,12 +13,10 @@ class Server(object):
     This class implements a fully compliant Socket.IO web server with support
     for websocket and long-polling transports.
 
-    :param engineio_options: A ``dict`` with options for the Engine.IO server.
-                            The values are passed directly to the
-                            ``engineio.Server`` constructor.
-    :param client_manager_class: The class that will manage the client list.
-                                 The default value is appropriate for most
-                                 cases.
+    :param client_manager: The client manager instance that will manage the
+                           client list. By default the client list is stored
+                           in an in-memory structure, which prevents the use
+                           of multiple worker processes.
     :param logger: To enable logging set to ``True`` or pass a logger object to
                    use. To disable logging set to ``False``.
     :param binary: ``True`` to support binary payloads, ``False`` to treat all
@@ -62,11 +60,11 @@ class Server(object):
                             a logger object to use. To disable logging set to
                             ``False``.
     """
-    def __init__(self, client_manager_class=None, logger=False, binary=False,
+    def __init__(self, client_manager=None, logger=False, binary=False,
                  json=None, **kwargs):
-        if client_manager_class is None:
-            client_manager_class = base_manager.BaseManager
-        self.manager = client_manager_class(self)
+        if client_manager is None:
+            client_manager = base_manager.BaseManager(self)
+        self.manager = client_manager
         engineio_options = kwargs
         engineio_logger = engineio_options.pop('engineio_logger', None)
         if engineio_logger is not None:
