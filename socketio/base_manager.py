@@ -94,7 +94,7 @@ class BaseManager(object):
         for sid in self.get_participants(namespace, room):
             if sid != skip_sid:
                 if callback is not None:
-                    id = self.server._generate_ack_id(sid, namespace, callback)
+                    id = self._generate_ack_id(sid, namespace, callback)
                 else:
                     id = None
                 self.server._emit_internal(sid, event, data, namespace, id)

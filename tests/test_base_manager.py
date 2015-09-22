@@ -220,9 +220,11 @@ class TestBaseManager(unittest.TestCase):
 
     def test_emit_with_callback(self):
         self.bm.connect('123', '/foo')
-        self.bm.server._generate_ack_id.return_value = 11
+        self.bm._generate_ack_id = mock.MagicMock()
+        self.bm._generate_ack_id.return_value = 11
         self.bm.emit('my event', {'foo': 'bar'}, namespace='/foo',
                      callback='cb')
+        self.bm._generate_ack_id.assert_called_once_with('123', '/foo', 'cb')
         self.bm.server._emit_internal.assert_called_once_with('123',
                                                               'my event',
                                                               {'foo': 'bar'},
