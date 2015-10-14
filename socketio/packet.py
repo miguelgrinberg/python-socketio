@@ -135,11 +135,6 @@ class Packet(object):
         else:
             return data
 
-
-
-
-
-
     def _data_is_binary(self, data):
         """Check if the data contains binary components."""
         try:
