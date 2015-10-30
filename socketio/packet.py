@@ -69,7 +69,11 @@ class Packet(object):
         necessary to fully decode the packet.
         """
         ep = encoded_packet
-        self.packet_type = int(ep[0:1])
+        try:
+            self.packet_type = int(ep[0:1])
+        except TypeError:
+            self.packet_type = ep
+            ep = ''
         self.namespace = None
         self.data = None
         ep = ep[1:]

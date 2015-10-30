@@ -32,6 +32,13 @@ class TestPacket(unittest.TestCase):
         self.assertEqual(pkt.data, ['foo'])
         self.assertEqual(pkt.encode(), '2["foo"]')
 
+    def test_decode_empty_event_packet(self):
+        pkt = packet.Packet(encoded_packet='1')
+        self.assertEqual(pkt.packet_type, packet.DISCONNECT)
+        # same thing, but with a numeric payload
+        pkt = packet.Packet(encoded_packet=1)
+        self.assertEqual(pkt.packet_type, packet.DISCONNECT)
+
     def test_encode_binary_event_packet(self):
         pkt = packet.Packet(packet_type=packet.EVENT, data=b'1234')
         self.assertEqual(pkt.packet_type, packet.BINARY_EVENT)
