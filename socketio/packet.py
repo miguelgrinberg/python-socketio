@@ -141,15 +141,18 @@ class Packet(object):
 
     def _data_is_binary(self, data):
         """Check if the data contains binary components."""
-        if isinstance(data, six.binary_type):
-            return True
-        elif isinstance(data, list):
-            return functools.reduce(
-                lambda a, b: a or b, [self._data_is_binary(item)
-                                      for item in data])
-        elif isinstance(data, dict):
-            return functools.reduce(
-                lambda a, b: a or b, [self._data_is_binary(item)
-                                      for item in six.itervalues(data)])
-        else:
+        try:
+            if isinstance(data, six.binary_type):
+                return True
+            elif isinstance(data, list):
+                return functools.reduce(
+                    lambda a, b: a or b, [self._data_is_binary(item)
+                                          for item in data])
+            elif isinstance(data, dict):
+                return functools.reduce(
+                    lambda a, b: a or b, [self._data_is_binary(item)
+                                          for item in six.itervalues(data)])
+            else:
+                return False
+        except TypeError:
             return False
