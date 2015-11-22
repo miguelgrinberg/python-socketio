@@ -172,3 +172,18 @@ class TestPacket(unittest.TestCase):
         self.assertEqual(pkt.data['a'], '123')
         self.assertEqual(pkt.data['b'], b'456')
         self.assertEqual(pkt.data['c'], [b'789', 123])
+
+    def test_data_is_binary_list(self):
+        pkt = packet.Packet()
+        self.assertFalse(pkt._data_is_binary([six.text_type('foo')]))
+        self.assertFalse(pkt._data_is_binary([]))
+        self.assertTrue(pkt._data_is_binary([b'foo']))
+        self.assertTrue(pkt._data_is_binary([six.text_type('foo'), b'bar']))
+
+    def test_data_is_binary_dict(self):
+        pkt = packet.Packet()
+        self.assertFalse(pkt._data_is_binary({'a': six.text_type('foo')}))
+        self.assertFalse(pkt._data_is_binary({}))
+        self.assertTrue(pkt._data_is_binary({'a': b'foo'}))
+        self.assertTrue(pkt._data_is_binary({'a': six.text_type('foo'),
+                                             'b': b'bar'}))

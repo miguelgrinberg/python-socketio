@@ -146,10 +146,11 @@ class Packet(object):
         elif isinstance(data, list):
             return functools.reduce(
                 lambda a, b: a or b, [self._data_is_binary(item)
-                                      for item in data])
+                                      for item in data], False)
         elif isinstance(data, dict):
             return functools.reduce(
                 lambda a, b: a or b, [self._data_is_binary(item)
-                                      for item in six.itervalues(data)])
+                                      for item in six.itervalues(data)],
+                False)
         else:
             return False
