@@ -12,11 +12,14 @@ class BaseManager(object):
     services. More sophisticated storage backends can be implemented by
     subclasses.
     """
-    def __init__(self, server):
-        self.server = server
+    def __init__(self):
+        self.server = None
         self.rooms = {}
         self.pending_removals = []
         self.callbacks = {}
+
+    def initialize(self, server):
+        self.server = server
 
     def get_namespaces(self):
         """Return an iterable with the active namespace names."""
@@ -69,7 +72,7 @@ class BaseManager(object):
         except KeyError:
             pass
 
-    def close_room(self, namespace, room):
+    def close_room(self, room, namespace):
         """Remove all participants from a room."""
         try:
             for sid in self.get_participants(namespace, room):

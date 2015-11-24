@@ -12,9 +12,13 @@ This project implements an Socket.IO server that can run standalone or
 integrated with a Python WSGI application. The following are some of its
 features:
 
-- Fully compatible with the Javascript
-  `socket.io-client <https://github.com/Automattic/socket.io-client>`_ library,
-  versions 1.3.5 and up.
+- Fully compatible with the 
+  `Javascript <https://github.com/Automattic/socket.io-client>`_,
+  `Swift <https://github.com/socketio/socket.io-client-swift>`_,
+  `C++ <https://github.com/socketio/socket.io-client-cpp>`_ and
+  `Java <https://github.com/socketio/socket.io-client-java>`_ official
+  Socket.IO clients, plus any third party clients that comply with the
+  Socket.IO specification.
 - Compatible with Python 2.7 and Python 3.3+.
 - Supports large number of clients even on modest hardware when used with an
   asynchronous server based on `eventlet <http://eventlet.net/>`_ or
@@ -24,20 +28,22 @@ features:
   WSGI applications.
 - Broadcasting of messages to all connected clients, or to subsets of them
   assigned to "rooms".
-- Uses an event-based architecture implemented with decorators that hides the
-  details of the protocol.
+- Optional support for multiple servers, connected through a messaging queue
+  such as Redis or RabbitMQ.
+- Event-based architecture implemented with decorators that hides the details
+  of the protocol.
 - Support for HTTP long-polling and WebSocket transports.
 - Support for XHR2 and XHR browsers.
 - Support for text and binary messages.
 - Support for gzip and deflate HTTP compression.
-- Configurable CORS responses to avoid cross-origin problems with browsers.
+- Configurable CORS responses, to avoid cross-origin problems with browsers.
 
 What is Socket.IO?
 ------------------
 
 Socket.IO is a transport protocol that enables real-time bidirectional
 event-based communication between clients (typically web browsers) and a
-server. The official implementations of the client and server components are
+server. The original implementations of the client and server components are
 written in JavaScript.
 
 Getting Started
@@ -357,13 +363,16 @@ address this important limitation.
 API Reference
 -------------
 
-.. toctree::
-   :maxdepth: 2
-
 .. module:: socketio
-
 .. autoclass:: Middleware
    :members:
-
 .. autoclass:: Server
+   :members:
+.. autoclass:: BaseManager
+   :members:
+.. autoclass:: PubSubManager
+   :members:
+.. autoclass:: KombuManager
+   :members:
+.. autoclass:: RedisManager
    :members:

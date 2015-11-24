@@ -92,13 +92,13 @@ class TestServer(unittest.TestCase):
         mgr = mock.MagicMock()
         s = server.Server(client_manager=mgr)
         s.close_room('room', namespace='/foo')
-        s.manager.close_room.assert_called_once_with('/foo', 'room')
+        s.manager.close_room.assert_called_once_with('room', '/foo')
 
     def test_close_room_default_namespace(self, eio):
         mgr = mock.MagicMock()
         s = server.Server(client_manager=mgr)
         s.close_room('room')
-        s.manager.close_room.assert_called_once_with('/', 'room')
+        s.manager.close_room.assert_called_once_with('room', '/')
 
     def test_rooms(self, eio):
         mgr = mock.MagicMock()
@@ -397,3 +397,9 @@ class TestServer(unittest.TestCase):
 
         # restore the default JSON module
         packet.Packet.json = json
+
+    def test_start_background_task(self, eio):
+        s = server.Server()
+        s.start_background_task('foo', 'bar', baz='baz')
+        s.eio.start_background_task.assert_called_once_with('foo', 'bar',
+                                                            baz='baz')

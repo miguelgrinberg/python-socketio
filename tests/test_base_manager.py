@@ -12,7 +12,8 @@ from socketio import base_manager
 class TestBaseManager(unittest.TestCase):
     def setUp(self):
         mock_server = mock.MagicMock()
-        self.bm = base_manager.BaseManager(mock_server)
+        self.bm = base_manager.BaseManager()
+        self.bm.initialize(mock_server)
 
     def test_connect(self):
         self.bm.connect('123', '/foo')
@@ -142,11 +143,11 @@ class TestBaseManager(unittest.TestCase):
         self.bm.connect('789', '/foo')
         self.bm.enter_room('123', '/foo', 'bar')
         self.bm.enter_room('123', '/foo', 'bar')
-        self.bm.close_room('/foo', 'bar')
+        self.bm.close_room('bar', '/foo')
         self.assertNotIn('bar', self.bm.rooms['/foo'])
 
     def test_close_invalid_room(self):
-        self.bm.close_room('/foo', 'bar')
+        self.bm.close_room('bar', '/foo')
 
     def test_rooms(self):
         self.bm.connect('123', '/foo')
