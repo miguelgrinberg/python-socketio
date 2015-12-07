@@ -1,6 +1,10 @@
 from functools import partial
 import uuid
 
+import json
+import pickle
+import six
+
 from .base_manager import BaseManager
 
 
@@ -18,6 +22,8 @@ class PubSubManager(BaseManager):
     :param channel: The channel name on which the server sends and receives
                     notifications.
     """
+    name = 'pubsub'
+
     def __init__(self, channel='socketio'):
         super(PubSubManager, self).__init__()
         self.channel = channel
@@ -40,6 +46,8 @@ class PubSubManager(BaseManager):
         """
         namespace = namespace or '/'
         if callback is not None:
+            if room is None:
+                raise ValueError('Cannot use callback without a room set.')
             id = self._generate_ack_id(room, namespace, callback)
             callback = (room, namespace, id)
         else:
@@ -59,7 +67,7 @@ class PubSubManager(BaseManager):
         support pub/sub backends.
         """
         raise NotImplementedError('This method must be implemented in a '
-                                  'subclass.')
+                                  'subclass.')  # pragma: no cover
 
     def _listen(self):
         """Return the next message published on the Socket.IO channel,
@@ -69,7 +77,7 @@ class PubSubManager(BaseManager):
         support pub/sub backends.
         """
         raise NotImplementedError('This method must be implemented in a '
-                                  'subclass.')
+                                  'subclass.')  # pragma: no cover
 
     def _handle_emit(self, message):
         # Events with callbacks are very tricky to handle across hosts
@@ -111,10 +119,24 @@ class PubSubManager(BaseManager):
 
     def _thread(self):
         for message in self._listen():
-            if 'method' in message:
-                if message['method'] == 'emit':
-                    self._handle_emit(message)
-                elif message['method'] == 'callback':
-                    self._handle_callback(message)
-                elif message['method'] == 'close_room':
-                    self._handle_close_room(message)
+            data = None
+            if isinstance(message, dict):
+                data = message
+            else:
+                if isinstance(message, six.binary_type):  # pragma: no cover
+                    try:
+                        data = pickle.loads(message)
+                    except:
+                        pass
+                if data is None:
+                    try:
+                        data = json.loads(message)
+                    except:
+                        pass
+            if data and 'method' in data:
+                if data['method'] == 'emit':
+                    self._handle_emit(data)
+                elif data['method'] == 'callback':
+                    self._handle_callback(data)
+                elif data['method'] == 'close_room':
+                    self._handle_close_room(data)

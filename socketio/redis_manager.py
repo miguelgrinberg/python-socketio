@@ -1,7 +1,5 @@
-import json
 import pickle
 
-import six
 try:
     import redis
 except ImportError:
@@ -10,7 +8,7 @@ except ImportError:
 from .pubsub_manager import PubSubManager
 
 
-class RedisManager(PubSubManager):
+class RedisManager(PubSubManager):  # pragma: no cover
     """Redis based client manager.
 
     This class implements a Redis backend for event sharing across multiple
@@ -48,17 +46,5 @@ class RedisManager(PubSubManager):
         for message in self.pubsub.listen():
             if message['channel'] == channel and \
                     message['type'] == 'message' and 'data' in message:
-                data = None
-                if isinstance(message['data'], six.binary_type):
-                    try:
-                        data = pickle.loads(message['data'])
-                    except:
-                        pass
-                if data is None:
-                    try:
-                        data = json.loads(message['data'])
-                    except:
-                        pass
-                if data:
-                    yield data
+                yield message['data']
         self.pubsub.unsubscribe(self.channel)

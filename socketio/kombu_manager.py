@@ -1,7 +1,5 @@
-import json
 import pickle
 
-import six
 try:
     import kombu
 except ImportError:
@@ -10,7 +8,7 @@ except ImportError:
 from .pubsub_manager import PubSubManager
 
 
-class KombuManager(PubSubManager):
+class KombuManager(PubSubManager):  # pragma: no cover
     """Client manager that uses kombu for inter-process messaging.
 
     This class implements a client manager backend for event sharing across
@@ -53,16 +51,4 @@ class KombuManager(PubSubManager):
         while True:
             message = listen_queue.get(block=True)
             message.ack()
-            data = None
-            if isinstance(message.payload, six.binary_type):
-                try:
-                    data = pickle.loads(message.payload)
-                except:
-                    pass
-            if data is None:
-                try:
-                    data = json.loads(message.payload)
-                except:
-                    pass
-            if data:
-                yield data
+            yield message.payload
