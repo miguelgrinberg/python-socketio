@@ -1,3 +1,6 @@
+from functools import partial
+import uuid
+
 from .base_manager import BaseManager
 
 
@@ -18,6 +21,7 @@ class PubSubManager(BaseManager):
     def __init__(self, channel='socketio'):
         super(PubSubManager, self).__init__()
         self.channel = channel
+        self.host_id = uuid.uuid4().hex
 
     def initialize(self, server):
         super(PubSubManager, self).initialize(server)
@@ -34,8 +38,14 @@ class PubSubManager(BaseManager):
 
         The parameters are the same as in :meth:`.Server.emit`.
         """
+        namespace = namespace or '/'
+        if callback is not None:
+            id = self._generate_ack_id(room, namespace, callback)
+            callback = (room, namespace, id)
+        else:
+            callback = None
         self._publish({'method': 'emit', 'event': event, 'data': data,
-                       'namespace': namespace or '/', 'room': room,
+                       'namespace': namespace, 'room': room,
                        'skip_sid': skip_sid, 'callback': callback})
 
     def close_room(self, room, namespace=None):
@@ -61,17 +71,50 @@ class PubSubManager(BaseManager):
         raise NotImplementedError('This method must be implemented in a '
                                   'subclass.')
 
+    def _handle_emit(self, message):
+        # Events with callbacks are very tricky to handle across hosts
+        # Here in the receiving end we set up a local callback that preserves
+        # the callback host and id from the sender
+        remote_callback = message.get('callback')
+        if remote_callback is not None and len(remote_callback) == 3:
+            callback = partial(self._return_callback, self.host_id,
+                               *remote_callback)
+        else:
+            callback = None
+        super(PubSubManager, self).emit(message['event'], message['data'],
+                                        namespace=message.get('namespace'),
+                                        room=message.get('room'),
+                                        skip_sid=message.get('skip_sid'),
+                                        callback=callback)
+
+    def _handle_callback(self, message):
+        if self.host_id == message.get('host_id'):
+            try:
+                sid = message['sid']
+                namespace = message['namespace']
+                id = message['id']
+                args = message['args']
+            except KeyError:
+                return
+            self.trigger_callback(sid, namespace, id, args)
+
+    def _return_callback(self, host_id, sid, namespace, callback_id, *args):
+        # When an event callback is received, the callback is returned back
+        # the sender, which is identified by the host_id
+        self._publish({'method': 'callback', 'host_id': host_id,
+                       'sid': sid, 'namespace': namespace, 'id': callback_id,
+                       'args': args})
+
+    def _handle_close_room(self, message):
+        super(PubSubManager, self).close_room(
+            room=message.get('room'), namespace=message.get('namespace'))
+
     def _thread(self):
         for message in self._listen():
             if 'method' in message:
                 if message['method'] == 'emit':
-                    super(PubSubManager, self).emit(
-                        message['event'], message['data'],
-                        namespace=message.get('namespace'),
-                        room=message.get('room'),
-                        skip_sid=message.get('skip_sid'),
-                        callback=message.get('callback'))
+                    self._handle_emit(message)
+                elif message['method'] == 'callback':
+                    self._handle_callback(message)
                 elif message['method'] == 'close_room':
-                    super(PubSubManager, self).close_room(
-                        room=message.get('room'),
-                        namespace=message.get('namespace'))
+                    self._handle_close_room(message)

@@ -104,12 +104,16 @@ class BaseManager(object):
 
     def trigger_callback(self, sid, namespace, id, data):
         """Invoke an application callback."""
+        callback = None
         try:
             callback = self.callbacks[sid][namespace][id]
         except KeyError:
-            raise ValueError('Unknown callback')
-        del self.callbacks[sid][namespace][id]
-        callback(*data)
+            # if we get an unknown callback we just ignore it
+            self.server.logger.warning('Unknown callback received, ignoring.')
+        else:
+            del self.callbacks[sid][namespace][id]
+        if callback is not None:
+            callback(*data)
 
     def _generate_ack_id(self, sid, namespace, callback):
         """Generate a unique identifier for an ACK packet."""

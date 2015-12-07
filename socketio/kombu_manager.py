@@ -57,8 +57,12 @@ class KombuManager(PubSubManager):
             if isinstance(message.payload, six.binary_type):
                 try:
                     data = pickle.loads(message.payload)
-                except pickle.PickleError:
+                except:
                     pass
             if data is None:
-                data = json.loads(message.payload)
-            yield data
+                try:
+                    data = json.loads(message.payload)
+                except:
+                    pass
+            if data:
+                yield data

@@ -104,12 +104,11 @@ class TestBaseManager(unittest.TestCase):
         self.bm.connect('123', '/')
         cb = mock.MagicMock()
         id = self.bm._generate_ack_id('123', '/', cb)
-        self.assertRaises(ValueError, self.bm.trigger_callback,
-                          '124', '/', id, ['foo'])
-        self.assertRaises(ValueError, self.bm.trigger_callback,
-                          '123', '/foo', id, ['foo'])
-        self.assertRaises(ValueError, self.bm.trigger_callback,
-                          '123', '/', id + 1, ['foo'])
+
+        # these should not raise an exception
+        self.bm.trigger_callback('124', '/', id, ['foo'])
+        self.bm.trigger_callback('123', '/foo', id, ['foo'])
+        self.bm.trigger_callback('123', '/', id + 1, ['foo'])
         self.assertEqual(cb.call_count, 0)
 
     def test_get_namespaces(self):

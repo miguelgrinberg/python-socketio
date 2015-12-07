@@ -274,7 +274,9 @@ class TestServer(unittest.TestCase):
         s._handle_eio_message('123', '61-1["my message","a",'
                                      '{"_placeholder":true,"num":0}]')
         self.assertEqual(s._attachment_count, 1)
-        self.assertRaises(ValueError, s._handle_eio_message, '123', b'foo')
+        # the following call should not raise an exception in spite of the
+        # callback id being invalid
+        s._handle_eio_message('123', b'foo')
 
     def test_handle_event_with_ack(self, eio):
         s = server.Server()

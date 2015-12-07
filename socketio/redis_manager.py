@@ -52,9 +52,13 @@ class RedisManager(PubSubManager):
                 if isinstance(message['data'], six.binary_type):
                     try:
                         data = pickle.loads(message['data'])
-                    except pickle.PickleError:
+                    except:
                         pass
                 if data is None:
-                    data = json.loads(message['data'])
-                yield data
+                    try:
+                        data = json.loads(message['data'])
+                    except:
+                        pass
+                if data:
+                    yield data
         self.pubsub.unsubscribe(self.channel)
