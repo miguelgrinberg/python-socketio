@@ -12,7 +12,7 @@ with open('README.rst', 'r') as f:
 
 setup(
     name='python-socketio',
-    version='0.8.0',
+    version='0.8.1',
     url='http://github.com/miguelgrinberg/python-socketio/',
     license='MIT',
     author='Miguel Grinberg',
@@ -29,7 +29,6 @@ setup(
     ],
     tests_require=[
         'mock',
-        'pbr<1.7.0',   # temporary, to workaround bug in 1.7.0
     ],
     test_suite='tests',
     classifiers=[
