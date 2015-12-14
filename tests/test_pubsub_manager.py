@@ -66,6 +66,11 @@ class TestBaseManager(unittest.TestCase):
                  'namespace': '/', 'room': 'baz', 'skip_sid': None,
                  'callback': ('baz', '/', '123')})
 
+    def test_emit_with_callback_without_server(self):
+        standalone_pm = pubsub_manager.PubSubManager()
+        self.assertRaises(RuntimeError, standalone_pm.emit, 'foo', 'bar',
+                          callback='cb')
+
     def test_emit_with_callback_missing_room(self):
         with mock.patch.object(self.pm, '_generate_ack_id',
                                return_value='123'):

@@ -46,6 +46,9 @@ class PubSubManager(BaseManager):
         """
         namespace = namespace or '/'
         if callback is not None:
+            if self.server is None:
+                raise RuntimeError('Callbacks can only be issued from the '
+                                   'context of a server.')
             if room is None:
                 raise ValueError('Cannot use callback without a room set.')
             id = self._generate_ack_id(room, namespace, callback)
