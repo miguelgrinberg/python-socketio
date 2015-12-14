@@ -27,6 +27,8 @@ Features
   assigned to "rooms".
 - Optional support for multiple servers, connected through a messaging queue
   such as Redis or RabbitMQ.
+- Send messages to clients from external processes, such as Celery workers or
+  auxiliary scripts.
 - Event-based architecture implemented with decorators that hides the details
   of the protocol.
 - Support for HTTP long-polling and WebSocket transports.

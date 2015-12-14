@@ -30,6 +30,8 @@ features:
   assigned to "rooms".
 - Optional support for multiple servers, connected through a messaging queue
   such as Redis or RabbitMQ.
+- Send messages to clients from external processes, such as Celery workers or
+  auxiliary scripts.
 - Event-based architecture implemented with decorators that hides the details
   of the protocol.
 - Support for HTTP long-polling and WebSocket transports.
@@ -212,13 +214,14 @@ Using a Message Queue
 ---------------------
 
 The Socket.IO server owns the socket connections to all the clients, so it is
-the only process that can emit events to them. A common need of larger
-applications is to emit events to clients from a different process, like a
-a `Celery <http://www.celeryproject.org/>`_ worker, or any other auxiliary
-process that works in conjunction with the server.
+the only process that can emit events to them. Unfortunately this becomes a
+limitation for many applications, as a common need is to emit events to
+clients from a different process, like a
+`Celery <http://www.celeryproject.org/>`_ worker, or any other auxiliary
+process or script that works in conjunction with the server.
 
 To enable these other processes to emit events, the server can be configured
-to listen for events to emit to clients on a message queue such as
+to listen for externally issued events on a message queue such as
 `Redis <http://redis.io/>`_ or `RabbitMQ <https://www.rabbitmq.com/>`_.
 Processes that need to emit events to client then post these events to the
 queue.
@@ -232,7 +235,7 @@ ta message queue.
 
 The message queue service needs to be installed and configured separately. By
 default, the server uses `Kombu <http://kombu.readthedocs.org/en/latest/>`_
-to read and write to the queue, so any message queue supported by this package
+to access the message queue, so any message queue supported by this package
 can be used. Kombu can be installed with pip::
 
     pip install kombu
