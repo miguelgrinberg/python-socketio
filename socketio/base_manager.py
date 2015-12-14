@@ -12,11 +12,14 @@ class BaseManager(object):
     services. More sophisticated storage backends can be implemented by
     subclasses.
     """
-    def __init__(self, server):
-        self.server = server
+    def __init__(self):
+        self.server = None
         self.rooms = {}
         self.pending_removals = []
         self.callbacks = {}
+
+    def initialize(self, server):
+        self.server = server
 
     def get_namespaces(self):
         """Return an iterable with the active namespace names."""
@@ -69,7 +72,7 @@ class BaseManager(object):
         except KeyError:
             pass
 
-    def close_room(self, namespace, room):
+    def close_room(self, room, namespace):
         """Remove all participants from a room."""
         try:
             for sid in self.get_participants(namespace, room):
@@ -101,12 +104,16 @@ class BaseManager(object):
 
     def trigger_callback(self, sid, namespace, id, data):
         """Invoke an application callback."""
+        callback = None
         try:
             callback = self.callbacks[sid][namespace][id]
         except KeyError:
-            raise ValueError('Unknown callback')
-        del self.callbacks[sid][namespace][id]
-        callback(*data)
+            # if we get an unknown callback we just ignore it
+            self.server.logger.warning('Unknown callback received, ignoring.')
+        else:
+            del self.callbacks[sid][namespace][id]
+        if callback is not None:
+            callback(*data)
 
     def _generate_ack_id(self, sid, namespace, callback):
         """Generate a unique identifier for an ACK packet."""

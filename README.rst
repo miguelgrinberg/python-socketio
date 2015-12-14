@@ -9,20 +9,33 @@ Python implementation of the `Socket.IO`_ realtime server.
 Features
 --------
 
--  Fully compatible with the Javascript `socket.io-client`_ library.
--  Compatible with Python 2.7 and Python 3.3+.
--  Based on `Eventlet`_, enabling large number of clients even on modest
-   hardware.
--  Includes a WSGI middleware that integrates Socket.IO traffic with
-   standard WSGI applications.
--  Uses an event-based architecture implemented with decorators that
-   hides the details of the protocol.
--  Implements HTTP long-polling and WebSocket transports.
--  Supports XHR2 and XHR browsers as clients.
--  Supports text and binary messages.
--  Supports gzip and deflate HTTP compression.
--  Configurable CORS responses to avoid cross-origin problems with
-   browsers.
+- Fully compatible with the 
+  `Javascript <https://github.com/Automattic/socket.io-client>`_,
+  `Swift <https://github.com/socketio/socket.io-client-swift>`_,
+  `C++ <https://github.com/socketio/socket.io-client-cpp>`_ and
+  `Java <https://github.com/socketio/socket.io-client-java>`_ official
+  Socket.IO clients, plus any third party clients that comply with the
+  Socket.IO specification.
+- Compatible with Python 2.7 and Python 3.3+.
+- Supports large number of clients even on modest hardware when used with an
+  asynchronous server based on `eventlet <http://eventlet.net/>`_ or
+  `gevent <http://gevent.org/>`_. For development and testing, any WSGI
+  complaint multi-threaded server can be used.
+- Includes a WSGI middleware that integrates Socket.IO traffic with standard
+  WSGI applications.
+- Broadcasting of messages to all connected clients, or to subsets of them
+  assigned to "rooms".
+- Optional support for multiple servers, connected through a messaging queue
+  such as Redis or RabbitMQ.
+- Send messages to clients from external processes, such as Celery workers or
+  auxiliary scripts.
+- Event-based architecture implemented with decorators that hides the details
+  of the protocol.
+- Support for HTTP long-polling and WebSocket transports.
+- Support for XHR2 and XHR browsers.
+- Support for text and binary messages.
+- Support for gzip and deflate HTTP compression.
+- Configurable CORS responses, to avoid cross-origin problems with browsers.
 
 Example
 -------

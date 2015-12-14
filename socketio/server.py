@@ -14,9 +14,9 @@ class Server(object):
     for websocket and long-polling transports.
 
     :param client_manager: The client manager instance that will manage the
-                           client list. By default the client list is stored
-                           in an in-memory structure, which prevents the use
-                           of multiple worker processes.
+                           client list. When this is omitted, the client list
+                           is stored in an in-memory structure, so the use of
+                           multiple connected servers is not possible.
     :param logger: To enable logging set to ``True`` or pass a logger object to
                    use. To disable logging set to ``False``.
     :param binary: ``True`` to support binary payloads, ``False`` to treat all
@@ -62,9 +62,6 @@ class Server(object):
     """
     def __init__(self, client_manager=None, logger=False, binary=False,
                  json=None, **kwargs):
-        if client_manager is None:
-            client_manager = base_manager.BaseManager(self)
-        self.manager = client_manager
         engineio_options = kwargs
         engineio_logger = engineio_options.pop('engineio_logger', None)
         if engineio_logger is not None:
@@ -96,6 +93,11 @@ class Server(object):
                 else:
                     self.logger.setLevel(logging.ERROR)
                 self.logger.addHandler(logging.StreamHandler())
+
+        if client_manager is None:
+            client_manager = base_manager.BaseManager()
+        client_manager.initialize(self)
+        self.manager = client_manager
 
     def on(self, event, handler=None, namespace=None):
         """Register an event handler.
@@ -248,7 +250,7 @@ class Server(object):
         """
         namespace = namespace or '/'
         self.logger.info('room %s is closing [%s]', room, namespace)
-        self.manager.close_room(namespace, room)
+        self.manager.close_room(room, namespace)
 
     def rooms(self, sid, namespace=None):
         """Return the rooms a client is in.
@@ -299,6 +301,9 @@ class Server(object):
         as a byte sequence.
         """
         return self.eio.handle_request(environ, start_response)
+
+    def start_background_task(self, target, *args, **kwargs):
+        self.eio.start_background_task(target, *args, **kwargs)
 
     def _emit_internal(self, sid, event, data, namespace=None, id=None):
         """Send a message to a client."""

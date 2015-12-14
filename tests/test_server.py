@@ -92,13 +92,13 @@ class TestServer(unittest.TestCase):
         mgr = mock.MagicMock()
         s = server.Server(client_manager=mgr)
         s.close_room('room', namespace='/foo')
-        s.manager.close_room.assert_called_once_with('/foo', 'room')
+        s.manager.close_room.assert_called_once_with('room', '/foo')
 
     def test_close_room_default_namespace(self, eio):
         mgr = mock.MagicMock()
         s = server.Server(client_manager=mgr)
         s.close_room('room')
-        s.manager.close_room.assert_called_once_with('/', 'room')
+        s.manager.close_room.assert_called_once_with('room', '/')
 
     def test_rooms(self, eio):
         mgr = mock.MagicMock()
@@ -274,7 +274,9 @@ class TestServer(unittest.TestCase):
         s._handle_eio_message('123', '61-1["my message","a",'
                                      '{"_placeholder":true,"num":0}]')
         self.assertEqual(s._attachment_count, 1)
-        self.assertRaises(ValueError, s._handle_eio_message, '123', b'foo')
+        # the following call should not raise an exception in spite of the
+        # callback id being invalid
+        s._handle_eio_message('123', b'foo')
 
     def test_handle_event_with_ack(self, eio):
         s = server.Server()
@@ -397,3 +399,9 @@ class TestServer(unittest.TestCase):
 
         # restore the default JSON module
         packet.Packet.json = json
+
+    def test_start_background_task(self, eio):
+        s = server.Server()
+        s.start_background_task('foo', 'bar', baz='baz')
+        s.eio.start_background_task.assert_called_once_with('foo', 'bar',
+                                                            baz='baz')

@@ -8,13 +8,17 @@ socketio documentation
 
 :ref:`genindex` | :ref:`modindex` | :ref:`search`
 
-This project implements an Socket.IO server that can run standalone or
+This project implements a Socket.IO server that can run standalone or
 integrated with a Python WSGI application. The following are some of its
 features:
 
-- Fully compatible with the Javascript
-  `socket.io-client <https://github.com/Automattic/socket.io-client>`_ library,
-  versions 1.3.5 and up.
+- Fully compatible with the 
+  `Javascript <https://github.com/Automattic/socket.io-client>`_,
+  `Swift <https://github.com/socketio/socket.io-client-swift>`_,
+  `C++ <https://github.com/socketio/socket.io-client-cpp>`_ and
+  `Java <https://github.com/socketio/socket.io-client-java>`_ official
+  Socket.IO clients, plus any third party clients that comply with the
+  Socket.IO specification.
 - Compatible with Python 2.7 and Python 3.3+.
 - Supports large number of clients even on modest hardware when used with an
   asynchronous server based on `eventlet <http://eventlet.net/>`_ or
@@ -24,24 +28,32 @@ features:
   WSGI applications.
 - Broadcasting of messages to all connected clients, or to subsets of them
   assigned to "rooms".
-- Uses an event-based architecture implemented with decorators that hides the
-  details of the protocol.
+- Optional support for multiple servers, connected through a messaging queue
+  such as Redis or RabbitMQ.
+- Send messages to clients from external processes, such as Celery workers or
+  auxiliary scripts.
+- Event-based architecture implemented with decorators that hides the details
+  of the protocol.
 - Support for HTTP long-polling and WebSocket transports.
 - Support for XHR2 and XHR browsers.
 - Support for text and binary messages.
 - Support for gzip and deflate HTTP compression.
-- Configurable CORS responses to avoid cross-origin problems with browsers.
+- Configurable CORS responses, to avoid cross-origin problems with browsers.
 
 What is Socket.IO?
 ------------------
 
 Socket.IO is a transport protocol that enables real-time bidirectional
 event-based communication between clients (typically web browsers) and a
-server. The official implementations of the client and server components are
+server. The original implementations of the client and server components are
 written in JavaScript.
 
 Getting Started
 ---------------
+
+The Socket.IO server can be installed with pip::
+
+    pip install python-socketio
 
 The following is a basic example of a Socket.IO server that uses Flask to
 deploy the client code to the browser::
@@ -100,8 +112,8 @@ Rooms
 
 Because Socket.IO is a bidirectional protocol, the server can send messages to
 any connected client at any time. To make it easy to address groups of clients,
-the application can put clients into rooms, and then address messages to all
-the clients in a room.
+the application can put clients into rooms, and then address messages to the
+entire room.
 
 When clients first connect, they are assigned to their own rooms, named with
 the session ID (the ``sid`` argument passed to all event handlers). The
@@ -198,6 +210,66 @@ methods in the :class:`socketio.Server` class.
 When the ``namespace`` argument is omitted, set to ``None`` or to ``'/'``, the
 default namespace, representing the physical connection, is used.
 
+Using a Message Queue
+---------------------
+
+The Socket.IO server owns the socket connections to all the clients, so it is
+the only process that can emit events to them. Unfortunately this becomes a
+limitation for many applications, as a common need is to emit events to
+clients from a different process, like a
+`Celery <http://www.celeryproject.org/>`_ worker, or any other auxiliary
+process or script that works in conjunction with the server.
+
+To enable these other processes to emit events, the server can be configured
+to listen for externally issued events on a message queue such as
+`Redis <http://redis.io/>`_ or `RabbitMQ <https://www.rabbitmq.com/>`_.
+Processes that need to emit events to client then post these events to the
+queue.
+
+Another situation in which the use of a message queue is necessary is with
+high traffic applications that work with large number of clients. To support
+these clients, it may be necessary to horizontally scale the Socket.IO
+server by splitting the client list among multiple server processes. For this
+type of installation, the server processes communicate with each other through
+ta message queue.
+
+The message queue service needs to be installed and configured separately. By
+default, the server uses `Kombu <http://kombu.readthedocs.org/en/latest/>`_
+to access the message queue, so any message queue supported by this package
+can be used. Kombu can be installed with pip::
+
+    pip install kombu
+
+To configure a Socket.IO server to connect to a message queue, the
+``client_manager`` argument must be passed in the server creation. The
+following example instructs the server to connect to a Redis service running
+on the same host and on the default port::
+
+    redis = socketio.KombuManager('redis://localhost:6379/')
+    sio = socketio.Server(client_manager=redis)
+
+For a RabbitMQ queue also running on the local server, the configuration is
+as follows::
+
+    amqp = socketio.KombuManager('amqp://guest:guest@localhost:5672//')
+    sio = socketio.Server(client_manager=amqp)
+
+The arguments passed to the ``KombuManager`` constructor are passed directly
+to Kombu's `Connection object
+<http://kombu.readthedocs.org/en/latest/userguide/connections.html>`_.
+
+If multiple Sokcet.IO servers are connected to a message queue, they
+automatically communicate with each other and manage a combine client list,
+without any need for additional configuration. To have a process other than
+the server connect to the queue to emit a message, the same ``KombuManager``
+class can be used. For example::
+
+    # connect to the redis queue
+    redis = socketio.KombuManager('redis://localhost:6379/')
+    
+    # emit an event
+    redis.emit('my event', data={'foo': 'bar'}, room='my room')
+
 Deployment
 ----------
 
@@ -233,16 +305,14 @@ command to launch the application under gunicorn is shown below::
     $ gunicorn -k eventlet -w 1 module:app
 
 Due to limitations in its load balancing algorithm, gunicorn can only be used
-with one worker process, so the ``-w 1`` option is required. Note that a
-single eventlet worker can handle a large number of concurrent clients.
+with one worker process, so the ``-w`` option cannot be set to a value higher
+than 1. A single eventlet worker can handle a large number of concurrent
+clients, each handled by a greenlet.
 
-Another limitation when using gunicorn is that the WebSocket transport is not
-available, because this transport it requires extensions to the WSGI standard.
-
-Note: Eventlet provides a ``monkey_patch()`` function that replaces all the
-blocking functions in the standard library with equivalent asynchronous
-versions. While python-socketio does not require monkey patching, other
-libraries such as database drivers are likely to require it.
+Eventlet provides a ``monkey_patch()`` function that replaces all the blocking
+functions in the standard library with equivalent asynchronous versions. While
+python-socketio does not require monkey patching, other libraries such as
+database drivers are likely to require it.
 
 Gevent
 ~~~~~~
@@ -287,14 +357,14 @@ Or to include WebSocket::
     $ gunicorn -k geventwebsocket.gunicorn.workers.GeventWebSocketWorker -w 1 module: app
 
 Same as with eventlet, due to limitations in its load balancing algorithm,
-gunicorn can only be used with one worker process, so the ``-w 1`` option is
-required. Note that a single eventlet worker can handle a large number of
-concurrent clients.
+gunicorn can only be used with one worker process, so the ``-w`` option cannot
+be higher than 1. A single gevent worker can handle a large number of
+concurrent clients through the use of greenlets.
 
-Note: Gevent provides a ``monkey_patch()`` function that replaces all the
-blocking functions in the standard library with equivalent asynchronous
-versions. While python-socketio does not require monkey patching, other
-libraries such as database drivers are likely to require it.
+Gevent provides a ``monkey_patch()`` function that replaces all the blocking
+functions in the standard library with equivalent asynchronous versions. While
+python-socketio does not require monkey patching, other libraries such as
+database drivers are likely to require it.
 
 Standard Threading Library
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -345,25 +415,25 @@ multiple servers), the following conditions must be met:
   using eventlet, gevent, or standard threads. Worker processes that only
   handle one request at a time are not supported.
 - The load balancer must be configured to always forward requests from a
-  client to the same process. Load balancers call this *sticky sessions*, or
-  *session affinity*.
-
-A limitation in the current release of the Socket.IO server is that because
-the clients are randomly assigned to different server processes, any form of
-broadcasting is not supported. A storage backend that enables multiple
-processes to share information about clients is currently in development to
-address this important limitation.
+  client to the same worker process. Load balancers call this *sticky
+  sessions*, or *session affinity*.
+- The worker processes communicate with each other through a message queue,
+  which must be installed and configured. See the section on using message
+  queues above for instructions.
 
 API Reference
 -------------
 
-.. toctree::
-   :maxdepth: 2
-
 .. module:: socketio
-
 .. autoclass:: Middleware
    :members:
-
 .. autoclass:: Server
+   :members:
+.. autoclass:: BaseManager
+   :members:
+.. autoclass:: PubSubManager
+   :members:
+.. autoclass:: KombuManager
+   :members:
+.. autoclass:: RedisManager
    :members:

@@ -12,7 +12,8 @@ from socketio import base_manager
 class TestBaseManager(unittest.TestCase):
     def setUp(self):
         mock_server = mock.MagicMock()
-        self.bm = base_manager.BaseManager(mock_server)
+        self.bm = base_manager.BaseManager()
+        self.bm.initialize(mock_server)
 
     def test_connect(self):
         self.bm.connect('123', '/foo')
@@ -103,12 +104,11 @@ class TestBaseManager(unittest.TestCase):
         self.bm.connect('123', '/')
         cb = mock.MagicMock()
         id = self.bm._generate_ack_id('123', '/', cb)
-        self.assertRaises(ValueError, self.bm.trigger_callback,
-                          '124', '/', id, ['foo'])
-        self.assertRaises(ValueError, self.bm.trigger_callback,
-                          '123', '/foo', id, ['foo'])
-        self.assertRaises(ValueError, self.bm.trigger_callback,
-                          '123', '/', id + 1, ['foo'])
+
+        # these should not raise an exception
+        self.bm.trigger_callback('124', '/', id, ['foo'])
+        self.bm.trigger_callback('123', '/foo', id, ['foo'])
+        self.bm.trigger_callback('123', '/', id + 1, ['foo'])
         self.assertEqual(cb.call_count, 0)
 
     def test_get_namespaces(self):
@@ -142,11 +142,11 @@ class TestBaseManager(unittest.TestCase):
         self.bm.connect('789', '/foo')
         self.bm.enter_room('123', '/foo', 'bar')
         self.bm.enter_room('123', '/foo', 'bar')
-        self.bm.close_room('/foo', 'bar')
+        self.bm.close_room('bar', '/foo')
         self.assertNotIn('bar', self.bm.rooms['/foo'])
 
     def test_close_invalid_room(self):
-        self.bm.close_room('/foo', 'bar')
+        self.bm.close_room('bar', '/foo')
 
     def test_rooms(self):
         self.bm.connect('123', '/foo')
