@@ -215,13 +215,12 @@ Using a Message Queue
 
 The Socket.IO server owns the socket connections to all the clients, so it is
 the only process that can emit events to them. Unfortunately this becomes a
-limitation for many applications, as a common need is to emit events to
-clients from a different process, like a
-`Celery <http://www.celeryproject.org/>`_ worker, or any other auxiliary
-process or script that works in conjunction with the server.
+limitation for many applications that use more than one process. A common need
+is to emit events to clients from a process other than the server, for example
+a `Celery <http://www.celeryproject.org/>`_ worker.
 
-To enable these other processes to emit events, the server can be configured
-to listen for externally issued events on a message queue such as
+To enable these auxiliary processes to emit events, the server can be
+configured to listen for externally issued events on a message queue such as
 `Redis <http://redis.io/>`_ or `RabbitMQ <https://www.rabbitmq.com/>`_.
 Processes that need to emit events to client then post these events to the
 queue.
@@ -229,9 +228,10 @@ queue.
 Another situation in which the use of a message queue is necessary is with
 high traffic applications that work with large number of clients. To support
 these clients, it may be necessary to horizontally scale the Socket.IO
-server by splitting the client list among multiple server processes. For this
-type of installation, the server processes communicate with each other through
-ta message queue.
+server by splitting the client list among multiple server processes. In this
+type of installation, each server processes owns the connections to a subset
+of the clients. To make broadcasting work in this environment, the servers
+communicate with each other through the message queue.
 
 The message queue service needs to be installed and configured separately. By
 default, the server uses `Kombu <http://kombu.readthedocs.org/en/latest/>`_
@@ -240,29 +240,38 @@ can be used. Kombu can be installed with pip::
 
     pip install kombu
 
+To use RabbitMQ or other AMQP protocol compatible queues, that is the only
+required dependency. But for other message queues, Kombu may require
+additional packages. For example, to use a Redis queue, Kombu needs the Python
+package for Redis installed as well::
+
+    pip install redis
+
 To configure a Socket.IO server to connect to a message queue, the
 ``client_manager`` argument must be passed in the server creation. The
 following example instructs the server to connect to a Redis service running
 on the same host and on the default port::
 
-    redis = socketio.KombuManager('redis://localhost:6379/')
+    redis = socketio.KombuManager('redis://')
     sio = socketio.Server(client_manager=redis)
 
-For a RabbitMQ queue also running on the local server, the configuration is
-as follows::
+For a RabbitMQ queue also running on the local server with default
+credentials, the configuration is as follows::
 
-    amqp = socketio.KombuManager('amqp://guest:guest@localhost:5672//')
+    amqp = socketio.KombuManager('amqp://')
     sio = socketio.Server(client_manager=amqp)
 
 The arguments passed to the ``KombuManager`` constructor are passed directly
 to Kombu's `Connection object
-<http://kombu.readthedocs.org/en/latest/userguide/connections.html>`_.
+<http://kombu.readthedocs.org/en/latest/userguide/connections.html>`_, so
+the Kombu documentation should be consulted for information on how to
+connect to the message queue appropriately.
 
 If multiple Sokcet.IO servers are connected to a message queue, they
-automatically communicate with each other and manage a combine client list,
+automatically communicate with each other and manage a combined client list,
 without any need for additional configuration. To have a process other than
 the server connect to the queue to emit a message, the same ``KombuManager``
-class can be used. For example::
+class can be used as standalone object. For example::
 
     # connect to the redis queue
     redis = socketio.KombuManager('redis://localhost:6379/')
