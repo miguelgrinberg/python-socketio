@@ -1,4 +1,5 @@
 import pickle
+import uuid
 
 try:
     import kombu
@@ -40,15 +41,17 @@ class KombuManager(PubSubManager):  # pragma: no cover
                                '(Run "pip install kombu" in your '
                                'virtualenv).')
         self.kombu = kombu.Connection(url)
-        self.queue = self.kombu.SimpleQueue(channel)
+        self.exchange = kombu.Exchange(channel, type='fanout', durable=False)
+        self.queue = kombu.Queue(str(uuid.uuid4()), self.exchange)
         super(KombuManager, self).__init__(channel=channel)
 
     def _publish(self, data):
-        return self.queue.put(pickle.dumps(data))
+        with self.kombu.SimpleQueue(self.queue) as queue:
+            queue.put(pickle.dumps(data))
 
     def _listen(self):
-        listen_queue = self.kombu.SimpleQueue(self.channel)
-        while True:
-            message = listen_queue.get(block=True)
-            message.ack()
-            yield message.payload
+        with self.kombu.SimpleQueue(self.queue) as queue:
+            while True:
+                message = queue.get(block=True)
+                message.ack()
+                yield message.payload
