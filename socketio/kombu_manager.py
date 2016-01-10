@@ -31,11 +31,14 @@ class KombuManager(PubSubManager):  # pragma: no cover
                 connection URLs.
     :param channel: The channel name on which the server sends and receives
                     notifications. Must be the same in all the servers.
+    :param write_only: If set ot ``True``, only initialize to emit events. The
+                       default of ``False`` initializes the class for emitting
+                       and receiving.
     """
     name = 'kombu'
 
     def __init__(self, url='amqp://guest:guest@localhost:5672//',
-                 channel='socketio'):
+                 channel='socketio', write_only=False):
         if kombu is None:
             raise RuntimeError('Kombu package is not installed '
                                '(Run "pip install kombu" in your '
@@ -43,7 +46,8 @@ class KombuManager(PubSubManager):  # pragma: no cover
         self.kombu = kombu.Connection(url)
         self.exchange = kombu.Exchange(channel, type='fanout', durable=False)
         self.queue = kombu.Queue(str(uuid.uuid4()), self.exchange)
-        super(KombuManager, self).__init__(channel=channel)
+        super(KombuManager, self).__init__(channel=channel,
+                                           write_only=write_only)
 
     def _publish(self, data):
         with self.kombu.SimpleQueue(self.queue) as queue:

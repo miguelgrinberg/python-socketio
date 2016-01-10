@@ -233,10 +233,11 @@ type of installation, each server processes owns the connections to a subset
 of the clients. To make broadcasting work in this environment, the servers
 communicate with each other through the message queue.
 
-The message queue service needs to be installed and configured separately. By
-default, the server uses `Kombu <http://kombu.readthedocs.org/en/latest/>`_
-to access the message queue, so any message queue supported by this package
-can be used. Kombu can be installed with pip::
+The message queue service needs to be installed and configured separately. One
+of the options offered by this package is to use
+`Kombu <http://kombu.readthedocs.org/en/latest/>`_ to access the message
+queue, which means that any message queue supported by this package can be
+used. Kombu can be installed with pip::
 
     pip install kombu
 
@@ -252,29 +253,40 @@ To configure a Socket.IO server to connect to a message queue, the
 following example instructs the server to connect to a Redis service running
 on the same host and on the default port::
 
-    redis = socketio.KombuManager('redis://')
-    sio = socketio.Server(client_manager=redis)
+    mgr = socketio.KombuManager('redis://')
+    sio = socketio.Server(client_manager=mgr)
 
 For a RabbitMQ queue also running on the local server with default
 credentials, the configuration is as follows::
 
-    amqp = socketio.KombuManager('amqp://')
-    sio = socketio.Server(client_manager=amqp)
+    mgr = socketio.KombuManager('amqp://')
+    sio = socketio.Server(client_manager=mgr)
 
-The arguments passed to the ``KombuManager`` constructor are passed directly
-to Kombu's `Connection object
+The URL passed to the ``KombuManager`` constructor is passed directly to
+Kombu's `Connection object
 <http://kombu.readthedocs.org/en/latest/userguide/connections.html>`_, so
 the Kombu documentation should be consulted for information on how to
 connect to the message queue appropriately.
 
+If the use of Kombu is not desired, native Redis support is also offered
+through the ``RedisManager`` class. This class takes the same arguments as
+``KombuManager``, but connects directly to a Redis store using the queue's
+pub/sub functionality::
+
+
+    mgr = socketio.RedisManager('redis://')
+    sio = socketio.Server(client_manager=mgr)
+
 If multiple Sokcet.IO servers are connected to a message queue, they
 automatically communicate with each other and manage a combined client list,
 without any need for additional configuration. To have a process other than
-the server connect to the queue to emit a message, the same ``KombuManager``
-class can be used as standalone object. For example::
+a server connect to the queue to emit a message, the same ``KombuManager``
+and ``RedisManager`` classes can be used as standalone object. In this case,
+the ``write_only`` argument should be set to ``True`` to disable the creation
+of a listening thread. For example::
 
-    # connect to the redis queue
-    redis = socketio.KombuManager('redis://localhost:6379/')
+    # connect to the redis queue through Kombu
+    redis = socketio.KombuManager('redis://', write_only=True)
     
     # emit an event
     redis.emit('my event', data={'foo': 'bar'}, room='my room')

@@ -24,14 +24,16 @@ class PubSubManager(BaseManager):
     """
     name = 'pubsub'
 
-    def __init__(self, channel='socketio'):
+    def __init__(self, channel='socketio', write_only=False):
         super(PubSubManager, self).__init__()
         self.channel = channel
+        self.write_only = write_only
         self.host_id = uuid.uuid4().hex
 
     def initialize(self, server):
         super(PubSubManager, self).initialize(server)
-        self.thread = self.server.start_background_task(self._thread)
+        if not self.write_only:
+            self.thread = self.server.start_background_task(self._thread)
         self.server.logger.info(self.name + ' backend initialized.')
 
     def emit(self, event, data, namespace=None, room=None, skip_sid=None,

@@ -29,6 +29,14 @@ class TestBaseManager(unittest.TestCase):
         self.assertEqual(pubsub.channel, 'foo')
         self.assertEqual(len(pubsub.host_id), 32)
 
+    def test_write_only_init(self):
+        mock_server = mock.MagicMock()
+        pm = pubsub_manager.PubSubManager(write_only=True)
+        pm.initialize(mock_server)
+        self.assertEqual(pm.channel, 'socketio')
+        self.assertEqual(len(pm.host_id), 32)
+        self.assertEqual(pm.server.start_background_task.call_count, 0)
+
     def test_emit(self):
         self.pm.emit('foo', 'bar')
         self.pm._publish.assert_called_once_with(
