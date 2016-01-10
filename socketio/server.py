@@ -335,6 +335,7 @@ class Server(object):
             self.manager.disconnect(sid, namespace)
             self._send_packet(sid, packet.Packet(packet.ERROR,
                                                  namespace=namespace))
+            return False
         else:
             self._send_packet(sid, packet.Packet(packet.CONNECT,
                                                  namespace=namespace))
@@ -393,7 +394,7 @@ class Server(object):
     def _handle_eio_connect(self, sid, environ):
         """Handle the Engine.IO connection event."""
         self.environ[sid] = environ
-        self._handle_connect(sid, '/')
+        return self._handle_connect(sid, '/')
 
     def _handle_eio_message(self, sid, data):
         """Dispatch Engine.IO messages."""
