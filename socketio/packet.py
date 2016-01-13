@@ -57,7 +57,7 @@ class Packet(object):
         if data is not None:
             if needs_comma:
                 encoded_packet += ','
-            encoded_packet += self.json.dumps(data, separators=(',', ':'))
+            encoded_packet += self.json.dumps(data, separators=(',', ':'), allow_nan=False)
         if attachments is not None:
             encoded_packet = [encoded_packet] + attachments
         return encoded_packet
