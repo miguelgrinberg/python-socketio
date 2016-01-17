@@ -125,6 +125,20 @@ class TestServer(unittest.TestCase):
                                            '2/foo,["my event","my data"]',
                                            binary=False)
 
+    def test_emit_internal_with_tuple(self, eio):
+        s = server.Server()
+        s._emit_internal('123', 'my event', ('foo', 'bar'), namespace='/foo')
+        s.eio.send.assert_called_once_with('123',
+                                           '2/foo,["my event","foo","bar"]',
+                                           binary=False)
+
+    def test_emit_internal_with_list(self, eio):
+        s = server.Server()
+        s._emit_internal('123', 'my event', ['foo', 'bar'], namespace='/foo')
+        s.eio.send.assert_called_once_with('123',
+                                           '2/foo,["my event",["foo","bar"]]',
+                                           binary=False)
+
     def test_emit_internal_with_callback(self, eio):
         s = server.Server()
         id = s.manager._generate_ack_id('123', '/foo', 'cb')
@@ -304,7 +318,7 @@ class TestServer(unittest.TestCase):
         s.on('my message', handler)
         s._handle_eio_message('123', '21000["my message","a","b","c"]')
         handler.assert_called_once_with('123', 'a', 'b', 'c')
-        s.eio.send.assert_called_once_with('123', '31000[1,"2",true]',
+        s.eio.send.assert_called_once_with('123', '31000[[1,"2",true]]',
                                            binary=False)
 
     def test_handle_event_with_ack_binary(self, eio):

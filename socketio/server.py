@@ -311,8 +311,14 @@ class Server(object):
             binary = False  # pragma: nocover
         else:
             binary = None
+        # tuples are expanded to multiple arguments, everything else is sent
+        # as a single argument
+        if isinstance(data, tuple):
+            data = list(data)
+        else:
+            data = [data]
         self._send_packet(sid, packet.Packet(packet.EVENT, namespace=namespace,
-                                             data=[event, data], id=id,
+                                             data=[event] + data, id=id,
                                              binary=binary))
 
     def _send_packet(self, sid, pkt):
@@ -365,10 +371,9 @@ class Server(object):
         r = self._trigger_event(data[0], namespace, sid, *data[1:])
         if id is not None:
             # send ACK packet with the response returned by the handler
+            # tuples are expanded as multiple arguments
             if isinstance(r, tuple):
                 data = list(r)
-            elif isinstance(r, list):
-                data = r
             else:
                 data = [r]
             if six.PY2 and not self.binary:

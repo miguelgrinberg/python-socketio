@@ -99,10 +99,10 @@ environment dictionary. The server can inspect authentication or other headers
 to decide if the client is allowed to connect. To reject a client the handler
 must return ``False``.
 
-When the client sends an event to the server the appropriate event handler is
-invoked with the ``sid`` and the message. The application can define as many
-events as needed and associate them with event handlers. An event is defined
-simply by a name.
+When the client sends an event to the server, the appropriate event handler is
+invoked with the ``sid`` and the message, which can be a single or multiple
+arguments. The application can define as many events as needed and associate
+them with event handlers. An event is defined simply by a name.
 
 When a connection with a client is broken, the ``disconnect`` event is called,
 allowing the application to perform cleanup.
@@ -136,10 +136,13 @@ that it will lose the ability to address individual clients.
         sio.leave_room(sid, data['room'])
 
 The :func:`socketio.Server.emit` method takes an event name, a message payload
-of type ``str``, ``bytes``, ``list`` or ``dict``, and the recipient room. To
-address an individual client, the ``sid`` of that client should be given as
-room (assuming the application did not alter these initial rooms). To address
-all connected clients, the ``room`` argument should be omitted.
+of type ``str``, ``bytes``, ``list``, ``dict`` or ``tuple``, and the recipient
+room. When sending a ``tuple``, the elements in it need to be of any of the
+other four allowed types. The elements of the tuple will be passed as multiple
+arguments to the client-side callback function. To address an individual
+client, the ``sid`` of that client should be given as room (assuming the
+application did not alter these initial rooms). To address all connected
+clients, the ``room`` argument should be omitted.
 
 ::
 
