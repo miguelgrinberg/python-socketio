@@ -276,7 +276,6 @@ through the ``RedisManager`` class. This class takes the same arguments as
 ``KombuManager``, but connects directly to a Redis store using the queue's
 pub/sub functionality::
 
-
     mgr = socketio.RedisManager('redis://')
     sio = socketio.Server(client_manager=mgr)
 
@@ -293,6 +292,11 @@ of a listening thread. For example::
     
     # emit an event
     redis.emit('my event', data={'foo': 'bar'}, room='my room')
+
+Note: when using a third party package to manage a message queue such as Redis
+or RabbitMQ in conjunction with eventlet or gevent, it is necessary to monkey
+patch the Python standard library, so that these packages access coroutine
+friendly library functions and classes.
 
 Deployment
 ----------
