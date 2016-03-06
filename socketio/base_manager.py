@@ -15,7 +15,6 @@ class BaseManager(object):
     def __init__(self):
         self.server = None
         self.rooms = {}
-        self.pending_removals = []
         self.callbacks = {}
 
     def initialize(self, server):
@@ -27,10 +26,8 @@ class BaseManager(object):
 
     def get_participants(self, namespace, room):
         """Return an iterable with the active participants in a room."""
-        for sid, active in six.iteritems(self.rooms[namespace][room]):
-            if active:
-                yield sid
-        self._clean_rooms()
+        for sid, active in six.iteritems(self.rooms[namespace][room].copy()):
+            yield sid
 
     def connect(self, sid, namespace):
         """Register a client connection to a namespace."""
@@ -56,7 +53,6 @@ class BaseManager(object):
 
     def enter_room(self, sid, namespace, room):
         """Add a client to a room."""
-        self._clean_rooms()  # ensure our rooms are up to date first
         if namespace not in self.rooms:
             self.rooms[namespace] = {}
         if room not in self.rooms[namespace]:
@@ -66,10 +62,11 @@ class BaseManager(object):
     def leave_room(self, sid, namespace, room):
         """Remove a client from a room."""
         try:
-            # do not delete immediately, just mark the client as inactive
-            # _clean_rooms() will do the clean up when it is safe to do so
-            self.rooms[namespace][room][sid] = False
-            self.pending_removals.append((namespace, room, sid))
+            del self.rooms[namespace][room][sid]
+            if len(self.rooms[namespace][room]) == 0:
+                del self.rooms[namespace][room]
+                if len(self.rooms[namespace]) == 0:
+                    del self.rooms[namespace]
         except KeyError:
             pass
 
@@ -126,17 +123,3 @@ class BaseManager(object):
         id = six.next(self.callbacks[sid][namespace][0])
         self.callbacks[sid][namespace][id] = callback
         return id
-
-    def _clean_rooms(self):
-        """Remove all the inactive room participants."""
-        for namespace, room, sid in self.pending_removals:
-            try:
-                del self.rooms[namespace][room][sid]
-            except KeyError:
-                # failures here could mean there were duplicates so we ignore
-                continue
-            if len(self.rooms[namespace][room]) == 0:
-                del self.rooms[namespace][room]
-                if len(self.rooms[namespace]) == 0:
-                    del self.rooms[namespace]
-        self.pending_removals = []

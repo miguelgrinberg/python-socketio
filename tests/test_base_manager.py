@@ -30,7 +30,6 @@ class TestBaseManager(unittest.TestCase):
         self.bm.enter_room('123', '/foo', 'bar')
         self.bm.enter_room('456', '/foo', 'baz')
         self.bm.disconnect('123', '/foo')
-        self.bm._clean_rooms()
         self.assertEqual(self.bm.rooms['/foo'], {None: {'456': True},
                                                  '456': {'456': True},
                                                  'baz': {'456': True}})
@@ -47,7 +46,6 @@ class TestBaseManager(unittest.TestCase):
         self.assertTrue(self.bm.is_connected('123', '/foo'))
         self.bm.disconnect('123', '/foo')
         self.assertFalse(self.bm.is_connected('123', '/foo'))
-        self.bm._clean_rooms()
         self.assertEqual(self.bm.rooms['/'], {None: {'456': True},
                                               '456': {'456': True}})
         self.assertEqual(self.bm.rooms['/foo'], {None: {'456': True},
@@ -62,7 +60,6 @@ class TestBaseManager(unittest.TestCase):
         self.bm.disconnect('123', '/foo')
         self.bm.disconnect('123', '/')
         self.bm.disconnect('123', '/foo')
-        self.bm._clean_rooms()
         self.assertEqual(self.bm.rooms['/'], {None: {'456': True},
                                               '456': {'456': True}})
         self.assertEqual(self.bm.rooms['/foo'], {None: {'456': True},
@@ -75,7 +72,6 @@ class TestBaseManager(unittest.TestCase):
         self.bm.enter_room('456', '/foo', 'baz')
         self.bm.disconnect('123', '/foo')
         self.bm.disconnect('456', '/foo')
-        self.bm._clean_rooms()
         self.assertEqual(self.bm.rooms, {})
 
     def test_disconnect_with_callbacks(self):
@@ -125,11 +121,10 @@ class TestBaseManager(unittest.TestCase):
         self.bm.connect('456', '/')
         self.bm.connect('789', '/')
         self.bm.disconnect('789', '/')
-        self.assertEqual(self.bm.rooms['/'][None]['789'], False)
+        self.assertNotIn('789', self.bm.rooms['/'][None])
         participants = list(self.bm.get_participants('/', None))
         self.assertEqual(len(participants), 2)
         self.assertNotIn('789', participants)
-        self.assertNotIn('789', self.bm.rooms['/'][None])
 
     def test_leave_invalid_room(self):
         self.bm.connect('123', '/foo')
