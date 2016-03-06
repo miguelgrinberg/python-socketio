@@ -56,6 +56,7 @@ class BaseManager(object):
 
     def enter_room(self, sid, namespace, room):
         """Add a client to a room."""
+        self._clean_rooms()  # ensure our rooms are up to date first
         if namespace not in self.rooms:
             self.rooms[namespace] = {}
         if room not in self.rooms[namespace]:
