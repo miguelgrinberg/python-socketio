@@ -355,8 +355,8 @@ class Server(object):
             namespace_list = [namespace]
         for n in namespace_list:
             if n != '/' and self.manager.is_connected(sid, n):
-                self._trigger_event('disconnect', n, sid)
                 self.manager.disconnect(sid, n)
+                self._trigger_event('disconnect', n, sid)
         if namespace == '/' and self.manager.is_connected(sid, namespace):
             self._trigger_event('disconnect', '/', sid)
             self.manager.disconnect(sid, '/')
