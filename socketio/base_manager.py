@@ -35,8 +35,10 @@ class BaseManager(object):
         self.enter_room(sid, namespace, sid)
 
     def is_connected(self, sid, namespace):
-        return sid in self.rooms[namespace][None] and \
-            self.rooms[namespace][None][sid]
+        try:
+            return self.rooms[namespace][None][sid]
+        except KeyError:
+            pass
 
     def disconnect(self, sid, namespace):
         """Register a client disconnect from a namespace."""
