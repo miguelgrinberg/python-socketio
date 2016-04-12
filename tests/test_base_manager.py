@@ -131,6 +131,10 @@ class TestBaseManager(unittest.TestCase):
         self.bm.leave_room('123', '/foo', 'baz')
         self.bm.leave_room('123', '/bar', 'baz')
 
+    def test_no_room(self):
+        rooms = self.bm.get_rooms('123', '/foo')
+        self.assertEqual([], rooms)
+
     def test_close_room(self):
         self.bm.connect('123', '/foo')
         self.bm.connect('456', '/foo')
