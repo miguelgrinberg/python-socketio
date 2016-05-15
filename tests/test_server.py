@@ -21,10 +21,13 @@ class TestServer(unittest.TestCase):
     def test_create(self, eio):
         mgr = mock.MagicMock()
         s = server.Server(client_manager=mgr, binary=True, foo='bar')
+        s.handle_request({}, None)
+        s.handle_request({}, None)
         eio.assert_called_once_with(**{'foo': 'bar'})
         self.assertEqual(s.manager, mgr)
         self.assertEqual(s.eio.on.call_count, 3)
         self.assertEqual(s.binary, True)
+        self.assertEqual(mgr.initialize.call_count, 1)
 
     def test_on_event(self, eio):
         s = server.Server()
@@ -285,6 +288,7 @@ class TestServer(unittest.TestCase):
 
     def test_handle_event_binary_ack(self, eio):
         s = server.Server()
+        s.manager.initialize(s)
         s._handle_eio_message('123', '61-1["my message","a",'
                                      '{"_placeholder":true,"num":0}]')
         self.assertEqual(s._attachment_count, 1)

@@ -96,8 +96,8 @@ class Server(object):
 
         if client_manager is None:
             client_manager = base_manager.BaseManager()
-        client_manager.initialize(self)
         self.manager = client_manager
+        self.manager_initialized = False
 
     def on(self, event, handler=None, namespace=None):
         """Register an event handler.
@@ -300,6 +300,9 @@ class Server(object):
         This function returns the HTTP response body to deliver to the client
         as a byte sequence.
         """
+        if not self.manager_initialized:
+            self.manager_initialized = True
+            self.manager.initialize(self)
         return self.eio.handle_request(environ, start_response)
 
     def start_background_task(self, target, *args, **kwargs):
