@@ -1,6 +1,6 @@
 # python-socketio with django example
 
-This example is for who wants to use django with pyton-socketio. Some truck used in this example is inspired by gevent-socketio.
+This example is for who wants to use django with pyton-socketio. Some tricks used in this example is inspired by gevent-socketio.
 
 # How to Setup
 
