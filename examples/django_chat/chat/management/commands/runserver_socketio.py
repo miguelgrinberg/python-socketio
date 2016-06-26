@@ -14,7 +14,6 @@ from django.utils.autoreload import code_changed, restart_with_reloader
 from django.core.wsgi import get_wsgi_application
 
 # from gevent import pywsgi
-from geventwebsocket.handler import WebSocketHandler
 from sdjango import autodiscover
 from sdjango import namespace
 from sdjango.sd_manager import SdManager

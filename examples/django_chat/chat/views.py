@@ -1,3 +1,6 @@
 from django.shortcuts import render
 
-# Create your views here.
+
+def socket_base(request, template="base.html"):
+    context={}
+    return render(request, template, context)
