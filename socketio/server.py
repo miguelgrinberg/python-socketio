@@ -99,6 +99,8 @@ class Server(object):
         self.manager = client_manager
         self.manager_initialized = False
 
+        self.async_mode = self.eio.async_mode
+
     def on(self, event, handler=None, namespace=None):
         """Register an event handler.
 
@@ -306,7 +308,31 @@ class Server(object):
         return self.eio.handle_request(environ, start_response)
 
     def start_background_task(self, target, *args, **kwargs):
+        """Start a background task using the appropriate async model.
+
+        This is a utility function that applications can use to start a
+        background task using the method that is compatible with the
+        selected async mode.
+
+        :param target: the target function to execute.
+        :param args: arguments to pass to the function.
+        :param kwargs: keyword arguments to pass to the function.
+
+        This function returns an object compatible with the `Thread` class in
+        the Python standard library. The `start()` method on this object is
+        already called by this function.
+        """
         self.eio.start_background_task(target, *args, **kwargs)
+
+    def sleep(self, seconds=0):
+        """Sleep for the requested amount of time using the appropriate async
+        model.
+
+        This is a utility function that applications can use to put a task to
+        sleep without having to worry about using the correct call for the
+        selected async mode.
+        """
+        return self.eio.sleep(seconds)
 
     def _emit_internal(self, sid, event, data, namespace=None, id=None):
         """Send a message to a client."""
