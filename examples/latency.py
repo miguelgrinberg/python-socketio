@@ -2,8 +2,9 @@ from flask import Flask, render_template
 
 import socketio
 
-# set this to 'threading', 'eventlet', or 'gevent'
-async_mode = 'threading'
+# set async_mode to 'threading', 'eventlet' or 'gevent' to force a mode
+# else, the best mode is selected automatically from what's installed
+async_mode = None
 
 sio = socketio.Server(async_mode=async_mode)
 app = Flask(__name__)
@@ -15,21 +16,21 @@ def index():
     return render_template('latency.html')
 
 
-@sio.on('ping')
+@sio.on('ping_from_client')
 def ping(sid):
-    sio.emit('pong', room=sid)
+    sio.emit('pong_from_server', room=sid)
 
 
 if __name__ == '__main__':
-    if async_mode == 'threading':
+    if sio.async_mode == 'threading':
         # deploy with Werkzeug
         app.run(threaded=True)
-    elif async_mode == 'eventlet':
+    elif sio.async_mode == 'eventlet':
         # deploy with eventlet
         import eventlet
         from eventlet import wsgi
         wsgi.server(eventlet.listen(('', 5000)), app)
-    elif async_mode == 'gevent':
+    elif sio.async_mode == 'gevent':
         # deploy with gevent
         from gevent import pywsgi
         try:
@@ -43,4 +44,4 @@ if __name__ == '__main__':
         else:
             pywsgi.WSGIServer(('', 5000), app).serve_forever()
     else:
-        print('Unknown async_mode: ' + async_mode)
+        print('Unknown async_mode: ' + sio.async_mode)

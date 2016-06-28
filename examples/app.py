@@ -1,15 +1,8 @@
-# set this to 'threading', 'eventlet', or 'gevent'
-async_mode = 'threading'
-
-if async_mode == 'eventlet':
-    import eventlet
-    eventlet.monkey_patch()
-elif async_mode == 'gevent':
-    from gevent import monkey
-    monkey.patch_all()
+# set async_mode to 'threading', 'eventlet' or 'gevent' to force a mode
+# else, the best mode is selected automatically from what's installed
+async_mode = None
 
 import time
-from threading import Thread
 from flask import Flask, render_template
 import socketio
 
@@ -24,7 +17,7 @@ def background_thread():
     """Example of how to send server generated events to clients."""
     count = 0
     while True:
-        time.sleep(10)
+        sio.sleep(10)
         count += 1
         sio.emit('my response', {'data': 'Server generated event'},
                  namespace='/test')
@@ -34,8 +27,7 @@ def background_thread():
 def index():
     global thread
     if thread is None:
-        thread = Thread(target=background_thread)
-        thread.start()
+        thread = sio.start_background_task(background_thread)
     return render_template('index.html')
 
 
@@ -95,14 +87,14 @@ def test_disconnect(sid):
 
 
 if __name__ == '__main__':
-    if async_mode == 'threading':
+    if sio.async_mode == 'threading':
         # deploy with Werkzeug
         app.run(threaded=True)
-    elif async_mode == 'eventlet':
+    elif sio.async_mode == 'eventlet':
         # deploy with eventlet
         import eventlet
         eventlet.wsgi.server(eventlet.listen(('', 5000)), app)
-    elif async_mode == 'gevent':
+    elif sio.async_mode == 'gevent':
         # deploy with gevent
         from gevent import pywsgi
         try:
@@ -116,4 +108,4 @@ if __name__ == '__main__':
         else:
             pywsgi.WSGIServer(('', 5000), app).serve_forever()
     else:
-        print('Unknown async_mode: ' + async_mode)
+        print('Unknown async_mode: ' + sio.async_mode)
