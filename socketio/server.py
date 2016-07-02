@@ -322,7 +322,7 @@ class Server(object):
         the Python standard library. The `start()` method on this object is
         already called by this function.
         """
-        self.eio.start_background_task(target, *args, **kwargs)
+        return self.eio.start_background_task(target, *args, **kwargs)
 
     def sleep(self, seconds=0):
         """Sleep for the requested amount of time using the appropriate async

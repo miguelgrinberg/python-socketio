@@ -23,7 +23,7 @@
           }
           send();
       });
-      socket.on('pong', function() {
+      socket.on('pong_from_server', function() {
           var latency = new Date - last;
           $('#latency').text(latency + 'ms');
           if (time)
@@ -39,7 +39,7 @@
       var last;
       function send() {
           last = new Date;
-          socket.emit('ping');
+          socket.emit('ping_from_client');
           $('#transport').text(socket.io.engine.transport.name);
       }
 
