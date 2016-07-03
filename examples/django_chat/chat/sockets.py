@@ -5,12 +5,24 @@ from sdjango import namespace
 online_user_num = 0
 
 
+def background_thread():
+
+    while True:
+        namespace.server.sleep(10)
+        namespace.server.emit("my response", {'data': 'Server generated event'}, namespace='/test')
+
+
 @namespace('/test')
 class TestNamespace:
 
     def __init__(self, name):
         self.name = name
         self.request = None  # django request object
+
+    def initialize(self):
+        """the server is already assigned when this function is called.
+        """
+        namespace.server.start_background_task(background_thread)
 
     def _get_socket(self, sid):
         socket = namespace.server.eio._get_socket(sid)

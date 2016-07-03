@@ -71,6 +71,8 @@ class namespace:
 
         methods = inspect.getmembers(instance, predicate=inspect.ismethod)
 
+        namespace.handler_container[self.name].append(instance)
+
         for key, value in methods:
             if key.startswith('on_'):
                 namespace.handler_container[self.name].append(value)
@@ -84,6 +86,9 @@ class namespace:
         namespace.server = server
 
         for name, handlers in namespace.handler_container.items():
+
+            instance = handlers.pop(0)
+            instance.initialize()
 
             for obj in handlers:
                 event_name = obj.__name__.replace('on_', '').replace('_', ' ')
