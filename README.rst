@@ -64,7 +64,7 @@ client:
     @sio.on('chat message', namespace='/chat')
     def message(sid, data):
         print("message ", data)
-        sio.emit(sid, 'reply')
+        sio.emit('reply', room=sid)
 
     @sio.on('disconnect', namespace='/chat')
     def disconnect(sid):
