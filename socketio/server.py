@@ -138,6 +138,8 @@ class Server(object):
         client's acknowledgement callback function if it exists. The
         ``'disconnect'`` handler does not take a second argument.
         """
+        if '-' in event:
+            raise ValueError('event names cannot contain hypens')
         namespace = namespace or '/'
 
         def set_handler(handler):
