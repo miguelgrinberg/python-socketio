@@ -423,3 +423,8 @@ class TestServer(unittest.TestCase):
         s.start_background_task('foo', 'bar', baz='baz')
         s.eio.start_background_task.assert_called_once_with('foo', 'bar',
                                                             baz='baz')
+
+    def test_sleep(self, eio):
+        s = server.Server()
+        s.sleep(1.23)
+        s.eio.sleep.assert_called_once_with(1.23)
