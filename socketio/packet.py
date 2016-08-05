@@ -28,6 +28,7 @@ class Packet(object):
             else:
                 raise ValueError('Packet does not support binary payload.')
         self.attachment_count = 0
+        self.attachments = []
         if encoded_packet:
             self.attachment_count = self.decode(encoded_packet)
 
@@ -100,11 +101,21 @@ class Packet(object):
             self.data = self.json.loads(ep)
         return attachment_count
 
+    def add_attachment(self, attachment):
+        if self.attachment_count <= len(self.attachments):
+            raise ValueError('Unexpected binary attachment')
+        self.attachments.append(attachment)
+        if self.attachment_count == len(self.attachments):
+            self.reconstruct_binary(self.attachments)
+            return True
+        return False
+
     def reconstruct_binary(self, attachments):
         """Reconstruct a decoded packet using the given list of binary
         attachments.
         """
-        self.data = self._reconstruct_binary_internal(self.data, attachments)
+        self.data = self._reconstruct_binary_internal(self.data,
+                                                      self.attachments)
 
     def _reconstruct_binary_internal(self, data, attachments):
         if isinstance(data, list):

@@ -78,9 +78,7 @@ class Server(object):
         self.environ = {}
         self.handlers = {}
 
-        self._binary_packet = None
-        self._attachment_count = 0
-        self._attachments = []
+        self._binary_packet = []
 
         if not isinstance(logger, bool):
             self.logger = logger
@@ -434,22 +432,14 @@ class Server(object):
 
     def _handle_eio_message(self, sid, data):
         """Dispatch Engine.IO messages."""
-        if self._attachment_count > 0:
-            self._attachments.append(data)
-            self._attachment_count -= 1
-
-            if self._attachment_count == 0:
-                self._binary_packet.reconstruct_binary(self._attachments)
-                if self._binary_packet.packet_type == packet.BINARY_EVENT:
-                    self._handle_event(sid, self._binary_packet.namespace,
-                                       self._binary_packet.id,
-                                       self._binary_packet.data)
+        if len(self._binary_packet):
+            pkt = self._binary_packet[0]
+            if pkt.add_attachment(data):
+                self._binary_packet.pop(0)
+                if pkt.packet_type == packet.BINARY_EVENT:
+                    self._handle_event(sid, pkt.namespace, pkt.id, pkt.data)
                 else:
-                    self._handle_ack(sid, self._binary_packet.namespace,
-                                     self._binary_packet.id,
-                                     self._binary_packet.data)
-                self._binary_packet = None
-                self._attachments = []
+                    self._handle_ack(sid, pkt.namespace, pkt.id, pkt.data)
         else:
             pkt = packet.Packet(encoded_packet=data)
             if pkt.packet_type == packet.CONNECT:
@@ -462,9 +452,7 @@ class Server(object):
                 self._handle_ack(sid, pkt.namespace, pkt.id, pkt.data)
             elif pkt.packet_type == packet.BINARY_EVENT or \
                     pkt.packet_type == packet.BINARY_ACK:
-                self._binary_packet = pkt
-                self._attachments = []
-                self._attachment_count = pkt.attachment_count
+                self._binary_packet.append(pkt)
             elif pkt.packet_type == packet.ERROR:
                 raise ValueError('Unexpected ERROR packet.')
             else:

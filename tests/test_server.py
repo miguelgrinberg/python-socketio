@@ -283,22 +283,19 @@ class TestServer(unittest.TestCase):
         s._handle_eio_message('123', '52-["my message","a",'
                                      '{"_placeholder":true,"num":1},'
                                      '{"_placeholder":true,"num":0}]')
-        self.assertEqual(s._attachment_count, 2)
         s._handle_eio_message('123', b'foo')
-        self.assertEqual(s._attachment_count, 1)
         s._handle_eio_message('123', b'bar')
-        self.assertEqual(s._attachment_count, 0)
         handler.assert_called_once_with('123', 'a', b'bar', b'foo')
 
     def test_handle_event_binary_ack(self, eio):
-        s = server.Server()
+        mgr = mock.MagicMock()
+        s = server.Server(client_manager=mgr)
         s.manager.initialize(s)
-        s._handle_eio_message('123', '61-1["my message","a",'
+        s._handle_eio_message('123', '61-321["my message","a",'
                                      '{"_placeholder":true,"num":0}]')
-        self.assertEqual(s._attachment_count, 1)
-        # the following call should not raise an exception in spite of the
-        # callback id being invalid
         s._handle_eio_message('123', b'foo')
+        mgr.trigger_callback.assert_called_once_with(
+            '123', '/', 321, ['my message', 'a', b'foo'])
 
     def test_handle_event_with_ack(self, eio):
         s = server.Server()

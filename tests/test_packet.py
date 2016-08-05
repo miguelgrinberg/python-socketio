@@ -50,7 +50,7 @@ class TestPacket(unittest.TestCase):
 
     def test_decode_binary_event_packet(self):
         pkt = packet.Packet(encoded_packet='51-{"_placeholder":true,"num":0}')
-        pkt.reconstruct_binary([b'1234'])
+        self.assertTrue(pkt.add_attachment(b'1234'))
         self.assertEqual(pkt.packet_type, packet.BINARY_EVENT)
         self.assertEqual(pkt.data, b'1234')
 
@@ -78,7 +78,7 @@ class TestPacket(unittest.TestCase):
 
     def test_decode_binary_ack_packet(self):
         pkt = packet.Packet(encoded_packet='61-{"_placeholder":true,"num":0}')
-        pkt.reconstruct_binary([b'1234'])
+        self.assertTrue(pkt.add_attachment(b'1234'))
         self.assertEqual(pkt.packet_type, packet.BINARY_ACK)
         self.assertEqual(pkt.data, b'1234')
 
@@ -157,7 +157,8 @@ class TestPacket(unittest.TestCase):
         pkt = packet.Packet(encoded_packet=(
             '52-{"a":"123","b":{"_placeholder":true,"num":0},'
             '"c":[{"_placeholder":true,"num":1},123]}'))
-        pkt.reconstruct_binary([b'456', b'789'])
+        self.assertFalse(pkt.add_attachment(b'456'))
+        self.assertTrue(pkt.add_attachment(b'789'))
         self.assertEqual(pkt.packet_type, packet.BINARY_EVENT)
         self.assertEqual(pkt.data['a'], '123')
         self.assertEqual(pkt.data['b'], b'456')
@@ -167,11 +168,20 @@ class TestPacket(unittest.TestCase):
         pkt = packet.Packet(encoded_packet=(
             '62-{"a":"123","b":{"_placeholder":true,"num":0},'
             '"c":[{"_placeholder":true,"num":1},123]}'))
-        pkt.reconstruct_binary([b'456', b'789'])
+        self.assertFalse(pkt.add_attachment(b'456'))
+        self.assertTrue(pkt.add_attachment(b'789'))
         self.assertEqual(pkt.packet_type, packet.BINARY_ACK)
         self.assertEqual(pkt.data['a'], '123')
         self.assertEqual(pkt.data['b'], b'456')
         self.assertEqual(pkt.data['c'], [b'789', 123])
+
+    def test_decode_too_many_binary_packets(self):
+        pkt = packet.Packet(encoded_packet=(
+            '62-{"a":"123","b":{"_placeholder":true,"num":0},'
+            '"c":[{"_placeholder":true,"num":1},123]}'))
+        self.assertFalse(pkt.add_attachment(b'456'))
+        self.assertTrue(pkt.add_attachment(b'789'))
+        self.assertRaises(ValueError, pkt.add_attachment, b'123')
 
     def test_data_is_binary_list(self):
         pkt = packet.Packet()
