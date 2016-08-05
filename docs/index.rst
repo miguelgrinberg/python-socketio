@@ -288,10 +288,10 @@ the ``write_only`` argument should be set to ``True`` to disable the creation
 of a listening thread. For example::
 
     # connect to the redis queue through Kombu
-    redis = socketio.KombuManager('redis://', write_only=True)
+    external_sio = socketio.KombuManager('redis://', write_only=True)
     
     # emit an event
-    redis.emit('my event', data={'foo': 'bar'}, room='my room')
+    external_sio.emit('my event', data={'foo': 'bar'}, room='my room')
 
 Note: when using a third party package to manage a message queue such as Redis
 or RabbitMQ in conjunction with eventlet or gevent, it is necessary to monkey
