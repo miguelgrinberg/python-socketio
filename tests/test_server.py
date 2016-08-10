@@ -306,6 +306,15 @@ class TestServer(unittest.TestCase):
         s.eio.send.assert_called_once_with('123', '31000["foo"]',
                                            binary=False)
 
+    def test_handle_event_with_ack_none(self, eio):
+        s = server.Server()
+        handler = mock.MagicMock(return_value=None)
+        s.on('my message', handler)
+        s._handle_eio_message('123', '21000["my message","foo"]')
+        handler.assert_called_once_with('123', 'foo')
+        s.eio.send.assert_called_once_with('123', '31000[]',
+                                           binary=False)
+
     def test_handle_event_with_ack_tuple(self, eio):
         mgr = mock.MagicMock()
         s = server.Server(client_manager=mgr)

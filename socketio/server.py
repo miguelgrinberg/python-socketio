@@ -401,7 +401,9 @@ class Server(object):
         if id is not None:
             # send ACK packet with the response returned by the handler
             # tuples are expanded as multiple arguments
-            if isinstance(r, tuple):
+            if r is None:
+                data = []
+            elif isinstance(r, tuple):
                 data = list(r)
             else:
                 data = [r]
