@@ -269,6 +269,13 @@ class TestServer(unittest.TestCase):
         s._handle_eio_message('123', '2["my message","a","b","c"]')
         handler.assert_called_once_with('123', 'a', 'b', 'c')
 
+    def test_handle_event_wildcard(self, eio):
+        s = server.Server()
+        handler = mock.MagicMock()
+        s.on('*', handler)
+        s._handle_eio_message('123', '2["my message","a","b","c"]')
+        handler.assert_called_once_with('123', 'my message', 'a', 'b', 'c')
+
     def test_handle_event_with_namespace(self, eio):
         s = server.Server()
         handler = mock.MagicMock()

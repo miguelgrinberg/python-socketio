@@ -397,6 +397,7 @@ class Server(object):
         namespace = namespace or '/'
         self.logger.info('received event "%s" from %s [%s]', data[0], sid,
                          namespace)
+        self._trigger_event('*', namespace, sid, *data)
         r = self._trigger_event(data[0], namespace, sid, *data[1:])
         if id is not None:
             # send ACK packet with the response returned by the handler
