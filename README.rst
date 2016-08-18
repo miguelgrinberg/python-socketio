@@ -47,6 +47,7 @@ client:
 
     import socketio
     import eventlet
+    import eventlet.wsgi
     from flask import Flask, render_template
 
     sio = socketio.Server()
