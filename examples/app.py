@@ -93,6 +93,7 @@ if __name__ == '__main__':
     elif sio.async_mode == 'eventlet':
         # deploy with eventlet
         import eventlet
+        import eventlet.wsgi
         eventlet.wsgi.server(eventlet.listen(('', 5000)), app)
     elif sio.async_mode == 'gevent':
         # deploy with gevent

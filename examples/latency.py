@@ -28,8 +28,8 @@ if __name__ == '__main__':
     elif sio.async_mode == 'eventlet':
         # deploy with eventlet
         import eventlet
-        from eventlet import wsgi
-        wsgi.server(eventlet.listen(('', 5000)), app)
+        import eventlet.wsgi
+        eventlet.wsgi.server(eventlet.listen(('', 5000)), app)
     elif sio.async_mode == 'gevent':
         # deploy with gevent
         from gevent import pywsgi
