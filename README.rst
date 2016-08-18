@@ -43,7 +43,7 @@ Example
 The following application uses Flask to serve the HTML/Javascript to the
 client:
 
-::
+.. code:: python
 
     import socketio
     import eventlet
