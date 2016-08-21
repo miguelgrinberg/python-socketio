@@ -48,9 +48,10 @@ class Namespace(object):
             setattr(self, func_name, get_wrapped_method(func_name))
 
     def _get_handlers(self):
-      """Returns a dict of event names and handlers this namespace provides."""
-      handlers = {}
-      for attr_name in dir(self):
-        if attr_name.startswith('on_'):
-          handlers[attr_name[3:]] = getattr(self, attr_name)
-      return handlers
+        """Returns a dict of event names and handlers this namespace
+        provides."""
+        handlers = {}
+        for attr_name in dir(self):
+            if attr_name.startswith('on_'):
+                handlers[attr_name[3:]] = getattr(self, attr_name)
+        return handlers
