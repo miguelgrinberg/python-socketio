@@ -23,7 +23,7 @@ class TestServer(unittest.TestCase):
         s = server.Server(client_manager=mgr, binary=True, foo='bar')
         s.handle_request({}, None)
         s.handle_request({}, None)
-        eio.assert_called_once_with(**{'foo': 'bar'})
+        eio.assert_called_once_with(**{'pass_environ': False, 'foo': 'bar'})
         self.assertEqual(s.manager, mgr)
         self.assertEqual(s.eio.on.call_count, 3)
         self.assertEqual(s.binary, True)
@@ -401,7 +401,7 @@ class TestServer(unittest.TestCase):
 
     def test_engineio_logger(self, eio):
         server.Server(engineio_logger='foo')
-        eio.assert_called_once_with(**{'logger': 'foo'})
+        eio.assert_called_once_with(**{'pass_environ': False, 'logger': 'foo'})
 
     def test_custom_json(self, eio):
         # Warning: this test cannot run in parallel with other tests, as it
@@ -417,7 +417,8 @@ class TestServer(unittest.TestCase):
                 return '+++ decoded +++'
 
         server.Server(json=CustomJSON)
-        eio.assert_called_once_with(**{'json': CustomJSON})
+        eio.assert_called_once_with(**{'pass_environ': False,
+                                       'json': CustomJSON})
 
         pkt = packet.Packet(packet_type=packet.EVENT,
                             data={six.text_type('foo'): six.text_type('bar')})
