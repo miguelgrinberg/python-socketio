@@ -213,6 +213,41 @@ methods in the :class:`socketio.Server` class.
 When the ``namespace`` argument is omitted, set to ``None`` or to ``'/'``, the
 default namespace, representing the physical connection, is used.
 
+Class-based namespaces
+----------------------
+
+Event handlers for a specific namespace can be grouped together in a
+sub class of the ``Namespace`` class.
+
+A method of this class named ``on_xxx`` is considered as the event handler
+for the event ``'xxx'`` in the namespace this class is registered to.
+
+There are also the following methods available that insert the current
+namespace automatically when none is given before they call their matching
+method of the ``Server`` instance:
+
+    ``emit``, ``send``, ``enter_room``, ``leave_room``, ``close_room``,
+    ``rooms``, ``disconnect``
+
+Example:
+
+::
+
+    from socketio import Namespace, Server
+
+    class ChatNamespace(Namespace):
+        def on_msg(self, sid, msg):
+            # self.server references to the socketio.Server object
+            data = "[%s]: %s" \
+                   % (self.server.environ[sid].get("REMOTE_ADDR"), msg)
+            # Note that we don't pass namespace="/chat" to the emit method.
+            # It is done automatically for us.
+            self.emit("msg", data, skip_sid=sid)
+            return "received your message: %s" % msg
+
+    sio = socketio.Server()
+    sio.register_namespace("/chat", ChatNamespace)
+
 Using a Message Queue
 ---------------------
 
