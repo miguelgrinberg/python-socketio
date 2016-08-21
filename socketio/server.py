@@ -4,6 +4,7 @@ import engineio
 import six
 
 from . import base_manager
+from . import namespace as sio_namespace
 from . import packet
 
 
@@ -141,6 +142,10 @@ class Server(object):
         namespace = namespace or '/'
 
         def set_handler(handler):
+            if isinstance(self.handlers.get(namespace),
+                          sio_namespace.Namespace):
+                raise ValueError('A Namespace object has been registered '
+                                 'for this namespace.')
             if namespace not in self.handlers:
                 self.handlers[namespace] = {}
             self.handlers[namespace][event] = handler
@@ -149,6 +154,37 @@ class Server(object):
         if handler is None:
             return set_handler
         set_handler(handler)
+
+    def register_namespace(self, name, namespace_class):
+        """Register the given ``namespace_class`` under the namespace named
+        by ``name``.
+
+        :param name: The namespace's name. It can be any string.
+        :param namespace_class: The sub class of ``Namespace`` to register
+                                handlers of. Don't pass an instance instead.
+
+        This function returns the instance of ``namespace_class`` created.
+
+        See documentation of ``Namespace`` class for an example.
+        """
+        namespace = namespace_class(name, self)
+        self.handlers[name] = namespace
+        return namespace
+
+    def get_event_handler(self, event, namespace):
+        """Returns the event handler for given ``event`` and ``namespace`` or
+        ``None``, if none exists.
+
+        :param event: The event name the handler is required for.
+        :param namespace: The Socket.IO namespace for the event.
+        """
+        handler = None
+        ns = self.handlers.get(namespace)
+        if isinstance(ns, sio_namespace.Namespace):
+            handler = ns.get_event_handler(event)
+        elif isinstance(ns, dict):
+            handler = ns.get(event)
+        return handler
 
     def emit(self, event, data=None, room=None, skip_sid=None, namespace=None,
              callback=None):
@@ -424,8 +460,9 @@ class Server(object):
 
     def _trigger_event(self, event, namespace, *args):
         """Invoke an application event handler."""
-        if namespace in self.handlers and event in self.handlers[namespace]:
-            return self.handlers[namespace][event](*args)
+        handler = self.get_event_handler(event, namespace)
+        if handler is not None:
+            return handler(*args)
 
     def _handle_eio_connect(self, sid, environ):
         """Handle the Engine.IO connection event."""
