@@ -8,6 +8,7 @@ if six.PY3:
 else:
     import mock
 
+from socketio import namespace
 from socketio import packet
 from socketio import server
 
@@ -44,6 +45,16 @@ class TestServer(unittest.TestCase):
         self.assertEqual(s.handlers['/']['connect'], foo)
         self.assertEqual(s.handlers['/']['disconnect'], bar)
         self.assertEqual(s.handlers['/foo']['disconnect'], bar)
+
+    def test_register_namespace(self, eio):
+        class NS(namespace.Namespace):
+            def on_foo(self):
+                self.emit("bar")
+
+        s = server.Server()
+        s.register_namespace('/ns', NS)
+
+        self.assertIsNotNone(s.handlers['/ns'].get('foo'))
 
     def test_on_bad_event_name(self, eio):
         s = server.Server()

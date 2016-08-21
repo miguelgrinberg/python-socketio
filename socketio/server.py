@@ -150,6 +150,20 @@ class Server(object):
             return set_handler
         set_handler(handler)
 
+    def register_namespace(self, name, namespace_class):
+        """Register all handlers of the given ``namespace_class`` under the
+        namespace named by ``name``.
+
+        :param name: The namespace's name. It can be any string.
+        :param namespace_class: The sub class of ``Namespace`` to register
+                                handlers of. Don't pass an instance instead.
+
+        See documentation of ``Namespace`` class for an example.
+        """
+        namespace = namespace_class(name, self)
+        for event, handler in six.iteritems(namespace._get_handlers()):
+            self.on(event, handler=handler, namespace=name)
+
     def emit(self, event, data=None, room=None, skip_sid=None, namespace=None,
              callback=None):
         """Emit a custom event to one or more connected clients.
