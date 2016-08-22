@@ -54,20 +54,19 @@ class Namespace(object):
                           'close_room', 'rooms', 'disconnect'):
             setattr(self, func_name, get_wrapped_method(func_name))
 
-    def _get_handlers(self):
-        """Returns a dict of event names and handlers this namespace
-        provides."""
-        handlers = {}
+    def get_event_handler(self, event_name):
+        """Returns the event handler for requested event or ``None``."""
         for attr_name in dir(self):
             attr = getattr(self, attr_name)
             if hasattr(attr, '_event_name'):
-                event_name = getattr(attr, '_event_name')
+                _event_name = getattr(attr, '_event_name')
             elif attr_name.startswith('on_'):
-                event_name = attr_name[3:]
+                _event_name = attr_name[3:]
             else:
                 continue
-            handlers[event_name] = attr
-        return handlers
+            if _event_name == event_name:
+                return attr
+        return None
 
     @staticmethod
     def event_name(name):

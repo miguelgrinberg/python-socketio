@@ -4,6 +4,7 @@ import engineio
 import six
 
 from . import base_manager
+from . import namespace as sio_namespace
 from . import packet
 
 
@@ -141,6 +142,10 @@ class Server(object):
         namespace = namespace or '/'
 
         def set_handler(handler):
+            if isinstance(self.handlers.get(namespace),
+                          sio_namespace.Namespace):
+                raise ValueError('A Namespace object has been registered '
+                                 'for this namespace.')
             if namespace not in self.handlers:
                 self.handlers[namespace] = {}
             self.handlers[namespace][event] = handler
@@ -151,8 +156,8 @@ class Server(object):
         set_handler(handler)
 
     def register_namespace(self, name, namespace_class):
-        """Register all handlers of the given ``namespace_class`` under the
-        namespace named by ``name``.
+        """Register the given ``namespace_class`` under the namespace named
+        by ``name``.
 
         :param name: The namespace's name. It can be any string.
         :param namespace_class: The sub class of ``Namespace`` to register
@@ -163,8 +168,7 @@ class Server(object):
         See documentation of ``Namespace`` class for an example.
         """
         namespace = namespace_class(name, self)
-        for event, handler in six.iteritems(namespace._get_handlers()):
-            self.on(event, handler=handler, namespace=name)
+        self.handlers[name] = namespace
         return namespace
 
     def emit(self, event, data=None, room=None, skip_sid=None, namespace=None,
@@ -441,8 +445,14 @@ class Server(object):
 
     def _trigger_event(self, event, namespace, *args):
         """Invoke an application event handler."""
-        if namespace in self.handlers and event in self.handlers[namespace]:
-            return self.handlers[namespace][event](*args)
+        handler = None
+        ns = self.handlers.get(namespace)
+        if isinstance(ns, sio_namespace.Namespace):
+            handler = ns.get_event_handler(event)
+        elif isinstance(ns, dict):
+            handler = ns.get(event)
+        if handler is not None:
+            return handler(*args)
 
     def _handle_eio_connect(self, sid, environ):
         """Handle the Engine.IO connection event."""
