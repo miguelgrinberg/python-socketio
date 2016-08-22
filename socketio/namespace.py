@@ -10,6 +10,7 @@ class Namespace(object):
     There are also the following methods available that insert the current
     namespace automatically when none is given before they call their matching
     method of the ``Server`` instance:
+
     ``emit``, ``send``, ``enter_room``, ``leave_room``, ``close_room``,
     ``rooms``, ``disconnect``
 
@@ -33,12 +34,14 @@ class Namespace(object):
                 # ...
 
         sio = socketio.Server()
-        sio.register_namespace("/chat", ChatNamespace)
+        ns = sio.register_namespace("/chat", ChatNamespace)
+        # ns now holds the instantiated ChatNamespace object
     """
 
     def __init__(self, name, server):
         self.name = name
         self.server = server
+        self.middlewares = []
 
         # wrap methods of Server object
         def get_wrapped_method(func_name):
@@ -54,7 +57,7 @@ class Namespace(object):
                           'close_room', 'rooms', 'disconnect'):
             setattr(self, func_name, get_wrapped_method(func_name))
 
-    def get_event_handler(self, event_name):
+    def _get_event_handler(self, event_name):
         """Returns the event handler for given ``event`` in this namespace or
         ``None``, if none exists.
 
@@ -62,15 +65,14 @@ class Namespace(object):
         """
         for attr_name in dir(self):
             attr = getattr(self, attr_name)
-            if hasattr(attr, '_event_name'):
-                _event_name = getattr(attr, '_event_name')
+            if hasattr(attr, '_sio_event_name'):
+                _event_name = getattr(attr, '_sio_event_name')
             elif attr_name.startswith('on_'):
                 _event_name = attr_name[3:]
             else:
                 continue
             if _event_name == event_name:
                 return attr
-        return None
 
     @staticmethod
     def event_name(name):
@@ -80,12 +82,11 @@ class Namespace(object):
             def foo(self, sid, data):
                 return "received: %s" % data
 
-        Note that this must be the last decorator applied on an event handler
-        (last applied means listed first) in order to work.
+        Ensure that you only add well-behaving decorators after this one
+        (meaning such that preserve attributes) because you'll loose them
+        otherwise.
         """
         def wrapper(handler):
-            def wrapped_handler(*args, **kwargs):
-                return handler(*args, **kwargs)
-            wrapped_handler._event_name = name
-            return wrapped_handler
+            handler._sio_event_name = name
+            return handler
         return wrapper

@@ -5,6 +5,7 @@ from .pubsub_manager import PubSubManager
 from .kombu_manager import KombuManager
 from .redis_manager import RedisManager
 from .server import Server
+from .util import apply_middleware
 
 __all__ = [Middleware, Namespace, Server, BaseManager, PubSubManager,
-           KombuManager, RedisManager]
+           KombuManager, RedisManager, apply_middleware]
