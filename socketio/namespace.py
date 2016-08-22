@@ -55,7 +55,11 @@ class Namespace(object):
             setattr(self, func_name, get_wrapped_method(func_name))
 
     def get_event_handler(self, event_name):
-        """Returns the event handler for requested event or ``None``."""
+        """Returns the event handler for given ``event`` in this namespace or
+        ``None``, if none exists.
+
+        :param event: The event name the handler is required for.
+        """
         for attr_name in dir(self):
             attr = getattr(self, attr_name)
             if hasattr(attr, '_event_name'):

@@ -171,6 +171,21 @@ class Server(object):
         self.handlers[name] = namespace
         return namespace
 
+    def get_event_handler(self, event, namespace):
+        """Returns the event handler for given ``event`` and ``namespace`` or
+        ``None``, if none exists.
+
+        :param event: The event name the handler is required for.
+        :param namespace: The Socket.IO namespace for the event.
+        """
+        handler = None
+        ns = self.handlers.get(namespace)
+        if isinstance(ns, sio_namespace.Namespace):
+            handler = ns.get_event_handler(event)
+        elif isinstance(ns, dict):
+            handler = ns.get(event)
+        return handler
+
     def emit(self, event, data=None, room=None, skip_sid=None, namespace=None,
              callback=None):
         """Emit a custom event to one or more connected clients.
@@ -445,12 +460,7 @@ class Server(object):
 
     def _trigger_event(self, event, namespace, *args):
         """Invoke an application event handler."""
-        handler = None
-        ns = self.handlers.get(namespace)
-        if isinstance(ns, sio_namespace.Namespace):
-            handler = ns.get_event_handler(event)
-        elif isinstance(ns, dict):
-            handler = ns.get(event)
+        handler = self.get_event_handler(event, namespace)
         if handler is not None:
             return handler(*args)
 
