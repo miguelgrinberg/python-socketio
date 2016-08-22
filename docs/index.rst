@@ -245,6 +245,11 @@ Example:
             self.emit("msg", data, skip_sid=sid)
             return "received your message: %s" % msg
 
+            # Here we set the event name explicitly by decorator.
+            @Namespace.event_name("event name with spaces")
+            def foo(self, sid):
+                # ...
+
     sio = socketio.Server()
     sio.register_namespace("/chat", ChatNamespace)
 

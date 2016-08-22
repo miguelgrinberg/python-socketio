@@ -16,6 +16,7 @@ class Namespace(object):
     Example:
 
         from socketio import Namespace, Server
+
         class ChatNamespace(Namespace):
             def on_msg(self, sid, msg):
                 # self.server references to the socketio.Server object
@@ -25,6 +26,12 @@ class Namespace(object):
                 # It is done automatically for us.
                 self.emit("msg", data, skip_sid=sid)
                 return "received your message: %s" % msg
+
+            # Here we set the event name explicitly by decorator.
+            @Namespace.event_name("event name with spaces")
+            def foo(self, sid):
+                # ...
+
         sio = socketio.Server()
         sio.register_namespace("/chat", ChatNamespace)
     """
@@ -52,6 +59,30 @@ class Namespace(object):
         provides."""
         handlers = {}
         for attr_name in dir(self):
-            if attr_name.startswith('on_'):
-                handlers[attr_name[3:]] = getattr(self, attr_name)
+            attr = getattr(self, attr_name)
+            if hasattr(attr, '_event_name'):
+                event_name = getattr(attr, '_event_name')
+            elif attr_name.startswith('on_'):
+                event_name = attr_name[3:]
+            else:
+                continue
+            handlers[event_name] = attr
         return handlers
+
+    @staticmethod
+    def event_name(name):
+        """Decorator to overwrite event names:
+
+            @Namespace.event_name("event name with spaces")
+            def foo(self, sid, data):
+                return "received: %s" % data
+
+        Note that this must be the last decorator applied on an event handler
+        (last applied means listed first) in order to work.
+        """
+        def wrapper(handler):
+            def wrapped_handler(*args, **kwargs):
+                return handler(*args, **kwargs)
+            wrapped_handler._event_name = name
+            return wrapped_handler
+        return wrapper
