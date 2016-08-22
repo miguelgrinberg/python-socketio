@@ -66,17 +66,17 @@ class TestServer(unittest.TestCase):
     def test_middleware(self, eio):
         class MW:
             def __init__(self):
-                self.ignore_event = mock.MagicMock(side_effect=100*[False])
-                self.before_event = mock.MagicMock(side_effect=100*[None])
-                self.after_event = mock.MagicMock(side_effect=100*[None])
+                self.ignore_event = mock.MagicMock(side_effect=100 * [False])
+                self.before_event = mock.MagicMock(side_effect=100 * [None])
+                self.after_event = mock.MagicMock(side_effect=100 * [None])
 
         mw1 = MW()
         mw2 = MW()
         mw3 = MW()
         mw4 = MW()
-        mw4.ignore_event = mock.MagicMock(side_effect=[True]+100*[False])
-        mw4.before_event = mock.MagicMock(side_effect=['x']+100*[None])
-        mw4.after_event = mock.MagicMock(side_effect=['x']+100*[None])
+        mw4.ignore_event = mock.MagicMock(side_effect=[True] + 100 * [False])
+        mw4.before_event = mock.MagicMock(side_effect=['x'] + 100 * [None])
+        mw4.after_event = mock.MagicMock(side_effect=['x'] + 100 * [None])
 
         class NS(namespace.Namespace):
             def on_foo(self, sid):
