@@ -158,11 +158,14 @@ class Server(object):
         :param namespace_class: The sub class of ``Namespace`` to register
                                 handlers of. Don't pass an instance instead.
 
+        This function returns the instance of ``namespace_class`` created.
+
         See documentation of ``Namespace`` class for an example.
         """
         namespace = namespace_class(name, self)
         for event, handler in six.iteritems(namespace._get_handlers()):
             self.on(event, handler=handler, namespace=name)
+        return namespace
 
     def emit(self, event, data=None, room=None, skip_sid=None, namespace=None,
              callback=None):
