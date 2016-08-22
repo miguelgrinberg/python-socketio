@@ -75,8 +75,8 @@ class Namespace(object):
             if _event_name == event_name:
                 extra_middlewares = getattr(attr, '_sio_middlewares', [])
                 return util._apply_middlewares(
-                           self.middlewares + extra_middlewares, event_name,
-                           self.name, attr)
+                    self.middlewares + extra_middlewares, event_name,
+                    self.name, attr)
 
     @staticmethod
     def event_name(name):

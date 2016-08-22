@@ -5,6 +5,7 @@ def _copy_sio_properties(from_func, to_func):
         if key.startswith('_sio'):
             setattr(to_func, key, getattr(from_func, key))
 
+
 def _apply_middlewares(middlewares, event, namespace, handler):
     """Wraps the given handler with a wrapper that executes middlewares
     before and after the real event handler."""
@@ -42,6 +43,7 @@ def _apply_middlewares(middlewares, event, namespace, handler):
         return tuple(data)
 
     return wrapped
+
 
 def apply_middleware(middleware):
     """Returns a decorator for event handlers that adds the given
