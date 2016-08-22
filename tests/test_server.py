@@ -58,9 +58,9 @@ class TestServer(unittest.TestCase):
         s = server.Server()
         s.register_namespace('/ns', NS)
 
-        self.assertIsNotNone(s.handlers['/ns'].get_event_handler('foo'))
-        self.assertIsNotNone(s.handlers['/ns'].get_event_handler('foo bar'))
-        self.assertIsNone(s.handlers['/ns'].get_event_handler('abc'))
+        self.assertIsNotNone(s.handlers['/ns']._get_event_handler('foo'))
+        self.assertIsNotNone(s.handlers['/ns']._get_event_handler('foo bar'))
+        self.assertIsNone(s.handlers['/ns']._get_event_handler('abc'))
 
     def test_on_bad_event_name(self, eio):
         s = server.Server()
@@ -215,6 +215,7 @@ class TestServer(unittest.TestCase):
         mgr = mock.MagicMock()
         s = server.Server(client_manager=mgr)
         handler = mock.MagicMock(return_value=False)
+        del handler._sio_middlewares
         s.on('connect', handler)
         s._handle_eio_connect('123', 'environ')
         handler.assert_called_once_with('123', 'environ')
@@ -226,6 +227,7 @@ class TestServer(unittest.TestCase):
         mgr = mock.MagicMock()
         s = server.Server(client_manager=mgr)
         handler = mock.MagicMock(return_value=False)
+        del handler._sio_middlewares
         s.on('connect', handler, namespace='/foo')
         s._handle_eio_connect('123', 'environ')
         s._handle_eio_message('123', '0/foo')

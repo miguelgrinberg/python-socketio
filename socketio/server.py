@@ -6,6 +6,7 @@ import six
 from . import base_manager
 from . import namespace as sio_namespace
 from . import packet
+from . import util
 
 
 class Server(object):
@@ -78,6 +79,7 @@ class Server(object):
 
         self.environ = {}
         self.handlers = {}
+        self.middlewares = []
 
         self._binary_packet = []
 
@@ -171,7 +173,7 @@ class Server(object):
         self.handlers[name] = namespace
         return namespace
 
-    def get_event_handler(self, event, namespace):
+    def _get_event_handler(self, event, namespace):
         """Returns the event handler for given ``event`` and ``namespace`` or
         ``None``, if none exists.
 
@@ -181,10 +183,14 @@ class Server(object):
         handler = None
         ns = self.handlers.get(namespace)
         if isinstance(ns, sio_namespace.Namespace):
-            handler = ns.get_event_handler(event)
+            handler = ns._get_event_handler(event)
         elif isinstance(ns, dict):
             handler = ns.get(event)
-        return handler
+        if handler is not None:
+            extra_middlewares = getattr(handler, '_sio_middlewares', [])
+            return util._apply_middlewares(
+                self.middlewares + extra_middlewares, event, namespace,
+                handler)
 
     def emit(self, event, data=None, room=None, skip_sid=None, namespace=None,
              callback=None):
@@ -460,7 +466,7 @@ class Server(object):
 
     def _trigger_event(self, event, namespace, *args):
         """Invoke an application event handler."""
-        handler = self.get_event_handler(event, namespace)
+        handler = self._get_event_handler(event, namespace)
         if handler is not None:
             return handler(*args)
 
