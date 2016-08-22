@@ -4,6 +4,7 @@ import engineio
 import six
 
 from . import base_manager
+from . import namespace as sio_namespace
 from . import packet
 
 
@@ -77,6 +78,7 @@ class Server(object):
 
         self.environ = {}
         self.handlers = {}
+        self.middlewares = []
 
         self._binary_packet = []
 
@@ -141,6 +143,10 @@ class Server(object):
         namespace = namespace or '/'
 
         def set_handler(handler):
+            if isinstance(self.handlers.get(namespace),
+                          sio_namespace.Namespace):
+                raise ValueError('A Namespace object has been registered '
+                                 'for this namespace.')
             if namespace not in self.handlers:
                 self.handlers[namespace] = {}
             self.handlers[namespace][event] = handler
@@ -149,6 +155,22 @@ class Server(object):
         if handler is None:
             return set_handler
         set_handler(handler)
+
+    def register_namespace(self, name, namespace_class):
+        """Register the given ``namespace_class`` under the namespace named
+        by ``name``.
+
+        :param name: The namespace's name. It can be any string.
+        :param namespace_class: The sub class of ``Namespace`` to register
+                                handlers of. Don't pass an instance instead.
+
+        This function returns the instance of ``namespace_class`` created.
+
+        See documentation of ``Namespace`` class for an example.
+        """
+        namespace = namespace_class(name, self)
+        self.handlers[name] = namespace
+        return namespace
 
     def emit(self, event, data=None, room=None, skip_sid=None, namespace=None,
              callback=None):
@@ -424,8 +446,61 @@ class Server(object):
 
     def _trigger_event(self, event, namespace, *args):
         """Invoke an application event handler."""
-        if namespace in self.handlers and event in self.handlers[namespace]:
-            return self.handlers[namespace][event](*args)
+        handler = None
+        middlewares = list(self.middlewares)
+        ns = self.handlers.get(namespace)
+        if isinstance(ns, sio_namespace.Namespace):
+            middlewares.extend(ns.middlewares)
+            handler = ns._get_event_handler(event)
+        elif isinstance(ns, dict):
+            handler = ns.get(event)
+        if handler is not None:
+            middlewares.extend(getattr(handler, '_sio_middlewares', []))
+            handler = self._apply_middlewares(middlewares, event, namespace,
+                                              handler)
+            return handler(*args)
+
+    @staticmethod
+    def _apply_middlewares(middlewares, event, namespace, handler):
+        """Wraps the given handler with a wrapper that executes middlewares
+        before and after the real event handler."""
+
+        _middlewares = []
+        for middleware in middlewares:
+            if isinstance(middleware, type):
+                middleware = middleware()
+            if not hasattr(middleware, 'ignore_event') or \
+               not middleware.ignore_event(event, namespace):
+                _middlewares.append(middleware)
+        if not _middlewares:
+            return handler
+
+        def wrapped(*args):
+            args = list(args)
+
+            for middleware in _middlewares:
+                if hasattr(middleware, 'before_event'):
+                    result = middleware.before_event(event, namespace, args)
+                    if result is not None:
+                        return result
+
+            result = handler(*args)
+            if result is None:
+                data = []
+            elif isinstance(result, tuple):
+                data = list(result)
+            else:
+                data = [result]
+
+            for middleware in reversed(_middlewares):
+                if hasattr(middleware, 'after_event'):
+                    result = middleware.after_event(event, namespace, data)
+                    if result is not None:
+                        return result
+
+            return tuple(data)
+
+        return wrapped
 
     def _handle_eio_connect(self, sid, environ):
         """Handle the Engine.IO connection event."""
