@@ -1,48 +1,33 @@
-def _copy_sio_properties(from_func, to_func):
-    """Copies all properties starting with ``'_sio'`` from one function to
-    another."""
-    for key in dir(from_func):
-        if key.startswith('_sio'):
-            setattr(to_func, key, getattr(from_func, key))
+def _simple_decorator(decorator):
+    """This decorator can be used to turn simple functions
+    into well-behaved decorators, so long as the decorators
+    are fairly simple. If a decorator expects a function and
+    returns a function (no descriptors), and if it doesn't
+    modify function attributes or docstring, then it is
+    eligible to use this. Simply apply @_simple_decorator to
+    your decorator and it will automatically preserve the
+    docstring and function attributes of functions to which
+    it is applied.
 
+    Also preserves all properties starting with ``'_sio'``.
+    """
+    def copy_attrs(a, b):
+        """Copies attributes from a to b."""
+        for attr_name in ('__name__', '__doc__'):
+            if hasattr(a, attr_name):
+                setattr(b, attr_name, getattr(a, attr_name))
+        if hasattr(a, '__dict__') and hasattr(b, '__dict__'):
+            b.__dict__.update(a.__dict__)
 
-def _apply_middlewares(middlewares, event, namespace, handler):
-    """Wraps the given handler with a wrapper that executes middlewares
-    before and after the real event handler."""
-    if not middlewares:
-        return handler
+    def new_decorator(f):
+        g = decorator(f)
+        copy_attrs(f, g)
+        return g
 
-    def wrapped(*args):
-        _middlewares = []
-        for middleware in middlewares:
-            if isinstance(middleware, type):
-                _middlewares.append(middleware())
-            else:
-                _middlewares.append(middleware)
-
-        for middleware in _middlewares:
-            if hasattr(middleware, 'before_event'):
-                result = middleware.before_event(event, namespace, args)
-                if result is not None:
-                    return result
-
-        result = handler(*args)
-        if result is None:
-            data = []
-        elif isinstance(result, tuple):
-            data = list(result)
-        else:
-            data = [result]
-
-        for middleware in reversed(_middlewares):
-            if hasattr(middleware, 'after_event'):
-                result = middleware.after_event(event, namespace, data)
-                if result is not None:
-                    return result
-
-        return tuple(data)
-
-    return wrapped
+    # Now a few lines needed to make _simple_decorator itself
+    # be a well-behaved decorator.
+    copy_attrs(decorator, new_decorator)
+    return new_decorator
 
 
 def apply_middleware(middleware):
@@ -51,10 +36,11 @@ def apply_middleware(middleware):
 
     :param middleware: The middleware to add
 
-    Note that you must not add third-party decorators after the ones
-    provided by this library because you'll otherwise loose metadata
-    that this decorators create. You can add them before instead.
+    Ensure that you only add well-behaving decorators after this one
+    (meaning such that preserve attributes) because you'll loose them
+    otherwise.
     """
+    @_simple_decorator
     def wrapper(handler):
         if not hasattr(handler, '_sio_middlewares'):
             handler._sio_middlewares = []

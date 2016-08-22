@@ -226,6 +226,10 @@ subset of them:
 * ``after_event(*args)`` is called after the event handler with the
   event name, the namespace and the list of values the event handler
   returned. It may alter that values eventually.
+* ``ignore_event`` is called before the middleware is applied to an
+  event handler with the event name and namespace as arguments. If its
+  return value resolves to ``True`` the middleware is not applied to that
+  particular event handler.
 
 If one of these methods returns something else than ``None``, execution
 is stopped at that point and the returned value is treated as if it was

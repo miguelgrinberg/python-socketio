@@ -36,7 +36,8 @@ class Namespace(object):
                 # ...
 
         sio = socketio.Server()
-        sio.register_namespace("/chat", ChatNamespace)
+        ns = sio.register_namespace("/chat", ChatNamespace)
+        # ns now holds the instantiated ChatNamespace object
     """
 
     def __init__(self, name, server):
@@ -73,10 +74,7 @@ class Namespace(object):
             else:
                 continue
             if _event_name == event_name:
-                extra_middlewares = getattr(attr, '_sio_middlewares', [])
-                return util._apply_middlewares(
-                    self.middlewares + extra_middlewares, event_name,
-                    self.name, attr)
+                return attr
 
     @staticmethod
     def event_name(name):
@@ -86,14 +84,12 @@ class Namespace(object):
             def foo(self, sid, data):
                 return "received: %s" % data
 
-        Note that you must not add third-party decorators after the ones
-        provided by this library because you'll otherwise loose metadata
-        that this decorators create. You can add them before instead.
+        Ensure that you only add well-behaving decorators after this one
+        (meaning such that preserve attributes) because you'll loose them
+        otherwise.
         """
+        @util._simple_decorator
         def wrapper(handler):
-            def wrapped_handler(*args, **kwargs):
-                return handler(*args, **kwargs)
-            util._copy_sio_properties(handler, wrapped_handler)
-            wrapped_handler._sio_event_name = name
-            return wrapped_handler
+            handler._sio_event_name = name
+            return handler
         return wrapper
