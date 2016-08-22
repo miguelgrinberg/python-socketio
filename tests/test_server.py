@@ -50,6 +50,7 @@ class TestServer(unittest.TestCase):
         class NS(namespace.Namespace):
             def on_foo(self, sid):
                 self.emit("bar")
+
             @namespace.Namespace.event_name('foo bar')
             def abc(self, sid):
                 self.emit("foo bar")
