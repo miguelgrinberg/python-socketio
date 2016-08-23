@@ -15,7 +15,7 @@ class Namespace(object):
         self.server = None
         self.middlewares = []
 
-    def set_server(self, server):
+    def _set_server(self, server):
         self.server = server
 
     def emit(self, event, data=None, room=None, skip_sid=None, namespace=None,
@@ -91,7 +91,7 @@ class Namespace(object):
         return self.server.disconnect(sid,
                                       namespace=namespace or self.name)
 
-    def get_event_handler(self, event_name):
+    def _get_event_handler(self, event_name):
         """Returns the event handler for given ``event`` in this namespace or
         ``None``, if none exists.
 

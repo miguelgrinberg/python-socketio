@@ -167,7 +167,7 @@ class Server(object):
         """
         if not isinstance(namespace_handler, namespace.Namespace):
             raise ValueError('Not a namespace instance')
-        namespace_handler.set_server(self)
+        namespace_handler._set_server(self)
         self.namespace_handlers[namespace_handler.name] = \
             namespace_handler
 
@@ -453,7 +453,7 @@ class Server(object):
         elif namespace in self.namespace_handlers:
             ns = self.namespace_handlers[namespace]
             middlewares.extend(ns.middlewares)
-            handler = ns.get_event_handler(event)
+            handler = ns._get_event_handler(event)
         if handler is not None:
             middlewares.extend(getattr(handler, '_sio_middlewares', []))
             handler = self._apply_middlewares(middlewares, event, namespace,
