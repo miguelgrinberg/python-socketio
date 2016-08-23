@@ -349,6 +349,9 @@ first add ``MW1`` and then ``MW2``.
     def foo(sid):
         # ...
 
+Note: if an event has a handler in a class-based namespace, and also a
+decorator-based function handler, the standalone function handler is invoked.
+
 Using a Message Queue
 ---------------------
 
