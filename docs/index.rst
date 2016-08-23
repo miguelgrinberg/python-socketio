@@ -230,19 +230,124 @@ that belong to a namespace can be created as methods of a subclass of
         def on_my_event(sid, data):
             self.emit('my_response', data)
 
+        # Here we set the event name explicitly by decorator.
+        @socketio.Namespace.event_name("event name with spaces")
+        def foo(self, sid):
+            pass
+
     sio.register_namespace(MyCustomNamespace('/test'))
 
 When class-based namespaces are used, any events received by the server are
 dispatched to a method named as the event name with the ``on_`` prefix. For
 example, event ``my_event`` will be handled by a method named ``on_my_event``.
 If an event is received for which there is no corresponding method defined in
-the namespace class, then the event is ignored. All event names used in
-class-based namespaces must used characters that are legal in method names.
+the namespace class, then the event is ignored.
+
+All event names containing characters that are not legal in method names
+must use the ``socketio.Namespace.event_name`` decorator on the event
+handler method to set it manually.
 
 As a convenience to methods defined in a class-based namespace, the namespace
 instance includes versions of several of the methods in the 
 :class:`socketio.Server` class that default to the proper namespace when the
 ``namespace`` argument is not given.
+
+Event handler middlewares
+-------------------------
+
+Event handler middlewares are objects with the following methods or a
+subset of them:
+
+* ``before_event(*args)`` is called before the event handler is executed
+  with the event name, the namespace and the list of arguments the event
+  handler will be called with. It may alter the arguments in that list
+  eventually.
+* ``after_event(*args)`` is called after the event handler with the
+  event name, the namespace and the list of values the event handler
+  returned. It may alter that values eventually.
+* ``ignore_event`` is called before the middleware is applied to an
+  event handler with the event name and namespace as arguments. If its
+  return value resolves to ``True`` the middleware is not applied to that
+  particular event handler.
+
+If one of these methods returns something else than ``None``, execution
+is stopped at that point and the returned value is treated as if it was
+returned by the event handler.
+
+Event handler middlewares can be chained. The ``before_event`` methods
+will be executed in the same order the middlewares were added, the
+``after_event`` methods are called in reversed order.
+
+Note that you can also use classes (objects of type ``type``) instead
+of instances as event handler middlewares. If you do so, they are
+instantiated with no arguments every time they are used to process
+an event.
+
+Example:
+
+::
+
+    from socketio import server
+
+    class MyMiddleware(object):
+        def ignore_event(self, event, namespace):
+            # This middleware won't be applied to connect and disconnect
+            # event handlers.
+            return event in ("connect", "disconnect")
+
+        def before_event(self, event, namespace, args):
+            print("before_event called with:", args)
+            if len(args) < 2 or args[1] != "secret":
+                return "Ha, you don't know the password!"
+
+        def after_event(self, event, namespace, args):
+            args[0] = "I faked the response!"
+
+    sio = socketio.server.Server()
+
+    @sio.on("/foo")
+    def foo(sid, data):
+        print("foo executed")
+        return "foo executed"
+
+    sio.middlewares.append(MyMiddleware())
+
+In this example, the middleware would be applied to every event handler
+executed by ``sio``, except for the ``'connect'`` and ``'disconnect'``
+handlers.
+
+Middlewares can be added to a ``Namespace`` object as well by inserting
+them into its ``middlewares`` ``list`` attribute. They are applied
+after the server-wide middlewares to every event handler defined in that
+``Namespace`` object.
+
+There is also a decorator available to add a middleware to a specific
+handler only. Given the middleware class from above, it would be used
+as follows:
+
+::
+
+    from socketio import util
+
+    sio = socketio.server.Server()
+
+    @sio.on("/foo")
+    @util.apply_middleware(MyMiddleware)
+    def foo(sid, data):
+        print("foo executed")
+        return "foo executed"
+
+Middlewares added by the decorator are treated as if they were added
+*after* the server-wide and namespace-wide middlewares. Naturally,
+decorators are applied from bottom to top. Hence the following will
+first add ``MW1`` and then ``MW2``.
+
+::
+
+    @util.apply_middleware(MW2)
+    @util.apply_middleware(MW1)
+    def foo(sid):
+        # ...
 
 Using a Message Queue
 ---------------------

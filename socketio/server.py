@@ -4,6 +4,7 @@ import engineio
 import six
 
 from . import base_manager
+from . import namespace as sio_namespace
 from . import packet
 from . import namespace
 
@@ -79,6 +80,7 @@ class Server(object):
         self.environ = {}
         self.handlers = {}
         self.namespace_handlers = {}
+        self.middlewares = []
 
         self._binary_packet = []
 
@@ -143,6 +145,10 @@ class Server(object):
         namespace = namespace or '/'
 
         def set_handler(handler):
+            if isinstance(self.handlers.get(namespace),
+                          sio_namespace.Namespace):
+                raise ValueError('A Namespace object has been registered '
+                                 'for this namespace.')
             if namespace not in self.handlers:
                 self.handlers[namespace] = {}
             self.handlers[namespace][event] = handler
@@ -162,7 +168,7 @@ class Server(object):
         if not isinstance(namespace_handler, namespace.Namespace):
             raise ValueError('Not a namespace instance')
         namespace_handler.set_server(self)
-        self.namespace_handlers[namespace_handler.namespace] = \
+        self.namespace_handlers[namespace_handler.name] = \
             namespace_handler
 
     def emit(self, event, data=None, room=None, skip_sid=None, namespace=None,
@@ -439,14 +445,62 @@ class Server(object):
 
     def _trigger_event(self, event, namespace, *args):
         """Invoke an application event handler."""
+        handler = None
+        middlewares = list(self.middlewares)
         # first see if we have an explicit handler for the event
         if namespace in self.handlers and event in self.handlers[namespace]:
-            return self.handlers[namespace][event](*args)
-
-        # or else, forward the event to a namepsace handler if one exists
+            handler = self.handlers[namespace][event]
         elif namespace in self.namespace_handlers:
-            return self.namespace_handlers[namespace].trigger_event(
-                event, *args)
+            ns = self.namespace_handlers[namespace]
+            middlewares.extend(ns.middlewares)
+            handler = ns.get_event_handler(event)
+        if handler is not None:
+            middlewares.extend(getattr(handler, '_sio_middlewares', []))
+            handler = self._apply_middlewares(middlewares, event, namespace,
+                                              handler)
+            return handler(*args)
+
+    @staticmethod
+    def _apply_middlewares(middlewares, event, namespace, handler):
+        """Wraps the given handler with a wrapper that executes middlewares
+        before and after the real event handler."""
+
+        _middlewares = []
+        for middleware in middlewares:
+            if isinstance(middleware, type):
+                middleware = middleware()
+            if not hasattr(middleware, 'ignore_event') or \
+               not middleware.ignore_event(event, namespace):
+                _middlewares.append(middleware)
+        if not _middlewares:
+            return handler
+
+        def wrapped(*args):
+            args = list(args)
+
+            for middleware in _middlewares:
+                if hasattr(middleware, 'before_event'):
+                    result = middleware.before_event(event, namespace, args)
+                    if result is not None:
+                        return result
+
+            result = handler(*args)
+            if result is None:
+                data = []
+            elif isinstance(result, tuple):
+                data = list(result)
+            else:
+                data = [result]
+
+            for middleware in reversed(_middlewares):
+                if hasattr(middleware, 'after_event'):
+                    result = middleware.after_event(event, namespace, data)
+                    if result is not None:
+                        return result
+
+            return tuple(data)
+
+        return wrapped
 
     def _handle_eio_connect(self, sid, environ):
         """Handle the Engine.IO connection event."""

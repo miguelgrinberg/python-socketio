@@ -18,7 +18,7 @@ class TestNamespace(unittest.TestCase):
 
         ns = MyNamespace('/foo')
         ns.set_server(mock.MagicMock())
-        ns.trigger_event('connect', 'sid', {'foo': 'bar'})
+        ns.get_event_handler('connect')('sid', {'foo': 'bar'})
         self.assertEqual(result['result'], ('sid', {'foo': 'bar'}))
 
     def test_disconnect_event(self):
@@ -30,7 +30,7 @@ class TestNamespace(unittest.TestCase):
 
         ns = MyNamespace('/foo')
         ns.set_server(mock.MagicMock())
-        ns.trigger_event('disconnect', 'sid')
+        ns.get_event_handler('disconnect')('sid')
         self.assertEqual(result['result'], 'sid')
 
     def test_event(self):
@@ -42,7 +42,7 @@ class TestNamespace(unittest.TestCase):
 
         ns = MyNamespace('/foo')
         ns.set_server(mock.MagicMock())
-        ns.trigger_event('custom_message', 'sid', {'data': 'data'})
+        ns.get_event_handler('custom_message')('sid', {'data': 'data'})
         self.assertEqual(result['result'], ('sid', {'data': 'data'}))
 
     def test_event_not_found(self):
@@ -54,7 +54,7 @@ class TestNamespace(unittest.TestCase):
 
         ns = MyNamespace('/foo')
         ns.set_server(mock.MagicMock())
-        ns.trigger_event('another_custom_message', 'sid', {'data': 'data'})
+        self.assertIsNone(ns.get_event_handler('another_custom_message'))
         self.assertEqual(result, {})
 
     def test_emit(self):
