@@ -161,7 +161,7 @@ class Server(object):
         """
         if not isinstance(namespace_handler, namespace.Namespace):
             raise ValueError('Not a namespace instance')
-        namespace_handler.set_server(self)
+        namespace_handler._set_server(self)
         self.namespace_handlers[namespace_handler.namespace] = \
             namespace_handler
 

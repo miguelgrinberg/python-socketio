@@ -14,10 +14,17 @@ class Namespace(object):
         self.namespace = namespace or '/'
         self.server = None
 
-    def set_server(self, server):
+    def _set_server(self, server):
         self.server = server
 
     def trigger_event(self, event, *args):
+        """Dispatch an event to the proper handler method.
+
+        In the most common usage, this method is not overloaded by subclasses,
+        as it performs the routing of events to methods. However, this
+        method can be overriden if special dispatching rules are needed, or if
+        having a single method that catches all events is desired.
+        """
         handler_name = 'on_' + event
         if hasattr(self, handler_name):
             return getattr(self, handler_name)(*args)
