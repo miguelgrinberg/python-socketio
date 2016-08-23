@@ -155,9 +155,9 @@ class Server(object):
     def register_namespace(self, namespace_handler):
         """Register a namespace handler object.
 
-        :param namespace_handler: A namespace subclass that handles all the
-                                  event traffic for a namespace. This method
-                                  accepts the class itself, or an instance.
+        :param namespace_handler: An instance of a :class:`Namespace`
+                                  subclass that handles all the event traffic
+                                  for a namespace.
         """
         if not isinstance(namespace_handler, namespace.Namespace):
             raise ValueError('Not a namespace instance')

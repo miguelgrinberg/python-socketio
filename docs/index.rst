@@ -244,6 +244,9 @@ instance includes versions of several of the methods in the
 :class:`socketio.Server` class that default to the proper namespace when the
 ``namespace`` argument is not given.
 
+Note: if an event has a handler in a class-based namespace, and also a
+decorator-based function handler, the standalone function handler is invoked.
+
 Using a Message Queue
 ---------------------
 
