@@ -5,6 +5,7 @@ import six
 
 from . import base_manager
 from . import packet
+from . import namespace
 
 
 class Server(object):
@@ -77,6 +78,7 @@ class Server(object):
 
         self.environ = {}
         self.handlers = {}
+        self.namespace_handlers = {}
 
         self._binary_packet = []
 
@@ -149,6 +151,19 @@ class Server(object):
         if handler is None:
             return set_handler
         set_handler(handler)
+
+    def register_namespace(self, namespace_handler):
+        """Register a namespace handler object.
+
+        :param namespace_handler: A namespace subclass that handles all the
+                                  event traffic for a namespace. This method
+                                  accepts the class itself, or an instance.
+        """
+        if not isinstance(namespace_handler, namespace.Namespace):
+            raise ValueError('Not a namespace instance')
+        namespace_handler.set_server(self)
+        self.namespace_handlers[namespace_handler.namespace] = \
+            namespace_handler
 
     def emit(self, event, data=None, room=None, skip_sid=None, namespace=None,
              callback=None):
@@ -424,8 +439,14 @@ class Server(object):
 
     def _trigger_event(self, event, namespace, *args):
         """Invoke an application event handler."""
+        # first see if we have an explicit handler for the event
         if namespace in self.handlers and event in self.handlers[namespace]:
             return self.handlers[namespace][event](*args)
+
+        # or else, forward the event to a namepsace handler if one exists
+        elif namespace in self.namespace_handlers:
+            return self.namespace_handlers[namespace].trigger_event(
+                event, *args)
 
     def _handle_eio_connect(self, sid, environ):
         """Handle the Engine.IO connection event."""

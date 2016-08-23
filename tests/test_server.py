@@ -10,6 +10,7 @@ else:
 
 from socketio import packet
 from socketio import server
+from socketio import namespace
 
 
 @mock.patch('engineio.Server')
@@ -385,6 +386,48 @@ class TestServer(unittest.TestCase):
         s._handle_eio_message('123', '0/foo')
         s.disconnect('123', namespace='/foo')
         s.eio.send.assert_any_call('123', '1/foo', binary=False)
+
+    def test_namespace_handler(self, eio):
+        result = {}
+
+        class MyNamespace(namespace.Namespace):
+            def on_connect(self, sid, environ):
+                result['result'] = (sid, environ)
+
+            def on_disconnect(self, sid):
+                result['result'] = ('disconnect', sid)
+
+            def on_foo(self, sid, data):
+                result['result'] = (sid, data)
+
+            def on_bar(self, sid):
+                result['result'] = 'bar'
+
+            def on_baz(self, sid, data1, data2):
+                result['result'] = (data1, data2)
+
+        s = server.Server()
+        s.register_namespace(MyNamespace('/foo'))
+        s._handle_eio_connect('123', 'environ')
+        s._handle_eio_message('123', '0/foo')
+        self.assertEqual(result['result'], ('123', 'environ'))
+        s._handle_eio_message('123', '2/foo,["foo","a"]')
+        self.assertEqual(result['result'], ('123', 'a'))
+        s._handle_eio_message('123', '2/foo,["bar"]')
+        self.assertEqual(result['result'], 'bar')
+        s._handle_eio_message('123', '2/foo,["baz","a","b"]')
+        self.assertEqual(result['result'], ('a', 'b'))
+        s.disconnect('123', '/foo')
+        self.assertEqual(result['result'], ('disconnect', '123'))
+
+    def test_bad_namespace_handler(self, eio):
+        class Dummy(object):
+            pass
+
+        s = server.Server()
+        self.assertRaises(ValueError, s.register_namespace, 123)
+        self.assertRaises(ValueError, s.register_namespace, Dummy)
+        self.assertRaises(ValueError, s.register_namespace, Dummy())
 
     def test_logger(self, eio):
         s = server.Server(logger=False)

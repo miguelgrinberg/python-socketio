@@ -213,6 +213,37 @@ methods in the :class:`socketio.Server` class.
 When the ``namespace`` argument is omitted, set to ``None`` or to ``'/'``, the
 default namespace, representing the physical connection, is used.
 
+Class-Based Namespaces
+----------------------
+
+As an alternative to the decorator-based event handlers, the event handlers
+that belong to a namespace can be created as methods of a subclass of 
+:class:`socketio.Namespace`::
+
+    class MyCustomNamespace(socketio.Namespace):
+        def on_connect(sid, environ):
+            pass
+
+        def on_disconnect(sid):
+            pass
+
+        def on_my_event(sid, data):
+            self.emit('my_response', data)
+
+    sio.register_namespace(MyCustomNamespace('/test'))
+
+When class-based namespaces are used, any events received by the server are
+dispatched to a method named as the event name with the ``on_`` prefix. For
+example, event ``my_event`` will be handled by a method named ``on_my_event``.
+If an event is received for which there is no corresponding method defined in
+the namespace class, then the event is ignored. All event names used in
+class-based namespaces must used characters that are legal in method names.
+
+As a convenience to methods defined in a class-based namespace, the namespace
+instance includes versions of several of the methods in the 
+:class:`socketio.Server` class that default to the proper namespace when the
+``namespace`` argument is not given.
+
 Using a Message Queue
 ---------------------
 
@@ -456,6 +487,8 @@ API Reference
 .. autoclass:: Middleware
    :members:
 .. autoclass:: Server
+   :members:
+.. autoclass:: Namespace
    :members:
 .. autoclass:: BaseManager
    :members:
