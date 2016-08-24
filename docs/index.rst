@@ -252,11 +252,12 @@ instance includes versions of several of the methods in the
 :class:`socketio.Server` class that default to the proper namespace when the
 ``namespace`` argument is not given.
 
-Event handler middlewares
--------------------------
+Event handler interceptors
+--------------------------
 
-Event handler middlewares are objects with the following methods or a
-subset of them:
+Event handler interceptors should be objects that inherit from
+``socketio.Interceptor`` and can have the following methods or a subset
+of them:
 
 * ``before_event(*args)`` is called before the event handler is executed
   with the event name, the namespace and the list of arguments the event
@@ -269,21 +270,21 @@ subset of them:
   event handling process with the event name, namespace and the exception
   object as its arguments. The exception could have been raised by either
   the event handler itself, or the ``before_event`` and ``after_event``
-  methods of another middleware that comes later in the middleware chain
+  methods of another interceptor that comes later in the interceptor chain
   (one that is applied more-specifically).
-* ``ignore_for`` is called before the middleware is applied to an
+* ``ignore_for`` is called before the interceptor is applied to an
   event handler with the event name and namespace as arguments. If its
-  return value resolves to ``True`` the middleware is ignored and not
+  return value resolves to ``True`` the interceptor is ignored and not
   applied to that particular event handler.
 
-Event handler middlewares can be chained. The ``before_event`` methods
-will be executed in the same order the middlewares were added, the
+Event handler interceptors can be chained. The ``before_event`` methods
+will be executed in the same order the interceptors were added, the
 ``after_event`` methods are called in reversed order.
 
 If the ``before_event`` method returns something else than ``None``,
-execution jumps to ``after_event`` of this middleware, passing the
+execution jumps to ``after_event`` of this interceptor, passing the
 arguments the method returned to it and continues the regular processing
-from there by rippling up until the least specific middleware is reached.
+from there by rippling up until the least specific interceptor is reached.
 
 If an ``after_event`` method returns something else than ``None``,
 execution is stopped at that point and the returned value is used as
@@ -292,23 +293,25 @@ the result of event handling.
 ``handle_exception``, if present, must either handle the given exception
 and return something that will be treated as the event handling result
 and eventually be passed to the ``after_event`` method of less-specific
-middlewares or re-raise the exception (or another one,
+interceptors or re-raise the exception (or another one,
 at their choice).
 
 Note that you can also use classes (objects of type ``type``) instead
-of instances as event handler middlewares. If you do so, they are
-instantiated with no arguments every time they are used to process
-an event.
+of instances as event handler interceptors. If you do so, they are
+instantiated with the ``socketio.Server`` object every time they are
+used to process an event. If you use ``socketio.Interceptor`` as base
+class for your interceptors, they'll have the ``socketio.Server`` object
+in use available as their ``server`` attribute.
 
 Example:
 
 ::
 
-    from socketio import server
+    from socketio import interceptor, server
 
-    class MyMiddleware(object):
+    class MyInterceptor(interceptor.Interceptor):
         def ignore_for(self, event, namespace):
-            # This middleware won't be applied to connect and disconnect
+            # This interceptor won't be applied to connect and disconnect
             # event handlers.
             return event in ("connect", "disconnect")
 
@@ -330,19 +333,19 @@ Example:
         print("foo executed")
         return "foo executed"
 
-    sio.middlewares.append(MyMiddleware())
+    sio.interceptors.append(MyInterceptor(s))
 
-In this example, the middleware would be applied to every event handler
+In this example, the interceptor would be applied to every event handler
 executed by ``sio``, except for the ``'connect'`` and ``'disconnect'``
 handlers.
 
-Middlewares can be added to a ``Namespace`` object as well by inserting
-them into its ``middlewares`` ``list`` attribute. They are applied
-after the server-wide middlewares to every event handler defined in that
+Interceptors can be added to a ``Namespace`` object as well by inserting
+them into its ``interceptors`` ``list`` attribute. They are applied
+after the server-wide interceptors to every event handler defined in that
 ``Namespace`` object.
 
-There is also a decorator available to add a middleware to a specific
-handler only. Given the middleware class from above, it would be used
+There is also a decorator available to add a interceptor to a specific
+handler only. Given the interceptor class from above, it would be used
 as follows:
 
 ::
@@ -352,20 +355,20 @@ as follows:
     sio = socketio.server.Server()
 
     @sio.on("/foo")
-    @util.apply_middleware(MyMiddleware)
+    @util.apply_interceptor(MyInterceptor)
     def foo(sid, data):
         print("foo executed")
         return "foo executed"
 
 Middlewares added by the decorator are treated as if they were added
-*after* the server-wide and namespace-wide middlewares. Naturally,
+*after* the server-wide and namespace-wide interceptors. Naturally,
 decorators are applied from bottom to top. Hence the following will
 first add ``MW1`` and then ``MW2``.
 
 ::
 
-    @util.apply_middleware(MW2)
-    @util.apply_middleware(MW1)
+    @util.apply_interceptor(MW2)
+    @util.apply_interceptor(MW1)
     def foo(sid):
         # ...
 

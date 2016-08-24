@@ -8,6 +8,7 @@ if six.PY3:
 else:
     import mock
 
+from socketio import interceptor
 from socketio import namespace
 from socketio import packet
 from socketio import server
@@ -47,17 +48,20 @@ class TestServer(unittest.TestCase):
         self.assertEqual(s.handlers['/']['disconnect'], bar)
         self.assertEqual(s.handlers['/foo']['disconnect'], bar)
 
-    def test_middleware(self, eio):
-        class MW:
-            def __init__(self):
+    def test_interceptor(self, eio):
+        class MW(interceptor.Interceptor):
+            def __init__(self, *args, **kwargs):
+                super(MW, self).__init__(*args, **kwargs)
                 self.ignore_for = mock.MagicMock(side_effect=100 * [False])
                 self.before_event = mock.MagicMock(side_effect=100 * [None])
                 self.after_event = mock.MagicMock(side_effect=100 * [None])
 
-        mw1 = MW()
-        mw2 = MW()
-        mw3 = MW()
-        mw4 = MW()
+        s = server.Server()
+
+        mw1 = MW(s)
+        mw2 = MW(s)
+        mw3 = MW(s)
+        mw4 = MW(s)
         mw4.ignore_for = mock.MagicMock(side_effect=[True] + 100 * [False])
         mw4.before_event = mock.MagicMock(side_effect=['x'] + 100 * [None])
         mw4.after_event = mock.MagicMock(side_effect=['x'] + 100 * [None])
@@ -67,20 +71,19 @@ class TestServer(unittest.TestCase):
                 pass
 
             @namespace.Namespace.event_name('foo bar')
-            @util.apply_middleware(mw4)
+            @util.apply_interceptor(mw4)
             def some_name(self, sid):
                 pass
 
-        s = server.Server()
-        s.middlewares.append(mw1)
+        s.interceptors.append(mw1)
 
         @s.on('abc')
-        @util.apply_middleware(mw2)
+        @util.apply_interceptor(mw2)
         def abc(sid):
             pass
 
         ns = NS('/ns')
-        ns.middlewares.append(mw3)
+        ns.interceptors.append(mw3)
         s.register_namespace(ns)
 
         # only mw1 and mw3 should run completely
@@ -291,7 +294,7 @@ class TestServer(unittest.TestCase):
         mgr = mock.MagicMock()
         s = server.Server(client_manager=mgr)
         handler = mock.MagicMock(return_value=False)
-        del handler._sio_middlewares
+        del handler._sio_interceptors
         s.on('connect', handler)
         s._handle_eio_connect('123', 'environ')
         handler.assert_called_once_with('123', 'environ')
@@ -303,7 +306,7 @@ class TestServer(unittest.TestCase):
         mgr = mock.MagicMock()
         s = server.Server(client_manager=mgr)
         handler = mock.MagicMock(return_value=False)
-        del handler._sio_middlewares
+        del handler._sio_interceptors
         s.on('connect', handler, namespace='/foo')
         s._handle_eio_connect('123', 'environ')
         s._handle_eio_message('123', '0/foo')

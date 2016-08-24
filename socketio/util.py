@@ -1,16 +1,16 @@
-def apply_middleware(middleware):
+def apply_interceptor(interceptor):
     """Returns a decorator for event handlers that adds the given
-    middleware to the handler decorated with it.
+    interceptor to the handler decorated with it.
 
-    :param middleware: The middleware to add
+    :param interceptor: The interceptor to add
 
     Ensure that you only add well-behaving decorators after this one
     (meaning such that preserve attributes) because you'll loose them
     otherwise.
     """
     def wrapper(handler):
-        if not hasattr(handler, '_sio_middlewares'):
-            handler._sio_middlewares = []
-        handler._sio_middlewares.append(middleware)
+        if not hasattr(handler, '_sio_interceptors'):
+            handler._sio_interceptors = []
+        handler._sio_interceptors.append(interceptor)
         return handler
     return wrapper

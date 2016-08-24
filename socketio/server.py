@@ -80,7 +80,7 @@ class Server(object):
         self.environ = {}
         self.handlers = {}
         self.namespace_handlers = {}
-        self.middlewares = []
+        self.interceptors = []
 
         self._binary_packet = []
 
@@ -446,52 +446,49 @@ class Server(object):
     def _trigger_event(self, event, namespace, *args):
         """Invoke an application event handler."""
         handler = None
-        middlewares = list(self.middlewares)
+        interceptors = list(self.interceptors)
         # first see if we have an explicit handler for the event
         if namespace in self.handlers and event in self.handlers[namespace]:
             handler = self.handlers[namespace][event]
         elif namespace in self.namespace_handlers:
             ns = self.namespace_handlers[namespace]
-            middlewares.extend(ns.middlewares)
+            interceptors.extend(ns.interceptors)
             handler = ns._get_event_handler(event)
         if handler is not None:
-            middlewares.extend(getattr(handler, '_sio_middlewares', []))
-            handler = self._apply_middlewares(middlewares, event, namespace,
-                                              handler)
+            interceptors.extend(getattr(handler, '_sio_interceptors', []))
+            handler = self._apply_interceptors(interceptors, event, namespace,
+                                               handler)
             return handler(*args)
 
-    @staticmethod
-    def _apply_middlewares(middlewares, event, namespace, handler):
-        """Wraps the given handler with a wrapper that executes middlewares
+    def _apply_interceptors(self, interceptors, event, namespace, handler):
+        """Wraps the given handler with a wrapper that executes interceptors
         before and after the real event handler."""
 
-        _middlewares = []
-        for middleware in middlewares:
-            if isinstance(middleware, type):
-                middleware = middleware()
-            if not hasattr(middleware, 'ignore_for') or \
-               not middleware.ignore_for(event, namespace):
-                _middlewares.append(middleware)
-        if not _middlewares:
+        _interceptors = []
+        for interceptor in interceptors:
+            if isinstance(interceptor, type):
+                interceptor = interceptor(self)
+            if not interceptor.ignore_for(event, namespace):
+                _interceptors.append(interceptor)
+        if not _interceptors:
             return handler
 
         def wrapped(*args):
-            def handle_exception(middlewares_processed, exc):
-                for middleware in \
-                        reversed(_middlewares[:middlewares_processed]):
-                    if hasattr(middleware, 'handle_exception'):
-                        try:
-                            result = middleware.handle_exception(
-                                event, namespace, exc)
-                            # exception has been cought
-                            return middlewares_processed, result
-                        except Exception as e:
-                            exc = e
-                    middlewares_processed -= 1
+            def handle_exception(interceptors_processed, exc):
+                for interceptor in \
+                        reversed(_interceptors[:interceptors_processed]):
+                    try:
+                        result = interceptor.handle_exception(
+                            event, namespace, exc)
+                        # exception has been cought
+                        return interceptors_processed, result
+                    except Exception as e:
+                        exc = e
+                    interceptors_processed -= 1
                 if exc is not None:
-                    # Exception hasn't been cought by any middleware,
+                    # Exception hasn't been cought by any interceptor,
                     # hence we finally raise it.
-                    raise e
+                    raise exc
 
             def reformat_result(result):
                 if result is None:
@@ -502,46 +499,44 @@ class Server(object):
                     return [result]
 
             args = list(args)
-            middlewares_processed = 0
+            interceptors_processed = 0
             result = None
             try:
-                # apply before_event methods
-                for middleware in _middlewares:
-                    middlewares_processed += 1
-                    if hasattr(middleware, 'before_event'):
-                        result = middleware.before_event(
-                            event, namespace, args)
-                        if result is not None:
-                            break
-#                            return result
+                # Apply before_event methods.
+                for interceptor in _interceptors:
+                    interceptors_processed += 1
+                    result = interceptor.before_event(
+                        event, namespace, args)
+                    if result is not None:
+                        break
                 if result is None:
                     # call the real event handler
                     result = handler(*args)
             except Exception as exc:
-                middlewares_processed, result = \
-                    handle_exception(middlewares_processed, exc)
+                interceptors_processed, result = \
+                    handle_exception(interceptors_processed, exc)
 
             data = reformat_result(result)
 
-            while middlewares_processed > 0:
+            while interceptors_processed > 0:
                 try:
                     # In case there was an exception handled, we ensure
-                    # only the middlewares that are less-specific
+                    # only the interceptors that are less-specific
                     # than the one that cought the exception get
-                    # applied. More-specific middlewares should not be
+                    # applied. More-specific interceptors should not be
                     # aware of less-specific ones and thus not process
                     # the output of them.
-                    for middleware in \
-                            reversed(_middlewares[:middlewares_processed]):
-                        if hasattr(middleware, 'after_event'):
-                            result = middleware.after_event(
-                                event, namespace, data)
-                            if result is not None:
-                                return result
-                        middlewares_processed -= 1
+                    # Apply after_event methods.
+                    for interceptor in \
+                            reversed(_interceptors[:interceptors_processed]):
+                        result = interceptor.after_event(
+                            event, namespace, data)
+                        if result is not None:
+                            return result
+                        interceptors_processed -= 1
                 except Exception as exc:
-                    middlewares_processed, result = \
-                        handle_exception(middlewares_processed, exc)
+                    interceptors_processed, result = \
+                        handle_exception(interceptors_processed, exc)
                     data = reformat_result(result)
 
             return tuple(data)

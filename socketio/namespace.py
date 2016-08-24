@@ -13,7 +13,7 @@ class Namespace(object):
     def __init__(self, namespace=None):
         self.name = namespace or '/'
         self.server = None
-        self.middlewares = []
+        self.interceptors = []
 
     def _set_server(self, server):
         self.server = server
