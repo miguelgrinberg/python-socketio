@@ -469,34 +469,80 @@ class Server(object):
         for middleware in middlewares:
             if isinstance(middleware, type):
                 middleware = middleware()
-            if not hasattr(middleware, 'ignore_event') or \
-               not middleware.ignore_event(event, namespace):
+            if not hasattr(middleware, 'ignore_for') or \
+               not middleware.ignore_for(event, namespace):
                 _middlewares.append(middleware)
         if not _middlewares:
             return handler
 
         def wrapped(*args):
+            def handle_exception(middlewares_processed, exc):
+                for middleware in \
+                        reversed(_middlewares[:middlewares_processed]):
+                    if hasattr(middleware, 'handle_exception'):
+                        try:
+                            result = middleware.handle_exception(
+                                event, namespace, exc)
+                            # exception has been cought
+                            return middlewares_processed, result
+                        except Exception as e:
+                            exc = e
+                    middlewares_processed -= 1
+                if exc is not None:
+                    # Exception hasn't been cought by any middleware,
+                    # hence we finally raise it.
+                    raise e
+
+            def reformat_result(result):
+                if result is None:
+                    return []
+                elif isinstance(result, tuple):
+                    return list(result)
+                else:
+                    return [result]
+
             args = list(args)
+            middlewares_processed = 0
+            result = None
+            try:
+                # apply before_event methods
+                for middleware in _middlewares:
+                    middlewares_processed += 1
+                    if hasattr(middleware, 'before_event'):
+                        result = middleware.before_event(
+                            event, namespace, args)
+                        if result is not None:
+                            break
+#                            return result
+                if result is None:
+                    # call the real event handler
+                    result = handler(*args)
+            except Exception as exc:
+                middlewares_processed, result = \
+                    handle_exception(middlewares_processed, exc)
 
-            for middleware in _middlewares:
-                if hasattr(middleware, 'before_event'):
-                    result = middleware.before_event(event, namespace, args)
-                    if result is not None:
-                        return result
+            data = reformat_result(result)
 
-            result = handler(*args)
-            if result is None:
-                data = []
-            elif isinstance(result, tuple):
-                data = list(result)
-            else:
-                data = [result]
-
-            for middleware in reversed(_middlewares):
-                if hasattr(middleware, 'after_event'):
-                    result = middleware.after_event(event, namespace, data)
-                    if result is not None:
-                        return result
+            while middlewares_processed > 0:
+                try:
+                    # In case there was an exception handled, we ensure
+                    # only the middlewares that are less-specific
+                    # than the one that cought the exception get
+                    # applied. More-specific middlewares should not be
+                    # aware of less-specific ones and thus not process
+                    # the output of them.
+                    for middleware in \
+                            reversed(_middlewares[:middlewares_processed]):
+                        if hasattr(middleware, 'after_event'):
+                            result = middleware.after_event(
+                                event, namespace, data)
+                            if result is not None:
+                                return result
+                        middlewares_processed -= 1
+                except Exception as exc:
+                    middlewares_processed, result = \
+                        handle_exception(middlewares_processed, exc)
+                    data = reformat_result(result)
 
             return tuple(data)
 

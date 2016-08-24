@@ -265,18 +265,35 @@ subset of them:
 * ``after_event(*args)`` is called after the event handler with the
   event name, the namespace and the list of values the event handler
   returned. It may alter that values eventually.
-* ``ignore_event`` is called before the middleware is applied to an
+* ``handle_exception`` is called when an exception is raised during the
+  event handling process with the event name, namespace and the exception
+  object as its arguments. The exception could have been raised by either
+  the event handler itself, or the ``before_event`` and ``after_event``
+  methods of another middleware that comes later in the middleware chain
+  (one that is applied more-specifically).
+* ``ignore_for`` is called before the middleware is applied to an
   event handler with the event name and namespace as arguments. If its
-  return value resolves to ``True`` the middleware is not applied to that
-  particular event handler.
-
-If one of these methods returns something else than ``None``, execution
-is stopped at that point and the returned value is treated as if it was
-returned by the event handler.
+  return value resolves to ``True`` the middleware is ignored and not
+  applied to that particular event handler.
 
 Event handler middlewares can be chained. The ``before_event`` methods
 will be executed in the same order the middlewares were added, the
 ``after_event`` methods are called in reversed order.
+
+If the ``before_event`` method returns something else than ``None``,
+execution jumps to ``after_event`` of this middleware, passing the
+arguments the method returned to it and continues the regular processing
+from there by rippling up until the least specific middleware is reached.
+
+If an ``after_event`` method returns something else than ``None``,
+execution is stopped at that point and the returned value is used as
+the result of event handling.
+
+``handle_exception``, if present, must either handle the given exception
+and return something that will be treated as the event handling result
+and eventually be passed to the ``after_event`` method of less-specific
+middlewares or re-raise the exception (or another one,
+at their choice).
 
 Note that you can also use classes (objects of type ``type``) instead
 of instances as event handler middlewares. If you do so, they are
@@ -290,10 +307,13 @@ Example:
     from socketio import server
 
     class MyMiddleware(object):
-        def ignore_event(self, event, namespace):
+        def ignore_for(self, event, namespace):
             # This middleware won't be applied to connect and disconnect
             # event handlers.
             return event in ("connect", "disconnect")
+
+        def handle_exception(self, event, namespace, e):
+            return "Exception: %r" % e
 
         def before_event(self, event, namespace, args):
             print("before_event called with:", args)
