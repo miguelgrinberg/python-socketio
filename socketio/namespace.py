@@ -14,6 +14,7 @@ class Namespace(object):
         self.name = namespace or '/'
         self.server = None
         self.interceptors = []
+        self.ignore_interceptors = []
 
     def _set_server(self, server):
         self.server = server

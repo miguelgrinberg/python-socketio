@@ -452,9 +452,17 @@ class Server(object):
             handler = self.handlers[namespace][event]
         elif namespace in self.namespace_handlers:
             ns = self.namespace_handlers[namespace]
-            interceptors.extend(ns.interceptors)
             handler = ns._get_event_handler(event)
+            if handler is not None:
+                for interceptor in ns.ignore_interceptors:
+                    while interceptor in interceptors:
+                        interceptors.remove(interceptor)
+            interceptors.extend(ns.interceptors)
         if handler is not None:
+            for interceptor in getattr(
+                    handler, '_sio_ignore_interceptors', []):
+                while interceptor in interceptors:
+                    interceptors.remove(interceptor)
             interceptors.extend(getattr(handler, '_sio_interceptors', []))
             handler = self._apply_interceptors(interceptors, event, namespace,
                                                handler)
@@ -504,11 +512,11 @@ class Server(object):
             try:
                 # Apply before_event methods.
                 for interceptor in _interceptors:
-                    interceptors_processed += 1
                     result = interceptor.before_event(
                         event, namespace, args)
                     if result is not None:
                         break
+                    interceptors_processed += 1
                 if result is None:
                     # call the real event handler
                     result = handler(*args)

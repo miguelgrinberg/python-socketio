@@ -62,7 +62,6 @@ class TestServer(unittest.TestCase):
         mw2 = MW(s)
         mw3 = MW(s)
         mw4 = MW(s)
-        mw4.ignore_for = mock.MagicMock(side_effect=[True] + 100 * [False])
         mw4.before_event = mock.MagicMock(side_effect=['x'] + 100 * [None])
         mw4.after_event = mock.MagicMock(side_effect=['x'] + 100 * [None])
 
@@ -72,6 +71,7 @@ class TestServer(unittest.TestCase):
 
             @namespace.Namespace.event_name('foo bar')
             @util.apply_interceptor(mw4)
+            @util.ignore_interceptor(mw3)
             def some_name(self, sid):
                 pass
 
@@ -97,37 +97,39 @@ class TestServer(unittest.TestCase):
         self.assertEqual(mw4.before_event.call_count, 0)
         self.assertEqual(mw4.after_event.call_count, 0)
 
-        # only mw1 and mw3 should run completely, mw4 is enabled but ignored
+        # only mw1 and mw4 should run, mw3 is ignored and mw4
+        # before_event returns "x" and starts after_event processing.
         s._trigger_event('foo bar', '/ns', '123')
         self.assertEqual(mw1.before_event.call_count, 2)
         self.assertEqual(mw1.after_event.call_count, 2)
         self.assertEqual(mw2.before_event.call_count, 0)
         self.assertEqual(mw2.after_event.call_count, 0)
-        self.assertEqual(mw3.before_event.call_count, 2)
-        self.assertEqual(mw3.after_event.call_count, 2)
-        self.assertEqual(mw4.before_event.call_count, 0)
+        self.assertEqual(mw3.before_event.call_count, 1)
+        self.assertEqual(mw3.after_event.call_count, 1)
+        self.assertEqual(mw4.before_event.call_count, 1)
         self.assertEqual(mw4.after_event.call_count, 0)
 
-        # again, this time mw4 before + after should be triggered as well
+        # again, this time mw4 after should be triggered as well and abort
+        # ing "x"
         s._trigger_event('foo bar', '/ns', '123')
         self.assertEqual(mw1.before_event.call_count, 3)
         self.assertEqual(mw1.after_event.call_count, 2)
         self.assertEqual(mw2.before_event.call_count, 0)
         self.assertEqual(mw2.after_event.call_count, 0)
-        self.assertEqual(mw3.before_event.call_count, 3)
-        self.assertEqual(mw3.after_event.call_count, 2)
-        self.assertEqual(mw4.before_event.call_count, 1)
+        self.assertEqual(mw3.before_event.call_count, 1)
+        self.assertEqual(mw3.after_event.call_count, 1)
+        self.assertEqual(mw4.before_event.call_count, 2)
         self.assertEqual(mw4.after_event.call_count, 1)
 
-        # again, this time mw4 before + after_event should be triggered
+        # again, this time mw1 and mw4 should run completely
         s._trigger_event('foo bar', '/ns', '123')
         self.assertEqual(mw1.before_event.call_count, 4)
         self.assertEqual(mw1.after_event.call_count, 3)
         self.assertEqual(mw2.before_event.call_count, 0)
         self.assertEqual(mw2.after_event.call_count, 0)
-        self.assertEqual(mw3.before_event.call_count, 4)
-        self.assertEqual(mw3.after_event.call_count, 3)
-        self.assertEqual(mw4.before_event.call_count, 2)
+        self.assertEqual(mw3.before_event.call_count, 1)
+        self.assertEqual(mw3.after_event.call_count, 1)
+        self.assertEqual(mw4.before_event.call_count, 3)
         self.assertEqual(mw4.after_event.call_count, 2)
 
         # only mw1 and mw2 should run completely
@@ -136,9 +138,9 @@ class TestServer(unittest.TestCase):
         self.assertEqual(mw1.after_event.call_count, 4)
         self.assertEqual(mw2.before_event.call_count, 1)
         self.assertEqual(mw2.after_event.call_count, 1)
-        self.assertEqual(mw3.before_event.call_count, 4)
-        self.assertEqual(mw3.after_event.call_count, 3)
-        self.assertEqual(mw4.before_event.call_count, 2)
+        self.assertEqual(mw3.before_event.call_count, 1)
+        self.assertEqual(mw3.after_event.call_count, 1)
+        self.assertEqual(mw4.before_event.call_count, 3)
         self.assertEqual(mw4.after_event.call_count, 2)
 
     def test_on_bad_event_name(self, eio):

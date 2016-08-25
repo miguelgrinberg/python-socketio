@@ -252,6 +252,9 @@ instance includes versions of several of the methods in the
 :class:`socketio.Server` class that default to the proper namespace when the
 ``namespace`` argument is not given.
 
+Note: if an event has a handler in a class-based namespace, and also a
+decorator-based function handler, the standalone function handler is invoked.
+
 Event handler interceptors
 --------------------------
 
@@ -307,9 +310,9 @@ Example:
 
 ::
 
-    from socketio import interceptor, server
+    import socketio
 
-    class MyInterceptor(interceptor.Interceptor):
+    class MyInterceptor(socketio.Interceptor):
         def ignore_for(self, event, namespace):
             # This interceptor won't be applied to connect and disconnect
             # event handlers.
@@ -326,7 +329,7 @@ Example:
         def after_event(self, event, namespace, args):
             args[0] = "I faked the response!"
 
-    sio = socketio.server.Server()
+    sio = socketio.Server()
 
     @sio.on("/foo")
     def foo(sid, data):
@@ -342,7 +345,10 @@ handlers.
 Interceptors can be added to a ``Namespace`` object as well by inserting
 them into its ``interceptors`` ``list`` attribute. They are applied
 after the server-wide interceptors to every event handler defined in that
-``Namespace`` object.
+``Namespace`` object. By adding interceptors to a namespace's
+``ignore_middleware`` ``list`` attribute, you can remove interceptors
+that have been added server-wide for that particular namespace. The
+order in wich interceptors are added to the ignore list doesn't matter.
 
 There is also a decorator available to add a interceptor to a specific
 handler only. Given the interceptor class from above, it would be used
@@ -350,30 +356,28 @@ as follows:
 
 ::
 
-    from socketio import util
-
-    sio = socketio.server.Server()
-
     @sio.on("/foo")
-    @util.apply_interceptor(MyInterceptor)
+    @socketio.apply_interceptor(MyInterceptor)
     def foo(sid, data):
         print("foo executed")
         return "foo executed"
 
-Middlewares added by the decorator are treated as if they were added
+Interceptors added by the decorator are treated as if they were added
 *after* the server-wide and namespace-wide interceptors. Naturally,
 decorators are applied from bottom to top. Hence the following will
 first add ``MW1`` and then ``MW2``.
 
 ::
 
-    @util.apply_interceptor(MW2)
-    @util.apply_interceptor(MW1)
+    @socketio.apply_interceptor(MW2)
+    @socketio.apply_interceptor(MW1)
     def foo(sid):
         # ...
 
-Note: if an event has a handler in a class-based namespace, and also a
-decorator-based function handler, the standalone function handler is invoked.
+A ``socketio.ignore_middleware`` decorator is available as well. By
+decorating an event handler with it, you can remove interceptors that
+have been added server-wide or namespace-wide for that particular event
+handler. The order this decorator is applied in doesn't matter.
 
 Using a Message Queue
 ---------------------
