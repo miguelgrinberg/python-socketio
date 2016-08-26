@@ -30,6 +30,9 @@ class Server(object):
                  packets. Custom json modules must have ``dumps`` and ``loads``
                  functions that are compatible with the standard library
                  versions.
+    :param async_handlers: If set to ``True``, event handlers are executed in
+                           separate threads. To run handlers synchronously,
+                           set to ``False``. The default is ``False``.
     :param kwargs: Connection parameters for the underlying Engine.IO server.
 
     The Engine.IO configuration supports the following settings:
@@ -62,7 +65,7 @@ class Server(object):
                             ``False``.
     """
     def __init__(self, client_manager=None, logger=False, binary=False,
-                 json=None, **kwargs):
+                 json=None, async_handlers=False, **kwargs):
         engineio_options = kwargs
         engineio_logger = engineio_options.pop('engineio_logger', None)
         if engineio_logger is not None:
@@ -70,6 +73,7 @@ class Server(object):
         if json is not None:
             packet.Packet.json = json
             engineio_options['json'] = json
+        engineio_options['async_handlers'] = False
         self.eio = engineio.Server(**engineio_options)
         self.eio.on('connect', self._handle_eio_connect)
         self.eio.on('message', self._handle_eio_message)
@@ -98,6 +102,8 @@ class Server(object):
             client_manager = base_manager.BaseManager()
         self.manager = client_manager
         self.manager_initialized = False
+
+        self.async_handlers = async_handlers
 
         self.async_mode = self.eio.async_mode
 
@@ -412,7 +418,14 @@ class Server(object):
         namespace = namespace or '/'
         self.logger.info('received event "%s" from %s [%s]', data[0], sid,
                          namespace)
-        r = self._trigger_event(data[0], namespace, sid, *data[1:])
+        if self.async_handlers:
+            self.start_background_task(self._handle_event_internal, self, sid,
+                                       data, namespace, id)
+        else:
+            self._handle_event_internal(self, sid, data, namespace, id)
+
+    def _handle_event_internal(self, server, sid, data, namespace, id):
+        r = server._trigger_event(data[0], namespace, sid, *data[1:])
         if id is not None:
             # send ACK packet with the response returned by the handler
             # tuples are expanded as multiple arguments
@@ -426,10 +439,10 @@ class Server(object):
                 binary = False  # pragma: nocover
             else:
                 binary = None
-            self._send_packet(sid, packet.Packet(packet.ACK,
-                                                 namespace=namespace,
-                                                 id=id, data=data,
-                                                 binary=binary))
+            server._send_packet(sid, packet.Packet(packet.ACK,
+                                                   namespace=namespace,
+                                                   id=id, data=data,
+                                                   binary=binary))
 
     def _handle_ack(self, sid, namespace, id, data):
         """Handle ACK packets from the client."""
