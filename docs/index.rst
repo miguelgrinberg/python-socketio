@@ -428,6 +428,29 @@ functions in the standard library with equivalent asynchronous versions. While
 python-socketio does not require monkey patching, other libraries such as
 database drivers are likely to require it.
 
+Gevent with uWSGI
+~~~~~~~~~~~~~~~~~
+
+When using the uWSGI server in combination with gevent, the Socket.IO server
+can take advantage of uWSGI's native WebSocket support.
+
+Instances of class ``socketio.Server`` will automatically use this option for
+asynchronous operations if both gevent and uWSGI are installed and eventlet is
+not installed. To request this asynchoronous mode explicitly, the
+``async_mode`` option can be given in the constructor::
+
+    # gevent with uWSGI
+    sio = socketio.Server(async_mode='gevent_uwsgi')
+
+A complete explanation of the configuration and usage of the uWSGI server is
+beyond the scope of this documentation. The uWSGI server is a fairly complex
+package that provides a large and comprehensive set of options. It must be
+compiled with WebSocket and SSL support for the WebSocket transport to be
+available. As way of an introduction, the following command starts a uWSGI
+server for the ``latency.py`` example on port 5000::
+
+    $ uwsgi --http :5000 --gevent 1000 --http-websockets --master --wsgi-file latency.py --callable app
+
 Standard Threading Library
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
