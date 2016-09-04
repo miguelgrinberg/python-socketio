@@ -4,15 +4,19 @@ python-socketio
 
 Socket.IO server.
 """
+import re
 from setuptools import setup
 
+with open('socketio/__init__.py', 'r') as f:
+    version = re.search(r'^__version__\s*=\s*[\'"]([^\'"]*)[\'"]',
+                        f.read(), re.MULTILINE).group(1)
 
 with open('README.rst', 'r') as f:
     long_description = f.read()
 
 setup(
     name='python-socketio',
-    version='1.5.0',
+    version=version,
     url='http://github.com/miguelgrinberg/python-socketio/',
     license='MIT',
     author='Miguel Grinberg',
