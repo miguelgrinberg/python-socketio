@@ -389,6 +389,23 @@ class TestServer(unittest.TestCase):
         s.disconnect('123', namespace='/foo')
         s.eio.send.assert_any_call('123', '1/foo', binary=False)
 
+    def test_disconnect_twice(self, eio):
+        s = server.Server()
+        s._handle_eio_connect('123', 'environ')
+        s.disconnect('123')
+        calls = s.eio.send.call_count
+        s.disconnect('123')
+        self.assertEqual(calls, s.eio.send.call_count)
+
+    def test_disconnect_twice_namespace(self, eio):
+        s = server.Server()
+        s._handle_eio_connect('123', 'environ')
+        s._handle_eio_message('123', '0/foo')
+        s.disconnect('123', namespace='/foo')
+        calls = s.eio.send.call_count
+        s.disconnect('123', namespace='/foo')
+        self.assertEqual(calls, s.eio.send.call_count)
+
     def test_namespace_handler(self, eio):
         result = {}
 

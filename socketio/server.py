@@ -296,11 +296,12 @@ class Server(object):
                           argument is omitted the default namespace is used.
         """
         namespace = namespace or '/'
-        self.logger.info('Disconnecting %s [%s]', sid, namespace)
-        self._send_packet(sid, packet.Packet(packet.DISCONNECT,
-                                             namespace=namespace))
-        self._trigger_event('disconnect', namespace, sid)
-        self.manager.disconnect(sid, namespace=namespace)
+        if self.manager.is_connected(sid, namespace=namespace):
+            self.logger.info('Disconnecting %s [%s]', sid, namespace)
+            self._send_packet(sid, packet.Packet(packet.DISCONNECT,
+                                                 namespace=namespace))
+            self._trigger_event('disconnect', namespace, sid)
+            self.manager.disconnect(sid, namespace=namespace)
 
     def transport(self, sid):
         """Return the name of the transport used by the client.
