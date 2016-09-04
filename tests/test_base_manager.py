@@ -24,6 +24,20 @@ class TestBaseManager(unittest.TestCase):
         self.assertEqual(self.bm.rooms['/foo'], {None: {'123': True},
                                                  '123': {'123': True}})
 
+    def test_pre_disconnect(self):
+        self.bm.connect('123', '/foo')
+        self.bm.connect('456', '/foo')
+        self.bm.pre_disconnect('123', '/foo')
+        self.assertEqual(self.bm.pending_disconnect, {'/foo': ['123']})
+        self.assertFalse(self.bm.is_connected('123', '/foo'))
+        self.bm.pre_disconnect('456', '/foo')
+        self.assertEqual(self.bm.pending_disconnect, {'/foo': ['123', '456']})
+        self.assertFalse(self.bm.is_connected('456', '/foo'))
+        self.bm.disconnect('123', '/foo')
+        self.assertEqual(self.bm.pending_disconnect, {'/foo': ['456']})
+        self.bm.disconnect('456', '/foo')
+        self.assertEqual(self.bm.pending_disconnect, {})
+
     def test_disconnect(self):
         self.bm.connect('123', '/foo')
         self.bm.connect('456', '/foo')
