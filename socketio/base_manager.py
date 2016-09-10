@@ -16,6 +16,7 @@ class BaseManager(object):
         self.server = None
         self.rooms = {}
         self.callbacks = {}
+        self.pending_disconnect = {}
 
     def initialize(self, server):
         self.server = server
@@ -35,10 +36,25 @@ class BaseManager(object):
         self.enter_room(sid, namespace, sid)
 
     def is_connected(self, sid, namespace):
+        if namespace in self.pending_disconnect and \
+                sid in self.pending_disconnect[namespace]:
+            # the client is in the process of being disconnected
+            return False
         try:
             return self.rooms[namespace][None][sid]
         except KeyError:
             pass
+
+    def pre_disconnect(self, sid, namespace):
+        """Put the client in the to-be-disconnected list.
+
+        This allows the client data structures to be present while the
+        disconnect handler is invoked, but still recognize the fact that the
+        client is soon going away.
+        """
+        if namespace not in self.pending_disconnect:
+            self.pending_disconnect[namespace] = []
+        self.pending_disconnect[namespace].append(sid)
 
     def disconnect(self, sid, namespace):
         """Register a client disconnect from a namespace."""
@@ -52,6 +68,11 @@ class BaseManager(object):
             del self.callbacks[sid][namespace]
             if len(self.callbacks[sid]) == 0:
                 del self.callbacks[sid]
+        if namespace in self.pending_disconnect and \
+                sid in self.pending_disconnect[namespace]:
+            self.pending_disconnect[namespace].remove(sid)
+            if len(self.pending_disconnect[namespace]) == 0:
+                del self.pending_disconnect[namespace]
 
     def enter_room(self, sid, namespace, room):
         """Add a client to a room."""

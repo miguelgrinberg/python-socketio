@@ -1,10 +1,10 @@
-from flask import Flask, render_template
-
-import socketio
-
-# set async_mode to 'threading', 'eventlet' or 'gevent' to force a mode
-# else, the best mode is selected automatically from what's installed
+# set async_mode to 'threading', 'eventlet', 'gevent' or 'gevent_uwsgi' to
+# force a mode else, the best mode is selected automatically from what's
+# installed
 async_mode = None
+
+from flask import Flask, render_template
+import socketio
 
 sio = socketio.Server(async_mode=async_mode)
 app = Flask(__name__)
@@ -43,5 +43,9 @@ if __name__ == '__main__':
                               handler_class=WebSocketHandler).serve_forever()
         else:
             pywsgi.WSGIServer(('', 5000), app).serve_forever()
+    elif sio.async_mode == 'gevent_uwsgi':
+        print('Start the application through the uwsgi server. Example:')
+        print('uwsgi --http :5000 --gevent 1000 --http-websockets --master '
+              '--wsgi-file latency.py --callable app')
     else:
         print('Unknown async_mode: ' + sio.async_mode)

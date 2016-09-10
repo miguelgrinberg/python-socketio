@@ -23,13 +23,15 @@ class TestServer(unittest.TestCase):
 
     def test_create(self, eio):
         mgr = mock.MagicMock()
-        s = server.Server(client_manager=mgr, binary=True, foo='bar')
+        s = server.Server(client_manager=mgr, binary=True,
+                          async_handlers=True, foo='bar')
         s.handle_request({}, None)
         s.handle_request({}, None)
-        eio.assert_called_once_with(**{'foo': 'bar'})
+        eio.assert_called_once_with(**{'foo': 'bar', 'async_handlers': False})
         self.assertEqual(s.manager, mgr)
         self.assertEqual(s.eio.on.call_count, 3)
         self.assertEqual(s.binary, True)
+        self.assertEqual(s.async_handlers, True)
         self.assertEqual(mgr.initialize.call_count, 1)
 
     def test_on_event(self, eio):
@@ -486,6 +488,23 @@ class TestServer(unittest.TestCase):
         s.disconnect('123', namespace='/foo')
         s.eio.send.assert_any_call('123', '1/foo', binary=False)
 
+    def test_disconnect_twice(self, eio):
+        s = server.Server()
+        s._handle_eio_connect('123', 'environ')
+        s.disconnect('123')
+        calls = s.eio.send.call_count
+        s.disconnect('123')
+        self.assertEqual(calls, s.eio.send.call_count)
+
+    def test_disconnect_twice_namespace(self, eio):
+        s = server.Server()
+        s._handle_eio_connect('123', 'environ')
+        s._handle_eio_message('123', '0/foo')
+        s.disconnect('123', namespace='/foo')
+        calls = s.eio.send.call_count
+        s.disconnect('123', namespace='/foo')
+        self.assertEqual(calls, s.eio.send.call_count)
+
     def test_namespace_handler(self, eio):
         result = {}
 
@@ -527,6 +546,8 @@ class TestServer(unittest.TestCase):
         self.assertRaises(ValueError, s.register_namespace, 123)
         self.assertRaises(ValueError, s.register_namespace, Dummy)
         self.assertRaises(ValueError, s.register_namespace, Dummy())
+        self.assertRaises(ValueError, s.register_namespace,
+                          namespace.Namespace)
 
     def test_logger(self, eio):
         s = server.Server(logger=False)
@@ -543,7 +564,8 @@ class TestServer(unittest.TestCase):
 
     def test_engineio_logger(self, eio):
         server.Server(engineio_logger='foo')
-        eio.assert_called_once_with(**{'logger': 'foo'})
+        eio.assert_called_once_with(**{'logger': 'foo',
+                                       'async_handlers': False})
 
     def test_custom_json(self, eio):
         # Warning: this test cannot run in parallel with other tests, as it
@@ -559,7 +581,8 @@ class TestServer(unittest.TestCase):
                 return '+++ decoded +++'
 
         server.Server(json=CustomJSON)
-        eio.assert_called_once_with(**{'json': CustomJSON})
+        eio.assert_called_once_with(**{'json': CustomJSON,
+                                       'async_handlers': False})
 
         pkt = packet.Packet(packet_type=packet.EVENT,
                             data={six.text_type('foo'): six.text_type('bar')})
@@ -569,6 +592,13 @@ class TestServer(unittest.TestCase):
 
         # restore the default JSON module
         packet.Packet.json = json
+
+    def test_async_handlers(self, eio):
+        s = server.Server(async_handlers=True)
+        s._handle_eio_message('123', '2["my message","a","b","c"]')
+        s.eio.start_background_task.assert_called_once_with(
+            s._handle_event_internal, s, '123', ['my message', 'a', 'b', 'c'],
+            '/', None)
 
     def test_start_background_task(self, eio):
         s = server.Server()
