@@ -50,7 +50,8 @@ class KombuManager(PubSubManager):  # pragma: no cover
 
     def _queue(self, conn=None):
         exchange = kombu.Exchange(self.channel, type='fanout', durable=False)
-        queue = kombu.Queue(str(uuid.uuid4()), exchange)
+        queue = kombu.Queue(str(uuid.uuid4()), exchange,
+                            queue_arguments={'x-expires': 300000})
         return queue
 
     def _publish(self, data):
