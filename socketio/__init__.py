@@ -8,7 +8,7 @@ from .redis_manager import RedisManager
 from .server import Server
 from .util import apply_interceptor, ignore_interceptor
 
-__version__ = '1.5.1'
+__version__ = '1.6.0'
 
 __all__ = [__version__, Interceptor, Middleware, Namespace, Server,
            BaseManager, PubSubManager, KombuManager, RedisManager,
