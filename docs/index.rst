@@ -313,7 +313,7 @@ pub/sub functionality::
     mgr = socketio.RedisManager('redis://')
     sio = socketio.Server(client_manager=mgr)
 
-If multiple Sokcet.IO servers are connected to a message queue, they
+If multiple Socket.IO servers are connected to a message queue, they
 automatically communicate with each other and manage a combined client list,
 without any need for additional configuration. To have a process other than
 a server connect to the queue to emit a message, the same ``KombuManager``
