@@ -177,7 +177,7 @@ class Server(object):
             namespace_handler
 
     def emit(self, event, data=None, room=None, skip_sid=None, namespace=None,
-             callback=None):
+             callback=None, **kwargs):
         """Emit a custom event to one or more connected clients.
 
         :param event: The event name. It can be any string. The event names
@@ -202,14 +202,22 @@ class Server(object):
                          that will be passed to the function are those provided
                          by the client. Callback functions can only be used
                          when addressing an individual client.
+        :param ignore_queue: Only used when a message queue is configured. If
+                             set to ``True``, the event is emitted to the
+                             clients directly, without going through the queue.
+                             This is more efficient, but only works when a
+                             single server process is used. It is recommended
+                             to always leave this parameter with its default
+                             value of ``False``.
         """
         namespace = namespace or '/'
         self.logger.info('emitting event "%s" to %s [%s]', event,
                          room or 'all', namespace)
-        self.manager.emit(event, data, namespace, room, skip_sid, callback)
+        self.manager.emit(event, data, namespace, room, skip_sid, callback,
+                          **kwargs)
 
     def send(self, data, room=None, skip_sid=None, namespace=None,
-             callback=None):
+             callback=None, **kwargs):
         """Send a message to one or more connected clients.
 
         This function emits an event with the name ``'message'``. Use
@@ -234,8 +242,16 @@ class Server(object):
                          that will be passed to the function are those provided
                          by the client. Callback functions can only be used
                          when addressing an individual client.
+        :param ignore_queue: Only used when a message queue is configured. If
+                             set to ``True``, the event is emitted to the
+                             clients directly, without going through the queue.
+                             This is more efficient, but only works when a
+                             single server process is used. It is recommended
+                             to always leave this parameter with its default
+                             value of ``False``.
         """
-        self.emit('message', data, room, skip_sid, namespace, callback)
+        self.emit('message', data, room, skip_sid, namespace, callback,
+                  **kwargs)
 
     def enter_room(self, sid, room, namespace=None):
         """Enter a room.
