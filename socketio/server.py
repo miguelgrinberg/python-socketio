@@ -7,6 +7,8 @@ from . import base_manager
 from . import packet
 from . import namespace
 
+default_logger = logging.getLogger('socketio')
+
 
 class Server(object):
     """A Socket.IO server.
@@ -92,7 +94,7 @@ class Server(object):
         if not isinstance(logger, bool):
             self.logger = logger
         else:
-            self.logger = logging.getLogger('socketio')
+            self.logger = default_logger
             if not logging.root.handlers and \
                     self.logger.level == logging.NOTSET:
                 if logger:
