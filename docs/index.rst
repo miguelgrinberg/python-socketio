@@ -244,8 +244,14 @@ instance includes versions of several of the methods in the
 :class:`socketio.Server` class that default to the proper namespace when the
 ``namespace`` argument is not given.
 
-Note: if an event has a handler in a class-based namespace, and also a
-decorator-based function handler, the standalone function handler is invoked.
+In the case that an event has a handler in a class-based namespace, and also a
+decorator-based function handler, only the standalone function handler is
+invoked.
+
+It is important to note that class-based namespaces are singletons. This means
+that a single instance of a namespace class is used for all clients, and
+consequently, a namespace instance cannot be used to store client specific
+information.
 
 Using a Message Queue
 ---------------------
