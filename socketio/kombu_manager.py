@@ -47,6 +47,20 @@ class KombuManager(PubSubManager):  # pragma: no cover
         self.url = url
         self.producer = self._producer()
 
+    def initialize(self, server):
+        super(KombuManager, self).initialize(server)
+
+        monkey_patched = True
+        if server.async_mode == 'eventlet':
+            from eventlet.patcher import is_monkey_patched
+            monkey_patched = is_monkey_patched('socket')
+        elif 'gevent' in server.async_mode:
+            from gevent.monkey import is_module_patched
+            monkey_patched = is_module_patched('socket')
+        if not monkey_patched:
+            raise RuntimeError('Redis requires a monkey patched socket '
+                               'library to work with ' + server.async_mode)
+
     def _connection(self):
         return kombu.Connection(self.url)
 
