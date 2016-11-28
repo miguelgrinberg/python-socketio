@@ -113,7 +113,7 @@ class BaseManager(object):
         return r
 
     def emit(self, event, data, namespace, room=None, skip_sid=None,
-             callback=None):
+             callback=None, **kwargs):
         """Emit a message to a single client, a room, or all the clients
         connected to the namespace."""
         if namespace not in self.rooms or room not in self.rooms[namespace]:

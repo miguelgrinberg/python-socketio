@@ -252,8 +252,14 @@ instance includes versions of several of the methods in the
 :class:`socketio.Server` class that default to the proper namespace when the
 ``namespace`` argument is not given.
 
-Note: if an event has a handler in a class-based namespace, and also a
-decorator-based function handler, the standalone function handler is invoked.
+In the case that an event has a handler in a class-based namespace, and also a
+decorator-based function handler, only the standalone function handler is
+invoked.
+
+It is important to note that class-based namespaces are singletons. This means
+that a single instance of a namespace class is used for all clients, and
+consequently, a namespace instance cannot be used to store client specific
+information.
 
 Event handler interceptors
 --------------------------
@@ -445,7 +451,7 @@ pub/sub functionality::
     mgr = socketio.RedisManager('redis://')
     sio = socketio.Server(client_manager=mgr)
 
-If multiple Sokcet.IO servers are connected to a message queue, they
+If multiple Socket.IO servers are connected to a message queue, they
 automatically communicate with each other and manage a combined client list,
 without any need for additional configuration. To have a process other than
 a server connect to the queue to emit a message, the same ``KombuManager``

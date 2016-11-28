@@ -85,6 +85,14 @@ class TestBaseManager(unittest.TestCase):
             self.assertRaises(ValueError, self.pm.emit, 'foo', 'bar',
                               callback='cb')
 
+    def test_emit_with_ignore_queue(self):
+        self.pm.connect('123', '/')
+        self.pm.emit('foo', 'bar', room='123', namespace='/',
+                     ignore_queue=True)
+        self.pm._publish.assert_not_called()
+        self.pm.server._emit_internal.assert_called_once_with('123', 'foo',
+                                                              'bar', '/', None)
+
     def test_close_room(self):
         self.pm.close_room('foo')
         self.pm._publish.assert_called_once_with(
