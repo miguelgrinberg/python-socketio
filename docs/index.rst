@@ -204,14 +204,14 @@ as a pathname following the hostname and port. For example, connecting to
 *http://example.com:8000/chat* would open a connection to the namespace
 */chat*.
 
-Each namespace is handled independently from the others, with separate event
-handlers and rooms. It is important that applications that use multiple
-namespaces specify the correct namespace when setting up their event handlers
-and rooms, using the optional ``namespace`` argument available in all the
-methods in the :class:`socketio.Server` class.
+Each namespace is handled independently from the others, with separate session
+IDs (``sid``s), event handlers and rooms. It is important that applications
+that use multiple namespaces specify the correct namespace when setting up
+their event handlers and rooms, using the optional ``namespace`` argument
+available in all the methods in the :class:`socketio.Server` class.
 
-When the ``namespace`` argument is omitted, set to ``None`` or to ``'/'``, the
-default namespace, representing the physical connection, is used.
+When the ``namespace`` argument is omitted, set to ``None`` or to ``'/'``, a
+default namespace is used.
 
 Class-Based Namespaces
 ----------------------
