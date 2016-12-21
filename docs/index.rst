@@ -211,7 +211,7 @@ their event handlers and rooms, using the optional ``namespace`` argument
 available in all the methods in the :class:`socketio.Server` class.
 
 When the ``namespace`` argument is omitted, set to ``None`` or to ``'/'``, the
-default namespace, representing the physical connection, is used.
+default namespace, is used.
 
 Class-Based Namespaces
 ----------------------
