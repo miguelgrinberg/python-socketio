@@ -89,7 +89,7 @@ class Server(object):
         self.handlers = {}
         self.namespace_handlers = {}
 
-        self._binary_packet = []
+        self._binary_packet = {}
 
         if not isinstance(logger, bool):
             self.logger = logger
@@ -491,10 +491,10 @@ class Server(object):
 
     def _handle_eio_message(self, sid, data):
         """Dispatch Engine.IO messages."""
-        if len(self._binary_packet):
-            pkt = self._binary_packet[0]
+        if sid in self._binary_packet:
+            pkt = self._binary_packet[sid]
             if pkt.add_attachment(data):
-                self._binary_packet.pop(0)
+                del self._binary_packet[sid]
                 if pkt.packet_type == packet.BINARY_EVENT:
                     self._handle_event(sid, pkt.namespace, pkt.id, pkt.data)
                 else:
@@ -511,7 +511,7 @@ class Server(object):
                 self._handle_ack(sid, pkt.namespace, pkt.id, pkt.data)
             elif pkt.packet_type == packet.BINARY_EVENT or \
                     pkt.packet_type == packet.BINARY_ACK:
-                self._binary_packet.append(pkt)
+                self._binary_packet[sid] = pkt
             elif pkt.packet_type == packet.ERROR:
                 raise ValueError('Unexpected ERROR packet.')
             else:
