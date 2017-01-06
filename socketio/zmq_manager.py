@@ -50,7 +50,7 @@ class ZmqManager(PubSubManager):  # pragma: no cover
     """
     name = 'zmq'
 
-    def __init__(self, url='tcp://localhost:5555+5556',
+    def __init__(self, url='zmq+tcp://localhost:5555+5556',
                  channel='socketio',
                  write_only=False):
         if zmq is None:
