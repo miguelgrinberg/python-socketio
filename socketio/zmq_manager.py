@@ -104,6 +104,7 @@ class ZmqManager(PubSubManager):  # pragma: no cover
             if isinstance(message, str):
                 message = pickle.loads(message)
             if isinstance(message, dict) and \
+                    message['type'] == 'message' and \
                     message['channel'] == self.channel and \
                     'data' in message:
                 yield message['data']
