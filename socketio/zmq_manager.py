@@ -102,7 +102,10 @@ class ZmqManager(PubSubManager):  # pragma: no cover
     def _listen(self):
         for message in self.zmq_listen():
             if isinstance(message, str):
-                message = pickle.loads(message)
+                try:
+                    message = pickle.loads(message)
+                except Exception:
+                    pass
             if isinstance(message, dict) and \
                     message['type'] == 'message' and \
                     message['channel'] == self.channel and \
