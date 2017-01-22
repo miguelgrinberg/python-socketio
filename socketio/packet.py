@@ -78,12 +78,21 @@ class Packet(object):
         self.namespace = None
         self.data = None
         ep = ep[1:]
-        dash = (ep + '-').find('-')
-        comma = (ep + ',').find(',')
         attachment_count = 0
-        if dash < comma:
-            attachment_count = int(ep[0:dash])
-            ep = ep[dash + 1:]
+        if ep and ep[0].isdigit():
+            # build number so it's either attachment count or id
+            ind = 0
+            ep_len = len(ep)
+            while ind < ep_len and ep[ind].isdigit():
+                ind += 1
+            num = int(ep[0:ind])
+            ep = ep[ind:]
+            if ep:
+                if ep[0] == '-':
+                    attachment_count = num
+                    ep = ep[1:]
+                else:
+                    self.id = num
         if ep and ep[0:1] == '/':
             sep = ep.find(',')
             if sep == -1:
