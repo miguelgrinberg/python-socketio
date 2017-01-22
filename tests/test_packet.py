@@ -106,6 +106,17 @@ class TestPacket(unittest.TestCase):
         self.assertEqual(pkt.namespace, '/bar')
         self.assertEqual(pkt.encode(), '2/bar')
 
+    def test_encode_namespace_with_hyphens(self):
+        pkt = packet.Packet(packet_type=packet.EVENT,
+                            data=[six.text_type('foo')], namespace='/b-a-r')
+        self.assertEqual(pkt.namespace, '/b-a-r')
+        self.assertEqual(pkt.encode(), '2/b-a-r,["foo"]')
+
+    def test_decode_namespace_with_hyphens(self):
+        pkt = packet.Packet(encoded_packet='2/b-a-r,["foo"]')
+        self.assertEqual(pkt.namespace, '/b-a-r')
+        self.assertEqual(pkt.encode(), '2/b-a-r,["foo"]')
+
     def test_encode_id(self):
         pkt = packet.Packet(packet_type=packet.EVENT,
                             data=[six.text_type('foo')], id=123)
