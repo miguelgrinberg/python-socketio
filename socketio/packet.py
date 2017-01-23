@@ -12,6 +12,16 @@ packet_names = ['CONNECT', 'DISCONNECT', 'EVENT', 'ACK', 'ERROR',
 class Packet(object):
     """Socket.IO packet."""
 
+    # the format of the Socket.IO packet is as follows:
+    #
+    # type: 1 byte, values 0-6
+    # num_attachments: ASCII encoded, only if num_attachments != 0
+    # '-': only if num_attachments != 0
+    # namespace: only if namespace != '/'
+    # ',': only if namespace and one of id and data are defined in this packet
+    # id: ASCII encoded, only if id is not None
+    # data: JSON dump of data payload
+
     json = _json
 
     def __init__(self, packet_type=EVENT, data=None, namespace=None, id=None,
@@ -79,9 +89,8 @@ class Packet(object):
         self.data = None
         ep = ep[1:]
         dash = (ep + '-').find('-')
-        comma = (ep + ',').find(',')
         attachment_count = 0
-        if dash < comma:
+        if ep[0:dash].isdigit():
             attachment_count = int(ep[0:dash])
             ep = ep[dash + 1:]
         if ep and ep[0:1] == '/':
