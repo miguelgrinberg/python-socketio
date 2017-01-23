@@ -48,10 +48,6 @@ class TestServer(unittest.TestCase):
         self.assertEqual(s.handlers['/']['disconnect'], bar)
         self.assertEqual(s.handlers['/foo']['disconnect'], bar)
 
-    def test_on_bad_event_name(self, eio):
-        s = server.Server()
-        self.assertRaises(ValueError, s.on, 'two-words')
-
     def test_emit(self, eio):
         mgr = mock.MagicMock()
         s = server.Server(client_manager=mgr)

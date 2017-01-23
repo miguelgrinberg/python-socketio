@@ -117,6 +117,17 @@ class TestPacket(unittest.TestCase):
         self.assertEqual(pkt.namespace, '/b-a-r')
         self.assertEqual(pkt.encode(), '2/b-a-r,["foo"]')
 
+    def test_encode_event_with_hyphens(self):
+        pkt = packet.Packet(packet_type=packet.EVENT,
+                            data=[six.text_type('f-o-o')])
+        self.assertEqual(pkt.namespace, None)
+        self.assertEqual(pkt.encode(), '2["f-o-o"]')
+
+    def test_decode_event_with_hyphens(self):
+        pkt = packet.Packet(encoded_packet='2["f-o-o"]')
+        self.assertEqual(pkt.namespace, None)
+        self.assertEqual(pkt.encode(), '2["f-o-o"]')
+
     def test_encode_id(self):
         pkt = packet.Packet(packet_type=packet.EVENT,
                             data=[six.text_type('foo')], id=123)
