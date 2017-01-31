@@ -1,9 +1,8 @@
-import time
 import pickle
 import re
 
 try:
-    import zmq
+    import eventlet.green.zmq as zmq
 except ImportError:
     zmq = None
 
@@ -92,12 +91,9 @@ class ZmqManager(PubSubManager):  # pragma: no cover
 
     def zmq_listen(self):
         while True:
-            try:
-                response = self.sub.recv(flags=zmq.NOBLOCK)
-                if response is not None:
-                    yield response
-            except zmq.Again:
-                time.sleep(0.5)
+            response = self.sub.recv()
+            if response is not None:
+                yield response
 
     def _listen(self):
         for message in self.zmq_listen():
