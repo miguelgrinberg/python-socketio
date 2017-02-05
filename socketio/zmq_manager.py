@@ -5,12 +5,16 @@ try:
     import eventlet.green.zmq as zmq
 except ImportError:
     zmq = None
+import six
 
 from .pubsub_manager import PubSubManager
 
 
 class ZmqManager(PubSubManager):  # pragma: no cover
     """zmq based client manager.
+
+    NOTE: this zmq implementation should be considered experimental at this
+    time. At this time, eventlet is required to use zmq.
 
     This class implements a zmq backend for event sharing across multiple
     processes. To use a zmq backend, initialize the :class:`Server` instance as
@@ -27,25 +31,20 @@ class ZmqManager(PubSubManager):  # pragma: no cover
                        default of ``False`` initializes the class for emitting
                        and receiving.
 
+    A zmq message broker must be running for the zmq_manager to work.
+    you can write your own or adapt one from the following simple broker
+    below::
 
-    N.B.
-    a zmq message broker must be running for the zmq_manager to work.
-    you can write your own or adapt one from the following simple broker below.
-    port numbers in the broker must match port numbers in connection string.
-    ``
-    import zmq
+        import zmq
 
-    receiver = zmq.Context().socket(zmq.PULL)
-    receiver.bind("tcp://*:5555")
+        receiver = zmq.Context().socket(zmq.PULL)
+        receiver.bind("tcp://*:5555")
 
-    publisher = zmq.Context().socket(zmq.PUB)
-    publisher.bind("tcp://*:5556")
+        publisher = zmq.Context().socket(zmq.PUB)
+        publisher.bind("tcp://*:5556")
 
-
-    while True:
-        publisher.send(receiver.recv())
-    ``
-
+        while True:
+            publisher.send(receiver.recv())
     """
     name = 'zmq'
 
@@ -97,7 +96,7 @@ class ZmqManager(PubSubManager):  # pragma: no cover
 
     def _listen(self):
         for message in self.zmq_listen():
-            if isinstance(message, str):
+            if isinstance(message, six.binary_type):
                 try:
                     message = pickle.loads(message)
                 except Exception:
