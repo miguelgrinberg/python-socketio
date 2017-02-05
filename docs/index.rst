@@ -131,7 +131,7 @@ that it will lose the ability to address individual clients.
     def enter_room(sid, data):
         sio.enter_room(sid, data['room'])
 
-    @sio.on('enter room')
+    @sio.on('leave room')
     def leave_room(sid, data):
         sio.leave_room(sid, data['room'])
 
