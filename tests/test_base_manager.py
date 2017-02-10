@@ -13,7 +13,8 @@ class TestBaseManager(unittest.TestCase):
     def setUp(self):
         mock_server = mock.MagicMock()
         self.bm = base_manager.BaseManager()
-        self.bm.initialize(mock_server)
+        self.bm.set_server(mock_server)
+        self.bm.initialize()
 
     def test_connect(self):
         self.bm.connect('123', '/foo')

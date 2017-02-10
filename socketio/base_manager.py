@@ -18,8 +18,14 @@ class BaseManager(object):
         self.callbacks = {}
         self.pending_disconnect = {}
 
-    def initialize(self, server):
+    def set_server(self, server):
         self.server = server
+
+    def initialize(self):
+        """Invoked before the first request is received. Subclasses can add
+        their initialization code here.
+        """
+        pass
 
     def get_namespaces(self):
         """Return an iterable with the active namespace names."""

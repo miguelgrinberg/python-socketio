@@ -16,7 +16,8 @@ class TestBaseManager(unittest.TestCase):
         mock_server = mock.MagicMock()
         self.pm = pubsub_manager.PubSubManager()
         self.pm._publish = mock.MagicMock()
-        self.pm.initialize(mock_server)
+        self.pm.set_server(mock_server)
+        self.pm.initialize()
 
     def test_default_init(self):
         self.assertEqual(self.pm.channel, 'socketio')
@@ -32,7 +33,8 @@ class TestBaseManager(unittest.TestCase):
     def test_write_only_init(self):
         mock_server = mock.MagicMock()
         pm = pubsub_manager.PubSubManager(write_only=True)
-        pm.initialize(mock_server)
+        pm.set_server(mock_server)
+        pm.initialize()
         self.assertEqual(pm.channel, 'socketio')
         self.assertEqual(len(pm.host_id), 32)
         self.assertEqual(pm.server.start_background_task.call_count, 0)

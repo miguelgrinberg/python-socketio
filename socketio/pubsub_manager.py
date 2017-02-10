@@ -30,8 +30,8 @@ class PubSubManager(BaseManager):
         self.write_only = write_only
         self.host_id = uuid.uuid4().hex
 
-    def initialize(self, server):
-        super(PubSubManager, self).initialize(server)
+    def initialize(self):
+        super(PubSubManager, self).initialize()
         if not self.write_only:
             self.thread = self.server.start_background_task(self._thread)
         self.server.logger.info(self.name + ' backend initialized.')

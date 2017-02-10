@@ -79,7 +79,7 @@ class Server(object):
             packet.Packet.json = json
             engineio_options['json'] = json
         engineio_options['async_handlers'] = False
-        self.eio = engineio.Server(**engineio_options)
+        self.eio = self._engineio_server_class()(**engineio_options)
         self.eio.on('connect', self._handle_eio_connect)
         self.eio.on('message', self._handle_eio_message)
         self.eio.on('disconnect', self._handle_eio_disconnect)
@@ -106,6 +106,7 @@ class Server(object):
         if client_manager is None:
             client_manager = base_manager.BaseManager()
         self.manager = client_manager
+        self.manager.set_server(self)
         self.manager_initialized = False
 
         self.async_handlers = async_handlers
@@ -346,7 +347,7 @@ class Server(object):
         """
         if not self.manager_initialized:
             self.manager_initialized = True
-            self.manager.initialize(self)
+            self.manager.initialize()
         return self.eio.handle_request(environ, start_response)
 
     def start_background_task(self, target, *args, **kwargs):
@@ -518,3 +519,6 @@ class Server(object):
     def _handle_eio_disconnect(self, sid):
         """Handle Engine.IO disconnect event."""
         self._handle_disconnect(sid, '/')
+
+    def _engineio_server_class(self):
+        return engineio.Server

@@ -40,5 +40,7 @@ venv*
 .eggs
 .ropeproject
 .idea
+.vscode
+tags
 htmlcov
 *.swp
