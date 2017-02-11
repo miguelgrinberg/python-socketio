@@ -18,9 +18,10 @@ Features
   Socket.IO specification.
 - Compatible with Python 2.7 and Python 3.3+.
 - Supports large number of clients even on modest hardware when used with an
-  asynchronous server based on `eventlet <http://eventlet.net/>`_ or
-  `gevent <http://gevent.org/>`_. For development and testing, any WSGI
-  complaint multi-threaded server can be used.
+  asynchronous server based on `asyncio <https://docs.python.org/3/library/asyncio.html>`_,
+  `eventlet <http://eventlet.net/>`_ or `gevent <http://gevent.org/>`_. For
+  development and testing, any WSGI complaint multi-threaded server can also be
+  used.
 - Includes a WSGI middleware that integrates Socket.IO traffic with standard
   WSGI applications.
 - Broadcasting of messages to all connected clients, or to subsets of them
@@ -40,8 +41,44 @@ Features
 Example
 -------
 
-The following application uses Flask to serve the HTML/Javascript to the
-client:
+The following eample application uses the `aiohttp <http://aiohttp.readthedocs.io/>`_
+framework for asyncio:
+
+.. code:: python
+
+    from aiohttp import web
+    import socketio
+
+    sio = socketio.AsyncServer()
+    app = web.Application()
+    sio.attach(app)
+
+    async def index(request):
+        """Serve the client-side application."""
+        with open('index.html') as f:
+            return web.Response(text=f.read(), content_type='text/html')
+
+    @sio.on('connect', namespace='/chat')
+    def connect(sid, environ):
+        print("connect ", sid)
+
+    @sio.on('chat message', namespace='/chat')
+    async def message(sid, data):
+        print("message ", data)
+        await sio.emit('reply', room=sid)
+
+    @sio.on('disconnect', namespace='/chat')
+    def disconnect(sid):
+        print('disconnect ', sid)
+
+    app.router.add_static('/static', 'static')
+    app.router.add_get('/', index)
+
+    if __name__ == '__main__':
+        web.run_app(app)
+
+And below is a similar example, using Flask to serve the client application.
+This example is compatible with Python 2.7 and Python 3.3+:
 
 .. code:: python
 
@@ -84,8 +121,5 @@ Resources
 -  `Documentation`_
 -  `PyPI`_
 
-.. _Socket.IO: https://github.com/Automattic/socket.io
-.. _socket.io-client: https://github.com/Automattic/socket.io-client
-.. _Eventlet: http://eventlet.net/
 .. _Documentation: http://pythonhosted.org/python-socketio
 .. _PyPI: https://pypi.python.org/pypi/python-socketio
