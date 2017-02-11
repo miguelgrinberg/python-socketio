@@ -30,7 +30,6 @@ class TestServer(unittest.TestCase):
         self.assertEqual(s.eio.on.call_count, 3)
         self.assertEqual(s.binary, True)
         self.assertEqual(s.async_handlers, True)
-        self.assertEqual(mgr.initialize.call_count, 1)
 
     def test_on_event(self, eio):
         s = server.Server()
@@ -180,6 +179,7 @@ class TestServer(unittest.TestCase):
         handler.assert_called_once_with('123', 'environ')
         s.manager.connect.assert_called_once_with('123', '/')
         s.eio.send.assert_called_once_with('123', '0', binary=False)
+        self.assertEqual(mgr.initialize.call_count, 1)
 
     def test_handle_connect_namespace(self, eio):
         mgr = mock.MagicMock()

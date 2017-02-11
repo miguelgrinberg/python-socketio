@@ -106,7 +106,7 @@ class AsyncServer(server.Server):
                              to always leave this parameter with its default
                              value of ``False``.
 
-        Note: this method is asynchronous.
+        Note: this method is a coroutine.
         """
         namespace = namespace or '/'
         self.logger.info('emitting event "%s" to %s [%s]', event,
@@ -148,7 +148,7 @@ class AsyncServer(server.Server):
                              to always leave this parameter with its default
                              value of ``False``.
 
-        Note: this method is asynchronous.
+        Note: this method is a coroutine.
         """
         await self.emit('message', data, room, skip_sid, namespace, callback,
                         **kwargs)
@@ -160,7 +160,7 @@ class AsyncServer(server.Server):
         :param namespace: The Socket.IO namespace to disconnect. If this
                           argument is omitted the default namespace is used.
 
-        Note: this method is asynchronous.
+        Note: this method is a coroutine.
         """
         namespace = namespace or '/'
         if self.manager.is_connected(sid, namespace=namespace):
@@ -185,18 +185,38 @@ class AsyncServer(server.Server):
         This function returns the HTTP response body to deliver to the client
         as a byte sequence.
 
-        Note: this method is asynchronous.
+        Note: this method is a coroutine.
         """
-        if not self.manager_initialized:
-            self.manager_initialized = True
-            self.manager.initialize()
         return await self.eio.handle_request(environ)
 
     def start_background_task(self, target, *args, **kwargs):
-        raise RuntimeError('Not implemented, use asyncio.')
+        """Start a background task using the appropriate async model.
 
-    def sleep(self, seconds=0):
-        raise RuntimeError('Not implemented, use asyncio.')
+        This is a utility function that applications can use to start a
+        background task using the method that is compatible with the
+        selected async mode.
+
+        :param target: the target function to execute. Must be a coroutine.
+        :param args: arguments to pass to the function.
+        :param kwargs: keyword arguments to pass to the function.
+
+        The return value is a ``asyncio.Task`` object.
+
+        Note: this method is a coroutine.
+        """
+        return self.eio.start_background_task(target, *args, **kwargs)
+
+    async def sleep(self, seconds=0):
+        """Sleep for the requested amount of time using the appropriate async
+        model.
+
+        This is a utility function that applications can use to put a task to
+        sleep without having to worry about using the correct call for the
+        selected async mode.
+
+        Note: this method is a coroutine.
+        """
+        return await self.eio.sleep(seconds)
 
     async def _emit_internal(self, sid, event, data, namespace=None, id=None):
         """Send a message to a client."""
@@ -301,6 +321,9 @@ class AsyncServer(server.Server):
 
     async def _handle_eio_connect(self, sid, environ):
         """Handle the Engine.IO connection event."""
+        if not self.manager_initialized:
+            self.manager_initialized = True
+            self.manager.initialize()
         self.environ[sid] = environ
         return await self._handle_connect(sid, '/')
 

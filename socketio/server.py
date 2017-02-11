@@ -345,9 +345,6 @@ class Server(object):
         This function returns the HTTP response body to deliver to the client
         as a byte sequence.
         """
-        if not self.manager_initialized:
-            self.manager_initialized = True
-            self.manager.initialize()
         return self.eio.handle_request(environ, start_response)
 
     def start_background_task(self, target, *args, **kwargs):
@@ -485,6 +482,9 @@ class Server(object):
 
     def _handle_eio_connect(self, sid, environ):
         """Handle the Engine.IO connection event."""
+        if not self.manager_initialized:
+            self.manager_initialized = True
+            self.manager.initialize()
         self.environ[sid] = environ
         return self._handle_connect(sid, '/')
 

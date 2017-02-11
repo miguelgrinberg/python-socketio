@@ -13,7 +13,7 @@ async def background_task():
     """Example of how to send server generated events to clients."""
     count = 0
     while True:
-        await asyncio.sleep(10)
+        await sio.sleep(10)
         count += 1
         await sio.emit('my response', {'data': 'Server generated event'},
                        namespace='/test')
@@ -84,5 +84,5 @@ app.router.add_get('/', index)
 
 
 if __name__ == '__main__':
-    asyncio.ensure_future(background_task())
+    sio.start_background_task(background_task)
     web.run_app(app)
