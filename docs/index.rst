@@ -6,10 +6,8 @@
 socketio documentation
 ======================
 
-:ref:`genindex` | :ref:`modindex` | :ref:`search`
-
-This project implements a Socket.IO server that can run standalone or
-integrated with a Python WSGI application. The following are some of its
+This project implements a Python Socket.IO server that can run standalone or
+integrated with a web application. The following are some of its
 features:
 
 - Fully compatible with the 
