@@ -35,11 +35,11 @@ def _run(coro):
 
 
 @unittest.skipIf(sys.version_info < (3, 5), 'only for Python 3.5+')
-class TestAsyncioManager(unittest.TestCase):
+class TestAsyncManager(unittest.TestCase):
     def setUp(self):
         mock_server = mock.MagicMock()
         mock_server._emit_internal = AsyncMock()
-        self.bm = asyncio_manager.AsyncioManager()
+        self.bm = asyncio_manager.AsyncManager()
         self.bm.set_server(mock_server)
         self.bm.initialize()
 

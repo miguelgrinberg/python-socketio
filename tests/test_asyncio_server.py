@@ -202,7 +202,7 @@ class TestAsyncServer(unittest.TestCase):
 
     def test_emit_internal_binary(self, eio):
         eio.return_value.send = AsyncMock()
-        s = asyncio_server.AsyncServer(binary=True)
+        s = asyncio_server.AsyncServer()
         _run(s._emit_internal('123', u'my event', b'my binary data'))
         self.assertEqual(s.eio.send.mock.call_count, 2)
 
@@ -412,7 +412,7 @@ class TestAsyncServer(unittest.TestCase):
     def test_handle_event_with_ack_binary(self, eio):
         eio.return_value.send = AsyncMock()
         mgr = self._get_mock_manager()
-        s = asyncio_server.AsyncServer(client_manager=mgr, binary=True)
+        s = asyncio_server.AsyncServer(client_manager=mgr)
         handler = mock.MagicMock(return_value=b'foo')
         s.on('my message', handler)
         _run(s._handle_eio_message('123', '21000["my message","foo"]'))

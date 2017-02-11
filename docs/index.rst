@@ -21,9 +21,10 @@ features:
   Socket.IO specification.
 - Compatible with Python 2.7 and Python 3.3+.
 - Supports large number of clients even on modest hardware when used with an
-  asynchronous server based on `eventlet <http://eventlet.net/>`_ or
-  `gevent <http://gevent.org/>`_. For development and testing, any WSGI
-  complaint multi-threaded server can be used.
+  asynchronous server based on `asyncio <https://docs.python.org/3/library/asyncio.html>`_,
+  `eventlet <http://eventlet.net/>`_ or `gevent <http://gevent.org/>`_. For
+  development and testing, any WSGI complaint multi-threaded server can also be
+  used.
 - Includes a WSGI middleware that integrates Socket.IO traffic with standard
   WSGI applications.
 - Broadcasting of messages to all connected clients, or to subsets of them
@@ -55,8 +56,45 @@ The Socket.IO server can be installed with pip::
 
     pip install python-socketio
 
-The following is a basic example of a Socket.IO server that uses Flask to
-deploy the client code to the browser::
+The following is a basic example of a Socket.IO server that uses the
+`aiohttp <http://aiohttp.readthedocs.io/>`_ framework for asyncio (Python 3.5+
+only):
+
+.. code:: python
+
+    from aiohttp import web
+    import socketio
+
+    sio = socketio.AsyncServer()
+    app = web.Application()
+    sio.attach(app)
+
+    async def index(request):
+        """Serve the client-side application."""
+        with open('index.html') as f:
+            return web.Response(text=f.read(), content_type='text/html')
+
+    @sio.on('connect', namespace='/chat')
+    def connect(sid, environ):
+        print("connect ", sid)
+
+    @sio.on('chat message', namespace='/chat')
+    async def message(sid, data):
+        print("message ", data)
+        await sio.emit('reply', room=sid)
+
+    @sio.on('disconnect', namespace='/chat')
+    def disconnect(sid):
+        print('disconnect ', sid)
+
+    app.router.add_static('/static', 'static')
+    app.router.add_get('/', index)
+
+    if __name__ == '__main__':
+        web.run_app(app)
+
+And below is a similar example, but using Flask and Eventlet. This example is
+compatible with Python 2.7 and 3.3+::
 
     import socketio
     import eventlet
@@ -106,6 +144,41 @@ them with event handlers. An event is defined simply by a name.
 
 When a connection with a client is broken, the ``disconnect`` event is called,
 allowing the application to perform cleanup.
+
+Server
+------
+
+Socket.IO servers are instances of class :class:`socketio.Server`, which can be
+combined with a WSGI compliant application using :class:`socketio.Middleware`::
+
+    # create a Socket.IO server
+    sio = socketio.Server()
+
+    # wrap WSGI application with socketio's middleware
+    app = socketio.Middleware(sio, app)
+
+
+For asyncio based servers, the :class:`socketio.AsyncServer` class provides a
+coroutine friendly server::
+
+    # create a Socket.IO server
+    sio = socketio.AsyncServer()
+
+    # attach server to application
+    sio.attach(app)
+
+Event handlers for servers are register using the :func:`socketio.Server.on`
+method::
+
+    @sio.on('my custom event')
+    def my_custom_event():
+        pass
+
+For asyncio servers, event handlers can be regular functions or coroutines::
+
+    @sio.on('my custom event')
+    async def my_custom_event():
+        await sio.emit('my reply')
 
 Rooms
 -----
@@ -232,6 +305,22 @@ that belong to a namespace can be created as methods of a subclass of
 
     sio.register_namespace(MyCustomNamespace('/test'))
 
+For asyncio based severs, namespaces must inherit from
+:class:`socketio.AsyncNamespace`, and can define event handlers as regular
+methods or coroutines::
+
+    class MyCustomNamespace(socketio.AsyncNamespace):
+        def on_connect(sid, environ):
+            pass
+
+        def on_disconnect(sid):
+            pass
+
+        async def on_my_event(sid, data):
+            await self.emit('my_response', data)
+
+    sio.register_namespace(MyCustomNamespace('/test'))
+
 When class-based namespaces are used, any events received by the server are
 dispatched to a method named as the event name with the ``on_`` prefix. For
 example, event ``my_event`` will be handled by a method named ``on_my_event``.
@@ -241,8 +330,8 @@ class-based namespaces must used characters that are legal in method names.
 
 As a convenience to methods defined in a class-based namespace, the namespace
 instance includes versions of several of the methods in the 
-:class:`socketio.Server` class that default to the proper namespace when the
-``namespace`` argument is not given.
+:class:`socketio.Server` and :class:`socketio.AsyncServer` classes that default
+to the proper namespace when the ``namespace`` argument is not given.
 
 In the case that an event has a handler in a class-based namespace, and also a
 decorator-based function handler, only the standalone function handler is
@@ -344,6 +433,33 @@ Deployment
 The following sections describe a variety of deployment strategies for
 Socket.IO servers.
 
+Aiohttp
+~~~~~~~
+
+`Aiohttp <http://aiohttp.readthedocs.io/>`_ is a framework with support for HTTP
+and WebSocket, based on asyncio. Support for this framework is limited to Python
+3.5 and newer.
+
+Instances of class ``engineio.AsyncServer`` will automatically use aiohttp
+for asynchronous operations if the library is installed. To request its use
+explicitly, the ``async_mode`` option can be given in the constructor::
+
+    sio = socketio.AsyncServer(async_mode='aiohttp')
+
+A server configured for aiohttp must be attached to an existing application::
+
+    app = web.Application()
+    sio.attach(app)
+
+The aiohttp application can define regular routes that will coexist with the
+Socket.IO server. A typical pattern is to add routes that serve a client
+application and any associated static files.
+
+The aiohttp application is then executed in the usual manner::
+
+    if __name__ == '__main__':
+        web.run_app(app)
+
 Eventlet
 ~~~~~~~~
 
@@ -385,7 +501,7 @@ database drivers are likely to require it.
 Gevent
 ~~~~~~
 
-`Gevent <http://gevent.org>`_ is another asynchronous framework based on
+`Gevent <http://gevent.org/>`_ is another asynchronous framework based on
 coroutines, very similar to eventlet. An Socket.IO server deployed with
 gevent has access to the long-polling transport. If project
 `gevent-websocket <https://bitbucket.org/Jeffrey/gevent-websocket/>`_ is
@@ -503,8 +619,8 @@ difficult. To deploy a cluster of Socket.IO processes (hosted on one or
 multiple servers), the following conditions must be met:
 
 - Each Socket.IO process must be able to handle multiple requests, either by
-  using eventlet, gevent, or standard threads. Worker processes that only
-  handle one request at a time are not supported.
+  using asyncio, eventlet, gevent, or standard threads. Worker processes that
+  only handle one request at a time are not supported.
 - The load balancer must be configured to always forward requests from a
   client to the same worker process. Load balancers call this *sticky
   sessions*, or *session affinity*.
@@ -516,17 +632,36 @@ API Reference
 -------------
 
 .. module:: socketio
+
 .. autoclass:: Middleware
    :members:
+
 .. autoclass:: Server
    :members:
+
+.. autoclass:: AsyncServer
+   :members:
+   :inherited-members:
+
 .. autoclass:: Namespace
    :members:
+
+.. autoclass:: AsyncNamespace
+   :members:
+   :inherited-members:
+
 .. autoclass:: BaseManager
    :members:
+
 .. autoclass:: PubSubManager
    :members:
+
 .. autoclass:: KombuManager
    :members:
+
 .. autoclass:: RedisManager
    :members:
+
+.. autoclass:: AsyncManager
+   :members:
+   :inherited-members:

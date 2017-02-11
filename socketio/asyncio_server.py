@@ -30,12 +30,9 @@ class AsyncServer(server.Server):
 
     :param async_mode: The asynchronous model to use. See the Deployment
                        section in the documentation for a description of the
-                       available options. Valid async modes are "threading",
-                       "eventlet", "gevent" and "gevent_uwsgi". If this
-                       argument is not given, "eventlet" is tried first, then
-                       "gevent_uwsgi", then "gevent", and finally "threading".
-                       The first async mode that has all its dependencies
-                       installed is then one that is chosen.
+                       available options. Valid async modes are "aiohttp". If
+                       this argument is not given, an async mode is chosen
+                       based on the installed packages.
     :param ping_timeout: The time in seconds that the client waits for the
                          server to respond before disconnecting.
     :param ping_interval: The interval in seconds at which the client pings
@@ -58,10 +55,9 @@ class AsyncServer(server.Server):
                             a logger object to use. To disable logging set to
                             ``False``.
     """
-    def __init__(self, client_manager=None, logger=False, binary=False,
-                 json=None, async_handlers=False, **kwargs):
+    def __init__(self, client_manager=None, logger=False, json=None, **kwargs):
         if client_manager is None:
-            client_manager = asyncio_manager.AsyncioManager()
+            client_manager = asyncio_manager.AsyncManager()
         super().__init__(client_manager=client_manager, logger=logger,
                          binary=False, json=json, **kwargs)
 
@@ -171,23 +167,15 @@ class AsyncServer(server.Server):
             await self._trigger_event('disconnect', namespace, sid)
             self.manager.disconnect(sid, namespace=namespace)
 
-    async def handle_request(self, environ):
+    async def handle_request(self, *args, **kwargs):
         """Handle an HTTP request from the client.
 
-        This is the entry point of the Socket.IO application, using the same
-        interface as a WSGI application. For the typical usage, this function
-        is invoked by the :class:`Middleware` instance, but it can be invoked
-        directly when the middleware is not used.
-
-        :param environ: The WSGI environment.
-        :param start_response: The WSGI ``start_response`` function.
-
-        This function returns the HTTP response body to deliver to the client
-        as a byte sequence.
+        This is the entry point of the Socket.IO application. This function
+        returns the HTTP response body to deliver to the client.
 
         Note: this method is a coroutine.
         """
-        return await self.eio.handle_request(environ)
+        return await self.eio.handle_request(*args, **kwargs)
 
     def start_background_task(self, target, *args, **kwargs):
         """Start a background task using the appropriate async model.

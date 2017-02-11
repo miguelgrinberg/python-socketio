@@ -3,12 +3,15 @@ import asyncio
 from .base_manager import BaseManager
 
 
-class AsyncioManager(BaseManager):
+class AsyncManager(BaseManager):
     """Manage a client list for an asyncio server."""
     async def emit(self, event, data, namespace, room=None, skip_sid=None,
                    callback=None, **kwargs):
         """Emit a message to a single client, a room, or all the clients
-        connected to the namespace."""
+        connected to the namespace.
+
+        Note: this method is a coroutine.
+        """
         if namespace not in self.rooms or room not in self.rooms[namespace]:
             return
         tasks = []
@@ -23,7 +26,10 @@ class AsyncioManager(BaseManager):
         await asyncio.wait(tasks)
 
     async def trigger_callback(self, sid, namespace, id, data):
-        """Invoke an application callback."""
+        """Invoke an application callback.
+
+        Note: this method is a coroutine.
+        """
         callback = None
         try:
             callback = self.callbacks[sid][namespace][id]
