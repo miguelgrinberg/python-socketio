@@ -17,6 +17,9 @@ class Namespace(object):
     def _set_server(self, server):
         self.server = server
 
+    def is_asyncio_based(self):
+        return False
+
     def trigger_event(self, event, *args):
         """Dispatch an event to the proper handler method.
 

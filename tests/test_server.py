@@ -180,6 +180,8 @@ class TestServer(unittest.TestCase):
         s.manager.connect.assert_called_once_with('123', '/')
         s.eio.send.assert_called_once_with('123', '0', binary=False)
         self.assertEqual(mgr.initialize.call_count, 1)
+        s._handle_eio_connect('456', 'environ')
+        self.assertEqual(mgr.initialize.call_count, 1)
 
     def test_handle_connect_namespace(self, eio):
         mgr = mock.MagicMock()
@@ -439,12 +441,17 @@ class TestServer(unittest.TestCase):
         class Dummy(object):
             pass
 
+        class AsyncNS(namespace.Namespace):
+            def is_asyncio_based(self):
+                return True
+
         s = server.Server()
         self.assertRaises(ValueError, s.register_namespace, 123)
         self.assertRaises(ValueError, s.register_namespace, Dummy)
         self.assertRaises(ValueError, s.register_namespace, Dummy())
         self.assertRaises(ValueError, s.register_namespace,
                           namespace.Namespace)
+        self.assertRaises(ValueError, s.register_namespace, AsyncNS())
 
     def test_logger(self, eio):
         s = server.Server(logger=False)

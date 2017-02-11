@@ -33,7 +33,7 @@ class AsyncioManager(BaseManager):
         else:
             del self.callbacks[sid][namespace][id]
         if callback is not None:
-            if asyncio.iscoroutinefunction(callback):
+            if asyncio.iscoroutinefunction(callback) is True:
                 try:
                     await callback(*data)
                 except asyncio.CancelledError:  # pragma: no cover

@@ -113,6 +113,9 @@ class Server(object):
 
         self.async_mode = self.eio.async_mode
 
+    def is_asyncio_based(self):
+        return False
+
     def on(self, event, handler=None, namespace=None):
         """Register an event handler.
 
@@ -171,6 +174,8 @@ class Server(object):
         """
         if not isinstance(namespace_handler, namespace.Namespace):
             raise ValueError('Not a namespace instance')
+        if self.is_asyncio_based() != namespace_handler.is_asyncio_based():
+            raise ValueError('Not a valid namespace class for this server')
         namespace_handler._set_server(self)
         self.namespace_handlers[namespace_handler.namespace] = \
             namespace_handler

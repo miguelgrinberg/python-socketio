@@ -305,7 +305,8 @@ class AsyncServer(server.Server):
         """Invoke an application event handler."""
         # first see if we have an explicit handler for the event
         if namespace in self.handlers and event in self.handlers[namespace]:
-            if asyncio.iscoroutinefunction(self.handlers[namespace][event]):
+            if asyncio.iscoroutinefunction(self.handlers[namespace][event]) \
+                    is True:
                 try:
                     ret = await self.handlers[namespace][event](*args)
                 except asyncio.CancelledError:  # pragma: no cover
