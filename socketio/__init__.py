@@ -12,10 +12,12 @@ if sys.version_info >= (3, 5):  # pragma: no cover
     from .asyncio_server import AsyncServer
     from .asyncio_manager import AsyncManager
     from .asyncio_namespace import AsyncNamespace
+    from .asyncio_redis_manager import AsyncRedisManager
 else:  # pragma: no cover
     AsyncServer = None
     AsyncManager = None
     AsyncNamespace = None
+    AsyncRedisManager = None
 
 __version__ = '1.6.3'
 
@@ -23,6 +25,5 @@ __all__ = ['__version__', 'Middleware', 'Server', 'BaseManager',
            'PubSubManager', 'KombuManager', 'RedisManager', 'ZmqManager',
            'Namespace']
 if AsyncServer is not None:  # pragma: no cover
-    __all__.append('AsyncServer')
-    __all__.append('AsyncNamespace')
-    __all__.append('AsyncManager')
+    __all__ += ['AsyncServer', 'AsyncNamespace', 'AsyncManager',
+                'AsyncRedisManager']

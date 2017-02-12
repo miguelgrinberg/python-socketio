@@ -154,11 +154,13 @@ class TestAsyncNamespace(unittest.TestCase):
 
     def test_close_room(self):
         ns = asyncio_namespace.AsyncNamespace('/foo')
-        ns._set_server(mock.MagicMock())
-        ns.close_room('room')
-        ns.server.close_room.assert_called_with('room', namespace='/foo')
-        ns.close_room('room', namespace='/bar')
-        ns.server.close_room.assert_called_with('room', namespace='/bar')
+        mock_server = mock.MagicMock()
+        mock_server.close_room = AsyncMock()
+        ns._set_server(mock_server)
+        _run(ns.close_room('room'))
+        ns.server.close_room.mock.assert_called_with('room', namespace='/foo')
+        _run(ns.close_room('room', namespace='/bar'))
+        ns.server.close_room.mock.assert_called_with('room', namespace='/bar')
 
     def test_rooms(self):
         ns = asyncio_namespace.AsyncNamespace('/foo')

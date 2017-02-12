@@ -54,7 +54,7 @@ async def close(sid, message):
     await sio.emit('my response',
                    {'data': 'Room ' + message['room'] + ' is closing.'},
                    room=message['room'], namespace='/test')
-    sio.close_room(message['room'], namespace='/test')
+    await sio.close_room(message['room'], namespace='/test')
 
 
 @sio.on('my room event', namespace='/test')

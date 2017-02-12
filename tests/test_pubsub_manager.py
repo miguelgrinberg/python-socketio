@@ -216,12 +216,11 @@ class TestBaseManager(unittest.TestCase):
             yield pickle.dumps({'method': 'close_room', 'value': 'baz'})
             yield 'bad json'
             yield b'bad pickled'
-            raise KeyboardInterrupt
 
         self.pm._listen = mock.MagicMock(side_effect=messages)
         try:
             self.pm._thread()
-        except KeyboardInterrupt:
+        except StopIteration:
             pass
 
         self.pm._handle_emit.assert_called_once_with(

@@ -25,6 +25,13 @@ class AsyncManager(BaseManager):
                                                         namespace, id))
         await asyncio.wait(tasks)
 
+    async def close_room(self, room, namespace):
+        """Remove all participants from a room.
+
+        Note: this method is a coroutine.
+        """
+        return super().close_room(room, namespace)
+
     async def trigger_callback(self, sid, namespace, id, data):
         """Invoke an application callback.
 

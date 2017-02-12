@@ -195,7 +195,7 @@ class TestAsyncManager(unittest.TestCase):
         self.bm.connect('789', '/foo')
         self.bm.enter_room('123', '/foo', 'bar')
         self.bm.enter_room('123', '/foo', 'bar')
-        self.bm.close_room('bar', '/foo')
+        _run(self.bm.close_room('bar', '/foo'))
         self.assertNotIn('bar', self.bm.rooms['/foo'])
 
     def test_close_invalid_room(self):

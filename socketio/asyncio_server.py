@@ -149,6 +149,21 @@ class AsyncServer(server.Server):
         await self.emit('message', data, room, skip_sid, namespace, callback,
                         **kwargs)
 
+    async def close_room(self, room, namespace=None):
+        """Close a room.
+
+        This function removes all the clients from the given room.
+
+        :param room: Room name.
+        :param namespace: The Socket.IO namespace for the event. If this
+                          argument is omitted the default namespace is used.
+
+        Note: this method is a coroutine.
+        """
+        namespace = namespace or '/'
+        self.logger.info('room %s is closing [%s]', room, namespace)
+        await self.manager.close_room(room, namespace)
+
     async def disconnect(self, sid, namespace=None):
         """Disconnect a client.
 

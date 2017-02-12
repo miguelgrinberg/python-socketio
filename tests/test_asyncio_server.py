@@ -49,6 +49,7 @@ class TestAsyncServer(unittest.TestCase):
     def _get_mock_manager(self):
         mgr = mock.MagicMock()
         mgr.emit = AsyncMock()
+        mgr.close_room = AsyncMock()
         mgr.trigger_callback = AsyncMock()
         return mgr
 
@@ -134,14 +135,14 @@ class TestAsyncServer(unittest.TestCase):
     def test_close_room(self, eio):
         mgr = self._get_mock_manager()
         s = asyncio_server.AsyncServer(client_manager=mgr)
-        s.close_room('room', namespace='/foo')
-        s.manager.close_room.assert_called_once_with('room', '/foo')
+        _run(s.close_room('room', namespace='/foo'))
+        s.manager.close_room.mock.assert_called_once_with('room', '/foo')
 
     def test_close_room_default_namespace(self, eio):
         mgr = self._get_mock_manager()
         s = asyncio_server.AsyncServer(client_manager=mgr)
-        s.close_room('room')
-        s.manager.close_room.assert_called_once_with('room', '/')
+        _run(s.close_room('room'))
+        s.manager.close_room.mock.assert_called_once_with('room', '/')
 
     def test_rooms(self, eio):
         mgr = self._get_mock_manager()

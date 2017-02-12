@@ -363,11 +363,13 @@ type of installation, each server processes owns the connections to a subset
 of the clients. To make broadcasting work in this environment, the servers
 communicate with each other through the message queue.
 
-The message queue service needs to be installed and configured separately. One
-of the options offered by this package is to use
-`Kombu <http://kombu.readthedocs.org/en/latest/>`_ to access the message
-queue, which means that any message queue supported by this package can be
-used. Kombu can be installed with pip::
+Kombu
+~~~~~
+
+One of the messaging options offered by this package to access the message
+queue is `Kombu <http://kombu.readthedocs.org/en/latest/>`_ , which means that
+any message queue supported by this package can be used. Kombu can be installed
+with pip::
 
     pip install kombu
 
@@ -378,7 +380,8 @@ package for Redis installed as well::
 
     pip install redis
 
-To configure a Socket.IO server to connect to a message queue, the
+The appropriate message queue service, such as RabbitMQ or Redis, must also be
+installed. To configure a Socket.IO server to connect to a Kombu queue, the
 ``client_manager`` argument must be passed in the server creation. The
 following example instructs the server to connect to a Redis service running
 on the same host and on the default port::
@@ -392,38 +395,62 @@ credentials, the configuration is as follows::
     mgr = socketio.KombuManager('amqp://')
     sio = socketio.Server(client_manager=mgr)
 
-The URL passed to the ``KombuManager`` constructor is passed directly to
+The URL passed to the :class:`KombuManager` constructor is passed directly to
 Kombu's `Connection object
 <http://kombu.readthedocs.org/en/latest/userguide/connections.html>`_, so
 the Kombu documentation should be consulted for information on how to
 connect to the message queue appropriately.
 
-If the use of Kombu is not desired, native Redis support is also offered
-through the ``RedisManager`` class. This class takes the same arguments as
-``KombuManager``, but connects directly to a Redis store using the queue's
-pub/sub functionality::
+Note that Kombu currently does not support asyncio, so it cannot be used with
+the :class:`socketio.AsyncServer` class.
 
+Redis
+~~~~~
+
+To use a Redis message queue, the Python package for Redis must also be
+installed::
+
+    # WSGI server
+    pip install redis
+
+    # asyncio server
+    pip install aioredis
+
+Native Redis support is accessed through the :class:`socketio.RedisManager` and 
+:class:`socketio.AsyncRedisManager` classes. These classes connect directly to
+the Redis store and use the queue's pub/sub functionality::
+
+    # WSGI server
     mgr = socketio.RedisManager('redis://')
     sio = socketio.Server(client_manager=mgr)
 
-If multiple Socket.IO servers are connected to a message queue, they
+    # asyncio server
+    mgr = socketio.AsyncRedisManager('redis://')
+    sio = socketio.AsyncServer(client_manager=mgr)
+
+Horizontal scaling
+~~~~~~~~~~~~~~~~~~
+
+If multiple Socket.IO servers are connected to the same message queue, they
 automatically communicate with each other and manage a combined client list,
-without any need for additional configuration. To have a process other than
-a server connect to the queue to emit a message, the same ``KombuManager``
-and ``RedisManager`` classes can be used as standalone object. In this case,
-the ``write_only`` argument should be set to ``True`` to disable the creation
-of a listening thread. For example::
+without any need for additional configuration. When a load balancer such as
+nginx is used, this provides virtually unlimited scaling capabilities for the
+server.
+
+Emitting from external processes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+To have a process other than a server connect to the queue to emit a message,
+the same client manager classes can be used as standalone objects. In this
+case, the ``write_only`` argument should be set to ``True`` to disable the
+creation of a listening thread, which only makes sense in a server. For
+example::
 
     # connect to the redis queue through Kombu
     external_sio = socketio.KombuManager('redis://', write_only=True)
     
     # emit an event
     external_sio.emit('my event', data={'foo': 'bar'}, room='my room')
-
-Note: when using a third party package to manage a message queue such as Redis
-or RabbitMQ in conjunction with eventlet or gevent, it is necessary to monkey
-patch the Python standard library, so that these packages access coroutine
-friendly library functions and classes.
 
 Deployment
 ----------
@@ -663,3 +690,6 @@ API Reference
 .. autoclass:: AsyncManager
    :members:
    :inherited-members:
+
+.. autoclass:: AsyncRedisManager
+   :members:

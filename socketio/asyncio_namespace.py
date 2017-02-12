@@ -70,6 +70,18 @@ class AsyncNamespace(namespace.Namespace):
                                       namespace=namespace or self.namespace,
                                       callback=callback)
 
+    async def close_room(self, room, namespace=None):
+        """Close a room.
+
+        The only difference with the :func:`socketio.Server.close_room` method
+        is that when the ``namespace`` argument is not given the namespace
+        associated with the class is used.
+
+        Note: this method is a coroutine.
+        """
+        return await self.server.close_room(
+            room, namespace=namespace or self.namespace)
+
     async def disconnect(self, sid, namespace=None):
         """Disconnect a client.
 
