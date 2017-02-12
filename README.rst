@@ -4,7 +4,8 @@ python-socketio
 .. image:: https://travis-ci.org/miguelgrinberg/python-socketio.svg?branch=master
     :target: https://travis-ci.org/miguelgrinberg/python-socketio
 
-Python implementation of the `Socket.IO`_ realtime server.
+Python implementation of the `Socket.IO <https://github.com/Automattic/socket.io>`_
+realtime server.
 
 Features
 --------
