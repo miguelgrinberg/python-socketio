@@ -42,7 +42,7 @@ Features
 Example
 -------
 
-The following eample application uses the `aiohttp <http://aiohttp.readthedocs.io/>`_
+The following example application uses the `aiohttp <http://aiohttp.readthedocs.io/>`_
 framework for asyncio:
 
 .. code:: python
