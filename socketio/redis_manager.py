@@ -43,19 +43,20 @@ class RedisManager(PubSubManager):  # pragma: no cover
         super(RedisManager, self).__init__(channel=channel,
                                            write_only=write_only)
 
-    def initialize(self, server):
-        super(RedisManager, self).initialize(server)
+    def initialize(self):
+        super(RedisManager, self).initialize()
 
         monkey_patched = True
-        if server.async_mode == 'eventlet':
+        if self.server.async_mode == 'eventlet':
             from eventlet.patcher import is_monkey_patched
             monkey_patched = is_monkey_patched('socket')
-        elif 'gevent' in server.async_mode:
+        elif 'gevent' in self.server.async_mode:
             from gevent.monkey import is_module_patched
             monkey_patched = is_module_patched('socket')
         if not monkey_patched:
-            raise RuntimeError('Redis requires a monkey patched socket '
-                               'library to work with ' + server.async_mode)
+            raise RuntimeError(
+                'Redis requires a monkey patched socket library to work '
+                'with ' + self.server.async_mode)
 
     def _publish(self, data):
         return self.redis.publish(self.channel, pickle.dumps(data))
