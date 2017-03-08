@@ -19,7 +19,8 @@ Features
   Socket.IO specification.
 - Compatible with Python 2.7 and Python 3.3+.
 - Supports large number of clients even on modest hardware when used with an
-  asynchronous server based on `asyncio <https://docs.python.org/3/library/asyncio.html>`_,
+  asynchronous server based on `asyncio <https://docs.python.org/3/library/asyncio.html>`_
+  (`sanic <http://sanic.readthedocs.io/>`_ and `aiohttp <http://aiohttp.readthedocs.io/>`_),
   `eventlet <http://eventlet.net/>`_ or `gevent <http://gevent.org/>`_. For
   development and testing, any WSGI complaint multi-threaded server can also be
   used.

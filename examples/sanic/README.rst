@@ -5,8 +5,8 @@ This directory contains example Socket.IO applications that are compatible with
 asyncio and the sanic framework. These applications require Python 3.5 or
 later.
 
-Note that because sanic does not support the WebSocket protocol, the only
-transport is long-polling at this time.
+Note that Sanic versions older than 0.4.0 do not support the WebSocket
+protocol, so on those versions the only available transport is long-polling.
 
 app.py
 ------

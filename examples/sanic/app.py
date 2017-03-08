@@ -20,6 +20,11 @@ async def background_task():
                        namespace='/test')
 
 
+@app.listener('before_server_start')
+def before_server_start(sanic, loop):
+    sio.start_background_task(background_task)
+
+
 @app.route('/')
 async def index(request):
     with open('app.html') as f:
@@ -85,5 +90,4 @@ app.static('/static', './static')
 
 
 if __name__ == '__main__':
-    sio.start_background_task(background_task)
     app.run()
