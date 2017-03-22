@@ -313,7 +313,7 @@ class AsyncServer(server.Server):
                 try:
                     ret = await self.handlers[namespace][event](*args)
                 except asyncio.CancelledError:  # pragma: no cover
-                    pass
+                    ret = None
             else:
                 ret = self.handlers[namespace][event](*args)
             return ret
