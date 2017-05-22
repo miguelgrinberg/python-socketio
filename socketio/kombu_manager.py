@@ -59,7 +59,7 @@ class KombuManager(PubSubManager):  # pragma: no cover
             monkey_patched = is_module_patched('socket')
         if not monkey_patched:
             raise RuntimeError(
-                'Redis requires a monkey patched socket library to work '
+                'Kombu requires a monkey patched socket library to work '
                 'with ' + self.server.async_mode)
 
     def _connection(self):
