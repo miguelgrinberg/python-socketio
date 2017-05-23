@@ -293,13 +293,13 @@ that belong to a namespace can be created as methods of a subclass of
 :class:`socketio.Namespace`::
 
     class MyCustomNamespace(socketio.Namespace):
-        def on_connect(sid, environ):
+        def on_connect(self, sid, environ):
             pass
 
-        def on_disconnect(sid):
+        def on_disconnect(self, sid):
             pass
 
-        def on_my_event(sid, data):
+        def on_my_event(self, sid, data):
             self.emit('my_response', data)
 
     sio.register_namespace(MyCustomNamespace('/test'))
@@ -309,13 +309,13 @@ For asyncio based severs, namespaces must inherit from
 methods or coroutines::
 
     class MyCustomNamespace(socketio.AsyncNamespace):
-        def on_connect(sid, environ):
+        def on_connect(self, sid, environ):
             pass
 
-        def on_disconnect(sid):
+        def on_disconnect(self, sid):
             pass
 
-        async def on_my_event(sid, data):
+        async def on_my_event(self, sid, data):
             await self.emit('my_response', data)
 
     sio.register_namespace(MyCustomNamespace('/test'))
