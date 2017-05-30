@@ -99,6 +99,11 @@ class TestBaseManager(unittest.TestCase):
         self.bm.disconnect('123', '/')
         self.assertNotIn('123', self.bm.callbacks)
 
+    def test_disconnect_bad_namespace(self):
+        self.bm.connect('123', '/')
+        self.bm.connect('123', '/foo')
+        self.bm.disconnect('123', '/bar')  # should not assert
+
     def test_trigger_callback(self):
         self.bm.connect('123', '/')
         self.bm.connect('123', '/foo')

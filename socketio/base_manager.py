@@ -64,6 +64,8 @@ class BaseManager(object):
 
     def disconnect(self, sid, namespace):
         """Register a client disconnect from a namespace."""
+        if namespace not in self.rooms:
+            return
         rooms = []
         for room_name, room in six.iteritems(self.rooms[namespace]):
             if sid in room:
