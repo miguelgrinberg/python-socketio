@@ -1,7 +1,7 @@
 # set async_mode to 'threading', 'eventlet', 'gevent' or 'gevent_uwsgi' to
 # force a mode else, the best mode is selected automatically from what's
 # installed
-async_mode = 'threading'
+async_mode = None
 
 import os
 
