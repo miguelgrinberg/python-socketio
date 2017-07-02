@@ -23,8 +23,9 @@ class AsyncManager(BaseManager):
                     id = None
                 tasks.append(self.server._emit_internal(sid, event, data,
                                                         namespace, id))
-        if tasks != []:
-            await asyncio.wait(tasks)
+        if tasks == []:  # pragma: no cover
+            return
+        await asyncio.wait(tasks)
 
     async def close_room(self, room, namespace):
         """Remove all participants from a room.

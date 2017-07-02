@@ -24,6 +24,9 @@ class AsyncServer(server.Server):
                  packets. Custom json modules must have ``dumps`` and ``loads``
                  functions that are compatible with the standard library
                  versions.
+    :param async_handlers: If set to ``True``, event handlers are executed in
+                           separate threads. To run handlers synchronously,
+                           set to ``False``. The default is ``False``.
     :param kwargs: Connection parameters for the underlying Engine.IO server.
 
     The Engine.IO configuration supports the following settings:
@@ -55,11 +58,13 @@ class AsyncServer(server.Server):
                             a logger object to use. To disable logging set to
                             ``False``.
     """
-    def __init__(self, client_manager=None, logger=False, json=None, **kwargs):
+    def __init__(self, client_manager=None, logger=False, json=None,
+                 async_handlers=False, **kwargs):
         if client_manager is None:
             client_manager = asyncio_manager.AsyncManager()
         super().__init__(client_manager=client_manager, logger=logger,
-                         binary=False, json=json, **kwargs)
+                         binary=False, json=json,
+                         async_handlers=async_handlers, **kwargs)
 
     def is_asyncio_based(self):
         return True
@@ -280,7 +285,11 @@ class AsyncServer(server.Server):
         namespace = namespace or '/'
         self.logger.info('received event "%s" from %s [%s]', data[0], sid,
                          namespace)
-        await self._handle_event_internal(self, sid, data, namespace, id)
+        if self.async_handlers:
+            self.start_background_task(self._handle_event_internal, self, sid,
+                                       data, namespace, id)
+        else:
+            await self._handle_event_internal(self, sid, data, namespace, id)
 
     async def _handle_event_internal(self, server, sid, data, namespace, id):
         r = await server._trigger_event(data[0], namespace, sid, *data[1:])

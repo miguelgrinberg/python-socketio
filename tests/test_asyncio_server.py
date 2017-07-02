@@ -56,14 +56,15 @@ class TestAsyncServer(unittest.TestCase):
     def test_create(self, eio):
         eio.return_value.handle_request = AsyncMock()
         mgr = self._get_mock_manager()
-        s = asyncio_server.AsyncServer(client_manager=mgr, foo='bar')
+        s = asyncio_server.AsyncServer(client_manager=mgr,
+                                       async_handlers=True, foo='bar')
         _run(s.handle_request({}))
         _run(s.handle_request({}))
         eio.assert_called_once_with(**{'foo': 'bar', 'async_handlers': False})
         self.assertEqual(s.manager, mgr)
         self.assertEqual(s.eio.on.call_count, 3)
         self.assertEqual(s.binary, False)
-        self.assertEqual(s.async_handlers, False)
+        self.assertEqual(s.async_handlers, True)
 
     def test_attach(self, eio):
         s = asyncio_server.AsyncServer()
@@ -581,12 +582,18 @@ class TestAsyncServer(unittest.TestCase):
         # restore the default JSON module
         packet.Packet.json = json
 
+    def test_async_handlers(self, eio):
+        s = asyncio_server.AsyncServer(async_handlers=True)
+        _run(s._handle_eio_message('123', '2["my message","a","b","c"]'))
+        s.eio.start_background_task.assert_called_once_with(
+            s._handle_event_internal, s, '123', ['my message', 'a', 'b', 'c'],
+            '/', None)
+
     def test_start_background_task(self, eio):
-        eio.return_value.start_background_task = AsyncMock()
         s = asyncio_server.AsyncServer()
-        _run(s.start_background_task('foo', 'bar', baz='baz'))
-        s.eio.start_background_task.mock.assert_called_once_with('foo', 'bar',
-                                                                 baz='baz')
+        s.start_background_task('foo', 'bar', baz='baz')
+        s.eio.start_background_task.assert_called_once_with('foo', 'bar',
+                                                            baz='baz')
 
     def test_sleep(self, eio):
         eio.return_value.sleep = AsyncMock()
