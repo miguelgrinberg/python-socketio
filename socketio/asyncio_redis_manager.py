@@ -67,13 +67,15 @@ class AsyncRedisManager(AsyncPubSubManager):  # pragma: no cover
     async def _publish(self, data):
         if self.pub is None:
             self.pub = await aioredis.create_redis((self.host, self.port),
-                                                   db=self.db, password=self.password)
+                                                   db=self.db,
+                                                   password=self.password)
         return await self.pub.publish(self.channel, pickle.dumps(data))
 
     async def _listen(self):
         if self.sub is None:
             self.sub = await aioredis.create_redis((self.host, self.port),
-                                                   db=self.db, password=self.password)
+                                                   db=self.db,
+                                                   password=self.password)
             self.ch = (await self.sub.subscribe(self.channel))[0]
         while True:
             return await self.ch.get()
