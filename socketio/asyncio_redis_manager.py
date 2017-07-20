@@ -13,19 +13,14 @@ def _parse_redis_url(url):
     p = urlparse(url)
     if p.scheme != 'redis':
         raise ValueError('Invalid redis url')
-    if ':' in p.netloc:
-        host, port = p.netloc.split(':')
-        port = int(port)
-    else:
-        host = p.netloc or 'localhost'
-        port = 6379
+    host = p.hostname or 'localhost'
+    port = p.port or 6379
+    password = p.password
     if p.path:
         db = int(p.path[1:])
     else:
         db = 0
-    if not host:
-        raise ValueError('Invalid redis hostname')
-    return host, port, db
+    return host, port, password, db
 
 
 class AsyncRedisManager(AsyncPubSubManager):  # pragma: no cover
@@ -53,15 +48,14 @@ class AsyncRedisManager(AsyncPubSubManager):  # pragma: no cover
     name = 'aioredis'
 
     def __init__(self, url='redis://localhost:6379/0', channel='socketio',
-                 write_only=False, password=None):
+                 write_only=False):
         if aioredis is None:
             raise RuntimeError('Redis package is not installed '
                                '(Run "pip install aioredis" in your '
                                'virtualenv).')
-        self.host, self.port, self.db = _parse_redis_url(url)
+        self.host, self.port, self.password, self.db = _parse_redis_url(url)
         self.pub = None
         self.sub = None
-        self.password = password
         super().__init__(channel=channel, write_only=write_only)
 
     async def _publish(self, data):
