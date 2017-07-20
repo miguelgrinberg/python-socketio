@@ -53,7 +53,7 @@ class AsyncRedisManager(AsyncPubSubManager):  # pragma: no cover
     name = 'aioredis'
 
     def __init__(self, url='redis://localhost:6379/0', channel='socketio',
-                 write_only=False):
+                 write_only=False, password=None):
         if aioredis is None:
             raise RuntimeError('Redis package is not installed '
                                '(Run "pip install aioredis" in your '
@@ -61,18 +61,21 @@ class AsyncRedisManager(AsyncPubSubManager):  # pragma: no cover
         self.host, self.port, self.db = _parse_redis_url(url)
         self.pub = None
         self.sub = None
+        self.password = password
         super().__init__(channel=channel, write_only=write_only)
 
     async def _publish(self, data):
         if self.pub is None:
             self.pub = await aioredis.create_redis((self.host, self.port),
-                                                   db=self.db)
+                                                   db=self.db,
+                                                   password=self.password)
         return await self.pub.publish(self.channel, pickle.dumps(data))
 
     async def _listen(self):
         if self.sub is None:
             self.sub = await aioredis.create_redis((self.host, self.port),
-                                                   db=self.db)
+                                                   db=self.db,
+                                                   password=self.password)
             self.ch = (await self.sub.subscribe(self.channel))[0]
         while True:
             return await self.ch.get()
