@@ -71,18 +71,33 @@ class KombuManager(PubSubManager):  # pragma: no cover
     def _queue(self):
         queue_name = 'flask-socketio.' + str(uuid.uuid4())
         return kombu.Queue(queue_name, self._exchange(),
+                           durable=False,
                            queue_arguments={'x-expires': 300000})
 
     def _producer(self):
         return self._connection().Producer(exchange=self._exchange())
 
+    def __error_callback(self, exception, interval):
+        self.server.logger.exception('Sleeping {}s'.format(interval))
+
     def _publish(self, data):
-        self.producer.publish(pickle.dumps(data))
+        connection = self._connection()
+        publish = connection.ensure(self.producer, self.producer.publish,
+                                    errback=self.__error_callback)
+        publish(pickle.dumps(data))
 
     def _listen(self):
         reader_queue = self._queue()
-        with self._connection().SimpleQueue(reader_queue) as queue:
-            while True:
-                message = queue.get(block=True)
-                message.ack()
-                yield message.payload
+
+        while True:
+            connection = self._connection().ensure_connection(
+                errback=self.__error_callback)
+            try:
+                with connection.SimpleQueue(reader_queue) as queue:
+                    while True:
+                        message = queue.get(block=True)
+                        message.ack()
+                        yield message.payload
+            except connection.connection_errors:
+                self.server.logger.exception("Connection error "
+                                             "while reading from queue")
