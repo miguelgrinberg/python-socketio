@@ -1,5 +1,6 @@
 import functools
 import json as _json
+from urllib.parse import urlparse
 
 import six
 
@@ -87,7 +88,7 @@ class Packet(object):
             ep = ''
         self.namespace = None
         self.data = None
-        ep = ep[1:]
+        ep = urlparse(ep[1:]).path
         dash = (ep + '-').find('-')
         attachment_count = 0
         if ep[0:dash].isdigit():
