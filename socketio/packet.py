@@ -3,7 +3,7 @@ import json as _json
 try:
     from urllib.parse import urlparse
 except ImportError:
-    from urllib2.urlparse import urlparse
+    from urlparse import urlparse
 
 import six
 
