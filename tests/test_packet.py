@@ -97,6 +97,13 @@ class TestPacket(unittest.TestCase):
         self.assertEqual(pkt.namespace, '/bar')
         self.assertEqual(pkt.encode(), '2/bar,["foo"]')
 
+    def test_decode_namespace_with_query_string(self):
+        # some Socket.IO clients mistakenly attach the query string to the
+        # namespace
+        pkt = packet.Packet(encoded_packet='2/bar?a=b,["foo"]')
+        self.assertEqual(pkt.namespace, '/bar')
+        self.assertEqual(pkt.encode(), '2/bar,["foo"]')
+
     def test_encode_namespace_no_data(self):
         pkt = packet.Packet(packet_type=packet.EVENT, namespace='/bar')
         self.assertEqual(pkt.encode(), '2/bar')

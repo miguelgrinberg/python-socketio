@@ -101,6 +101,9 @@ class Packet(object):
             else:
                 self.namespace = ep[0:sep]
                 ep = ep[sep + 1:]
+            q = self.namespace.find('?')
+            if q != -1:
+                self.namespace = self.namespace[0:q]
         if ep and ep[0].isdigit():
             self.id = 0
             while ep[0].isdigit():
