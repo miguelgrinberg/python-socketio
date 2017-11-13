@@ -422,6 +422,8 @@ class Server(object):
             self.manager.disconnect(sid, namespace)
             self._send_packet(sid, packet.Packet(packet.ERROR,
                                                  namespace=namespace))
+            if sid in self.environ:  # pragma: no cover
+                del self.environ[sid]
             return False
         else:
             self._send_packet(sid, packet.Packet(packet.CONNECT,
