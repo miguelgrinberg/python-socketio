@@ -258,6 +258,8 @@ class AsyncServer(server.Server):
             self.manager.disconnect(sid, namespace)
             await self._send_packet(sid, packet.Packet(packet.ERROR,
                                                        namespace=namespace))
+            if sid in self.environ:  # pragma: no cover
+                del self.environ[sid]
             return False
         else:
             await self._send_packet(sid, packet.Packet(packet.CONNECT,
