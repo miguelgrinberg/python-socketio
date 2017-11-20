@@ -277,7 +277,7 @@ as a pathname following the hostname and port. For example, connecting to
 */chat*.
 
 Each namespace is handled independently from the others, with separate session
-IDs (``sid``s), event handlers and rooms. It is important that applications
+IDs (``sid``\ s), event handlers and rooms. It is important that applications
 that use multiple namespaces specify the correct namespace when setting up
 their event handlers and rooms, using the optional ``namespace`` argument
 available in all the methods in the :class:`socketio.Server` class.
