@@ -48,10 +48,9 @@ class AsyncManager(BaseManager):
         else:
             del self.callbacks[sid][namespace][id]
         if callback is not None:
-            if asyncio.iscoroutinefunction(callback) is True:
+            ret = callback(*data)
+            if asyncio.iscoroutine(ret):
                 try:
-                    await callback(*data)
+                    await ret
                 except asyncio.CancelledError:  # pragma: no cover
                     pass
-            else:
-                callback(*data)

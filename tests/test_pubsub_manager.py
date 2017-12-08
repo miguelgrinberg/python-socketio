@@ -17,11 +17,11 @@ class TestBaseManager(unittest.TestCase):
         self.pm = pubsub_manager.PubSubManager()
         self.pm._publish = mock.MagicMock()
         self.pm.set_server(mock_server)
+        self.pm.host_id = '123456'
         self.pm.initialize()
 
     def test_default_init(self):
         self.assertEqual(self.pm.channel, 'socketio')
-        self.assertEqual(len(self.pm.host_id), 32)
         self.pm.server.start_background_task.assert_called_once_with(
             self.pm._thread)
 
@@ -44,28 +44,28 @@ class TestBaseManager(unittest.TestCase):
         self.pm._publish.assert_called_once_with(
             {'method': 'emit', 'event': 'foo', 'data': 'bar',
              'namespace': '/', 'room': None, 'skip_sid': None,
-             'callback': None})
+             'callback': None, 'host_id': '123456'})
 
     def test_emit_with_namespace(self):
         self.pm.emit('foo', 'bar', namespace='/baz')
         self.pm._publish.assert_called_once_with(
             {'method': 'emit', 'event': 'foo', 'data': 'bar',
              'namespace': '/baz', 'room': None, 'skip_sid': None,
-             'callback': None})
+             'callback': None, 'host_id': '123456'})
 
     def test_emit_with_room(self):
         self.pm.emit('foo', 'bar', room='baz')
         self.pm._publish.assert_called_once_with(
             {'method': 'emit', 'event': 'foo', 'data': 'bar',
              'namespace': '/', 'room': 'baz', 'skip_sid': None,
-             'callback': None})
+             'callback': None, 'host_id': '123456'})
 
     def test_emit_with_skip_sid(self):
         self.pm.emit('foo', 'bar', skip_sid='baz')
         self.pm._publish.assert_called_once_with(
             {'method': 'emit', 'event': 'foo', 'data': 'bar',
              'namespace': '/', 'room': None, 'skip_sid': 'baz',
-             'callback': None})
+             'callback': None, 'host_id': '123456'})
 
     def test_emit_with_callback(self):
         with mock.patch.object(self.pm, '_generate_ack_id',
@@ -74,7 +74,7 @@ class TestBaseManager(unittest.TestCase):
             self.pm._publish.assert_called_once_with(
                 {'method': 'emit', 'event': 'foo', 'data': 'bar',
                  'namespace': '/', 'room': 'baz', 'skip_sid': None,
-                 'callback': ('baz', '/', '123')})
+                 'callback': ('baz', '/', '123'), 'host_id': '123456'})
 
     def test_emit_with_callback_without_server(self):
         standalone_pm = pubsub_manager.PubSubManager()
@@ -141,7 +141,8 @@ class TestBaseManager(unittest.TestCase):
         with mock.patch.object(base_manager.BaseManager, 'emit') as super_emit:
             self.pm._handle_emit({'event': 'foo', 'data': 'bar',
                                   'namespace': '/baz',
-                                  'callback': ('sid', '/baz', 123)})
+                                  'callback': ('sid', '/baz', 123),
+                                  'host_id': host_id})
             self.assertEqual(super_emit.call_count, 1)
             self.assertEqual(super_emit.call_args[0], ('foo', 'bar'))
             self.assertEqual(super_emit.call_args[1]['namespace'], '/baz')
