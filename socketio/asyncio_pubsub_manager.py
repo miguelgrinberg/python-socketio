@@ -65,7 +65,8 @@ class AsyncPubSubManager(AsyncManager):
             callback = None
         await self._publish({'method': 'emit', 'event': event, 'data': data,
                              'namespace': namespace, 'room': room,
-                             'skip_sid': skip_sid, 'callback': callback})
+                             'skip_sid': skip_sid, 'callback': callback,
+                             'host_id': self.host_id})
 
     async def close_room(self, room, namespace=None):
         await self._publish({'method': 'close_room', 'room': room,
@@ -95,8 +96,9 @@ class AsyncPubSubManager(AsyncManager):
         # Here in the receiving end we set up a local callback that preserves
         # the callback host and id from the sender
         remote_callback = message.get('callback')
+        remote_host_id = message.get('host_id')
         if remote_callback is not None and len(remote_callback) == 3:
-            callback = partial(self._return_callback, self.host_id,
+            callback = partial(self._return_callback, remote_host_id,
                                *remote_callback)
         else:
             callback = None

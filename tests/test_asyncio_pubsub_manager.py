@@ -44,11 +44,11 @@ class TestAsyncPubSubManager(unittest.TestCase):
         self.pm = asyncio_pubsub_manager.AsyncPubSubManager()
         self.pm._publish = AsyncMock()
         self.pm.set_server(mock_server)
+        self.pm.host_id = '123456'
         self.pm.initialize()
 
     def test_default_init(self):
         self.assertEqual(self.pm.channel, 'socketio')
-        self.assertEqual(len(self.pm.host_id), 32)
         self.pm.server.start_background_task.assert_called_once_with(
             self.pm._thread)
 
@@ -71,28 +71,28 @@ class TestAsyncPubSubManager(unittest.TestCase):
         self.pm._publish.mock.assert_called_once_with(
             {'method': 'emit', 'event': 'foo', 'data': 'bar',
              'namespace': '/', 'room': None, 'skip_sid': None,
-             'callback': None})
+             'callback': None, 'host_id': '123456'})
 
     def test_emit_with_namespace(self):
         _run(self.pm.emit('foo', 'bar', namespace='/baz'))
         self.pm._publish.mock.assert_called_once_with(
             {'method': 'emit', 'event': 'foo', 'data': 'bar',
              'namespace': '/baz', 'room': None, 'skip_sid': None,
-             'callback': None})
+             'callback': None, 'host_id': '123456'})
 
     def test_emit_with_room(self):
         _run(self.pm.emit('foo', 'bar', room='baz'))
         self.pm._publish.mock.assert_called_once_with(
             {'method': 'emit', 'event': 'foo', 'data': 'bar',
              'namespace': '/', 'room': 'baz', 'skip_sid': None,
-             'callback': None})
+             'callback': None, 'host_id': '123456'})
 
     def test_emit_with_skip_sid(self):
         _run(self.pm.emit('foo', 'bar', skip_sid='baz'))
         self.pm._publish.mock.assert_called_once_with(
             {'method': 'emit', 'event': 'foo', 'data': 'bar',
              'namespace': '/', 'room': None, 'skip_sid': 'baz',
-             'callback': None})
+             'callback': None, 'host_id': '123456'})
 
     def test_emit_with_callback(self):
         with mock.patch.object(self.pm, '_generate_ack_id',
@@ -101,7 +101,7 @@ class TestAsyncPubSubManager(unittest.TestCase):
             self.pm._publish.mock.assert_called_once_with(
                 {'method': 'emit', 'event': 'foo', 'data': 'bar',
                  'namespace': '/', 'room': 'baz', 'skip_sid': None,
-                 'callback': ('baz', '/', '123')})
+                 'callback': ('baz', '/', '123'), 'host_id': '123456'})
 
     def test_emit_with_callback_without_server(self):
         standalone_pm = asyncio_pubsub_manager.AsyncPubSubManager()
@@ -173,7 +173,8 @@ class TestAsyncPubSubManager(unittest.TestCase):
                                new=AsyncMock()) as super_emit:
             _run(self.pm._handle_emit({'event': 'foo', 'data': 'bar',
                                        'namespace': '/baz',
-                                       'callback': ('sid', '/baz', 123)}))
+                                       'callback': ('sid', '/baz', 123),
+                                       'host_id': '123456'}))
             self.assertEqual(super_emit.mock.call_count, 1)
             self.assertEqual(super_emit.mock.call_args[0],
                              (self.pm, 'foo', 'bar'))
