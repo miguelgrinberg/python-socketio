@@ -33,12 +33,14 @@ class RedisManager(PubSubManager):  # pragma: no cover
     name = 'redis'
 
     def __init__(self, url='redis://localhost:6379/0', channel='socketio',
-                 write_only=False):
+                 write_only=False, **kwargs):
         if redis is None:
             raise RuntimeError('Redis package is not installed '
                                '(Run "pip install redis" in your '
                                'virtualenv).')
         self.redis = redis.Redis.from_url(url)
+        if "client_name" in kwargs:
+            self.redis.client_setname(kwargs["client_name"])
         self.pubsub = self.redis.pubsub()
         super(RedisManager, self).__init__(channel=channel,
                                            write_only=write_only)
