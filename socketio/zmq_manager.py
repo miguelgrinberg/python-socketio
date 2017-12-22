@@ -50,7 +50,7 @@ class ZmqManager(PubSubManager):  # pragma: no cover
 
     def __init__(self, url='zmq+tcp://localhost:5555+5556',
                  channel='socketio',
-                 write_only=False, **kwargs):
+                 write_only=False):
         if zmq is None:
             raise RuntimeError('zmq package is not installed '
                                '(Run "pip install pyzmq" in your '
