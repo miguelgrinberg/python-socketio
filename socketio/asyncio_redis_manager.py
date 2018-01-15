@@ -1,3 +1,5 @@
+import asyncio
+import logging
 import pickle
 from urllib.parse import urlparse
 
@@ -7,6 +9,8 @@ except ImportError:
     aioredis = None
 
 from .asyncio_pubsub_manager import AsyncPubSubManager
+
+logger = logging.getLogger('socketio')
 
 
 def _parse_redis_url(url):
@@ -59,17 +63,39 @@ class AsyncRedisManager(AsyncPubSubManager):  # pragma: no cover
         super().__init__(channel=channel, write_only=write_only)
 
     async def _publish(self, data):
-        if self.pub is None:
-            self.pub = await aioredis.create_redis((self.host, self.port),
-                                                   db=self.db,
-                                                   password=self.password)
-        return await self.pub.publish(self.channel, pickle.dumps(data))
+        retry = True
+        while True:
+            try:
+                if self.pub is None:
+                    self.pub = await aioredis.create_redis(
+                        (self.host, self.port), db=self.db,
+                        password=self.password)
+                return await self.pub.publish(self.channel,
+                                              pickle.dumps(data))
+            except (aioredis.RedisError, OSError):
+                if retry:
+                    logger.error('Cannot publish to redis... retrying')
+                    self.pub = None
+                    retry = False
+                else:
+                    logger.error('Cannot publish to redis... giving up')
+                    break
 
     async def _listen(self):
-        if self.sub is None:
-            self.sub = await aioredis.create_redis((self.host, self.port),
-                                                   db=self.db,
-                                                   password=self.password)
-            self.ch = (await self.sub.subscribe(self.channel))[0]
+        retry_sleep = 1
         while True:
-            return await self.ch.get()
+            try:
+                if self.sub is None:
+                    self.sub = await aioredis.create_redis(
+                        (self.host, self.port), db=self.db,
+                        password=self.password)
+                self.ch = (await self.sub.subscribe(self.channel))[0]
+                return await self.ch.get()
+            except (aioredis.RedisError, OSError):
+                logger.error('Cannot receive from redis... '
+                             'retrying in {} secs'.format(retry_sleep))
+                self.sub = None
+                await asyncio.sleep(retry_sleep)
+                retry_sleep *= 2
+                if retry_sleep > 60:
+                    retry_sleep = 60
