@@ -36,7 +36,7 @@ class AsyncNamespace(namespace.Namespace):
                 try:
                     ret = await handler(*args)
                 except asyncio.CancelledError:  # pragma: no cover
-                    pass
+                    ret = None
             else:
                 ret = handler(*args)
             return ret
