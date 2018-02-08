@@ -428,6 +428,8 @@ class Server(object):
         else:
             self._send_packet(sid, packet.Packet(packet.CONNECT,
                                                  namespace=namespace))
+            self._trigger_event('after_connect', namespace, sid,
+                               self.environ[sid])
 
     def _handle_disconnect(self, sid, namespace):
         """Handle a client disconnect."""
