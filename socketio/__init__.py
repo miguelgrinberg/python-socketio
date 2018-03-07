@@ -19,7 +19,7 @@ else:  # pragma: no cover
     AsyncNamespace = None
     AsyncRedisManager = None
 
-__version__ = '1.8.4'
+__version__ = '1.9.0'
 
 __all__ = ['__version__', 'Middleware', 'Server', 'BaseManager',
            'PubSubManager', 'KombuManager', 'RedisManager', 'ZmqManager',
