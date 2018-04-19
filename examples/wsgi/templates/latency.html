@@ -15,7 +15,7 @@
     <script>
       // socket
       var socket = io.connect('http://' + document.domain + ':' + location.port);
-      var chart = $('#chart');
+      var chart = $('#chart').get(0);
       socket.on('connect', function() {
           if (chart.getContext) {
               render();
