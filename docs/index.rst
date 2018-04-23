@@ -166,7 +166,7 @@ coroutine friendly server::
     # attach server to application
     sio.attach(app)
 
-Event handlers for servers are register using the :func:`socketio.Server.on`
+Event handlers for servers are registered using the :func:`socketio.Server.on`
 method::
 
     @sio.on('my custom event')
