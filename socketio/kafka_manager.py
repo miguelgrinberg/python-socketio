@@ -1,7 +1,5 @@
 import logging
 import pickle
-import time
-import json
 
 try:
     import kafka
