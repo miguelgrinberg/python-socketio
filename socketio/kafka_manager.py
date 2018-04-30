@@ -25,8 +25,9 @@ class KafkaManager(PubSubManager):  # pragma: no cover
 
     :param url: The connection URL for the Kafka server. For a default Kafka
                 store running on the same host, use ``kafka://``.
-    :param channel: The channel name (topic) on which the server sends and receives
-                    notifications. Must be the same in all the servers.
+    :param channel: The channel name (topic) on which the server sends and
+                    receives notifications. Must be the same in all the
+                    servers.
     :param write_only: If set ot ``True``, only initialize to emit events. The
                        default of ``False`` initializes the class for emitting
                        and receiving.
@@ -48,16 +49,13 @@ class KafkaManager(PubSubManager):  # pragma: no cover
         self.consumer = kafka.KafkaConsumer(self.channel,
                                             bootstrap_servers=self.kafka_url)
 
-
     def _publish(self, data):
         self.producer.send(self.channel, value=pickle.dumps(data))
         self.producer.flush()
 
-
     def _kafka_listen(self):
         for message in self.consumer:
             yield message
-
 
     def _listen(self):
         for message in self._kafka_listen():
