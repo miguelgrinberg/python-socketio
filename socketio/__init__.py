@@ -23,7 +23,7 @@ else:  # pragma: no cover
 __version__ = '1.9.0'
 
 __all__ = ['__version__', 'Middleware', 'Server', 'BaseManager',
-           'PubSubManager', 'KombuManager', 'RedisManager', 'KafkaManager', 
+           'PubSubManager', 'KombuManager', 'RedisManager', 'KafkaManager',
            'ZmqManager', 'Namespace']
 if AsyncServer is not None:  # pragma: no cover
     __all__ += ['AsyncServer', 'AsyncNamespace', 'AsyncManager',
