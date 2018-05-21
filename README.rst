@@ -17,7 +17,7 @@ Features
   `Java <https://github.com/socketio/socket.io-client-java>`_ official
   Socket.IO clients, plus any third party clients that comply with the
   Socket.IO specification.
-- Compatible with Python 2.7 and Python 3.3+.
+- Compatible with Python 3.5+.
 - Supports large number of clients even on modest hardware when used with an
   asynchronous server based on `asyncio <https://docs.python.org/3/library/asyncio.html>`_
   (`sanic <http://sanic.readthedocs.io/>`_ and `aiohttp <http://aiohttp.readthedocs.io/>`_),
