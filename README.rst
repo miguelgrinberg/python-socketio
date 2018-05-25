@@ -123,5 +123,5 @@ Resources
 -  `Documentation`_
 -  `PyPI`_
 
-.. _Documentation: http://pythonhosted.org/python-socketio
+.. _Documentation: http://python-socketio.readthedocs.io/en/latest/
 .. _PyPI: https://pypi.python.org/pypi/python-socketio
