@@ -610,7 +610,7 @@ can take advantage of uWSGI's native WebSocket support.
 
 Instances of class ``socketio.Server`` will automatically use this option for
 asynchronous operations if both gevent and uWSGI are installed and eventlet is
-not installed. To request this asynchoronous mode explicitly, the
+not installed. To request this asynchronous mode explicitly, the
 ``async_mode`` option can be given in the constructor::
 
     # gevent with uWSGI
