@@ -124,4 +124,4 @@ Resources
 -  `PyPI`_
 
 .. _Documentation: http://python-socketio.readthedocs.io/en/latest/
-.. _PyPI: https://pypi.python.org/pypi/python-socketio
+.. _PyPI: https://pypi.org/project/python-socketio
