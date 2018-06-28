@@ -20,7 +20,8 @@ Features
 - Compatible with Python 2.7 and Python 3.3+.
 - Supports large number of clients even on modest hardware when used with an
   asynchronous server based on `asyncio <https://docs.python.org/3/library/asyncio.html>`_
-  (`sanic <http://sanic.readthedocs.io/>`_ and `aiohttp <http://aiohttp.readthedocs.io/>`_),
+  (`sanic <http://sanic.readthedocs.io/>`_, `aiohttp <http://aiohttp.readthedocs.io/>`_
+  or `tornado <http://www.tornadoweb.org/>`_),
   `eventlet <http://eventlet.net/>`_ or `gevent <http://gevent.org/>`_. For
   development and testing, any WSGI compliant multi-threaded server can also be
   used.

@@ -13,3 +13,13 @@ aiohttp
 -------
 
 Examples that are compatible with the aiohttp framework for asyncio.
+
+sanic
+-----
+
+Examples that are compatible with the sanic framework for asyncio.
+
+tornado
+-------
+
+Examples that are compatible with the tornado framework.

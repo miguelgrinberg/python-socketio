@@ -8,6 +8,7 @@ from .redis_manager import RedisManager
 from .zmq_manager import ZmqManager
 from .server import Server
 from .namespace import Namespace
+from .tornado import get_tornado_handler
 if sys.version_info >= (3, 5):  # pragma: no cover
     from .asyncio_server import AsyncServer
     from .asyncio_manager import AsyncManager
@@ -26,4 +27,4 @@ __all__ = ['__version__', 'Middleware', 'Server', 'BaseManager',
            'Namespace']
 if AsyncServer is not None:  # pragma: no cover
     __all__ += ['AsyncServer', 'AsyncNamespace', 'AsyncManager',
-                'AsyncRedisManager']
+                'AsyncRedisManager', 'get_tornado_handler']
