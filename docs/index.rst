@@ -20,7 +20,8 @@ features:
 - Compatible with Python 2.7 and Python 3.3+.
 - Supports large number of clients even on modest hardware when used with an
   asynchronous server based on `asyncio <https://docs.python.org/3/library/asyncio.html>`_
-  (`sanic <http://sanic.readthedocs.io/>`_ and `aiohttp <http://aiohttp.readthedocs.io/>`_),
+  (`sanic <http://sanic.readthedocs.io/>`_, `aiohttp <http://aiohttp.readthedocs.io/>`_ or
+  `tornado <http://www.tornadoweb.org/>`_),
   `eventlet <http://eventlet.net/>`_ or `gevent <http://gevent.org>`_. For
   development and testing, any WSGI compliant multi-threaded server can also be
   used.
@@ -511,6 +512,39 @@ The aiohttp application is then executed in the usual manner::
 
     if __name__ == '__main__':
         web.run_app(app)
+
+Tornado
+~~~~~~~
+
+`Tornado <http://www.tornadoweb.org//>`_ is a web framework with support
+for HTTP and WebSocket. Support for this framework requires Python 3.5 and
+newer. Only Tornado version 5 and newer are supported, thanks to its tight
+integration with asyncio.
+
+Instances of class ``socketio.AsyncServer`` will automatically use tornado
+for asynchronous operations if the library is installed. To request its use
+explicitly, the ``async_mode`` option can be given in the constructor::
+
+    sio = socketio.AsyncServer(async_mode='tornado')
+
+A server configured for tornado must include a request handler for
+Engine.IO::
+
+    app = tornado.web.Application(
+        [
+            (r"/socketio.io/", socketio.get_tornado_handler(sio)),
+        ],
+        # ... other application options
+    )
+
+The tornado application can define other routes that will coexist with the
+Socket.IO server. A typical pattern is to add routes that serve a client
+application and any associated static files.
+
+The tornado application is then executed in the usual manner::
+
+    app.listen(port)
+    tornado.ioloop.IOLoop.current().start()
 
 Eventlet
 ~~~~~~~~
