@@ -165,7 +165,7 @@ class BaseManager(object):
     def _get_logger(self):
         """Get the appropriate logger
 
-        Prevents uninitialized servers in write-only mode failing because of a missing logger.
+        Prevents uninitialized servers in write-only mode from failing.
         """
 
         if self.logger:

@@ -43,7 +43,9 @@ class KombuManager(PubSubManager):  # pragma: no cover
             raise RuntimeError('Kombu package is not installed '
                                '(Run "pip install kombu" in your '
                                'virtualenv).')
-        super(KombuManager, self).__init__(channel=channel, write_only=write_only, logger=logger)
+        super(KombuManager, self).__init__(channel=channel,
+                                           write_only=write_only,
+                                           logger=logger)
         self.url = url
         self.producer = self._producer()
 

@@ -48,11 +48,13 @@ class TestBaseManager(unittest.TestCase):
         self.assertEqual(pm._get_logger(), logging.getLogger('socketio'))
 
     def test_write_only_with_provided_logger(self):
-        pm = pubsub_manager.PubSubManager(write_only=True, logger=logging.getLogger('new_logger'))
+        test_logger = logging.getLogger('new_logger')
+        pm = pubsub_manager.PubSubManager(write_only=True,
+                                          logger=test_logger)
         pm.initialize()
         self.assertEqual(pm.channel, 'socketio')
         self.assertEqual(len(pm.host_id), 32)
-        self.assertEqual(pm._get_logger(), logging.getLogger('new_logger'))
+        self.assertEqual(pm._get_logger(), test_logger)
 
     def test_emit(self):
         self.pm.emit('foo', 'bar')
