@@ -50,7 +50,8 @@ class ZmqManager(PubSubManager):  # pragma: no cover
 
     def __init__(self, url='zmq+tcp://localhost:5555+5556',
                  channel='socketio',
-                 write_only=False):
+                 write_only=False,
+                 logger=None):
         if zmq is None:
             raise RuntimeError('zmq package is not installed '
                                '(Run "pip install pyzmq" in your '
@@ -76,7 +77,8 @@ class ZmqManager(PubSubManager):  # pragma: no cover
         self.sub = sub
         self.channel = channel
         super(ZmqManager, self).__init__(channel=channel,
-                                         write_only=write_only)
+                                         write_only=write_only,
+                                         logger=logger)
 
     def _publish(self, data):
         pickled_data = pickle.dumps(

@@ -44,7 +44,7 @@ class AsyncManager(BaseManager):
             callback = self.callbacks[sid][namespace][id]
         except KeyError:
             # if we get an unknown callback we just ignore it
-            self.server.logger.warning('Unknown callback received, ignoring.')
+            self._get_logger().warning('Unknown callback received, ignoring.')
         else:
             del self.callbacks[sid][namespace][id]
         if callback is not None:
