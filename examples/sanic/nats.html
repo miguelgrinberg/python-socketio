@@ -1,0 +1,44 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+    <title>NATS &plus; SocketIO </title>
+    <script type="text/javascript" src="//code.jquery.com/jquery-2.1.4.min.js"></script>
+    <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/socket.io/1.3.5/socket.io.min.js"></script>
+    <script type="text/javascript" charset="utf-8">
+        $(document).ready(function(){
+            namespace = '/test';
+            var socket = io.connect('http://' + document.domain + ':' + location.port + namespace);
+            socket.on('connect', function() {
+               $('#log').append('<br />Connected!');
+               socket.emit('event', {data: 'Connection started...'});
+            });
+            socket.on('disconnect', function() {
+               socket.emit('event', {data: 'Disconnecting...'});
+               $('#log').append('<br />Disconnected!');
+            });
+            socket.on('response', function(msg) {
+                $('#log').append('<br />Received: ' + msg.data);
+            });
+            socket.on('nats', function(msg) {
+                console.log("NATS???");
+                $('#log').append('<br />NATS: ' + msg.data);
+            });
+            // event handler for server sent data
+            $('form#emit').submit(function(event) {
+                socket.emit('event', {data: $('#emit_data').val()});
+                return false;
+            });
+        });
+    </script>
+</head>
+<body>
+    <h1>NATS &plus; SocketIO</h1>
+    <h2>Publish to NATS</h2>
+    <form id="emit" method="POST" action='#'>
+        <input type="text" name="emit_data" id="emit_data" placeholder="Message">
+        <input type="submit" value="Publish">
+    </form>
+    <h2>Receive:</h2>
+    <div><p id="log"></p></div>
+</body>
+</html>
