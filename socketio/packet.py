@@ -88,9 +88,9 @@ class Packet(object):
         self.namespace = None
         self.data = None
         ep = ep[1:]
-        dash = (ep + '-').find('-')
+        dash = ep.find('-')
         attachment_count = 0
-        if ep[0:dash].isdigit():
+        if dash > 0 and ep[0:dash].isdigit():
             attachment_count = int(ep[0:dash])
             ep = ep[dash + 1:]
         if ep and ep[0:1] == '/':
@@ -106,7 +106,7 @@ class Packet(object):
                 self.namespace = self.namespace[0:q]
         if ep and ep[0].isdigit():
             self.id = 0
-            while ep[0].isdigit():
+            while ep and ep[0].isdigit():
                 self.id = self.id * 10 + int(ep[0])
                 ep = ep[1:]
         if ep:

@@ -146,6 +146,18 @@ class TestPacket(unittest.TestCase):
         self.assertEqual(pkt.id, 123)
         self.assertEqual(pkt.encode(), '2123["foo"]')
 
+    def test_encode_id_no_data(self):
+        pkt = packet.Packet(packet_type=packet.EVENT, id=123)
+        self.assertEqual(pkt.id, 123)
+        self.assertIsNone(pkt.data)
+        self.assertEqual(pkt.encode(), '2123')
+
+    def test_decode_id_no_data(self):
+        pkt = packet.Packet(encoded_packet='2123')
+        self.assertEqual(pkt.id, 123)
+        self.assertIsNone(pkt.data)
+        self.assertEqual(pkt.encode(), '2123')
+
     def test_encode_namespace_and_id(self):
         pkt = packet.Packet(packet_type=packet.EVENT,
                             data=[six.text_type('foo')], namespace='/bar',
