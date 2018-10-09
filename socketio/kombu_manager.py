@@ -38,12 +38,14 @@ class KombuManager(PubSubManager):  # pragma: no cover
     name = 'kombu'
 
     def __init__(self, url='amqp://guest:guest@localhost:5672//',
-                 channel='socketio', write_only=False):
+                 channel='socketio', write_only=False, logger=None):
         if kombu is None:
             raise RuntimeError('Kombu package is not installed '
                                '(Run "pip install kombu" in your '
                                'virtualenv).')
-        super(KombuManager, self).__init__(channel=channel)
+        super(KombuManager, self).__init__(channel=channel,
+                                           write_only=write_only,
+                                           logger=logger)
         self.url = url
         self.producer = self._producer()
 
@@ -78,7 +80,7 @@ class KombuManager(PubSubManager):  # pragma: no cover
         return self._connection().Producer(exchange=self._exchange())
 
     def __error_callback(self, exception, interval):
-        self.server.logger.exception('Sleeping {}s'.format(interval))
+        self._get_logger().exception('Sleeping {}s'.format(interval))
 
     def _publish(self, data):
         connection = self._connection()
@@ -99,5 +101,5 @@ class KombuManager(PubSubManager):  # pragma: no cover
                         message.ack()
                         yield message.payload
             except connection.connection_errors:
-                self.server.logger.exception("Connection error "
+                self._get_logger().exception("Connection error "
                                              "while reading from queue")

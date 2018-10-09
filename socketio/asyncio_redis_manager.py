@@ -1,5 +1,4 @@
 import asyncio
-import logging
 import pickle
 from urllib.parse import urlparse
 
@@ -9,8 +8,6 @@ except ImportError:
     aioredis = None
 
 from .asyncio_pubsub_manager import AsyncPubSubManager
-
-logger = logging.getLogger('socketio')
 
 
 def _parse_redis_url(url):
@@ -52,7 +49,7 @@ class AsyncRedisManager(AsyncPubSubManager):  # pragma: no cover
     name = 'aioredis'
 
     def __init__(self, url='redis://localhost:6379/0', channel='socketio',
-                 write_only=False):
+                 write_only=False, logger=None):
         if aioredis is None:
             raise RuntimeError('Redis package is not installed '
                                '(Run "pip install aioredis" in your '
@@ -60,7 +57,7 @@ class AsyncRedisManager(AsyncPubSubManager):  # pragma: no cover
         self.host, self.port, self.password, self.db = _parse_redis_url(url)
         self.pub = None
         self.sub = None
-        super().__init__(channel=channel, write_only=write_only)
+        super().__init__(channel=channel, write_only=write_only, logger=logger)
 
     async def _publish(self, data):
         retry = True
@@ -74,11 +71,13 @@ class AsyncRedisManager(AsyncPubSubManager):  # pragma: no cover
                                               pickle.dumps(data))
             except (aioredis.RedisError, OSError):
                 if retry:
-                    logger.error('Cannot publish to redis... retrying')
+                    self._get_logger().error('Cannot publish to redis... '
+                                             'retrying')
                     self.pub = None
                     retry = False
                 else:
-                    logger.error('Cannot publish to redis... giving up')
+                    self._get_logger().error('Cannot publish to redis... '
+                                             'giving up')
                     break
 
     async def _listen(self):
@@ -92,8 +91,9 @@ class AsyncRedisManager(AsyncPubSubManager):  # pragma: no cover
                 self.ch = (await self.sub.subscribe(self.channel))[0]
                 return await self.ch.get()
             except (aioredis.RedisError, OSError):
-                logger.error('Cannot receive from redis... '
-                             'retrying in {} secs'.format(retry_sleep))
+                self._get_logger().error('Cannot receive from redis... '
+                                         'retrying in '
+                                         '{} secs'.format(retry_sleep))
                 self.sub = None
                 await asyncio.sleep(retry_sleep)
                 retry_sleep *= 2

@@ -1,6 +1,9 @@
 import itertools
+import logging
 
 import six
+
+default_logger = logging.getLogger('socketio')
 
 
 class BaseManager(object):
@@ -13,6 +16,7 @@ class BaseManager(object):
     subclasses.
     """
     def __init__(self):
+        self.logger = None
         self.server = None
         self.rooms = {}
         self.callbacks = {}
@@ -141,7 +145,7 @@ class BaseManager(object):
             callback = self.callbacks[sid][namespace][id]
         except KeyError:
             # if we get an unknown callback we just ignore it
-            self.server.logger.warning('Unknown callback received, ignoring.')
+            self._get_logger().warning('Unknown callback received, ignoring.')
         else:
             del self.callbacks[sid][namespace][id]
         if callback is not None:
@@ -157,3 +161,16 @@ class BaseManager(object):
         id = six.next(self.callbacks[sid][namespace][0])
         self.callbacks[sid][namespace][id] = callback
         return id
+
+    def _get_logger(self):
+        """Get the appropriate logger
+
+        Prevents uninitialized servers in write-only mode from failing.
+        """
+
+        if self.logger:
+            return self.logger
+        elif self.server:
+            return self.server.logger
+        else:
+            return default_logger

@@ -24,17 +24,18 @@ class AsyncPubSubManager(AsyncManager):
     """
     name = 'asyncpubsub'
 
-    def __init__(self, channel='socketio', write_only=False):
+    def __init__(self, channel='socketio', write_only=False, logger=None):
         super().__init__()
         self.channel = channel
         self.write_only = write_only
         self.host_id = uuid.uuid4().hex
+        self.logger = logger
 
     def initialize(self):
         super().initialize()
         if not self.write_only:
             self.thread = self.server.start_background_task(self._thread)
-        self.server.logger.info(self.name + ' backend initialized.')
+        self._get_logger().info(self.name + ' backend initialized.')
 
     async def emit(self, event, data, namespace=None, room=None, skip_sid=None,
                    callback=None, **kwargs):
