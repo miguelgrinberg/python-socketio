@@ -71,7 +71,7 @@ class BaseManager(object):
         if namespace not in self.rooms:
             return
         rooms = []
-        for room_name, room in six.iteritems(self.rooms[namespace]):
+        for room_name, room in six.iteritems(self.rooms[namespace].copy()):
             if sid in room:
                 rooms.append(room_name)
         for room in rooms:
