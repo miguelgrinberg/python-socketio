@@ -57,7 +57,7 @@ class ZmqManager(PubSubManager):  # pragma: no cover
                                '(Run "pip install pyzmq" in your '
                                'virtualenv).')
 
-        r = re.compile(':\d+\+\d+$')
+        r = re.compile(r':\d+\+\d+$')
         if not (url.startswith('zmq+tcp://') and r.search(url)):
             raise RuntimeError('unexpected connection string: ' + url)
 
