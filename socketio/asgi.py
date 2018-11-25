@@ -19,7 +19,9 @@ class ASGIApp(engineio.ASGIApp):
     :param socketio_path: The endpoint where the Socket.IO application should
                           be installed. The default value is appropriate for
                           most cases.
+
     Example usage::
+
         import socketio
         import uvicorn
 
