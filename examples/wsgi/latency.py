@@ -8,7 +8,7 @@ import socketio
 
 sio = socketio.Server(async_mode=async_mode)
 app = Flask(__name__)
-app.wsgi_app = socketio.Middleware(sio, app.wsgi_app)
+app.wsgi_app = socketio.WSGIApp(sio, app.wsgi_app)
 
 
 @app.route('/')

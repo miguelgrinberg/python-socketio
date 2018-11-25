@@ -1,14 +1,21 @@
 import engineio
 
 
-class Middleware(engineio.Middleware):
+class WSGIApp(engineio.WSGIApp):
     """WSGI middleware for Socket.IO.
 
-    This middleware dispatches traffic to a Socket.IO application, and
-    optionally forwards regular HTTP traffic to a WSGI application.
+    This middleware dispatches traffic to a Socket.IO application. It can also
+    serve a list of static files to the client, or forward unrelated HTTP
+    traffic to another WSGI application.
 
-    :param socketio_app: The Socket.IO server.
+    :param socketio_app: The Socket.IO server. Must be an instance of the
+                         ``socketio.Server`` class.
     :param wsgi_app: The WSGI app that receives all other traffic.
+    :param static_files: A dictionary where the keys are URLs that should be
+                         served as static files. For each URL, the value is
+                         a dictionary with ``content_type`` and ``filename``
+                         keys. This option is intended to be used for serving
+                         client files during development.
     :param socketio_path: The endpoint where the Socket.IO application should
                           be installed. The default value is appropriate for
                           most cases.
@@ -20,8 +27,15 @@ class Middleware(engineio.Middleware):
         from . import wsgi_app
 
         sio = socketio.Server()
-        app = socketio.Middleware(sio, wsgi_app)
+        app = socketio.WSGIApp(sio, wsgi_app)
         eventlet.wsgi.server(eventlet.listen(('', 8000)), app)
     """
-    def __init__(self, socketio_app, wsgi_app=None, socketio_path='socket.io'):
-        super(Middleware, self).__init__(socketio_app, wsgi_app, socketio_path)
+    def __init__(self, socketio_app, wsgi_app=None, static_files=None,
+                 socketio_path='socket.io'):
+        super(WSGIApp, self).__init__(socketio_app, wsgi_app,
+                                      static_files=static_files,
+                                      engineio_path=socketio_path)
+
+
+class Middleware(WSGIApp):
+    """This class has been renamed to WSGIApp and is now deprecated."""
