@@ -1,9 +1,8 @@
-Socket.IO aiohttp Examples
+Socket.IO ASGI Examples
 ==========================
 
 This directory contains example Socket.IO applications that are compatible with
-asyncio and the aiohttp framework. These applications require Python 3.5 or
-later.
+asyncio and the ASGI specification.
 
 app.py
 ------
@@ -36,4 +35,4 @@ or::
     $ python latency.py
 
 You can then access the application from your web browser at
-``http://localhost:8080``.
+``http://localhost:5000``.
