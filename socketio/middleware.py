@@ -39,3 +39,7 @@ class WSGIApp(engineio.WSGIApp):
 
 class Middleware(WSGIApp):
     """This class has been renamed to WSGIApp and is now deprecated."""
+    def __init__(self, socketio_app, wsgi_app=None,
+                 socketio_path='socket.io'):
+        super(Middleware, self).__init__(socketio_app, wsgi_app,
+                                         socketio_path=socketio_path)
