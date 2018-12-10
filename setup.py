@@ -29,7 +29,7 @@ setup(
     platforms='any',
     install_requires=[
         'six>=1.9.0',
-        'python-engineio>=2.2.0'
+        'python-engineio>=3.0.0'
     ],
     tests_require=[
         'mock',
