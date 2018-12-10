@@ -73,6 +73,9 @@ class AsyncServer(server.Server):
         """Attach the Socket.IO server to an application."""
         self.eio.attach(app, socketio_path)
 
+    async def shutdown(self):
+        return await self.eio.shutdown()
+
     async def emit(self, event, data=None, room=None, skip_sid=None,
                    namespace=None, callback=None, **kwargs):
         """Emit a custom event to one or more connected clients.
