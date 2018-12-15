@@ -7,7 +7,7 @@ from . import base_manager
 from . import packet
 from . import namespace
 
-default_logger = logging.getLogger('socketio')
+default_logger = logging.getLogger('socketio.server')
 
 
 class Server(object):

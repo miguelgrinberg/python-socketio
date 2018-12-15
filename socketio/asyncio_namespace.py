@@ -93,3 +93,55 @@ class AsyncNamespace(namespace.Namespace):
         """
         return await self.server.disconnect(
             sid, namespace=namespace or self.namespace)
+
+
+class AsyncClientNamespace(namespace.ClientNamespace):
+    """Base class for asyncio class-based namespaces.
+
+    A class-based namespace is a class that contains all the event handlers
+    for a Socket.IO namespace. The event handlers are methods of the class
+    with the prefix ``on_``, such as ``on_connect``, ``on_disconnect``,
+    ``on_message``, ``on_json``, and so on. These can be regular functions or
+    coroutines.
+
+    :param namespace: The Socket.IO namespace to be used with all the event
+                      handlers defined in this class. If this argument is
+                      omitted, the default namespace is used.
+    """
+    async def emit(self, event, data=None, namespace=None, callback=None):
+        """Emit a custom event to the server.
+
+        The only difference with the :func:`socketio.Client.emit` method is
+        that when the ``namespace`` argument is not given the namespace
+        associated with the class is used.
+
+        Note: this method is a coroutine.
+        """
+        return await self.server.emit(event, data=data,
+                                      namespace=namespace or self.namespace,
+                                      callback=callback)
+
+    async def send(self, data, namespace=None, callback=None):
+        """Send a message to the server.
+
+        The only difference with the :func:`socketio.Client.send` method is
+        that when the ``namespace`` argument is not given the namespace
+        associated with the class is used.
+
+        Note: this method is a coroutine.
+        """
+        return await self.server.send(data,
+                                      namespace=namespace or self.namespace,
+                                      callback=callback)
+
+    async def disconnect(self, namespace=None):
+        """Disconnect a client.
+
+        The only difference with the :func:`socketio.Client.disconnect` method
+        is that when the ``namespace`` argument is not given the namespace
+        associated with the class is used.
+
+        Note: this method is a coroutine.
+        """
+        return await self.server.disconnect(
+            namespace=namespace or self.namespace)

@@ -42,6 +42,7 @@ API Reference
 
 .. autoclass:: Namespace
    :members:
+   :inherited-members:
 
 ``AsyncNamespace`` class
 ------------------------

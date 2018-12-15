@@ -1,21 +1,6 @@
-class Namespace(object):
-    """Base class for class-based namespaces.
-
-    A class-based namespace is a class that contains all the event handlers
-    for a Socket.IO namespace. The event handlers are methods of the class
-    with the prefix ``on_``, such as ``on_connect``, ``on_disconnect``,
-    ``on_message``, ``on_json``, and so on.
-
-    :param namespace: The Socket.IO namespace to be used with all the event
-                      handlers defined in this class. If this argument is
-                      omitted, the default namespace is used.
-    """
+class BaseNamespace(object):
     def __init__(self, namespace=None):
         self.namespace = namespace or '/'
-        self.server = None
-
-    def _set_server(self, server):
-        self.server = server
 
     def is_asyncio_based(self):
         return False
@@ -31,6 +16,26 @@ class Namespace(object):
         handler_name = 'on_' + event
         if hasattr(self, handler_name):
             return getattr(self, handler_name)(*args)
+
+
+class Namespace(BaseNamespace):
+    """Base class for server-side class-based namespaces.
+
+    A class-based namespace is a class that contains all the event handlers
+    for a Socket.IO namespace. The event handlers are methods of the class
+    with the prefix ``on_``, such as ``on_connect``, ``on_disconnect``,
+    ``on_message``, ``on_json``, and so on.
+
+    :param namespace: The Socket.IO namespace to be used with all the event
+                      handlers defined in this class. If this argument is
+                      omitted, the default namespace is used.
+    """
+    def __init__(self, namespace=None):
+        super(Namespace, self).__init__(namespace=namespace)
+        self.server = None
+
+    def _set_server(self, server):
+        self.server = server
 
     def emit(self, event, data=None, room=None, skip_sid=None, namespace=None,
              callback=None):
@@ -104,3 +109,54 @@ class Namespace(object):
         """
         return self.server.disconnect(sid,
                                       namespace=namespace or self.namespace)
+
+
+class ClientNamespace(BaseNamespace):
+    """Base class for client-side class-based namespaces.
+
+    A class-based namespace is a class that contains all the event handlers
+    for a Socket.IO namespace. The event handlers are methods of the class
+    with the prefix ``on_``, such as ``on_connect``, ``on_disconnect``,
+    ``on_message``, ``on_json``, and so on.
+
+    :param namespace: The Socket.IO namespace to be used with all the event
+                      handlers defined in this class. If this argument is
+                      omitted, the default namespace is used.
+    """
+    def __init__(self, namespace=None):
+        super(Namespace, self).__init__(namespace=namespace)
+        self.client = None
+
+    def _set_client(self, client):
+        self.client = client
+
+    def emit(self, event, data=None, namespace=None, callback=None):
+        """Emit a custom event to the server.
+
+        The only difference with the :func:`socketio.Client.emit` method is
+        that when the ``namespace`` argument is not given the namespace
+        associated with the class is used.
+        """
+        return self.client.emit(event, data=data,
+                                namespace=namespace or self.namespace,
+                                callback=callback)
+
+    def send(self, data, room=None, skip_sid=None, namespace=None,
+             callback=None):
+        """Send a message to the server.
+
+        The only difference with the :func:`socketio.Client.send` method is
+        that when the ``namespace`` argument is not given the namespace
+        associated with the class is used.
+        """
+        return self.server.send(data, namespace=namespace or self.namespace,
+                                callback=callback)
+
+    def disconnect(self, namespace=None):
+        """Disconnect from the server.
+
+        The only difference with the :func:`socketio.Client.disconnect` method
+        is that when the ``namespace`` argument is not given the namespace
+        associated with the class is used.
+        """
+        return self.server.disconnect(namespace=namespace or self.namespace)
