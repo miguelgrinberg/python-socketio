@@ -15,7 +15,7 @@
     <script>
       // socket
       var socket = io.connect('http://' + document.domain + ':' + location.port);
-      var char = $('chart').get(0);
+      var chart = $('#chart').get(0);
       socket.on('connect', function() {
           if (chart.getContext) {
               render();
@@ -49,7 +49,7 @@
       function render() {
           if (smoothie)
               smoothie.stop();
-          chart.width = document.body.clientWidth;
+          chart.css('width', $(document).width());
           smoothie = new SmoothieChart();
           smoothie.streamTo(chart, 1000);
           time = new TimeSeries();
