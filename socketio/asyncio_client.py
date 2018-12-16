@@ -218,8 +218,10 @@ class AsyncClient(client.Client):
         # as a single argument
         if isinstance(data, tuple):
             data = list(data)
-        else:
+        elif data is not None:
             data = [data]
+        else:
+            data = []
         await self._send_packet(packet.Packet(
             packet.EVENT, namespace=namespace, data=[event] + data, id=id,
             binary=binary))
