@@ -1,19 +1,19 @@
-import itertools
+import asyncio
 import logging
 import random
 
 import engineio
 import six
 
+from . import client
 from . import exceptions
-from . import namespace
 from . import packet
 
 default_logger = logging.getLogger('socketio.client')
 
 
-class Client(object):
-    """An Socket.IO client.
+class AsyncClient(client.Client):
+    """An Socket.IO client for asyncio.
 
     This class implements a fully compliant Engine.IO web client with support
     for websocket and long-polling transports.
@@ -53,120 +53,11 @@ class Client(object):
                             a logger object to use. To disable logging set to
                             ``False``. The default is ``False``.
     """
-    def __init__(self, reconnection=True, reconnection_attempts=0,
-                 reconnection_delay=1, reconnection_delay_max=5,
-                 randomization_factor=0.5, logger=False, binary=False,
-                 json=None, **kwargs):
-        self.reconnection = reconnection
-        self.reconnection_attempts = reconnection_attempts
-        self.reconnection_delay = reconnection_delay
-        self.reconnection_delay_max = reconnection_delay_max
-        self.randomization_factor = randomization_factor
-        self.binary = binary
-
-        engineio_options = kwargs
-        engineio_logger = engineio_options.pop('engineio_logger', None)
-        if engineio_logger is not None:
-            engineio_options['logger'] = engineio_logger
-        if json is not None:
-            packet.Packet.json = json
-            engineio_options['json'] = json
-
-        self.eio = self._engineio_client_class()(**engineio_options)
-        self.eio.on('connect', self._handle_eio_connect)
-        self.eio.on('message', self._handle_eio_message)
-        self.eio.on('disconnect', self._handle_eio_disconnect)
-
-        if not isinstance(logger, bool):
-            self.logger = logger
-        else:
-            self.logger = default_logger
-            if not logging.root.handlers and \
-                    self.logger.level == logging.NOTSET:
-                if logger:
-                    self.logger.setLevel(logging.INFO)
-                else:
-                    self.logger.setLevel(logging.ERROR)
-                self.logger.addHandler(logging.StreamHandler())
-
-        self.connection_url = None
-        self.connection_headers = None
-        self.connection_transports = None
-        self.connection_namespaces = None
-        self.socketio_path = None
-
-        self.namespaces = None
-        self.handlers = {}
-        self.namespace_handlers = {}
-        self.callbacks = {}
-        self._binary_packet = None
-        self._reconnect_task = None
-
     def is_asyncio_based(self):
-        return False
+        return True
 
-    def on(self, event, handler=None, namespace=None):
-        """Register an event handler.
-
-        :param event: The event name. It can be any string. The event names
-                      ``'connect'``, ``'message'`` and ``'disconnect'`` are
-                      reserved and should not be used.
-        :param handler: The function that should be invoked to handle the
-                        event. When this parameter is not given, the method
-                        acts as a decorator for the handler function.
-        :param namespace: The Socket.IO namespace for the event. If this
-                          argument is omitted the handler is associated with
-                          the default namespace.
-
-        Example usage::
-
-            # as a decorator:
-            @sio.on('connect')
-            def connect_handler():
-                print('Connected!')
-
-            # as a method:
-            def message_handler(msg):
-                print('Received message: ', msg)
-                sio.send( 'response')
-            sio.on('message', message_handler)
-
-        The ``'connect'`` event handler receives no arguments. The
-        ``'message'`` handler and handlers for custom event names receive the
-        message payload as only argument. Any values returned from a message
-        handler will be passed to the client's acknowledgement callback
-        function if it exists. The ``'disconnect'`` handler does not take
-        arguments.
-        """
-        namespace = namespace or '/'
-
-        def set_handler(handler):
-            if namespace not in self.handlers:
-                self.handlers[namespace] = {}
-            self.handlers[namespace][event] = handler
-            return handler
-
-        if handler is None:
-            return set_handler
-        set_handler(handler)
-
-    def register_namespace(self, namespace_handler):
-        """Register a namespace handler object.
-
-        :param namespace_handler: An instance of a :class:`Namespace`
-                                  subclass that handles all the event traffic
-                                  for a namespace.
-        """
-        if not isinstance(namespace_handler, namespace.ClientNamespace):
-            raise ValueError('Not a namespace instance')
-        if self.is_asyncio_based() != namespace_handler.is_asyncio_based():
-            raise ValueError('Not a valid namespace class for this client')
-        namespace_handler._set_client(self)
-        self.namespace_handlers[namespace_handler.namespace] = \
-            namespace_handler
-
-    def connect(self, url, headers={}, transports=None,
-                namespaces=None, socketio_path='socket.io'):
+    async def connect(self, url, headers={}, transports=None,
+                      namespaces=None, socketio_path='socket.io'):
         """Connect to a Socket.IO server.
 
         :param url: The URL of the Socket.IO server. It can include custom
@@ -185,6 +76,8 @@ class Client(object):
                               installed. The default value is appropriate for
                               most cases.
 
+        Note: this method is a coroutine.
+
         Example usage::
 
             sio = socketio.Client()
@@ -201,26 +94,29 @@ class Client(object):
                 set(self.namespace_handlers.keys()))
         self.namespaces = [n for n in namespaces if n != '/']
         try:
-            self.eio.connect(url, headers=headers, transports=transports,
-                             engineio_path=socketio_path)
+            await self.eio.connect(url, headers=headers,
+                                   transports=transports,
+                                   engineio_path=socketio_path)
         except engineio.exceptions.ConnectionError as exc:
             six.raise_from(exceptions.ConnectionError(exc.args[0]), None)
 
-    def wait(self):
+    async def wait(self):
         """Wait until the connection with the server ends.
 
         Client applications can use this function to block the main thread
         during the life of the connection.
+
+        Note: this method is a coroutine.
         """
         while True:
-            self.eio.wait()
+            await self.eio.wait()
             if not self._reconnect_task:
                 break
-            self._reconnect_task.join()
+            await self._reconnect_task
             if self.eio.state != 'connected':
                 break
 
-    def emit(self, event, data=None, namespace=None, callback=None):
+    async def emit(self, event, data=None, namespace=None, callback=None):
         """Emit a custom event to one or more connected clients.
 
         :param event: The event name. It can be any string. The event names
@@ -237,6 +133,8 @@ class Client(object):
                          that will be passed to the function are those provided
                          by the client. Callback functions can only be used
                          when addressing an individual client.
+
+        Note: this method is a coroutine.
         """
         namespace = namespace or '/'
         self.logger.info('Emitting event "%s" [%s]', event, namespace)
@@ -244,9 +142,9 @@ class Client(object):
             id = self._generate_ack_id(namespace, callback)
         else:
             id = None
-        self._emit_internal(event, data, namespace, id)
+        await self._emit_internal(event, data, namespace, id)
 
-    def send(self, data, namespace=None, callback=None):
+    async def send(self, data, namespace=None, callback=None):
         """Send a message to one or more connected clients.
 
         This function emits an event with the name ``'message'``. Use
@@ -263,25 +161,23 @@ class Client(object):
                          that will be passed to the function are those provided
                          by the client. Callback functions can only be used
                          when addressing an individual client.
-        """
-        self.emit('message', data, namespace, callback)
 
-    def disconnect(self):
-        """Disconnect from the server."""
+        Note: this method is a coroutine.
+        """
+        await self.emit('message', data, namespace, callback)
+
+    async def disconnect(self):
+        """Disconnect from the server.
+
+        Note: this method is a coroutine.
+        """
         for n in self.namespaces:
-            self._trigger_event('disconnect', namespace=n)
-            self._send_packet(packet.Packet(packet.DISCONNECT, namespace=n))
-        self._trigger_event('disconnect', namespace='/')
-        self._send_packet(packet.Packet(
+            await self._trigger_event('disconnect', namespace=n)
+            await self._send_packet(packet.Packet(packet.DISCONNECT,
+                                    namespace=n))
+        await self._trigger_event('disconnect', namespace='/')
+        await self._send_packet(packet.Packet(
             packet.DISCONNECT, namespace='/'))
-
-    def transport(self):
-        """Return the name of the transport used by the client.
-
-        The two possible values returned by this function are ``'polling'``
-        and ``'websocket'``.
-        """
-        return self.eio.transport()
 
     def start_background_task(self, target, *args, **kwargs):
         """Start a background task using the appropriate async model.
@@ -300,17 +196,19 @@ class Client(object):
         """
         return self.eio.start_background_task(target, *args, **kwargs)
 
-    def sleep(self, seconds=0):
+    async def sleep(self, seconds=0):
         """Sleep for the requested amount of time using the appropriate async
         model.
 
         This is a utility function that applications can use to put a task to
         sleep without having to worry about using the correct call for the
         selected async mode.
-        """
-        return self.eio.sleep(seconds)
 
-    def _emit_internal(self, event, data, namespace=None, id=None):
+        Note: this method is a coroutine.
+        """
+        return await self.eio.sleep(seconds)
+
+    async def _emit_internal(self, event, data, namespace=None, id=None):
         """Send a message to a client."""
         if six.PY2 and not self.binary:
             binary = False  # pragma: nocover
@@ -322,51 +220,43 @@ class Client(object):
             data = list(data)
         else:
             data = [data]
-        self._send_packet(packet.Packet(packet.EVENT, namespace=namespace,
-                                        data=[event] + data, id=id,
-                                        binary=binary))
+        await self._send_packet(packet.Packet(
+            packet.EVENT, namespace=namespace, data=[event] + data, id=id,
+            binary=binary))
 
-    def _send_packet(self, pkt):
+    async def _send_packet(self, pkt):
         """Send a Socket.IO packet to the server."""
         encoded_packet = pkt.encode()
         if isinstance(encoded_packet, list):
             binary = False
             for ep in encoded_packet:
-                self.eio.send(ep, binary=binary)
+                await self.eio.send(ep, binary=binary)
                 binary = True
         else:
-            self.eio.send(encoded_packet, binary=False)
+            await self.eio.send(encoded_packet, binary=False)
 
-    def _generate_ack_id(self, namespace, callback):
-        """Generate a unique identifier for an ACK packet."""
-        namespace = namespace or '/'
-        if namespace not in self.callbacks:
-            self.callbacks[namespace] = {0: itertools.count(1)}
-        id = six.next(self.callbacks[namespace][0])
-        self.callbacks[namespace][id] = callback
-        return id
-
-    def _handle_connect(self, namespace):
+    async def _handle_connect(self, namespace):
         namespace = namespace or '/'
         self.logger.info('Namespace {} is connected'.format(namespace))
-        self._trigger_event('connect', namespace=namespace)
+        await self._trigger_event('connect', namespace=namespace)
         if namespace == '/':
             for n in self.namespaces:
-                self._send_packet(packet.Packet(packet.CONNECT, namespace=n))
+                await self._send_packet(packet.Packet(packet.CONNECT,
+                                        namespace=n))
 
-    def _handle_disconnect(self, namespace):
+    async def _handle_disconnect(self, namespace):
         namespace = namespace or '/'
-        self._trigger_event('disconnect', namespace=namespace)
+        await self._trigger_event('disconnect', namespace=namespace)
         if namespace in self.namespaces:
             self.namespaces.remove(namespace)
 
-    def _handle_event(self, namespace, id, data):
+    async def _handle_event(self, namespace, id, data):
         namespace = namespace or '/'
         self.logger.info('Received event "%s" [%s]', data[0], namespace)
-        self._handle_event_internal(data, namespace, id)
+        await self._handle_event_internal(data, namespace, id)
 
-    def _handle_event_internal(self, data, namespace, id):
-        r = self._trigger_event(data[0], namespace, *data[1:])
+    async def _handle_event_internal(self, data, namespace, id):
+        r = await self._trigger_event(data[0], namespace, *data[1:])
         if id is not None:
             # send ACK packet with the response returned by the handler
             # tuples are expanded as multiple arguments
@@ -380,10 +270,11 @@ class Client(object):
                 binary = False  # pragma: nocover
             else:
                 binary = None
-            self._send_packet(packet.Packet(packet.ACK, namespace=namespace,
-                              id=id, data=data, binary=binary))
+            await self._send_packet(packet.Packet(
+                packet.ACK, namespace=namespace, id=id, data=data,
+                binary=binary))
 
-    def _handle_ack(self, namespace, id, data):
+    async def _handle_ack(self, namespace, id, data):
         namespace = namespace or '/'
         self.logger.info('Received ack [%s]', namespace)
         callback = None
@@ -404,18 +295,26 @@ class Client(object):
         if namespace in self.namespaces:
             self.namespaces.remove(namespace)
 
-    def _trigger_event(self, event, namespace, *args):
+    async def _trigger_event(self, event, namespace, *args):
         """Invoke an application event handler."""
         # first see if we have an explicit handler for the event
         if namespace in self.handlers and event in self.handlers[namespace]:
-            return self.handlers[namespace][event](*args)
+            if asyncio.iscoroutinefunction(self.handlers[namespace][event]) \
+                    is True:
+                try:
+                    ret = await self.handlers[namespace][event](*args)
+                except asyncio.CancelledError:  # pragma: no cover
+                    ret = None
+            else:
+                ret = self.handlers[namespace][event](*args)
+            return ret
 
         # or else, forward the event to a namepsace handler if one exists
         elif namespace in self.namespace_handlers:
-            return self.namespace_handlers[namespace].trigger_event(
+            return await self.namespace_handlers[namespace].trigger_event(
                 event, *args)
 
-    def _handle_reconnect(self):
+    async def _handle_reconnect(self):
         attempt_count = 0
         current_delay = self.reconnection_delay
         while True:
@@ -427,13 +326,13 @@ class Client(object):
             self.logger.info(
                 'Connection failed, new attempt in {:.02f} seconds'.format(
                     delay))
-            self.sleep(delay)
+            await self.sleep(delay)
             attempt_count += 1
             try:
-                self.connect(self.connection_url,
-                             headers=self.connection_headers,
-                             transports=self.connection_transports,
-                             socketio_path=self.socketio_path)
+                await self.connect(self.connection_url,
+                                   headers=self.connection_headers,
+                                   transports=self.connection_transports,
+                                   socketio_path=self.socketio_path)
             except (exceptions.ConnectionError, ValueError):
                 pass
             else:
@@ -450,26 +349,26 @@ class Client(object):
         """Handle the Engine.IO connection event."""
         self.logger.info('Engine.IO connection established')
 
-    def _handle_eio_message(self, data):
+    async def _handle_eio_message(self, data):
         """Dispatch Engine.IO messages."""
         if self._binary_packet:
             pkt = self._binary_packet
             if pkt.add_attachment(data):
                 self._binary_packet = None
                 if pkt.packet_type == packet.BINARY_EVENT:
-                    self._handle_event(pkt.namespace, pkt.id, pkt.data)
+                    await self._handle_event(pkt.namespace, pkt.id, pkt.data)
                 else:
-                    self._handle_ack(pkt.namespace, pkt.id, pkt.data)
+                    await self._handle_ack(pkt.namespace, pkt.id, pkt.data)
         else:
             pkt = packet.Packet(encoded_packet=data)
             if pkt.packet_type == packet.CONNECT:
-                self._handle_connect(pkt.namespace)
+                await self._handle_connect(pkt.namespace)
             elif pkt.packet_type == packet.DISCONNECT:
-                self._handle_disconnect(pkt.namespace)
+                await self._handle_disconnect(pkt.namespace)
             elif pkt.packet_type == packet.EVENT:
-                self._handle_event(pkt.namespace, pkt.id, pkt.data)
+                await self._handle_event(pkt.namespace, pkt.id, pkt.data)
             elif pkt.packet_type == packet.ACK:
-                self._handle_ack(pkt.namespace, pkt.id, pkt.data)
+                await self._handle_ack(pkt.namespace, pkt.id, pkt.data)
             elif pkt.packet_type == packet.BINARY_EVENT or \
                     pkt.packet_type == packet.BINARY_ACK:
                 self._binary_packet = pkt
@@ -478,12 +377,12 @@ class Client(object):
             else:
                 raise ValueError('Unknown packet type.')
 
-    def _handle_eio_disconnect(self):
+    async def _handle_eio_disconnect(self):
         """Handle the Engine.IO disconnection event."""
         self.logger.info('Engine.IO connection dropped')
         for n in self.namespaces:
-            self._trigger_event('disconnect', namespace=n)
-        self._trigger_event('disconnect', namespace='/')
+            await self._trigger_event('disconnect', namespace=n)
+        await self._trigger_event('disconnect', namespace='/')
         self.callbacks = {}
         self._binary_packet = None
         if self.eio.state == 'connected' and self.reconnection:
@@ -491,4 +390,4 @@ class Client(object):
                 self._handle_reconnect)
 
     def _engineio_client_class(self):
-        return engineio.Client
+        return engineio.AsyncClient

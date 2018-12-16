@@ -12,6 +12,7 @@ from .middleware import WSGIApp, Middleware
 from .tornado import get_tornado_handler
 if sys.version_info >= (3, 5):  # pragma: no cover
     # from .asyncio_client import AsyncClient
+    from .asyncio_client import AsyncClient
     from .asyncio_server import AsyncServer
     from .asyncio_manager import AsyncManager
     from .asyncio_namespace import AsyncNamespace, AsyncClientNamespace
@@ -29,6 +30,6 @@ __all__ = ['__version__', 'Client', 'Server', 'BaseManager', 'PubSubManager',
            'KombuManager', 'RedisManager', 'ZmqManager', 'Namespace',
            'ClientNamespace', 'WSGIApp', 'Middleware']
 if AsyncServer is not None:  # pragma: no cover
-    __all__ += ['AsyncServer', 'AsyncNamespace', 'AsyncClientNamespace',
-                'AsyncManager', 'AsyncRedisManager', 'ASGIApp',
-                'get_tornado_handler']
+    __all__ += ['AsyncClient', 'AsyncServer', 'AsyncNamespace',
+                'AsyncClientNamespace', 'AsyncManager', 'AsyncRedisManager',
+                'ASGIApp', 'get_tornado_handler']
