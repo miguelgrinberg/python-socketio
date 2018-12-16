@@ -49,7 +49,7 @@
       function render() {
           if (smoothie)
               smoothie.stop();
-          chart.css('width', $(document).width());
+          chart.width = document.body.clientWidth;
           smoothie = new SmoothieChart();
           smoothie.streamTo(chart, 1000);
           time = new TimeSeries();
