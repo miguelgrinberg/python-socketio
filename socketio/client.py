@@ -13,9 +13,9 @@ default_logger = logging.getLogger('socketio.client')
 
 
 class Client(object):
-    """An Socket.IO client.
+    """A Socket.IO client.
 
-    This class implements a fully compliant Engine.IO web client with support
+    This class implements a fully compliant Socket.IO web client with support
     for websocket and long-polling transports.
 
     :param reconnection: ``True`` if the client should automatically attempt to
@@ -214,6 +214,7 @@ class Client(object):
         """
         while True:
             self.eio.wait()
+            self.sleep(1)  # give the reconnect task time to start up
             if not self._reconnect_task:
                 break
             self._reconnect_task.join()

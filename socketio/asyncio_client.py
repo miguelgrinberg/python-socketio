@@ -13,9 +13,9 @@ default_logger = logging.getLogger('socketio.client')
 
 
 class AsyncClient(client.Client):
-    """An Socket.IO client for asyncio.
+    """A Socket.IO client for asyncio.
 
-    This class implements a fully compliant Engine.IO web client with support
+    This class implements a fully compliant Socket.IO web client with support
     for websocket and long-polling transports.
 
     :param reconnection: ``True`` if the client should automatically attempt to
@@ -110,6 +110,7 @@ class AsyncClient(client.Client):
         """
         while True:
             await self.eio.wait()
+            await self.sleep(1)  # give the reconnect task time to start up
             if not self._reconnect_task:
                 break
             await self._reconnect_task
