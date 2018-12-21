@@ -108,6 +108,9 @@ class AsyncClientNamespace(namespace.ClientNamespace):
                       handlers defined in this class. If this argument is
                       omitted, the default namespace is used.
     """
+    def is_asyncio_based(self):
+        return True
+
     async def emit(self, event, data=None, namespace=None, callback=None):
         """Emit a custom event to the server.
 

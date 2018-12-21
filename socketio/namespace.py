@@ -124,7 +124,7 @@ class ClientNamespace(BaseNamespace):
                       omitted, the default namespace is used.
     """
     def __init__(self, namespace=None):
-        super(Namespace, self).__init__(namespace=namespace)
+        super(ClientNamespace, self).__init__(namespace=namespace)
         self.client = None
 
     def _set_client(self, client):

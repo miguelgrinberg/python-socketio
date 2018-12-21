@@ -95,7 +95,7 @@ class Client(object):
         self.connection_namespaces = None
         self.socketio_path = None
 
-        self.namespaces = None
+        self.namespaces = []
         self.handlers = {}
         self.namespace_handlers = {}
         self.callbacks = {}
@@ -245,7 +245,21 @@ class Client(object):
             id = self._generate_ack_id(namespace, callback)
         else:
             id = None
-        self._emit_internal(event, data, namespace, id)
+        if six.PY2 and not self.binary:
+            binary = False  # pragma: nocover
+        else:
+            binary = None
+        # tuples are expanded to multiple arguments, everything else is sent
+        # as a single argument
+        if isinstance(data, tuple):
+            data = list(data)
+        elif data is not None:
+            data = [data]
+        else:
+            data = []
+        self._send_packet(packet.Packet(packet.EVENT, namespace=namespace,
+                                        data=[event] + data, id=id,
+                                        binary=binary))
 
     def send(self, data, namespace=None, callback=None):
         """Send a message to one or more connected clients.
@@ -265,7 +279,8 @@ class Client(object):
                          by the client. Callback functions can only be used
                          when addressing an individual client.
         """
-        self.emit('message', data, namespace, callback)
+        self.emit('message', data=data, namespace=namespace,
+                  callback=callback)
 
     def disconnect(self):
         """Disconnect from the server."""
@@ -311,24 +326,6 @@ class Client(object):
         """
         return self.eio.sleep(seconds)
 
-    def _emit_internal(self, event, data, namespace=None, id=None):
-        """Send a message to a client."""
-        if six.PY2 and not self.binary:
-            binary = False  # pragma: nocover
-        else:
-            binary = None
-        # tuples are expanded to multiple arguments, everything else is sent
-        # as a single argument
-        if isinstance(data, tuple):
-            data = list(data)
-        elif data is not None:
-            data = [data]
-        else:
-            data = []
-        self._send_packet(packet.Packet(packet.EVENT, namespace=namespace,
-                                        data=[event] + data, id=id,
-                                        binary=binary))
-
     def _send_packet(self, pkt):
         """Send a Socket.IO packet to the server."""
         encoded_packet = pkt.encode()
@@ -356,6 +353,8 @@ class Client(object):
         if namespace == '/':
             for n in self.namespaces:
                 self._send_packet(packet.Packet(packet.CONNECT, namespace=n))
+        elif namespace not in self.namespaces:
+            self.namespaces.append(namespace)
 
     def _handle_disconnect(self, namespace):
         namespace = namespace or '/'
@@ -366,9 +365,6 @@ class Client(object):
     def _handle_event(self, namespace, id, data):
         namespace = namespace or '/'
         self.logger.info('Received event "%s" [%s]', data[0], namespace)
-        self._handle_event_internal(data, namespace, id)
-
-    def _handle_event_internal(self, data, namespace, id):
         r = self._trigger_event(data[0], namespace, *data[1:])
         if id is not None:
             # send ACK packet with the response returned by the handler
@@ -400,7 +396,7 @@ class Client(object):
         if callback is not None:
             callback(*data)
 
-    def _handle_error(self, namespace, data):
+    def _handle_error(self, namespace):
         namespace = namespace or '/'
         self.logger.info('Connection to namespace {} was rejected'.format(
             namespace))
@@ -413,7 +409,7 @@ class Client(object):
         if namespace in self.handlers and event in self.handlers[namespace]:
             return self.handlers[namespace][event](*args)
 
-        # or else, forward the event to a namepsace handler if one exists
+        # or else, forward the event to a namespace handler if one exists
         elif namespace in self.namespace_handlers:
             return self.namespace_handlers[namespace].trigger_event(
                 event, *args)
@@ -449,7 +445,7 @@ class Client(object):
                     'Maximum reconnection attempts reached, giving up')
                 break
 
-    def _handle_eio_connect(self):
+    def _handle_eio_connect(self):  # pragma: no cover
         """Handle the Engine.IO connection event."""
         self.logger.info('Engine.IO connection established')
 
@@ -477,7 +473,7 @@ class Client(object):
                     pkt.packet_type == packet.BINARY_ACK:
                 self._binary_packet = pkt
             elif pkt.packet_type == packet.ERROR:
-                self._handle_error(pkt.namespace, pkt.data)
+                self._handle_error(pkt.namespace)
             else:
                 raise ValueError('Unknown packet type.')
 

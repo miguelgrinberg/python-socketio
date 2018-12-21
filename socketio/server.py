@@ -489,7 +489,7 @@ class Server(object):
         if namespace in self.handlers and event in self.handlers[namespace]:
             return self.handlers[namespace][event](*args)
 
-        # or else, forward the event to a namepsace handler if one exists
+        # or else, forward the event to a namespace handler if one exists
         elif namespace in self.namespace_handlers:
             return self.namespace_handlers[namespace].trigger_event(
                 event, *args)
