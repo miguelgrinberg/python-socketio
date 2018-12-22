@@ -29,14 +29,14 @@ setup(
     platforms='any',
     install_requires=[
         'six>=1.9.0',
-        'python-engineio>=3.0.0'
+        'python-engineio>=3.1.2'
     ],
     extras_require={
         'client': [
-            'python-engineio[client]>=3.0.0'
+            'python-engineio[client]>=3.1.2'
         ],
         'asyncio_client': [
-            'python-engineio[asyncio_client]>=3.0.0'
+            'python-engineio[asyncio_client]>=3.1.2'
         ]
     },
     tests_require=[
