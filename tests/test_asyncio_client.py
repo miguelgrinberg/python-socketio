@@ -60,6 +60,22 @@ class TestAsyncClient(unittest.TestCase):
             'url', headers='headers', transports='transports',
             engineio_path='path')
 
+    def test_connect_one_namespace(self):
+        c = asyncio_client.AsyncClient()
+        c.eio.connect = AsyncMock()
+        _run(c.connect('url', headers='headers', transports='transports',
+                       namespaces='/foo',
+                       socketio_path='path'))
+        self.assertEqual(c.connection_url, 'url')
+        self.assertEqual(c.connection_headers, 'headers')
+        self.assertEqual(c.connection_transports, 'transports')
+        self.assertEqual(c.connection_namespaces, ['/foo'])
+        self.assertEqual(c.socketio_path, 'path')
+        self.assertEqual(c.namespaces, ['/foo'])
+        c.eio.connect.mock.assert_called_once_with(
+            'url', headers='headers', transports='transports',
+            engineio_path='path')
+
     def test_connect_default_namespaces(self):
         c = asyncio_client.AsyncClient()
         c.eio.connect = AsyncMock()

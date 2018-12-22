@@ -4,7 +4,7 @@ from socketio import namespace
 
 
 class AsyncNamespace(namespace.Namespace):
-    """Base class for asyncio class-based namespaces.
+    """Base class for asyncio server-side class-based namespaces.
 
     A class-based namespace is a class that contains all the event handlers
     for a Socket.IO namespace. The event handlers are methods of the class
@@ -96,7 +96,7 @@ class AsyncNamespace(namespace.Namespace):
 
 
 class AsyncClientNamespace(namespace.ClientNamespace):
-    """Base class for asyncio class-based namespaces.
+    """Base class for asyncio client-side class-based namespaces.
 
     A class-based namespace is a class that contains all the event handlers
     for a Socket.IO namespace. The event handlers are methods of the class

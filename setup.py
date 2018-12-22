@@ -31,6 +31,14 @@ setup(
         'six>=1.9.0',
         'python-engineio>=3.0.0'
     ],
+    extras_require={
+        'client': [
+            'python-engineio[client]>=3.0.0'
+        ],
+        'asyncio_client': [
+            'python-engineio[asyncio_client]>=3.0.0'
+        ]
+    },
     tests_require=[
         'mock',
     ],

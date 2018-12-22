@@ -6,6 +6,19 @@ API Reference
 
 .. module:: socketio
 
+``Client`` class
+----------------
+
+.. autoclass:: Client
+   :members:
+
+``AsyncClient`` class
+---------------------
+
+.. autoclass:: AsyncClient
+   :members:
+   :inherited-members:
+
 ``Server`` class
 ----------------
 
@@ -37,10 +50,24 @@ API Reference
 .. autoclass:: Middleware
    :members:
 
+``ClientNamespace`` class
+-------------------------
+
+.. autoclass:: ClientNamespace
+   :members:
+   :inherited-members:
+
 ``Namespace`` class
 -------------------
 
 .. autoclass:: Namespace
+   :members:
+   :inherited-members:
+
+``AsyncClientNamespace`` class
+------------------------------
+
+.. autoclass:: AsyncClientNamespace
    :members:
    :inherited-members:
 

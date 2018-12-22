@@ -199,6 +199,9 @@ class Client(object):
         if namespaces is None:
             namespaces = set(self.handlers.keys()).union(
                 set(self.namespace_handlers.keys()))
+        elif isinstance(namespaces, six.string_types):
+            namespaces = [namespaces]
+            self.connection_namespaces = namespaces
         self.namespaces = [n for n in namespaces if n != '/']
         try:
             self.eio.connect(url, headers=headers, transports=transports,

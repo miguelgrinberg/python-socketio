@@ -10,57 +10,84 @@ What is Socket.IO?
 ------------------
 
 Socket.IO is a transport protocol that enables real-time bidirectional
-event-based communication between clients (typically web browsers or
-smartphones) and a server. There are Socket.IO clients and servers implemented
-in a variety of languages, including JavaScript, Python, C++, Swift, C# and
-PHP.
+event-based communication between clients (typically, though not always,
+web browsers) and a server. The official implementations of the client
+and server components are written in JavaScript. This package provides
+Python implementations of both, each with standard and asyncio variants.
 
-Features
---------
+Client Examples
+---------------
 
-- Fully compatible with the 
-  `Javascript <https://github.com/Automattic/socket.io-client>`_,
-  `Swift <https://github.com/socketio/socket.io-client-swift>`_,
-  `C++ <https://github.com/socketio/socket.io-client-cpp>`_ and
-  `Java <https://github.com/socketio/socket.io-client-java>`_ official
-  Socket.IO clients, plus any third party clients that comply with the
-  Socket.IO specification.
-- Compatible with Python 2.7 and Python 3.3+.
-- Supports large number of clients even on modest hardware due to being
-  asynchronous, even when asyncio is not used.
-- Compatible with `aiohttp <http://aiohttp.readthedocs.io/>`_,
-  `sanic <http://sanic.readthedocs.io/>`_,
-  `tornado <http://www.tornadoweb.org/>`_,
-  `eventlet <http://eventlet.net/>`_,
-  `gevent <http://gevent.org>`_,
-  or any `WSGI <https://wsgi.readthedocs.io/en/latest/index.html>`_ or
-  `ASGI <https://asgi.readthedocs.io/en/latest/>`_ compatible server.
-- Includes WSGI and ASGI middlewares that integrate Socket.IO traffic with
-  other web applications.
-- Broadcasting of messages to all connected clients, or to subsets of them
-  assigned to "rooms".
-- Optional support for multiple servers, connected through a messaging queue
-  such as Redis or RabbitMQ.
-- Send messages to clients from external processes, such as Celery workers or
-  auxiliary scripts.
-- Event-based architecture implemented with decorators that hides the details
-  of the protocol.
-- Support for HTTP long-polling and WebSocket transports.
-- Support for XHR2 and XHR browsers.
-- Support for text and binary messages.
-- Support for gzip and deflate HTTP compression.
-- Configurable CORS responses, to avoid cross-origin problems with browsers.
+The example that follows shows a simple Python client:
 
-Examples
---------
+.. code:: python
 
-The Socket.IO server can be installed with pip::
+    import socketio
 
-    pip install python-socketio
+    sio = socketio.Client()
 
-The following is a basic example of a Socket.IO server that uses the
-`aiohttp <http://aiohttp.readthedocs.io/>`_ framework for asyncio (Python 3.5+
-only):
+    @sio.on('connect')
+    def on_connect():
+        print('connection established')
+
+    @sio.on('my message')
+    def on_message(data):
+        print('message received with ', data)
+        sio.emit('my response', {'response': 'my response'})
+
+    @sio.on('disconnect')
+    def on_disconnect():
+        print('disconnected from server')
+
+    sio.connect('http://localhost:5000')
+    sio.wait()
+
+Client Features
+---------------
+
+- Can connect to other Socket.IO complaint servers besides the one in
+  this package.
+- Compatible with Python 2.7 and 3.5+.
+- Two versions of the client, one for standard Python and another for
+  asyncio.
+- Uses an event-based architecture implemented with decorators that
+  hides the details of the protocol.
+- Implements HTTP long-polling and WebSocket transports.
+- Automatically reconnects to the server if the connection is dropped.
+
+Server Examples
+---------------
+
+The following application is a basic server example that uses the Eventlet
+asynchronous server:
+
+.. code:: python
+
+    import engineio
+    import eventlet
+
+    sio = socketio.Server()
+    app = socketio.WSGIApp(eio, static_files={
+        '/': {'content_type': 'text/html', 'filename': 'index.html'}
+    })
+
+    @sio.on('connect')
+    def connect(sid, environ):
+        print('connect ', sid)
+
+    @sio.on('my message')
+    def message(sid, data):
+        print('message ', data)
+
+    @sio.on('disconnect')
+    def disconnect(sid):
+        print('disconnect ', sid)
+
+    if __name__ == '__main__':
+        eventlet.wsgi.server(eventlet.listen(('', 5000)), app)
+
+Below is a similar application, coded for ``asyncio`` (Python 3.5+ only) and the
+Uvicorn web server:
 
 .. code:: python
 
@@ -95,54 +122,35 @@ only):
     if __name__ == '__main__':
         web.run_app(app)
 
-And below is a similar example, but using Flask and Eventlet. This example is
-compatible with Python 2.7 and 3.3+::
+Server Features
+---------------
 
-    import socketio
-    import eventlet
-    from flask import Flask, render_template
-
-    sio = socketio.Server()
-    app = Flask(__name__)
-
-    @app.route('/')
-    def index():
-        """Serve the client-side application."""
-        return render_template('index.html')
-
-    @sio.on('connect')
-    def connect(sid, environ):
-        print('connect ', sid)
-
-    @sio.on('my message')
-    def message(sid, data):
-        print('message ', data)
-
-    @sio.on('disconnect')
-    def disconnect(sid):
-        print('disconnect ', sid)
-
-    if __name__ == '__main__':
-        # wrap Flask application with socketio's middleware
-        app = socketio.WSGIApp(sio, app)
-
-        # deploy as an eventlet WSGI server
-        eventlet.wsgi.server(eventlet.listen(('', 8000)), app)
-
-The client-side application must include the
-`socket.io-client <https://github.com/Automattic/socket.io-client>`_ library
-(versions 1.3.5 or newer recommended).
-
-Each time a client connects to the server the ``connect`` event handler is
-invoked with the ``sid`` (session ID) assigned to the connection and the WSGI
-environment dictionary. The server can inspect authentication or other headers
-to decide if the client is allowed to connect. To reject a client the handler
-must return ``False``.
-
-When the client sends an event to the server, the appropriate event handler is
-invoked with the ``sid`` and the message, which can be a single or multiple
-arguments. The application can define as many events as needed and associate
-them with event handlers. An event is defined simply by a name.
-
-When a connection with a client is broken, the ``disconnect`` event is called,
-allowing the application to perform cleanup.
+- Can connect to servers running other complaint Socket.IO clients besides
+  the one in this package.
+- Compatible with Python 2.7 and Python 3.5+.
+- Two versions of the server, one for standard Python and another for
+  asyncio.
+- Supports large number of clients even on modest hardware due to being
+  asynchronous.
+- Can be hosted on any `WSGI <https://wsgi.readthedocs.io/en/latest/index.html>`_ and
+  `ASGI <https://asgi.readthedocs.io/en/latest/>`_ web servers includind
+  `Gunicorn <https://gunicorn.org/>`_, `Uvicorn <https://github.com/encode/uvicorn>`_,
+  `eventlet <http://eventlet.net/>`_ and `gevent <http://gevent.org>`_.
+- Can be integrated with WSGI applications written in frameworks such as Flask, Django,
+  etc.
+- Can be integrated with `aiohttp <http://aiohttp.readthedocs.io/>`_,
+  `sanic <http://sanic.readthedocs.io/>`_ and `tornado <http://www.tornadoweb.org/>`_
+  ``asyncio`` applications.
+- Broadcasting of messages to all connected clients, or to subsets of them
+  assigned to "rooms".
+- Optional support for multiple servers, connected through a messaging queue
+  such as Redis or RabbitMQ.
+- Send messages to clients from external processes, such as Celery workers or
+  auxiliary scripts.
+- Event-based architecture implemented with decorators that hides the details
+  of the protocol.
+- Support for HTTP long-polling and WebSocket transports.
+- Support for XHR2 and XHR browsers.
+- Support for text and binary messages.
+- Support for gzip and deflate HTTP compression.
+- Configurable CORS responses, to avoid cross-origin problems with browsers.

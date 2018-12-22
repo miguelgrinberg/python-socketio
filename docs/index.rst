@@ -6,19 +6,16 @@
 python-socketio
 ===============
 
-This projects implements a Socket.IO server that can run standalone or
-integrated with a variety of Python web frameworks.
+This projects implements Socket.IO clients and servers that can run standalone
+or integrated with a variety of Python web frameworks.
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 3
 
    intro
-   guide
-   deployment
+   client
+   server
    api
-
-Indices and tables
-------------------
 
 * :ref:`genindex`
 * :ref:`modindex`
