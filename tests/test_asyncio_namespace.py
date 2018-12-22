@@ -179,3 +179,37 @@ class TestAsyncNamespace(unittest.TestCase):
         ns.server.disconnect.mock.assert_called_with('sid', namespace='/foo')
         _run(ns.disconnect('sid', namespace='/bar'))
         ns.server.disconnect.mock.assert_called_with('sid', namespace='/bar')
+
+    def test_emit_client(self):
+        ns = asyncio_namespace.AsyncClientNamespace('/foo')
+        mock_client = mock.MagicMock()
+        mock_client.emit = AsyncMock()
+        ns._set_client(mock_client)
+        _run(ns.emit('ev', data='data', callback='cb'))
+        ns.client.emit.mock.assert_called_with(
+            'ev', data='data', namespace='/foo', callback='cb')
+        _run(ns.emit('ev', data='data', namespace='/bar', callback='cb'))
+        ns.client.emit.mock.assert_called_with(
+            'ev', data='data', namespace='/bar', callback='cb')
+
+    def test_send_client(self):
+        ns = asyncio_namespace.AsyncClientNamespace('/foo')
+        mock_client = mock.MagicMock()
+        mock_client.send = AsyncMock()
+        ns._set_client(mock_client)
+        _run(ns.send(data='data', callback='cb'))
+        ns.client.send.mock.assert_called_with(
+            'data', namespace='/foo', callback='cb')
+        _run(ns.send(data='data', namespace='/bar', callback='cb'))
+        ns.client.send.mock.assert_called_with(
+            'data', namespace='/bar', callback='cb')
+
+    def test_disconnect_client(self):
+        ns = asyncio_namespace.AsyncClientNamespace('/foo')
+        mock_client = mock.MagicMock()
+        mock_client.disconnect = AsyncMock()
+        ns._set_client(mock_client)
+        _run(ns.disconnect())
+        ns.client.disconnect.mock.assert_called_with(namespace='/foo')
+        _run(ns.disconnect(namespace='/bar'))
+        ns.client.disconnect.mock.assert_called_with(namespace='/bar')

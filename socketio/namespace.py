@@ -149,7 +149,7 @@ class ClientNamespace(BaseNamespace):
         that when the ``namespace`` argument is not given the namespace
         associated with the class is used.
         """
-        return self.server.send(data, namespace=namespace or self.namespace,
+        return self.client.send(data, namespace=namespace or self.namespace,
                                 callback=callback)
 
     def disconnect(self, namespace=None):
@@ -159,4 +159,4 @@ class ClientNamespace(BaseNamespace):
         is that when the ``namespace`` argument is not given the namespace
         associated with the class is used.
         """
-        return self.server.disconnect(namespace=namespace or self.namespace)
+        return self.client.disconnect(namespace=namespace or self.namespace)

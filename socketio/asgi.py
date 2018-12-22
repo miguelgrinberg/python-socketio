@@ -1,7 +1,7 @@
 import engineio
 
 
-class ASGIApp(engineio.ASGIApp):
+class ASGIApp(engineio.ASGIApp):  # pragma: no cover
     """ASGI application middleware for Socket.IO.
 
     This middleware dispatches traffic to an Socket.IO application. It can

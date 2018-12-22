@@ -127,3 +127,31 @@ class TestNamespace(unittest.TestCase):
         ns.server.disconnect.assert_called_with('sid', namespace='/foo')
         ns.disconnect('sid', namespace='/bar')
         ns.server.disconnect.assert_called_with('sid', namespace='/bar')
+
+    def test_emit_client(self):
+        ns = namespace.ClientNamespace('/foo')
+        ns._set_client(mock.MagicMock())
+        ns.emit('ev', data='data', callback='cb')
+        ns.client.emit.assert_called_with(
+            'ev', data='data', namespace='/foo', callback='cb')
+        ns.emit('ev', data='data', namespace='/bar', callback='cb')
+        ns.client.emit.assert_called_with(
+            'ev', data='data', namespace='/bar', callback='cb')
+
+    def test_send_client(self):
+        ns = namespace.ClientNamespace('/foo')
+        ns._set_client(mock.MagicMock())
+        ns.send(data='data', callback='cb')
+        ns.client.send.assert_called_with(
+            'data', namespace='/foo', callback='cb')
+        ns.send(data='data', namespace='/bar', callback='cb')
+        ns.client.send.assert_called_with(
+            'data', namespace='/bar', callback='cb')
+
+    def test_disconnect_client(self):
+        ns = namespace.ClientNamespace('/foo')
+        ns._set_client(mock.MagicMock())
+        ns.disconnect()
+        ns.client.disconnect.assert_called_with(namespace='/foo')
+        ns.disconnect(namespace='/bar')
+        ns.client.disconnect.assert_called_with(namespace='/bar')

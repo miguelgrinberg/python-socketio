@@ -120,7 +120,7 @@ class AsyncClientNamespace(namespace.ClientNamespace):
 
         Note: this method is a coroutine.
         """
-        return await self.server.emit(event, data=data,
+        return await self.client.emit(event, data=data,
                                       namespace=namespace or self.namespace,
                                       callback=callback)
 
@@ -133,7 +133,7 @@ class AsyncClientNamespace(namespace.ClientNamespace):
 
         Note: this method is a coroutine.
         """
-        return await self.server.send(data,
+        return await self.client.send(data,
                                       namespace=namespace or self.namespace,
                                       callback=callback)
 
@@ -146,5 +146,5 @@ class AsyncClientNamespace(namespace.ClientNamespace):
 
         Note: this method is a coroutine.
         """
-        return await self.server.disconnect(
+        return await self.client.disconnect(
             namespace=namespace or self.namespace)

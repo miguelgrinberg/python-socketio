@@ -74,6 +74,11 @@ class TesClient(unittest.TestCase):
         c = client.Client(logger=my_logger)
         self.assertEqual(c.logger, my_logger)
 
+    @mock.patch('socketio.client.Client._engineio_client_class')
+    def test_engineio_logger(self, engineio_client_class):
+        client.Client(engineio_logger='foo')
+        engineio_client_class().assert_called_once_with(logger='foo')
+
     def test_on_event(self):
         c = client.Client()
 
@@ -629,3 +634,76 @@ class TesClient(unittest.TestCase):
             mock.call(1.5)
         ])
         self.assertEqual(c._reconnect_task, 'foo')
+
+    def test_handle_eio_message(self):
+        c = client.Client()
+        c._handle_connect = mock.MagicMock()
+        c._handle_disconnect = mock.MagicMock()
+        c._handle_event = mock.MagicMock()
+        c._handle_ack = mock.MagicMock()
+        c._handle_error = mock.MagicMock()
+
+        c._handle_eio_message('0')
+        c._handle_connect.assert_called_with(None)
+        c._handle_eio_message('0/foo')
+        c._handle_connect.assert_called_with('/foo')
+        c._handle_eio_message('1')
+        c._handle_disconnect.assert_called_with(None)
+        c._handle_eio_message('1/foo')
+        c._handle_disconnect.assert_called_with('/foo')
+        c._handle_eio_message('2["foo"]')
+        c._handle_event.assert_called_with(None, None, ['foo'])
+        c._handle_eio_message('3/foo,["bar"]')
+        c._handle_ack.assert_called_with('/foo', None, ['bar'])
+        c._handle_eio_message('4')
+        c._handle_error.assert_called_with(None)
+        c._handle_eio_message('4/foo')
+        c._handle_error.assert_called_with('/foo')
+        c._handle_eio_message('51-{"_placeholder":true,"num":0}')
+        self.assertEqual(c._binary_packet.packet_type, packet.BINARY_EVENT)
+        c._handle_eio_message(b'foo')
+        c._handle_event.assert_called_with(None, None, b'foo')
+        c._handle_eio_message('62-/foo,{"1":{"_placeholder":true,"num":1},'
+                              '"2":{"_placeholder":true,"num":0}}')
+        self.assertEqual(c._binary_packet.packet_type, packet.BINARY_ACK)
+        c._handle_eio_message(b'bar')
+        c._handle_eio_message(b'foo')
+        c._handle_ack.assert_called_with('/foo', None, {'1': b'foo',
+                                                        '2': b'bar'})
+        self.assertRaises(ValueError, c._handle_eio_message, '9')
+
+    def test_eio_disconnect(self):
+        c = client.Client()
+        c._trigger_event = mock.MagicMock()
+        c._handle_eio_disconnect()
+        c._trigger_event.assert_called_once_with('disconnect', namespace='/')
+
+    def test_eio_disconnect_namespaces(self):
+        c = client.Client()
+        c.namespaces = ['/foo', '/bar']
+        c._trigger_event = mock.MagicMock()
+        c._handle_eio_disconnect()
+        c._trigger_event.assert_any_call('disconnect', namespace='/foo')
+        c._trigger_event.assert_any_call('disconnect', namespace='/bar')
+        c._trigger_event.assert_any_call('disconnect', namespace='/')
+
+    def test_eio_disconnect_reconnect(self):
+        c = client.Client(reconnection=True)
+        c.start_background_task = mock.MagicMock()
+        c.eio.state = 'connected'
+        c._handle_eio_disconnect()
+        c.start_background_task.assert_called_once_with(c._handle_reconnect)
+
+    def test_eio_disconnect_self_disconnect(self):
+        c = client.Client(reconnection=True)
+        c.start_background_task = mock.MagicMock()
+        c.eio.state = 'disconnected'
+        c._handle_eio_disconnect()
+        c.start_background_task.assert_not_called()
+
+    def test_eio_disconnect_no_reconnect(self):
+        c = client.Client(reconnection=False)
+        c.start_background_task = mock.MagicMock()
+        c.eio.state = 'connected'
+        c._handle_eio_disconnect()
+        c.start_background_task.assert_not_called()
