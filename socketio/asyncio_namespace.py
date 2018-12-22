@@ -111,6 +111,28 @@ class AsyncClientNamespace(namespace.ClientNamespace):
     def is_asyncio_based(self):
         return True
 
+    async def trigger_event(self, event, *args):
+        """Dispatch an event to the proper handler method.
+
+        In the most common usage, this method is not overloaded by subclasses,
+        as it performs the routing of events to methods. However, this
+        method can be overriden if special dispatching rules are needed, or if
+        having a single method that catches all events is desired.
+
+        Note: this method is a coroutine.
+        """
+        handler_name = 'on_' + event
+        if hasattr(self, handler_name):
+            handler = getattr(self, handler_name)
+            if asyncio.iscoroutinefunction(handler) is True:
+                try:
+                    ret = await handler(*args)
+                except asyncio.CancelledError:  # pragma: no cover
+                    ret = None
+            else:
+                ret = handler(*args)
+            return ret
+
     async def emit(self, event, data=None, namespace=None, callback=None):
         """Emit a custom event to the server.
 

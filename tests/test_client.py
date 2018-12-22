@@ -21,7 +21,7 @@ from socketio import namespace
 from socketio import packet
 
 
-class TesClient(unittest.TestCase):
+class TestClient(unittest.TestCase):
     def test_is_asyncio_based(self):
         c = client.Client()
         self.assertEqual(c.is_asyncio_based(), False)
@@ -593,8 +593,8 @@ class TesClient(unittest.TestCase):
         c = client.Client()
         c._reconnect_task = 'foo'
         c.sleep = mock.MagicMock()
-        c.connect = mock.MagicMock(side_effect=[ValueError,
-                                   exceptions.ConnectionError, None])
+        c.connect = mock.MagicMock(
+            side_effect=[ValueError, exceptions.ConnectionError, None])
         c._handle_reconnect()
         self.assertEqual(c.sleep.call_count, 3)
         self.assertEqual(c.sleep.call_args_list, [
@@ -609,8 +609,8 @@ class TesClient(unittest.TestCase):
         c = client.Client(reconnection_delay_max=3)
         c._reconnect_task = 'foo'
         c.sleep = mock.MagicMock()
-        c.connect = mock.MagicMock(side_effect=[ValueError,
-                                   exceptions.ConnectionError, None])
+        c.connect = mock.MagicMock(
+            side_effect=[ValueError, exceptions.ConnectionError, None])
         c._handle_reconnect()
         self.assertEqual(c.sleep.call_count, 3)
         self.assertEqual(c.sleep.call_args_list, [
@@ -625,8 +625,8 @@ class TesClient(unittest.TestCase):
         c = client.Client(reconnection_attempts=2)
         c._reconnect_task = 'foo'
         c.sleep = mock.MagicMock()
-        c.connect = mock.MagicMock(side_effect=[ValueError,
-                                   exceptions.ConnectionError, None])
+        c.connect = mock.MagicMock(
+            side_effect=[ValueError, exceptions.ConnectionError, None])
         c._handle_reconnect()
         self.assertEqual(c.sleep.call_count, 2)
         self.assertEqual(c.sleep.call_args_list, [

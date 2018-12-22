@@ -180,6 +180,45 @@ class TestAsyncNamespace(unittest.TestCase):
         _run(ns.disconnect('sid', namespace='/bar'))
         ns.server.disconnect.mock.assert_called_with('sid', namespace='/bar')
 
+    def test_sync_event_client(self):
+        result = {}
+
+        class MyNamespace(asyncio_namespace.AsyncClientNamespace):
+            def on_custom_message(self, sid, data):
+                result['result'] = (sid, data)
+
+        ns = MyNamespace('/foo')
+        ns._set_client(mock.MagicMock())
+        _run(ns.trigger_event('custom_message', 'sid', {'data': 'data'}))
+        self.assertEqual(result['result'], ('sid', {'data': 'data'}))
+
+    def test_async_event_client(self):
+        result = {}
+
+        class MyNamespace(asyncio_namespace.AsyncClientNamespace):
+            @coroutine
+            def on_custom_message(self, sid, data):
+                result['result'] = (sid, data)
+
+        ns = MyNamespace('/foo')
+        ns._set_client(mock.MagicMock())
+        _run(ns.trigger_event('custom_message', 'sid', {'data': 'data'}))
+        self.assertEqual(result['result'], ('sid', {'data': 'data'}))
+
+    def test_event_not_found_client(self):
+        result = {}
+
+        class MyNamespace(asyncio_namespace.AsyncClientNamespace):
+            @coroutine
+            def on_custom_message(self, sid, data):
+                result['result'] = (sid, data)
+
+        ns = MyNamespace('/foo')
+        ns._set_client(mock.MagicMock())
+        _run(ns.trigger_event('another_custom_message', 'sid',
+                              {'data': 'data'}))
+        self.assertEqual(result, {})
+
     def test_emit_client(self):
         ns = asyncio_namespace.AsyncClientNamespace('/foo')
         mock_client = mock.MagicMock()

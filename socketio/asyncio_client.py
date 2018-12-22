@@ -143,7 +143,21 @@ class AsyncClient(client.Client):
             id = self._generate_ack_id(namespace, callback)
         else:
             id = None
-        await self._emit_internal(event, data, namespace, id)
+        if six.PY2 and not self.binary:
+            binary = False  # pragma: nocover
+        else:
+            binary = None
+        # tuples are expanded to multiple arguments, everything else is sent
+        # as a single argument
+        if isinstance(data, tuple):
+            data = list(data)
+        elif data is not None:
+            data = [data]
+        else:
+            data = []
+        await self._send_packet(packet.Packet(
+            packet.EVENT, namespace=namespace, data=[event] + data, id=id,
+            binary=binary))
 
     async def send(self, data, namespace=None, callback=None):
         """Send a message to one or more connected clients.
@@ -165,7 +179,8 @@ class AsyncClient(client.Client):
 
         Note: this method is a coroutine.
         """
-        await self.emit('message', data, namespace, callback)
+        await self.emit('message', data=data, namespace=namespace,
+                        callback=callback)
 
     async def disconnect(self):
         """Disconnect from the server.
@@ -209,24 +224,6 @@ class AsyncClient(client.Client):
         """
         return await self.eio.sleep(seconds)
 
-    async def _emit_internal(self, event, data, namespace=None, id=None):
-        """Send a message to a client."""
-        if six.PY2 and not self.binary:
-            binary = False  # pragma: nocover
-        else:
-            binary = None
-        # tuples are expanded to multiple arguments, everything else is sent
-        # as a single argument
-        if isinstance(data, tuple):
-            data = list(data)
-        elif data is not None:
-            data = [data]
-        else:
-            data = []
-        await self._send_packet(packet.Packet(
-            packet.EVENT, namespace=namespace, data=[event] + data, id=id,
-            binary=binary))
-
     async def _send_packet(self, pkt):
         """Send a Socket.IO packet to the server."""
         encoded_packet = pkt.encode()
@@ -246,6 +243,8 @@ class AsyncClient(client.Client):
             for n in self.namespaces:
                 await self._send_packet(packet.Packet(packet.CONNECT,
                                         namespace=n))
+        elif namespace not in self.namespaces:
+            self.namespaces.append(namespace)
 
     async def _handle_disconnect(self, namespace):
         namespace = namespace or '/'
@@ -256,9 +255,6 @@ class AsyncClient(client.Client):
     async def _handle_event(self, namespace, id, data):
         namespace = namespace or '/'
         self.logger.info('Received event "%s" [%s]', data[0], namespace)
-        await self._handle_event_internal(data, namespace, id)
-
-    async def _handle_event_internal(self, data, namespace, id):
         r = await self._trigger_event(data[0], namespace, *data[1:])
         if id is not None:
             # send ACK packet with the response returned by the handler
@@ -289,9 +285,12 @@ class AsyncClient(client.Client):
         else:
             del self.callbacks[namespace][id]
         if callback is not None:
-            callback(*data)
+            if asyncio.iscoroutinefunction(callback):
+                await callback(*data)
+            else:
+                callback(*data)
 
-    def _handle_error(self, namespace, data):
+    def _handle_error(self, namespace):
         namespace = namespace or '/'
         self.logger.info('Connection to namespace {} was rejected'.format(
             namespace))
@@ -302,8 +301,7 @@ class AsyncClient(client.Client):
         """Invoke an application event handler."""
         # first see if we have an explicit handler for the event
         if namespace in self.handlers and event in self.handlers[namespace]:
-            if asyncio.iscoroutinefunction(self.handlers[namespace][event]) \
-                    is True:
+            if asyncio.iscoroutinefunction(self.handlers[namespace][event]):
                 try:
                     ret = await self.handlers[namespace][event](*args)
                 except asyncio.CancelledError:  # pragma: no cover
@@ -348,7 +346,7 @@ class AsyncClient(client.Client):
                     'Maximum reconnection attempts reached, giving up')
                 break
 
-    def _handle_eio_connect(self):
+    def _handle_eio_connect(self):  # pragma: no cover
         """Handle the Engine.IO connection event."""
         self.logger.info('Engine.IO connection established')
 
@@ -376,7 +374,7 @@ class AsyncClient(client.Client):
                     pkt.packet_type == packet.BINARY_ACK:
                 self._binary_packet = pkt
             elif pkt.packet_type == packet.ERROR:
-                self._handle_error(pkt.namespace, pkt.data)
+                self._handle_error(pkt.namespace)
             else:
                 raise ValueError('Unknown packet type.')
 
