@@ -293,6 +293,7 @@ class Client(object):
         self._trigger_event('disconnect', namespace='/')
         self._send_packet(packet.Packet(
             packet.DISCONNECT, namespace='/'))
+        self.eio.disconnect(abort=True)
 
     def transport(self):
         """Return the name of the transport used by the client.

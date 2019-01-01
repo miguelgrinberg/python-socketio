@@ -197,6 +197,7 @@ class AsyncClient(client.Client):
         await self._trigger_event('disconnect', namespace='/')
         await self._send_packet(packet.Packet(
             packet.DISCONNECT, namespace='/'))
+        await self.eio.disconnect(abort=True)
 
     def start_background_task(self, target, *args, **kwargs):
         """Start a background task using the appropriate async model.

@@ -336,12 +336,14 @@ class TestClient(unittest.TestCase):
         c = client.Client()
         c._trigger_event = mock.MagicMock()
         c._send_packet = mock.MagicMock()
+        c.eio = mock.MagicMock()
         c.disconnect()
         c._trigger_event.assert_called_once_with('disconnect', namespace='/')
         self.assertEqual(c._send_packet.call_count, 1)
         expected_packet = packet.Packet(packet.DISCONNECT, namespace='/')
         self.assertEqual(c._send_packet.call_args_list[0][0][0].encode(),
                          expected_packet.encode())
+        c.eio.disconnect.assert_called_once_with(abort=True)
 
     def test_disconnect_namespaces(self):
         c = client.Client()

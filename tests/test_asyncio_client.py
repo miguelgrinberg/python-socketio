@@ -262,6 +262,8 @@ class TestAsyncClient(unittest.TestCase):
         c = asyncio_client.AsyncClient()
         c._trigger_event = AsyncMock()
         c._send_packet = AsyncMock()
+        c.eio = mock.MagicMock()
+        c.eio.disconnect = AsyncMock()
         _run(c.disconnect())
         c._trigger_event.mock.assert_called_once_with(
             'disconnect', namespace='/')
@@ -269,6 +271,7 @@ class TestAsyncClient(unittest.TestCase):
         expected_packet = packet.Packet(packet.DISCONNECT, namespace='/')
         self.assertEqual(c._send_packet.mock.call_args_list[0][0][0].encode(),
                          expected_packet.encode())
+        c.eio.disconnect.mock.assert_called_once_with(abort=True)
 
     def test_disconnect_namespaces(self):
         c = asyncio_client.AsyncClient()
