@@ -454,6 +454,38 @@ class TestAsyncServer(unittest.TestCase):
         _run(s._handle_eio_message('123', '3/foo,1["foo",2]'))
         cb.assert_called_once_with('foo', 2)
 
+    def test_session(self, eio):
+        fake_session = {}
+
+        async def fake_get_session(sid):
+            return fake_session
+
+        async def fake_save_session(sid, session):
+            global fake_session
+            fake_session = session
+
+        eio.return_value.send = AsyncMock()
+        s = asyncio_server.AsyncServer()
+        s.eio.get_session = fake_get_session
+        s.eio.save_session = fake_save_session
+
+        async def _test():
+            await s._handle_eio_connect('123', 'environ')
+            await s.save_session('123', {'foo': 'bar'})
+            async with s.session('123') as session:
+                self.assertEqual(session, {'foo': 'bar'})
+                session['foo'] = 'baz'
+                session['bar'] = 'foo'
+            self.assertEqual(await s.get_session('123'), {'foo': 'baz', 'bar': 'foo'})
+            self.assertEqual(fake_session, {'/': {'foo': 'baz', 'bar': 'foo'}})
+            async with s.session('123', namespace='/ns') as session:
+                self.assertEqual(session, {})
+                session['a'] = 'b'
+            self.assertEqual(await s.get_session('123', namespace='/ns'), {'a': 'b'})
+            self.assertEqual(fake_session, {'/': {'foo': 'baz', 'bar': 'foo'},
+                                            '/ns': {'a': 'b'}})
+        _run(_test())
+
     def test_disconnect(self, eio):
         eio.return_value.send = AsyncMock()
         s = asyncio_server.AsyncServer()

@@ -375,6 +375,34 @@ class TestServer(unittest.TestCase):
         s._handle_eio_message('123', '3/foo,1["foo",2]')
         cb.assert_called_once_with('foo', 2)
 
+    def test_session(self, eio):
+        fake_session = {}
+
+        def fake_get_session(sid):
+            return fake_session
+
+        def fake_save_session(sid, session):
+            global fake_session
+            fake_session = session
+
+        s = server.Server()
+        s.eio.get_session = fake_get_session
+        s.eio.save_session = fake_save_session
+        s._handle_eio_connect('123', 'environ')
+        s.save_session('123', {'foo': 'bar'})
+        with s.session('123') as session:
+            self.assertEqual(session, {'foo': 'bar'})
+            session['foo'] = 'baz'
+            session['bar'] = 'foo'
+        self.assertEqual(s.get_session('123'), {'foo': 'baz', 'bar': 'foo'})
+        self.assertEqual(fake_session, {'/': {'foo': 'baz', 'bar': 'foo'}})
+        with s.session('123', namespace='/ns') as session:
+            self.assertEqual(session, {})
+            session['a'] = 'b'
+        self.assertEqual(s.get_session('123', namespace='/ns'), {'a': 'b'})
+        self.assertEqual(fake_session, {'/': {'foo': 'baz', 'bar': 'foo'},
+                                        '/ns': {'a': 'b'}})
+
     def test_disconnect(self, eio):
         s = server.Server()
         s._handle_eio_connect('123', 'environ')

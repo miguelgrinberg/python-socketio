@@ -275,6 +275,70 @@ during the broadcast.
     def message(sid, data):
         sio.emit('my reply', data, room='chat_users', skip_sid=sid)
 
+User Sessions
+-------------
+
+The server can maintain application-specific information in a user session
+dedicated to each connected client. Applications can use the user session to
+write any details about the user that need to be preserved throughout the life
+of the connection, such as usernames or user ids.
+
+The ``save_session()`` and ``get_session()`` methods are used to store and
+retrieve information in the user session::
+
+    @sio.on('connect')
+    def on_connect(sid, environ):
+        username = authenticate_user(environ)
+        sio.save_session(sid, {'username': username})
+
+    @sio.on('message')
+    def on_message(sid, data):
+        session = sio.get_session(sid)
+        print('message from ', session['username'])
+
+For the ``asyncio`` server, these methods are coroutines::
+
+
+    @sio.on('connect')
+    async def on_connect(sid, environ):
+        username = authenticate_user(environ)
+        await sio.save_session(sid, {'username': username})
+
+    @sio.on('message')
+    async def on_message(sid, data):
+        session = await sio.get_session(sid)
+        print('message from ', session['username'])
+
+The session can also be manipulated with the `session()` context manager::
+
+    @sio.on('connect')
+    def on_connect(sid, environ):
+        username = authenticate_user(environ)
+        with sio.session(sid) as session:
+            session['username'] = username
+
+    @sio.on('message')
+    def on_message(sid, data):
+        with sio.session(sid) as session:
+            print('message from ', session['username'])
+
+For the ``asyncio`` server, an asynchronous context manager is used::
+
+    @sio.on('connect')
+    def on_connect(sid, environ):
+        username = authenticate_user(environ)
+        async with sio.session(sid) as session:
+            session['username'] = username
+
+    @sio.on('message')
+    def on_message(sid, data):
+        async with sio.session(sid) as session:
+            print('message from ', session['username'])
+
+The ``get_session()``, ``save_session()`` and ``session()`` methods take an
+optional ``namespace`` argument. If this argument isn't provided, the session
+is attached to the default namespace.
+
 Using a Message Queue
 ---------------------
 

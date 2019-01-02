@@ -100,6 +100,35 @@ class Namespace(BaseNamespace):
         """
         return self.server.rooms(sid, namespace=namespace or self.namespace)
 
+    def get_session(self, sid, namespace=None):
+        """Return the user session for a client.
+
+        The only difference with the :func:`socketio.Server.get_session`
+        method is that when the ``namespace`` argument is not given the
+        namespace associated with the class is used.
+        """
+        return self.server.get_session(
+            sid, namespace=namespace or self.namespace)
+
+    def save_session(self, sid, session, namespace=None):
+        """Store the user session for a client.
+
+        The only difference with the :func:`socketio.Server.save_session`
+        method is that when the ``namespace`` argument is not given the
+        namespace associated with the class is used.
+        """
+        return self.server.save_session(
+            sid, session, namespace=namespace or self.namespace)
+
+    def session(self, sid, namespace=None):
+        """Return the user session for a client with context manager syntax.
+
+        The only difference with the :func:`socketio.Server.session` method is
+        that when the ``namespace`` argument is not given the namespace
+        associated with the class is used.
+        """
+        return self.server.session(sid, namespace=namespace or self.namespace)
+
     def disconnect(self, sid, namespace=None):
         """Disconnect a client.
 

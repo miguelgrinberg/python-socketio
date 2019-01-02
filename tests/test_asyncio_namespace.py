@@ -170,6 +170,27 @@ class TestAsyncNamespace(unittest.TestCase):
         ns.rooms('sid', namespace='/bar')
         ns.server.rooms.assert_called_with('sid', namespace='/bar')
 
+    def test_session(self):
+        ns = asyncio_namespace.AsyncNamespace('/foo')
+        mock_server = mock.MagicMock()
+        mock_server.get_session = AsyncMock()
+        mock_server.save_session = AsyncMock()
+        ns._set_server(mock_server)
+        _run(ns.get_session('sid'))
+        ns.server.get_session.mock.assert_called_with('sid', namespace='/foo')
+        _run(ns.get_session('sid', namespace='/bar'))
+        ns.server.get_session.mock.assert_called_with('sid', namespace='/bar')
+        _run(ns.save_session('sid', {'a': 'b'}))
+        ns.server.save_session.mock.assert_called_with('sid', {'a': 'b'},
+                                                       namespace='/foo')
+        _run(ns.save_session('sid', {'a': 'b'}, namespace='/bar'))
+        ns.server.save_session.mock.assert_called_with('sid', {'a': 'b'},
+                                                       namespace='/bar')
+        ns.session('sid')
+        ns.server.session.assert_called_with('sid', namespace='/foo')
+        ns.session('sid', namespace='/bar')
+        ns.server.session.assert_called_with('sid', namespace='/bar')
+
     def test_disconnect(self):
         ns = asyncio_namespace.AsyncNamespace('/foo')
         mock_server = mock.MagicMock()

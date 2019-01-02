@@ -120,6 +120,24 @@ class TestNamespace(unittest.TestCase):
         ns.rooms('sid', namespace='/bar')
         ns.server.rooms.assert_called_with('sid', namespace='/bar')
 
+    def test_session(self):
+        ns = namespace.Namespace('/foo')
+        ns._set_server(mock.MagicMock())
+        ns.get_session('sid')
+        ns.server.get_session.assert_called_with('sid', namespace='/foo')
+        ns.get_session('sid', namespace='/bar')
+        ns.server.get_session.assert_called_with('sid', namespace='/bar')
+        ns.save_session('sid', {'a': 'b'})
+        ns.server.save_session.assert_called_with('sid', {'a': 'b'},
+                                                  namespace='/foo')
+        ns.save_session('sid', {'a': 'b'}, namespace='/bar')
+        ns.server.save_session.assert_called_with('sid', {'a': 'b'},
+                                                  namespace='/bar')
+        ns.session('sid')
+        ns.server.session.assert_called_with('sid', namespace='/foo')
+        ns.session('sid', namespace='/bar')
+        ns.server.session.assert_called_with('sid', namespace='/bar')
+
     def test_disconnect(self):
         ns = namespace.Namespace('/foo')
         ns._set_server(mock.MagicMock())

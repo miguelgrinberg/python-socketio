@@ -169,6 +169,73 @@ class AsyncServer(server.Server):
         self.logger.info('room %s is closing [%s]', room, namespace)
         await self.manager.close_room(room, namespace)
 
+    async def get_session(self, sid, namespace=None):
+        """Return the user session for a client.
+
+        :param sid: The session id of the client.
+        :param namespace: The Socket.IO namespace. If this argument is omitted
+                          the default namespace is used.
+
+        The return value is a dictionary. Modifications made to this
+        dictionary are not guaranteed to be preserved. If you want to modify
+        the user session, use the ``session`` context manager instead.
+        """
+        namespace = namespace or '/'
+        eio_session = await self.eio.get_session(sid)
+        return eio_session.setdefault(namespace, {})
+
+    async def save_session(self, sid, session, namespace=None):
+        """Store the user session for a client.
+
+        :param sid: The session id of the client.
+        :param session: The session dictionary.
+        :param namespace: The Socket.IO namespace. If this argument is omitted
+                          the default namespace is used.
+        """
+        namespace = namespace or '/'
+        eio_session = await self.eio.get_session(sid)
+        eio_session[namespace] = session
+
+    def session(self, sid, namespace=None):
+        """Return the user session for a client with context manager syntax.
+
+        :param sid: The session id of the client.
+
+        This is a context manager that returns the user session dictionary for
+        the client. Any changes that are made to this dictionary inside the
+        context manager block are saved back to the session. Example usage::
+
+            @eio.on('connect')
+            def on_connect(sid, environ):
+                username = authenticate_user(environ)
+                if not username:
+                    return False
+                with eio.session(sid) as session:
+                    session['username'] = username
+
+            @eio.on('message')
+            def on_message(sid, msg):
+                async with eio.session(sid) as session:
+                    print('received message from ', session['username'])
+        """
+        class _session_context_manager(object):
+            def __init__(self, server, sid, namespace):
+                self.server = server
+                self.sid = sid
+                self.namespace = namespace
+                self.session = None
+
+            async def __aenter__(self):
+                self.session = await self.server.get_session(
+                    sid, namespace=self.namespace)
+                return self.session
+
+            async def __aexit__(self, *args):
+                await self.server.save_session(sid, self.session,
+                                               namespace=self.namespace)
+
+        return _session_context_manager(self, sid, namespace)
+
     async def disconnect(self, sid, namespace=None):
         """Disconnect a client.
 

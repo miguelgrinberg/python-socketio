@@ -317,6 +317,74 @@ class Server(object):
         namespace = namespace or '/'
         return self.manager.get_rooms(sid, namespace)
 
+    def get_session(self, sid, namespace=None):
+        """Return the user session for a client.
+
+        :param sid: The session id of the client.
+        :param namespace: The Socket.IO namespace. If this argument is omitted
+                          the default namespace is used.
+
+        The return value is a dictionary. Modifications made to this
+        dictionary are not guaranteed to be preserved unless
+        ``save_session()`` is called, or when the ``session`` context manager
+        is used.
+        """
+        namespace = namespace or '/'
+        eio_session = self.eio.get_session(sid)
+        return eio_session.setdefault(namespace, {})
+
+    def save_session(self, sid, session, namespace=None):
+        """Store the user session for a client.
+
+        :param sid: The session id of the client.
+        :param session: The session dictionary.
+        :param namespace: The Socket.IO namespace. If this argument is omitted
+                          the default namespace is used.
+        """
+        namespace = namespace or '/'
+        eio_session = self.eio.get_session(sid)
+        eio_session[namespace] = session
+
+    def session(self, sid, namespace=None):
+        """Return the user session for a client with context manager syntax.
+
+        :param sid: The session id of the client.
+
+        This is a context manager that returns the user session dictionary for
+        the client. Any changes that are made to this dictionary inside the
+        context manager block are saved back to the session. Example usage::
+
+            @sio.on('connect')
+            def on_connect(sid, environ):
+                username = authenticate_user(environ)
+                if not username:
+                    return False
+                with sio.session(sid) as session:
+                    session['username'] = username
+
+            @sio.on('message')
+            def on_message(sid, msg):
+                with sio.session(sid) as session:
+                    print('received message from ', session['username'])
+        """
+        class _session_context_manager(object):
+            def __init__(self, server, sid, namespace):
+                self.server = server
+                self.sid = sid
+                self.namespace = namespace
+                self.session = None
+
+            def __enter__(self):
+                self.session = self.server.get_session(sid,
+                                                       namespace=namespace)
+                return self.session
+
+            def __exit__(self, *args):
+                self.server.save_session(sid, self.session,
+                                         namespace=namespace)
+
+        return _session_context_manager(self, sid, namespace)
+
     def disconnect(self, sid, namespace=None):
         """Disconnect a client.
 
