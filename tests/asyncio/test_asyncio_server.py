@@ -1,3 +1,4 @@
+import asyncio
 import json
 import logging
 import sys
@@ -9,25 +10,17 @@ if six.PY3:
 else:
     import mock
 
+from socketio import asyncio_server
+from socketio import asyncio_namespace
 from socketio import packet
 from socketio import namespace
-if sys.version_info >= (3, 5):
-    import asyncio
-    from asyncio import coroutine
-    from socketio import asyncio_server
-    from socketio import asyncio_namespace
-else:
-    # mock coroutine so that Python 2 doesn't complain
-    def coroutine(f):
-        return f
 
 
 def AsyncMock(*args, **kwargs):
     """Return a mock asynchronous function."""
     m = mock.MagicMock(*args, **kwargs)
 
-    @coroutine
-    def mock_coro(*args, **kwargs):
+    async def mock_coro(*args, **kwargs):
         return m(*args, **kwargs)
 
     mock_coro.mock = m
@@ -476,12 +469,15 @@ class TestAsyncServer(unittest.TestCase):
                 self.assertEqual(session, {'foo': 'bar'})
                 session['foo'] = 'baz'
                 session['bar'] = 'foo'
-            self.assertEqual(await s.get_session('123'), {'foo': 'baz', 'bar': 'foo'})
-            self.assertEqual(fake_session, {'/': {'foo': 'baz', 'bar': 'foo'}})
+            self.assertEqual(await s.get_session('123'),
+                             {'foo': 'baz', 'bar': 'foo'})
+            self.assertEqual(fake_session,
+                             {'/': {'foo': 'baz', 'bar': 'foo'}})
             async with s.session('123', namespace='/ns') as session:
                 self.assertEqual(session, {})
                 session['a'] = 'b'
-            self.assertEqual(await s.get_session('123', namespace='/ns'), {'a': 'b'})
+            self.assertEqual(await s.get_session('123', namespace='/ns'),
+                             {'a': 'b'})
             self.assertEqual(fake_session, {'/': {'foo': 'baz', 'bar': 'foo'},
                                             '/ns': {'a': 'b'}})
         _run(_test())
@@ -528,19 +524,16 @@ class TestAsyncServer(unittest.TestCase):
             def on_connect(self, sid, environ):
                 result['result'] = (sid, environ)
 
-            @coroutine
-            def on_disconnect(self, sid):
+            async def on_disconnect(self, sid):
                 result['result'] = ('disconnect', sid)
 
-            @coroutine
-            def on_foo(self, sid, data):
+            async def on_foo(self, sid, data):
                 result['result'] = (sid, data)
 
             def on_bar(self, sid):
                 result['result'] = 'bar'
 
-            @coroutine
-            def on_baz(self, sid, data1, data2):
+            async def on_baz(self, sid, data1, data2):
                 result['result'] = (data1, data2)
 
         s = asyncio_server.AsyncServer()

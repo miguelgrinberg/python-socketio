@@ -1,3 +1,4 @@
+import asyncio
 import sys
 import unittest
 
@@ -7,22 +8,14 @@ if six.PY3:
 else:
     import mock
 
-if sys.version_info >= (3, 5):
-    import asyncio
-    from asyncio import coroutine
-    from socketio import asyncio_namespace
-else:
-    # mock coroutine so that Python 2 doesn't complain
-    def coroutine(f):
-        return f
+from socketio import asyncio_namespace
 
 
 def AsyncMock(*args, **kwargs):
     """Return a mock asynchronous function."""
     m = mock.MagicMock(*args, **kwargs)
 
-    @coroutine
-    def mock_coro(*args, **kwargs):
+    async def mock_coro(*args, **kwargs):
         return m(*args, **kwargs)
 
     mock_coro.mock = m
@@ -40,8 +33,7 @@ class TestAsyncNamespace(unittest.TestCase):
         result = {}
 
         class MyNamespace(asyncio_namespace.AsyncNamespace):
-            @coroutine
-            def on_connect(self, sid, environ):
+            async def on_connect(self, sid, environ):
                 result['result'] = (sid, environ)
 
         ns = MyNamespace('/foo')
@@ -53,8 +45,7 @@ class TestAsyncNamespace(unittest.TestCase):
         result = {}
 
         class MyNamespace(asyncio_namespace.AsyncNamespace):
-            @coroutine
-            def on_disconnect(self, sid):
+            async def on_disconnect(self, sid):
                 result['result'] = sid
 
         ns = MyNamespace('/foo')
@@ -78,8 +69,7 @@ class TestAsyncNamespace(unittest.TestCase):
         result = {}
 
         class MyNamespace(asyncio_namespace.AsyncNamespace):
-            @coroutine
-            def on_custom_message(self, sid, data):
+            async def on_custom_message(self, sid, data):
                 result['result'] = (sid, data)
 
         ns = MyNamespace('/foo')
@@ -91,8 +81,7 @@ class TestAsyncNamespace(unittest.TestCase):
         result = {}
 
         class MyNamespace(asyncio_namespace.AsyncNamespace):
-            @coroutine
-            def on_custom_message(self, sid, data):
+            async def on_custom_message(self, sid, data):
                 result['result'] = (sid, data)
 
         ns = MyNamespace('/foo')
@@ -217,8 +206,7 @@ class TestAsyncNamespace(unittest.TestCase):
         result = {}
 
         class MyNamespace(asyncio_namespace.AsyncClientNamespace):
-            @coroutine
-            def on_custom_message(self, sid, data):
+            async def on_custom_message(self, sid, data):
                 result['result'] = (sid, data)
 
         ns = MyNamespace('/foo')
@@ -230,8 +218,7 @@ class TestAsyncNamespace(unittest.TestCase):
         result = {}
 
         class MyNamespace(asyncio_namespace.AsyncClientNamespace):
-            @coroutine
-            def on_custom_message(self, sid, data):
+            async def on_custom_message(self, sid, data):
                 result['result'] = (sid, data)
 
         ns = MyNamespace('/foo')

@@ -1,3 +1,4 @@
+import asyncio
 import functools
 import sys
 import unittest
@@ -8,23 +9,15 @@ if six.PY3:
 else:
     import mock
 
-if sys.version_info >= (3, 5):
-    import asyncio
-    from asyncio import coroutine
-    from socketio import asyncio_manager
-    from socketio import asyncio_pubsub_manager
-else:
-    # mock coroutine so that Python 2 doesn't complain
-    def coroutine(f):
-        return f
+from socketio import asyncio_manager
+from socketio import asyncio_pubsub_manager
 
 
 def AsyncMock(*args, **kwargs):
     """Return a mock asynchronous function."""
     m = mock.MagicMock(*args, **kwargs)
 
-    @coroutine
-    def mock_coro(*args, **kwargs):
+    async def mock_coro(*args, **kwargs):
         return m(*args, **kwargs)
 
     mock_coro.mock = m

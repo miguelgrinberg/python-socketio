@@ -6,6 +6,7 @@ Socket.IO server.
 """
 import re
 from setuptools import setup
+import six
 
 with open('socketio/__init__.py', 'r') as f:
     version = re.search(r'^__version__\s*=\s*[\'"]([^\'"]*)[\'"]',
@@ -42,7 +43,7 @@ setup(
     tests_require=[
         'mock',
     ],
-    test_suite='tests',
+    test_suite='tests' if six.PY3 else 'tests.common',
     classifiers=[
         'Environment :: Web Environment',
         'Intended Audience :: Developers',

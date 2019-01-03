@@ -1,8 +1,7 @@
 import sys
 import unittest
 
-if sys.version_info >= (3, 5):
-    from socketio import asyncio_redis_manager
+from socketio import asyncio_redis_manager
 
 
 @unittest.skipIf(sys.version_info < (3, 5), 'only for Python 3.5+')

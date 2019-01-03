@@ -1,3 +1,4 @@
+import asyncio
 import sys
 import unittest
 
@@ -7,26 +8,18 @@ if six.PY3:
 else:
     import mock
 
+from socketio import asyncio_client
+from socketio import asyncio_namespace
 from engineio import exceptions as engineio_exceptions
 from socketio import exceptions
 from socketio import packet
-if six.PY3:
-    import asyncio
-    from asyncio import coroutine
-    from socketio import asyncio_client
-    from socketio import asyncio_namespace
-else:
-    # mock coroutine so that Python 2 doesn't complain
-    def coroutine(f):
-        return f
 
 
 def AsyncMock(*args, **kwargs):
     """Return a mock asynchronous function."""
     m = mock.MagicMock(*args, **kwargs)
 
-    @coroutine
-    def mock_coro(*args, **kwargs):
+    async def mock_coro(*args, **kwargs):
         return m(*args, **kwargs)
 
     mock_coro.mock = m
@@ -119,8 +112,7 @@ class TestAsyncClient(unittest.TestCase):
         c.sleep = AsyncMock()
         states = ['disconnected']
 
-        @coroutine
-        def fake_wait():
+        async def fake_wait():
             c.eio.state = states.pop(0)
 
         c._reconnect_task = fake_wait()
@@ -134,8 +126,7 @@ class TestAsyncClient(unittest.TestCase):
         c.sleep = AsyncMock()
         states = ['connected', 'disconnected']
 
-        @coroutine
-        def fake_wait():
+        async def fake_wait():
             c.eio.state = states.pop(0)
             c._reconnect_task = fake_wait()
 
