@@ -45,7 +45,7 @@ functions must be defined using the ``on`` decorator::
 
     @sio.on('connect')
     def on_connect():
-        print('I'm connected!')
+        print('I\'m connected!')
 
     @sio.on('message')
     def on_message(data):
@@ -57,7 +57,7 @@ functions must be defined using the ``on`` decorator::
 
     @sio.on('disconnect')
     def on_disconnect():
-        print('I'm disconnected!')
+        print('I\'m disconnected!')
 
 For the ``asyncio`` server, event handlers can be regular functions as above,
 or can also be coroutines::
@@ -162,7 +162,7 @@ added to the ``on`` decorator::
 
     @sio.on('connect', namespace='/chat')
     def on_connect():
-        print('I'm connected to the /chat namespace!')
+        print('I\'m connected to the /chat namespace!')
 
 Likewise, the client can emit an event to the server on a namespace by
 providing its in the ``emit()`` call::
