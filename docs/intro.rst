@@ -67,7 +67,7 @@ asynchronous server:
     import eventlet
 
     sio = socketio.Server()
-    app = socketio.WSGIApp(eio, static_files={
+    app = socketio.WSGIApp(sio, static_files={
         '/': {'content_type': 'text/html', 'filename': 'index.html'}
     })
 
@@ -125,7 +125,7 @@ Uvicorn web server:
 Server Features
 ---------------
 
-- Can connect to servers running other complaint Socket.IO clients besides
+- Can connect to servers running other compliant Socket.IO clients besides
   the one in this package.
 - Compatible with Python 2.7 and Python 3.5+.
 - Two versions of the server, one for standard Python and another for
