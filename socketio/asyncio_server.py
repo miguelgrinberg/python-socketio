@@ -3,6 +3,7 @@ import asyncio
 import engineio
 
 from . import asyncio_manager
+from . import exceptions
 from . import packet
 from . import server
 
@@ -320,11 +321,18 @@ class AsyncServer(server.Server):
         """Handle a client connection request."""
         namespace = namespace or '/'
         self.manager.connect(sid, namespace)
-        if await self._trigger_event('connect', namespace, sid,
-                                     self.environ[sid]) is False:
+
+        try:
+            success = await self._trigger_event('connect', namespace, sid, self.environ[sid])
+        except exceptions.ConnectionRefusedError as exc:
+            fail_reason = exc.get_info()
+            success = False
+        else:
+            fail_reason = None
+
+        if success is False:
             self.manager.disconnect(sid, namespace)
-            await self._send_packet(sid, packet.Packet(packet.ERROR,
-                                                       namespace=namespace))
+            await self._send_packet(sid, packet.Packet(packet.ERROR, data=fail_reason, namespace=namespace))
             if sid in self.environ:  # pragma: no cover
                 del self.environ[sid]
             return False
