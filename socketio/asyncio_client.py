@@ -120,7 +120,8 @@ class AsyncClient(client.Client):
             if self.eio.state != 'connected':
                 break
 
-    async def emit(self, event, data=None, namespace=None, callback=None):
+    async def emit(self, event, data=None, namespace=None, callback=None,
+                   wait=False, timeout=60):
         """Emit a custom event to one or more connected clients.
 
         :param event: The event name. It can be any string. The event names
@@ -137,11 +138,30 @@ class AsyncClient(client.Client):
                          that will be passed to the function are those provided
                          by the client. Callback functions can only be used
                          when addressing an individual client.
+        :param wait: If set to ``True``, this function will wait for the
+                     server to handle the event and acknowledge it via its
+                     callback function. The value(s) passed by the server to
+                     its callback will be returned. If set to ``False``,
+                     this function emits the event and returns immediately.
+        :param timeout: If ``wait`` is set to ``True``, this parameter
+                        specifies a waiting timeout. If the timeout is reached
+                        before the server acknowledges the event, then a
+                        ``TimeoutError`` exception is raised.
 
         Note: this method is a coroutine.
         """
         namespace = namespace or '/'
         self.logger.info('Emitting event "%s" [%s]', event, namespace)
+        if wait is True:
+            callback_event = self.eio.create_event()
+            callback_args = []
+
+            def event_callback(*args):
+                callback_args.append(args)
+                callback_event.set()
+
+            callback = event_callback
+
         if callback is not None:
             id = self._generate_ack_id(namespace, callback)
         else:
@@ -161,8 +181,17 @@ class AsyncClient(client.Client):
         await self._send_packet(packet.Packet(
             packet.EVENT, namespace=namespace, data=[event] + data, id=id,
             binary=binary))
+        if wait is True:
+            try:
+                await asyncio.wait_for(callback_event.wait(), timeout)
+            except asyncio.TimeoutError:
+                six.raise_from(exceptions.TimeoutError(), None)
+            return callback_args[0] if len(callback_args[0]) > 1 \
+                else callback_args[0][0] if len(callback_args[0]) == 1 \
+                    else None
 
-    async def send(self, data, namespace=None, callback=None):
+    async def send(self, data, namespace=None, callback=None, wait=False,
+                   timeout=60):
         """Send a message to one or more connected clients.
 
         This function emits an event with the name ``'message'``. Use
@@ -179,11 +208,20 @@ class AsyncClient(client.Client):
                          that will be passed to the function are those provided
                          by the client. Callback functions can only be used
                          when addressing an individual client.
+        :param wait: If set to ``True``, this function will wait for the
+                     server to handle the event and acknowledge it via its
+                     callback function. The value(s) passed by the server to
+                     its callback will be returned. If set to ``False``,
+                     this function emits the event and returns immediately.
+        :param timeout: If ``wait`` is set to ``True``, this parameter
+                        specifies a waiting timeout. If the timeout is reached
+                        before the server acknowledges the event, then a
+                        ``TimeoutError`` exception is raised.
 
         Note: this method is a coroutine.
         """
         await self.emit('message', data=data, namespace=namespace,
-                        callback=callback)
+                        callback=callback, wait=wait, timeout=timeout)
 
     async def disconnect(self):
         """Disconnect from the server.
