@@ -8,9 +8,10 @@ if six.PY3:
 else:
     import mock
 
+from socketio import exceptions
+from socketio import namespace
 from socketio import packet
 from socketio import server
-from socketio import namespace
 
 
 @mock.patch('engineio.Server')
@@ -52,22 +53,55 @@ class TestServer(unittest.TestCase):
         s = server.Server(client_manager=mgr)
         s.emit('my event', {'foo': 'bar'}, 'room', '123', namespace='/foo',
                callback='cb')
-        s.manager.emit.assert_called_once_with('my event', {'foo': 'bar'},
-                                               '/foo', 'room', '123', 'cb')
+        s.manager.emit.assert_called_once_with(
+            'my event', {'foo': 'bar'}, '/foo', room='room', skip_sid='123',
+            callback='cb')
 
     def test_emit_default_namespace(self, eio):
         mgr = mock.MagicMock()
         s = server.Server(client_manager=mgr)
         s.emit('my event', {'foo': 'bar'}, 'room', '123', callback='cb')
-        s.manager.emit.assert_called_once_with('my event', {'foo': 'bar'}, '/',
-                                               'room', '123', 'cb')
+        s.manager.emit.assert_called_once_with(
+            'my event', {'foo': 'bar'}, '/', room='room', skip_sid='123',
+            callback='cb')
 
     def test_send(self, eio):
         mgr = mock.MagicMock()
         s = server.Server(client_manager=mgr)
         s.send('foo', 'room', '123', namespace='/foo', callback='cb')
-        s.manager.emit.assert_called_once_with('message', 'foo', '/foo',
-                                               'room', '123', 'cb')
+        s.manager.emit.assert_called_once_with(
+            'message', 'foo', '/foo', room='room', skip_sid='123',
+            callback='cb')
+
+    def test_call(self, eio):
+        mgr = mock.MagicMock()
+        s = server.Server(client_manager=mgr)
+
+        def fake_event_wait(timeout=None):
+            self.assertEqual(timeout, 60)
+            s.manager.emit.call_args_list[0][1]['callback']('foo', 321)
+            return True
+
+        s.eio.create_event.return_value.wait = fake_event_wait
+        self.assertEqual(s.call('foo', sid='123'), ('foo', 321))
+
+    def test_call_with_timeout(self, eio):
+        mgr = mock.MagicMock()
+        s = server.Server(client_manager=mgr)
+
+        def fake_event_wait(timeout=None):
+            self.assertEqual(timeout, 12)
+            return False
+
+        s.eio.create_event.return_value.wait = fake_event_wait
+        self.assertRaises(exceptions.TimeoutError, s.call, 'foo',
+                          sid='123', timeout=12)
+
+    def test_call_without_async_handlers(self, eio):
+        mgr = mock.MagicMock()
+        s = server.Server(client_manager=mgr, async_handlers=False)
+        self.assertRaises(RuntimeError, s.call, 'foo',
+                          sid='123', timeout=12)
 
     def test_enter_room(self, eio):
         mgr = mock.MagicMock()
@@ -265,21 +299,21 @@ class TestServer(unittest.TestCase):
         s._handle_eio_disconnect('123')
 
     def test_handle_event(self, eio):
-        s = server.Server()
+        s = server.Server(async_handlers=False)
         handler = mock.MagicMock()
         s.on('my message', handler)
         s._handle_eio_message('123', '2["my message","a","b","c"]')
         handler.assert_called_once_with('123', 'a', 'b', 'c')
 
     def test_handle_event_with_namespace(self, eio):
-        s = server.Server()
+        s = server.Server(async_handlers=False)
         handler = mock.MagicMock()
         s.on('my message', handler, namespace='/foo')
         s._handle_eio_message('123', '2/foo,["my message","a","b","c"]')
         handler.assert_called_once_with('123', 'a', 'b', 'c')
 
     def test_handle_event_binary(self, eio):
-        s = server.Server()
+        s = server.Server(async_handlers=False)
         handler = mock.MagicMock()
         s.on('my message', handler)
         s._handle_eio_message('123', '52-["my message","a",'
@@ -300,7 +334,7 @@ class TestServer(unittest.TestCase):
             '123', '/', 321, ['my message', 'a', b'foo'])
 
     def test_handle_event_with_ack(self, eio):
-        s = server.Server()
+        s = server.Server(async_handlers=False)
         handler = mock.MagicMock(return_value='foo')
         s.on('my message', handler)
         s._handle_eio_message('123', '21000["my message","foo"]')
@@ -309,7 +343,7 @@ class TestServer(unittest.TestCase):
                                            binary=False)
 
     def test_handle_event_with_ack_none(self, eio):
-        s = server.Server()
+        s = server.Server(async_handlers=False)
         handler = mock.MagicMock(return_value=None)
         s.on('my message', handler)
         s._handle_eio_message('123', '21000["my message","foo"]')
@@ -319,7 +353,7 @@ class TestServer(unittest.TestCase):
 
     def test_handle_event_with_ack_tuple(self, eio):
         mgr = mock.MagicMock()
-        s = server.Server(client_manager=mgr)
+        s = server.Server(client_manager=mgr, async_handlers=False)
         handler = mock.MagicMock(return_value=(1, '2', True))
         s.on('my message', handler)
         s._handle_eio_message('123', '21000["my message","a","b","c"]')
@@ -329,7 +363,7 @@ class TestServer(unittest.TestCase):
 
     def test_handle_event_with_ack_list(self, eio):
         mgr = mock.MagicMock()
-        s = server.Server(client_manager=mgr)
+        s = server.Server(client_manager=mgr, async_handlers=False)
         handler = mock.MagicMock(return_value=[1, '2', True])
         s.on('my message', handler)
         s._handle_eio_message('123', '21000["my message","a","b","c"]')
@@ -339,7 +373,7 @@ class TestServer(unittest.TestCase):
 
     def test_handle_event_with_ack_binary(self, eio):
         mgr = mock.MagicMock()
-        s = server.Server(client_manager=mgr, binary=True)
+        s = server.Server(client_manager=mgr, binary=True, async_handlers=False)
         handler = mock.MagicMock(return_value=b'foo')
         s.on('my message', handler)
         s._handle_eio_message('123', '21000["my message","foo"]')
@@ -452,7 +486,7 @@ class TestServer(unittest.TestCase):
             def on_baz(self, sid, data1, data2):
                 result['result'] = (data1, data2)
 
-        s = server.Server()
+        s = server.Server(async_handlers=False)
         s.register_namespace(MyNamespace('/foo'))
         s._handle_eio_connect('123', 'environ')
         s._handle_eio_message('123', '0/foo')

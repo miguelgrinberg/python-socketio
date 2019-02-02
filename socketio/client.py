@@ -224,8 +224,7 @@ class Client(object):
             if self.eio.state != 'connected':
                 break
 
-    def emit(self, event, data=None, namespace=None, callback=None,
-             wait=False, timeout=60):
+    def emit(self, event, data=None, namespace=None, callback=None):
         """Emit a custom event to one or more connected clients.
 
         :param event: The event name. It can be any string. The event names
@@ -242,28 +241,9 @@ class Client(object):
                          that will be passed to the function are those provided
                          by the client. Callback functions can only be used
                          when addressing an individual client.
-        :param wait: If set to ``True``, this function will wait for the
-                     server to handle the event and acknowledge it via its
-                     callback function. The value(s) passed by the server to
-                     its callback will be returned. If set to ``False``,
-                     this function emits the event and returns immediately.
-        :param timeout: If ``wait`` is set to ``True``, this parameter
-                        specifies a waiting timeout. If the timeout is reached
-                        before the server acknowledges the event, then a
-                        ``TimeoutError`` exception is raised.
         """
         namespace = namespace or '/'
         self.logger.info('Emitting event "%s" [%s]', event, namespace)
-        if wait is True:
-            callback_event = self.eio.create_event()
-            callback_args = []
-
-            def event_callback(*args):
-                callback_args.append(args)
-                callback_event.set()
-
-            callback = event_callback
-
         if callback is not None:
             id = self._generate_ack_id(namespace, callback)
         else:
@@ -283,12 +263,6 @@ class Client(object):
         self._send_packet(packet.Packet(packet.EVENT, namespace=namespace,
                                         data=[event] + data, id=id,
                                         binary=binary))
-        if wait is True:
-            if not callback_event.wait(timeout=timeout):
-                raise exceptions.TimeoutError()
-            return callback_args[0] if len(callback_args[0]) > 1 \
-                else callback_args[0][0] if len(callback_args[0]) == 1 \
-                    else None
 
     def send(self, data, namespace=None, callback=None, wait=False,
              timeout=60):
@@ -320,6 +294,37 @@ class Client(object):
         """
         self.emit('message', data=data, namespace=namespace,
                   callback=callback, wait=wait, timeout=timeout)
+
+    def call(self, event, data=None, namespace=None, timeout=60):
+        """Emit a custom event to a client and wait for the response.
+
+        :param event: The event name. It can be any string. The event names
+                      ``'connect'``, ``'message'`` and ``'disconnect'`` are
+                      reserved and should not be used.
+        :param data: The data to send to the client or clients. Data can be of
+                     type ``str``, ``bytes``, ``list`` or ``dict``. If a
+                     ``list`` or ``dict``, the data will be serialized as JSON.
+        :param namespace: The Socket.IO namespace for the event. If this
+                          argument is omitted the event is emitted to the
+                          default namespace.
+        :param timeout: The waiting timeout. If the timeout is reached before
+                        the client acknowledges the event, then a
+                        ``TimeoutError`` exception is raised.
+        """
+        callback_event = self.eio.create_event()
+        callback_args = []
+
+        def event_callback(*args):
+            callback_args.append(args)
+            callback_event.set()
+        
+        self.emit(event, data=data, namespace=namespace,
+                  callback=event_callback)
+        if not callback_event.wait(timeout=timeout):
+            raise exceptions.TimeoutError()
+        return callback_args[0] if len(callback_args[0]) > 1 \
+            else callback_args[0][0] if len(callback_args[0]) == 1 \
+                else None
 
     def disconnect(self):
         """Disconnect from the server."""

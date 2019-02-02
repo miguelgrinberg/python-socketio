@@ -283,44 +283,6 @@ class TestClient(unittest.TestCase):
                          expected_packet.encode())
         c._generate_ack_id.assert_called_once_with('/', 'cb')
 
-    def test_emit_with_wait(self):
-        c = client.Client()
-
-        def fake_event_wait(timeout=None):
-            self.assertEqual(timeout, 60)
-            c._generate_ack_id.call_args_list[0][0][1]('foo', 321)
-            return True
-
-        c._send_packet = mock.MagicMock()
-        c._generate_ack_id = mock.MagicMock(return_value=123)
-        c.eio = mock.MagicMock()
-        c.eio.create_event.return_value.wait = fake_event_wait
-        self.assertEqual(c.emit('foo', wait=True), ('foo', 321))
-        expected_packet = packet.Packet(packet.EVENT, namespace='/',
-                                        data=['foo'], id=123, binary=False)
-        self.assertEqual(c._send_packet.call_count, 1)
-        self.assertEqual(c._send_packet.call_args_list[0][0][0].encode(),
-                         expected_packet.encode())
-
-    def test_emit_with_wait_and_timeout(self):
-        c = client.Client()
-
-        def fake_event_wait(timeout=None):
-            self.assertEqual(timeout, 12)
-            return False
-
-        c._send_packet = mock.MagicMock()
-        c._generate_ack_id = mock.MagicMock(return_value=123)
-        c.eio = mock.MagicMock()
-        c.eio.create_event.return_value.wait = fake_event_wait
-        self.assertRaises(exceptions.TimeoutError, c.emit, 'foo', wait=True,
-                          timeout=12)
-        expected_packet = packet.Packet(packet.EVENT, namespace='/',
-                                        data=['foo'], id=123, binary=False)
-        self.assertEqual(c._send_packet.call_count, 1)
-        self.assertEqual(c._send_packet.call_args_list[0][0][0].encode(),
-                         expected_packet.encode())
-
     def test_emit_namespace_with_callback(self):
         c = client.Client()
         c._send_packet = mock.MagicMock()
@@ -370,6 +332,44 @@ class TestClient(unittest.TestCase):
         c.emit.assert_called_once_with(
             'message', data='data', namespace=None, callback=None, wait=False,
             timeout=60)
+
+    def test_call(self):
+        c = client.Client()
+
+        def fake_event_wait(timeout=None):
+            self.assertEqual(timeout, 60)
+            c._generate_ack_id.call_args_list[0][0][1]('foo', 321)
+            return True
+
+        c._send_packet = mock.MagicMock()
+        c._generate_ack_id = mock.MagicMock(return_value=123)
+        c.eio = mock.MagicMock()
+        c.eio.create_event.return_value.wait = fake_event_wait
+        self.assertEqual(c.call('foo'), ('foo', 321))
+        expected_packet = packet.Packet(packet.EVENT, namespace='/',
+                                        data=['foo'], id=123, binary=False)
+        self.assertEqual(c._send_packet.call_count, 1)
+        self.assertEqual(c._send_packet.call_args_list[0][0][0].encode(),
+                         expected_packet.encode())
+
+    def test_call_with_timeout(self):
+        c = client.Client()
+
+        def fake_event_wait(timeout=None):
+            self.assertEqual(timeout, 12)
+            return False
+
+        c._send_packet = mock.MagicMock()
+        c._generate_ack_id = mock.MagicMock(return_value=123)
+        c.eio = mock.MagicMock()
+        c.eio.create_event.return_value.wait = fake_event_wait
+        self.assertRaises(exceptions.TimeoutError, c.call, 'foo',
+                          timeout=12)
+        expected_packet = packet.Packet(packet.EVENT, namespace='/',
+                                        data=['foo'], id=123, binary=False)
+        self.assertEqual(c._send_packet.call_count, 1)
+        self.assertEqual(c._send_packet.call_args_list[0][0][0].encode(),
+                         expected_packet.encode())
 
     def test_disconnect(self):
         c = client.Client()
