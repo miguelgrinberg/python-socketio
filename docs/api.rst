@@ -114,3 +114,9 @@ API Reference
 
 .. autoclass:: AsyncRedisManager
    :members:
+
+``ConnectionRefusedError`` class
+--------------------------------
+
+.. autoclass:: ConnectionRefusedError
+   :members:

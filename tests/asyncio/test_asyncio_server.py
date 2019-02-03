@@ -10,7 +10,7 @@ if six.PY3:
 else:
     import mock
 
-from socketio import asyncio_server
+from socketio import asyncio_server, exceptions
 from socketio import asyncio_namespace
 from socketio import packet
 from socketio import namespace
@@ -275,6 +275,36 @@ class TestAsyncServer(unittest.TestCase):
         self.assertEqual(s.manager.disconnect.call_count, 1)
         self.assertEqual(s.environ, {})
         s.eio.send.mock.assert_any_call('123', '4/foo', binary=False)
+
+    def test_handle_connect_namespace_rejected_with_exception(self, eio):
+        eio.return_value.send = AsyncMock()
+        mgr = self._get_mock_manager()
+        s = asyncio_server.AsyncServer(client_manager=mgr)
+        handler = mock.MagicMock(side_effect=exceptions.ConnectionRefusedError('fail_reason'))
+        s.on('connect', handler, namespace='/foo')
+        _run(s._handle_eio_connect('123', 'environ'))
+        _run(s._handle_eio_message('123', '0/foo'))
+        self.assertEqual(s.manager.connect.call_count, 2)
+        self.assertEqual(s.manager.disconnect.call_count, 1)
+        self.assertEqual(s.environ, {})
+        s.eio.send.mock.assert_any_call('123', '4/foo,"fail_reason"', binary=False)
+
+    def test_handle_connect_namespace_rejected_with_custom_exception(self, eio):
+        class CustomizedConnRefused(exceptions.ConnectionRefusedError):
+            def get_info(self):
+                return 'customized: {}'.format(self._info)
+
+        eio.return_value.send = AsyncMock()
+        mgr = self._get_mock_manager()
+        s = asyncio_server.AsyncServer(client_manager=mgr)
+        handler = mock.MagicMock(side_effect=CustomizedConnRefused('fail_reason'))
+        s.on('connect', handler, namespace='/foo')
+        _run(s._handle_eio_connect('123', 'environ'))
+        _run(s._handle_eio_message('123', '0/foo'))
+        self.assertEqual(s.manager.connect.call_count, 2)
+        self.assertEqual(s.manager.disconnect.call_count, 1)
+        self.assertEqual(s.environ, {})
+        s.eio.send.mock.assert_any_call('123', '4/foo,"customized: fail_reason"', binary=False)
 
     def test_handle_disconnect(self, eio):
         eio.return_value.send = AsyncMock()
