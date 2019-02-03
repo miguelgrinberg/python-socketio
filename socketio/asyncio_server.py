@@ -1,6 +1,7 @@
 import asyncio
 
 import engineio
+import six
 
 from . import asyncio_manager
 from . import exceptions
@@ -27,7 +28,7 @@ class AsyncServer(server.Server):
                  versions.
     :param async_handlers: If set to ``True``, event handlers are executed in
                            separate threads. To run handlers synchronously,
-                           set to ``False``. The default is ``False``.
+                           set to ``False``. The default is ``True``.
     :param kwargs: Connection parameters for the underlying Engine.IO server.
 
     The Engine.IO configuration supports the following settings:
@@ -60,7 +61,7 @@ class AsyncServer(server.Server):
                             ``False``.
     """
     def __init__(self, client_manager=None, logger=False, json=None,
-                 async_handlers=False, **kwargs):
+                 async_handlers=True, **kwargs):
         if client_manager is None:
             client_manager = asyncio_manager.AsyncManager()
         super().__init__(client_manager=client_manager, logger=logger,
@@ -113,8 +114,9 @@ class AsyncServer(server.Server):
         namespace = namespace or '/'
         self.logger.info('emitting event "%s" to %s [%s]', event,
                          room or 'all', namespace)
-        await self.manager.emit(event, data, namespace, room, skip_sid,
-                                callback, **kwargs)
+        await self.manager.emit(event, data, namespace, room=room,
+                                skip_sid=skip_sid, callback=callback,
+                                **kwargs)
 
     async def send(self, data, room=None, skip_sid=None, namespace=None,
                    callback=None, **kwargs):
@@ -152,9 +154,54 @@ class AsyncServer(server.Server):
 
         Note: this method is a coroutine.
         """
-        await self.emit('message', data, room, skip_sid, namespace, callback,
-                        **kwargs)
+        await self.emit('message', data=data, room=room, skip_sid=skip_sid,
+                        namespace=namespace, callback=callback, **kwargs)
 
+    async def call(self, event, data=None, sid=None, namespace=None,
+                   timeout=60, **kwargs):
+        """Emit a custom event to a client and wait for the response.
+
+        :param event: The event name. It can be any string. The event names
+                      ``'connect'``, ``'message'`` and ``'disconnect'`` are
+                      reserved and should not be used.
+        :param data: The data to send to the client or clients. Data can be of
+                     type ``str``, ``bytes``, ``list`` or ``dict``. If a
+                     ``list`` or ``dict``, the data will be serialized as JSON.
+        :param sid: The session ID of the recipient client.
+        :param namespace: The Socket.IO namespace for the event. If this
+                          argument is omitted the event is emitted to the
+                          default namespace.
+        :param timeout: The waiting timeout. If the timeout is reached before
+                        the client acknowledges the event, then a
+                        ``TimeoutError`` exception is raised.
+        :param ignore_queue: Only used when a message queue is configured. If
+                             set to ``True``, the event is emitted to the
+                             client directly, without going through the queue.
+                             This is more efficient, but only works when a
+                             single server process is used. It is recommended
+                             to always leave this parameter with its default
+                             value of ``False``.
+        """
+        if not self.async_handlers:
+            raise RuntimeError(
+                'Cannot use call() when async_handlers is False.')
+        callback_event = self.eio.create_event()
+        callback_args = []
+
+        def event_callback(*args):
+            callback_args.append(args)
+            callback_event.set()
+        
+        await self.emit(event, data=data, room=sid, namespace=namespace,
+                        callback=event_callback, **kwargs)
+        try:
+            await asyncio.wait_for(callback_event.wait(), timeout)
+        except asyncio.TimeoutError:
+            six.raise_from(exceptions.TimeoutError(), None)
+        return callback_args[0] if len(callback_args[0]) > 1 \
+            else callback_args[0][0] if len(callback_args[0]) == 1 \
+                else None
+    
     async def close_room(self, room, namespace=None):
         """Close a room.
 

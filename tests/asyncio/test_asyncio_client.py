@@ -240,14 +240,50 @@ class TestAsyncClient(unittest.TestCase):
         _run(c.send('data', 'namespace', 'callback'))
         c.emit.mock.assert_called_once_with(
             'message', data='data', namespace='namespace',
-            callback='callback')
+            callback='callback', wait=False, timeout=60)
 
     def test_send_with_defaults(self):
         c = asyncio_client.AsyncClient()
         c.emit = AsyncMock()
         _run(c.send('data'))
         c.emit.mock.assert_called_once_with(
-            'message', data='data', namespace=None, callback=None)
+            'message', data='data', namespace=None, callback=None, wait=False,
+            timeout=60)
+
+    def test_call(self):
+        c = asyncio_client.AsyncClient()
+
+        async def fake_event_wait():
+            c._generate_ack_id.call_args_list[0][0][1]('foo', 321)
+
+        c._send_packet = AsyncMock()
+        c._generate_ack_id = mock.MagicMock(return_value=123)
+        c.eio = mock.MagicMock()
+        c.eio.create_event.return_value.wait = fake_event_wait
+        self.assertEqual(_run(c.call('foo')), ('foo', 321))
+        expected_packet = packet.Packet(packet.EVENT, namespace='/',
+                                        data=['foo'], id=123, binary=False)
+        self.assertEqual(c._send_packet.mock.call_count, 1)
+        self.assertEqual(c._send_packet.mock.call_args_list[0][0][0].encode(),
+                         expected_packet.encode())
+
+    def test_call_with_timeout(self):
+        c = asyncio_client.AsyncClient()
+
+        async def fake_event_wait():
+            await asyncio.sleep(1)
+
+        c._send_packet = AsyncMock()
+        c._generate_ack_id = mock.MagicMock(return_value=123)
+        c.eio = mock.MagicMock()
+        c.eio.create_event.return_value.wait = fake_event_wait
+        self.assertRaises(exceptions.TimeoutError, _run,
+                          c.call('foo', timeout=0.01))
+        expected_packet = packet.Packet(packet.EVENT, namespace='/',
+                                        data=['foo'], id=123, binary=False)
+        self.assertEqual(c._send_packet.mock.call_count, 1)
+        self.assertEqual(c._send_packet.mock.call_args_list[0][0][0].encode(),
+                         expected_packet.encode())
 
     def test_disconnect(self):
         c = asyncio_client.AsyncClient()
