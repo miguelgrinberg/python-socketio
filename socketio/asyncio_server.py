@@ -61,11 +61,11 @@ class AsyncServer(server.Server):
                             ``False``.
     """
     def __init__(self, client_manager=None, logger=False, json=None,
-                 async_handlers=True, **kwargs):
+                 async_handlers=True, binary=False, **kwargs):
         if client_manager is None:
             client_manager = asyncio_manager.AsyncManager()
         super().__init__(client_manager=client_manager, logger=logger,
-                         binary=False, json=json,
+                         binary=binary, json=json,
                          async_handlers=async_handlers, **kwargs)
 
     def is_asyncio_based(self):
