@@ -34,10 +34,12 @@ setup(
     ],
     extras_require={
         'client': [
-            'python-engineio[client]>=3.2.0'
+            'requests>=2.21.0',
+            'websocket-client>=0.54.0',
         ],
         'asyncio_client': [
-            'python-engineio[asyncio_client]>=3.2.0'
+            'aiohttp>=3.4',
+            'websockets>=7.0',
         ]
     },
     tests_require=[
