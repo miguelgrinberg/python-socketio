@@ -1,8 +1,8 @@
-Socket.IO Threading Examples
-============================
+Socket.IO Asyncio Examples
+==========================
 
 This directory contains example Socket.IO clients that work with the
-`threading` package of the Python standard library.
+`asyncio` package of the Python standard library.
 
 latency_client.py
 -----------------
