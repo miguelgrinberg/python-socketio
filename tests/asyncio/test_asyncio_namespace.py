@@ -257,6 +257,4 @@ class TestAsyncNamespace(unittest.TestCase):
         mock_client.disconnect = AsyncMock()
         ns._set_client(mock_client)
         _run(ns.disconnect())
-        ns.client.disconnect.mock.assert_called_with(namespace='/foo')
-        _run(ns.disconnect(namespace='/bar'))
-        ns.client.disconnect.mock.assert_called_with(namespace='/bar')
+        ns.client.disconnect.mock.assert_called_with()

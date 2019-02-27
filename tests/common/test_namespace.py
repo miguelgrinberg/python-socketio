@@ -170,6 +170,4 @@ class TestNamespace(unittest.TestCase):
         ns = namespace.ClientNamespace('/foo')
         ns._set_client(mock.MagicMock())
         ns.disconnect()
-        ns.client.disconnect.assert_called_with(namespace='/foo')
-        ns.disconnect(namespace='/bar')
-        ns.client.disconnect.assert_called_with(namespace='/bar')
+        ns.client.disconnect.assert_called_with()

@@ -181,11 +181,11 @@ class ClientNamespace(BaseNamespace):
         return self.client.send(data, namespace=namespace or self.namespace,
                                 callback=callback)
 
-    def disconnect(self, namespace=None):
+    def disconnect(self):
         """Disconnect from the server.
 
         The only difference with the :func:`socketio.Client.disconnect` method
         is that when the ``namespace`` argument is not given the namespace
         associated with the class is used.
         """
-        return self.client.disconnect(namespace=namespace or self.namespace)
+        return self.client.disconnect()

@@ -192,7 +192,7 @@ class AsyncClientNamespace(namespace.ClientNamespace):
                                       namespace=namespace or self.namespace,
                                       callback=callback)
 
-    async def disconnect(self, namespace=None):
+    async def disconnect(self):
         """Disconnect a client.
 
         The only difference with the :func:`socketio.Client.disconnect` method
@@ -201,5 +201,4 @@ class AsyncClientNamespace(namespace.ClientNamespace):
 
         Note: this method is a coroutine.
         """
-        return await self.client.disconnect(
-            namespace=namespace or self.namespace)
+        return await self.client.disconnect()
