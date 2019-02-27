@@ -376,8 +376,9 @@ class TestClient(unittest.TestCase):
         c._trigger_event = mock.MagicMock()
         c._send_packet = mock.MagicMock()
         c.eio = mock.MagicMock()
+        c.eio.state = 'connected'
         c.disconnect()
-        c._trigger_event.assert_called_once_with('disconnect', namespace='/')
+        self.assertEqual(c._trigger_event.call_count, 0)
         self.assertEqual(c._send_packet.call_count, 1)
         expected_packet = packet.Packet(packet.DISCONNECT, namespace='/')
         self.assertEqual(c._send_packet.call_args_list[0][0][0].encode(),
@@ -389,12 +390,10 @@ class TestClient(unittest.TestCase):
         c.namespaces = ['/foo', '/bar']
         c._trigger_event = mock.MagicMock()
         c._send_packet = mock.MagicMock()
+        c.eio = mock.MagicMock()
+        c.eio.state = 'connected'
         c.disconnect()
-        self.assertEqual(c._trigger_event.call_args_list, [
-            mock.call('disconnect', namespace='/foo'),
-            mock.call('disconnect', namespace='/bar'),
-            mock.call('disconnect', namespace='/')
-        ])
+        self.assertEqual(c._trigger_event.call_count, 0)
         self.assertEqual(c._send_packet.call_count, 3)
         expected_packet = packet.Packet(packet.DISCONNECT, namespace='/foo')
         self.assertEqual(c._send_packet.call_args_list[0][0][0].encode(),
@@ -731,6 +730,8 @@ class TestClient(unittest.TestCase):
     def test_eio_disconnect(self):
         c = client.Client()
         c._trigger_event = mock.MagicMock()
+        c.start_background_task = mock.MagicMock()
+        c.eio.state = 'connected'
         c._handle_eio_disconnect()
         c._trigger_event.assert_called_once_with('disconnect', namespace='/')
 
@@ -738,6 +739,8 @@ class TestClient(unittest.TestCase):
         c = client.Client()
         c.namespaces = ['/foo', '/bar']
         c._trigger_event = mock.MagicMock()
+        c.start_background_task = mock.MagicMock()
+        c.eio.state = 'connected'
         c._handle_eio_disconnect()
         c._trigger_event.assert_any_call('disconnect', namespace='/foo')
         c._trigger_event.assert_any_call('disconnect', namespace='/bar')

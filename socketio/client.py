@@ -317,7 +317,7 @@ class Client(object):
         def event_callback(*args):
             callback_args.append(args)
             callback_event.set()
-        
+
         self.emit(event, data=data, namespace=namespace,
                   callback=event_callback)
         if not callback_event.wait(timeout=timeout):
@@ -328,10 +328,10 @@ class Client(object):
 
     def disconnect(self):
         """Disconnect from the server."""
+        # here we just request the disconnection
+        # later in _handle_eio_disconnect we invoke the disconnect handler
         for n in self.namespaces:
-            self._trigger_event('disconnect', namespace=n)
             self._send_packet(packet.Packet(packet.DISCONNECT, namespace=n))
-        self._trigger_event('disconnect', namespace='/')
         self._send_packet(packet.Packet(
             packet.DISCONNECT, namespace='/'))
         self.eio.disconnect(abort=True)

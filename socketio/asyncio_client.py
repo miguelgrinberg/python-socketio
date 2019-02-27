@@ -235,11 +235,11 @@ class AsyncClient(client.Client):
 
         Note: this method is a coroutine.
         """
+        # here we just request the disconnection
+        # later in _handle_eio_disconnect we invoke the disconnect handler
         for n in self.namespaces:
-            await self._trigger_event('disconnect', namespace=n)
             await self._send_packet(packet.Packet(packet.DISCONNECT,
                                     namespace=n))
-        await self._trigger_event('disconnect', namespace='/')
         await self._send_packet(packet.Packet(
             packet.DISCONNECT, namespace='/'))
         await self.eio.disconnect(abort=True)

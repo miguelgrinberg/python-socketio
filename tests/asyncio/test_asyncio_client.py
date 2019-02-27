@@ -291,9 +291,9 @@ class TestAsyncClient(unittest.TestCase):
         c._send_packet = AsyncMock()
         c.eio = mock.MagicMock()
         c.eio.disconnect = AsyncMock()
+        c.eio.state = 'connected'
         _run(c.disconnect())
-        c._trigger_event.mock.assert_called_once_with(
-            'disconnect', namespace='/')
+        self.assertEqual(c._trigger_event.mock.call_count, 0)
         self.assertEqual(c._send_packet.mock.call_count, 1)
         expected_packet = packet.Packet(packet.DISCONNECT, namespace='/')
         self.assertEqual(c._send_packet.mock.call_args_list[0][0][0].encode(),
@@ -305,12 +305,11 @@ class TestAsyncClient(unittest.TestCase):
         c.namespaces = ['/foo', '/bar']
         c._trigger_event = AsyncMock()
         c._send_packet = AsyncMock()
+        c.eio = mock.MagicMock()
+        c.eio.disconnect = AsyncMock()
+        c.eio.state = 'connected'
         _run(c.disconnect())
-        self.assertEqual(c._trigger_event.mock.call_args_list, [
-            mock.call('disconnect', namespace='/foo'),
-            mock.call('disconnect', namespace='/bar'),
-            mock.call('disconnect', namespace='/')
-        ])
+        self.assertEqual(c._trigger_event.mock.call_count, 0)
         self.assertEqual(c._send_packet.mock.call_count, 3)
         expected_packet = packet.Packet(packet.DISCONNECT, namespace='/foo')
         self.assertEqual(c._send_packet.mock.call_args_list[0][0][0].encode(),
@@ -632,6 +631,7 @@ class TestAsyncClient(unittest.TestCase):
     def test_eio_disconnect(self):
         c = asyncio_client.AsyncClient()
         c._trigger_event = AsyncMock()
+        c.eio.state = 'connected'
         _run(c._handle_eio_disconnect())
         c._trigger_event.mock.assert_called_once_with(
             'disconnect', namespace='/')
@@ -640,6 +640,7 @@ class TestAsyncClient(unittest.TestCase):
         c = asyncio_client.AsyncClient()
         c.namespaces = ['/foo', '/bar']
         c._trigger_event = AsyncMock()
+        c.eio.state = 'connected'
         _run(c._handle_eio_disconnect())
         c._trigger_event.mock.assert_any_call('disconnect', namespace='/foo')
         c._trigger_event.mock.assert_any_call('disconnect', namespace='/bar')
