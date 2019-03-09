@@ -295,7 +295,8 @@ class TestAsyncServer(unittest.TestCase):
         self.assertEqual(s.manager.connect.call_count, 1)
         self.assertEqual(s.manager.disconnect.call_count, 1)
         self.assertEqual(s.environ, {})
-        s.eio.send.mock.assert_called_once_with('123', '4', binary=False)
+        s.eio.send.mock.assert_any_call('123', '0', binary=False)
+        s.eio.send.mock.assert_any_call('123', '1', binary=False)
 
     def test_handle_connect_namespace_rejected(self, eio):
         eio.return_value.send = AsyncMock()
@@ -308,7 +309,8 @@ class TestAsyncServer(unittest.TestCase):
         self.assertEqual(s.manager.connect.call_count, 2)
         self.assertEqual(s.manager.disconnect.call_count, 1)
         self.assertEqual(s.environ, {})
-        s.eio.send.mock.assert_any_call('123', '4/foo', binary=False)
+        s.eio.send.mock.assert_any_call('123', '0/foo', binary=False)
+        s.eio.send.mock.assert_any_call('123', '1/foo', binary=False)
 
     def test_handle_disconnect(self, eio):
         eio.return_value.send = AsyncMock()

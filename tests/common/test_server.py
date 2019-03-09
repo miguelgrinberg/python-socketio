@@ -239,7 +239,8 @@ class TestServer(unittest.TestCase):
         self.assertEqual(s.manager.connect.call_count, 1)
         self.assertEqual(s.manager.disconnect.call_count, 1)
         self.assertEqual(s.environ, {})
-        s.eio.send.assert_called_once_with('123', '4', binary=False)
+        s.eio.send.assert_any_call('123', '0', binary=False)
+        s.eio.send.assert_any_call('123', '1', binary=False)
 
     def test_handle_connect_namespace_rejected(self, eio):
         mgr = mock.MagicMock()
@@ -250,7 +251,8 @@ class TestServer(unittest.TestCase):
         s._handle_eio_message('123', '0/foo')
         self.assertEqual(s.manager.connect.call_count, 2)
         self.assertEqual(s.manager.disconnect.call_count, 1)
-        s.eio.send.assert_any_call('123', '4/foo', binary=False)
+        s.eio.send.assert_any_call('123', '0/foo', binary=False)
+        s.eio.send.assert_any_call('123', '1/foo', binary=False)
 
     def test_handle_disconnect(self, eio):
         mgr = mock.MagicMock()

@@ -300,7 +300,7 @@ class Server(object):
         def event_callback(*args):
             callback_args.append(args)
             callback_event.set()
-        
+
         self.emit(event, data=data, room=sid, namespace=namespace,
                   callback=event_callback, **kwargs)
         if not callback_event.wait(timeout=timeout):
@@ -530,17 +530,17 @@ class Server(object):
         """Handle a client connection request."""
         namespace = namespace or '/'
         self.manager.connect(sid, namespace)
+        self._send_packet(sid, packet.Packet(packet.CONNECT,
+                                             namespace=namespace))
         if self._trigger_event('connect', namespace, sid,
                                self.environ[sid]) is False:
-            self.manager.disconnect(sid, namespace)
-            self._send_packet(sid, packet.Packet(packet.ERROR,
+            self.manager.pre_disconnect(sid, namespace)
+            self._send_packet(sid, packet.Packet(packet.DISCONNECT,
                                                  namespace=namespace))
+            self.manager.disconnect(sid, namespace)
             if sid in self.environ:  # pragma: no cover
                 del self.environ[sid]
             return False
-        else:
-            self._send_packet(sid, packet.Packet(packet.CONNECT,
-                                                 namespace=namespace))
 
     def _handle_disconnect(self, sid, namespace):
         """Handle a client disconnect."""
