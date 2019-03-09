@@ -371,16 +371,23 @@ class AsyncServer(server.Server):
         if self.always_connect:
             await self._send_packet(sid, packet.Packet(packet.CONNECT,
                                                        namespace=namespace))
-        if await self._trigger_event('connect', namespace, sid,
-                                     self.environ[sid]) is False:
+        fail_reason = None
+        try:
+            success = await self._trigger_event('connect', namespace, sid,
+                                                self.environ[sid])
+        except exceptions.ConnectionRefusedError as exc:
+            fail_reason = exc.error_args
+            success = False
+
+        if success is False:
             if self.always_connect:
                 self.manager.pre_disconnect(sid, namespace)
                 await self._send_packet(sid, packet.Packet(
-                    packet.DISCONNECT, namespace=namespace))
+                    packet.DISCONNECT, data=fail_reason, namespace=namespace))
             self.manager.disconnect(sid, namespace)
             if not self.always_connect:
                 await self._send_packet(sid, packet.Packet(
-                    packet.ERROR, namespace=namespace))
+                    packet.ERROR, data=fail_reason, namespace=namespace))
             if sid in self.environ:  # pragma: no cover
                 del self.environ[sid]
             return False

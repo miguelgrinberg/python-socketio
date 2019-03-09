@@ -10,7 +10,7 @@ if six.PY3:
 else:
     import mock
 
-from socketio import asyncio_server
+from socketio import asyncio_server, exceptions
 from socketio import asyncio_namespace
 from socketio import exceptions
 from socketio import namespace
@@ -339,6 +339,34 @@ class TestAsyncServer(unittest.TestCase):
         self.assertEqual(s.environ, {})
         s.eio.send.mock.assert_any_call('123', '0/foo', binary=False)
         s.eio.send.mock.assert_any_call('123', '1/foo', binary=False)
+
+    def test_handle_connect_rejected_with_exception(self, eio):
+        eio.return_value.send = AsyncMock()
+        mgr = self._get_mock_manager()
+        s = asyncio_server.AsyncServer(client_manager=mgr)
+        handler = mock.MagicMock(
+            side_effect=exceptions.ConnectionRefusedError('fail_reason'))
+        s.on('connect', handler)
+        _run(s._handle_eio_connect('123', 'environ'))
+        self.assertEqual(s.manager.connect.call_count, 1)
+        self.assertEqual(s.manager.disconnect.call_count, 1)
+        self.assertEqual(s.environ, {})
+        s.eio.send.mock.assert_any_call('123', '4"fail_reason"', binary=False)
+
+    def test_handle_connect_namespace_rejected_with_exception(self, eio):
+        eio.return_value.send = AsyncMock()
+        mgr = self._get_mock_manager()
+        s = asyncio_server.AsyncServer(client_manager=mgr)
+        handler = mock.MagicMock(
+            side_effect=exceptions.ConnectionRefusedError('fail_reason', 1))
+        s.on('connect', handler, namespace='/foo')
+        _run(s._handle_eio_connect('123', 'environ'))
+        _run(s._handle_eio_message('123', '0/foo'))
+        self.assertEqual(s.manager.connect.call_count, 2)
+        self.assertEqual(s.manager.disconnect.call_count, 1)
+        self.assertEqual(s.environ, {})
+        s.eio.send.mock.assert_any_call('123', '4/foo,["fail_reason",1]',
+                                        binary=False)
 
     def test_handle_disconnect(self, eio):
         eio.return_value.send = AsyncMock()

@@ -111,6 +111,15 @@ standard WSGI format containing the request information, including HTTP
 headers. After inspecting the request, the connect event handler can return
 ``False`` to reject the connection with the client.
 
+Sometimes it is useful to pass data back to the client being rejected. In that
+case instead of returning ``False``
+:class:`socketio.exceptions.ConnectionRefusedError` can be raised, and all of
+its argument will be sent to the client with the rejection::
+
+    @sio.on('connect')
+    def connect(sid, environ):
+        raise ConnectionRefusedError('authentication failed')
+
 Emitting Events
 ---------------
 
