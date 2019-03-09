@@ -545,17 +545,23 @@ class Server(object):
         if self.always_connect:
             self._send_packet(sid, packet.Packet(packet.CONNECT,
                                                  namespace=namespace))
-        if self._trigger_event('connect', namespace, sid,
-                               self.environ[sid]) is False:
+        fail_reason = None
+        try:
+            success = self._trigger_event('connect', namespace, sid,
+                                          self.environ[sid])
+        except exceptions.ConnectionRefusedError as exc:
+            fail_reason = exc.error_args
+            success = False
+
+        if success is False:
             if self.always_connect:
                 self.manager.pre_disconnect(sid, namespace)
-                self._send_packet(sid, packet.Packet(packet.DISCONNECT,
-                                                     namespace=namespace))
+                self._send_packet(sid, packet.Packet(
+                    packet.DISCONNECT, data=fail_reason, namespace=namespace))
             self.manager.disconnect(sid, namespace)
             if not self.always_connect:
-                self._send_packet(sid, packet.Packet(packet.ERROR,
-                                                     namespace=namespace))
-
+                self._send_packet(sid, packet.Packet(
+                    packet.ERROR, data=fail_reason, namespace=namespace))
             if sid in self.environ:  # pragma: no cover
                 del self.environ[sid]
             return False

@@ -32,6 +32,12 @@ API Reference
    :members:
    :inherited-members:
 
+``ConnectionRefusedError`` class
+--------------------------------
+
+.. autoclass:: ConnectionRefusedError
+   :members:
+
 ``WSGIApp`` class
 -----------------
 
