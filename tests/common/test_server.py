@@ -294,7 +294,7 @@ class TestServer(unittest.TestCase):
         mgr = mock.MagicMock()
         s = server.Server(client_manager=mgr)
         handler = mock.MagicMock(
-            side_effect=exceptions.ConnectionRefusedError('fail_reason'))
+            side_effect=exceptions.ConnectionRefusedError(u'fail_reason'))
         s.on('connect', handler, namespace='/foo')
         s._handle_eio_connect('123', 'environ')
         s._handle_eio_message('123', '0/foo')
