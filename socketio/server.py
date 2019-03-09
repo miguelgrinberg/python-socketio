@@ -38,6 +38,16 @@ class Server(object):
                            executed in separate threads. To run handlers for a
                            client synchronously, set to ``False``. The default
                            is ``True``.
+    :param always_connect: When set to ``False``, new connections are
+                           provisory until the connect handler returns
+                           something other than ``False``, at which point they
+                           are accepted. When set to ``True``, connections are
+                           immediately accepted, and then if the connect
+                           handler returns ``False`` a disconnect is issued.
+                           Set to ``True`` if you need to emit events from the
+                           connect handler and your client is confused when it
+                           receives events before the connection acceptance.
+                           In any other case use the default of ``False``.
     :param kwargs: Connection parameters for the underlying Engine.IO server.
 
     The Engine.IO configuration supports the following settings:
@@ -79,7 +89,8 @@ class Server(object):
                             ``False``. The default is ``False``.
     """
     def __init__(self, client_manager=None, logger=False, binary=False,
-                 json=None, async_handlers=True, **kwargs):
+                 json=None, async_handlers=True, always_connect=False,
+                 **kwargs):
         engineio_options = kwargs
         engineio_logger = engineio_options.pop('engineio_logger', None)
         if engineio_logger is not None:
@@ -119,6 +130,7 @@ class Server(object):
         self.manager_initialized = False
 
         self.async_handlers = async_handlers
+        self.always_connect = always_connect
 
         self.async_mode = self.eio.async_mode
 
@@ -530,17 +542,26 @@ class Server(object):
         """Handle a client connection request."""
         namespace = namespace or '/'
         self.manager.connect(sid, namespace)
-        self._send_packet(sid, packet.Packet(packet.CONNECT,
-                                             namespace=namespace))
+        if self.always_connect:
+            self._send_packet(sid, packet.Packet(packet.CONNECT,
+                                                 namespace=namespace))
         if self._trigger_event('connect', namespace, sid,
                                self.environ[sid]) is False:
-            self.manager.pre_disconnect(sid, namespace)
-            self._send_packet(sid, packet.Packet(packet.DISCONNECT,
-                                                 namespace=namespace))
+            if self.always_connect:
+                self.manager.pre_disconnect(sid, namespace)
+                self._send_packet(sid, packet.Packet(packet.DISCONNECT,
+                                                     namespace=namespace))
             self.manager.disconnect(sid, namespace)
+            if not self.always_connect:
+                self._send_packet(sid, packet.Packet(packet.ERROR,
+                                                     namespace=namespace))
+
             if sid in self.environ:  # pragma: no cover
                 del self.environ[sid]
             return False
+        elif not self.always_connect:
+            self._send_packet(sid, packet.Packet(packet.CONNECT,
+                                                 namespace=namespace))
 
     def _handle_disconnect(self, sid, namespace):
         """Handle a client disconnect."""

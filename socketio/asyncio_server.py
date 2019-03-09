@@ -368,17 +368,25 @@ class AsyncServer(server.Server):
         """Handle a client connection request."""
         namespace = namespace or '/'
         self.manager.connect(sid, namespace)
-        await self._send_packet(sid, packet.Packet(packet.CONNECT,
-                                                   namespace=namespace))
+        if self.always_connect:
+            await self._send_packet(sid, packet.Packet(packet.CONNECT,
+                                                       namespace=namespace))
         if await self._trigger_event('connect', namespace, sid,
                                      self.environ[sid]) is False:
-            self.manager.pre_disconnect(sid, namespace)
-            await self._send_packet(sid, packet.Packet(packet.DISCONNECT,
-                                                       namespace=namespace))
+            if self.always_connect:
+                self.manager.pre_disconnect(sid, namespace)
+                await self._send_packet(sid, packet.Packet(
+                    packet.DISCONNECT, namespace=namespace))
             self.manager.disconnect(sid, namespace)
+            if not self.always_connect:
+                await self._send_packet(sid, packet.Packet(
+                    packet.ERROR, namespace=namespace))
             if sid in self.environ:  # pragma: no cover
                 del self.environ[sid]
             return False
+        elif not self.always_connect:
+            await self._send_packet(sid, packet.Packet(packet.CONNECT,
+                                                       namespace=namespace))
 
     async def _handle_disconnect(self, sid, namespace):
         """Handle a client disconnect."""
