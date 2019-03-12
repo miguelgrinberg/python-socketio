@@ -477,7 +477,8 @@ class Client(object):
                 self.connect(self.connection_url,
                              headers=self.connection_headers,
                              transports=self.connection_transports,
-                             socketio_path=self.socketio_path)
+                             socketio_path=self.socketio_path,
+                             namespaces=self.namespaces)
             except (exceptions.ConnectionError, ValueError):
                 pass
             else:
