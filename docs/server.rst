@@ -1,15 +1,15 @@
 The Socket.IO Server
 ====================
 
-This package contains two Socket.IO clients:
+This package contains two Socket.IO servers:
 
 - The :func:`socketio.Server` class creates a server compatible with the
   Python standard library.
 - The :func:`socketio.AsyncServer` class creates a server compatible with
   the ``asyncio`` package.
 
-The methods in the two clients are the same, with the only difference that in
-the ``asyncio`` client most methods are implemented as coroutines.
+The methods in the two servers are the same, with the only difference that in
+the ``asyncio`` server most methods are implemented as coroutines.
 
 Installation
 ------------
