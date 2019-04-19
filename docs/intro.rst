@@ -63,7 +63,6 @@ asynchronous server:
 
 .. code:: python
 
-    import engineio
     import eventlet
     import socketio
 
