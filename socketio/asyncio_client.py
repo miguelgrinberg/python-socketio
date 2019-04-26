@@ -162,8 +162,7 @@ class AsyncClient(client.Client):
             packet.EVENT, namespace=namespace, data=[event] + data, id=id,
             binary=binary))
 
-    async def send(self, data, namespace=None, callback=None, wait=False,
-                   timeout=60):
+    async def send(self, data, namespace=None, callback=None):
         """Send a message to one or more connected clients.
 
         This function emits an event with the name ``'message'``. Use
@@ -180,20 +179,11 @@ class AsyncClient(client.Client):
                          that will be passed to the function are those provided
                          by the client. Callback functions can only be used
                          when addressing an individual client.
-        :param wait: If set to ``True``, this function will wait for the
-                     server to handle the event and acknowledge it via its
-                     callback function. The value(s) passed by the server to
-                     its callback will be returned. If set to ``False``,
-                     this function emits the event and returns immediately.
-        :param timeout: If ``wait`` is set to ``True``, this parameter
-                        specifies a waiting timeout. If the timeout is reached
-                        before the server acknowledges the event, then a
-                        ``TimeoutError`` exception is raised.
 
         Note: this method is a coroutine.
         """
         await self.emit('message', data=data, namespace=namespace,
-                        callback=callback, wait=wait, timeout=timeout)
+                        callback=callback)
 
     async def call(self, event, data=None, namespace=None, timeout=60):
         """Emit a custom event to a client and wait for the response.

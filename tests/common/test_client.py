@@ -323,15 +323,14 @@ class TestClient(unittest.TestCase):
         c.send('data', 'namespace', 'callback')
         c.emit.assert_called_once_with(
             'message', data='data', namespace='namespace',
-            callback='callback', wait=False, timeout=60)
+            callback='callback')
 
     def test_send_with_defaults(self):
         c = client.Client()
         c.emit = mock.MagicMock()
         c.send('data')
         c.emit.assert_called_once_with(
-            'message', data='data', namespace=None, callback=None, wait=False,
-            timeout=60)
+            'message', data='data', namespace=None, callback=None)
 
     def test_call(self):
         c = client.Client()

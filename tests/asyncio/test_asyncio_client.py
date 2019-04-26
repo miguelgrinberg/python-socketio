@@ -240,15 +240,14 @@ class TestAsyncClient(unittest.TestCase):
         _run(c.send('data', 'namespace', 'callback'))
         c.emit.mock.assert_called_once_with(
             'message', data='data', namespace='namespace',
-            callback='callback', wait=False, timeout=60)
+            callback='callback')
 
     def test_send_with_defaults(self):
         c = asyncio_client.AsyncClient()
         c.emit = AsyncMock()
         _run(c.send('data'))
         c.emit.mock.assert_called_once_with(
-            'message', data='data', namespace=None, callback=None, wait=False,
-            timeout=60)
+            'message', data='data', namespace=None, callback=None)
 
     def test_call(self):
         c = asyncio_client.AsyncClient()

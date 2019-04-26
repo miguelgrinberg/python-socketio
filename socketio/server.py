@@ -242,7 +242,7 @@ class Server(object):
                           skip_sid=skip_sid, callback=callback, **kwargs)
 
     def send(self, data, room=None, skip_sid=None, namespace=None,
-             callback=None, wait=False, timeout=60, **kwargs):
+             callback=None, **kwargs):
         """Send a message to one or more connected clients.
 
         This function emits an event with the name ``'message'``. Use

@@ -264,8 +264,7 @@ class Client(object):
                                         data=[event] + data, id=id,
                                         binary=binary))
 
-    def send(self, data, namespace=None, callback=None, wait=False,
-             timeout=60):
+    def send(self, data, namespace=None, callback=None):
         """Send a message to one or more connected clients.
 
         This function emits an event with the name ``'message'``. Use
@@ -282,18 +281,9 @@ class Client(object):
                          that will be passed to the function are those provided
                          by the client. Callback functions can only be used
                          when addressing an individual client.
-        :param wait: If set to ``True``, this function will wait for the
-                     server to handle the event and acknowledge it via its
-                     callback function. The value(s) passed by the server to
-                     its callback will be returned. If set to ``False``,
-                     this function emits the event and returns immediately.
-        :param timeout: If ``wait`` is set to ``True``, this parameter
-                        specifies a waiting timeout. If the timeout is reached
-                        before the server acknowledges the event, then a
-                        ``TimeoutError`` exception is raised.
         """
         self.emit('message', data=data, namespace=namespace,
-                  callback=callback, wait=wait, timeout=timeout)
+                  callback=callback)
 
     def call(self, event, data=None, namespace=None, timeout=60):
         """Emit a custom event to a client and wait for the response.
