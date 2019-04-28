@@ -2,7 +2,6 @@
 import asyncio
 
 import uvicorn
-from uvicorn.loops.auto import auto_loop_setup
 
 import socketio
 
@@ -10,6 +9,7 @@ sio = socketio.AsyncServer(async_mode='asgi')
 app = socketio.ASGIApp(sio, static_files={
     '/': {'content_type': 'text/html', 'filename': 'app.html'},
 })
+background_task_started = False
 
 
 async def background_task():
@@ -68,6 +68,10 @@ async def disconnect_request(sid):
 
 @sio.on('connect', namespace='/test')
 async def test_connect(sid, environ):
+    global background_task_started
+    if not background_task_started:
+        sio.start_background_task(background_task)
+        background_task_started = True
     await sio.emit('my response', {'data': 'Connected', 'count': 0}, room=sid,
                    namespace='/test')
 
@@ -78,6 +82,4 @@ def test_disconnect(sid):
 
 
 if __name__ == '__main__':
-    loop = auto_loop_setup()
-    sio.start_background_task(background_task)
-    uvicorn.run(app, '127.0.0.1', 5000, loop=loop)
+    uvicorn.run(app, host='127.0.0.1', port=5000)

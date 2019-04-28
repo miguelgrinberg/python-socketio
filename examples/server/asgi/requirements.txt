@@ -1,9 +1,9 @@
 Click==7.0
 h11==0.8.1
-httptools==0.0.11
-python-engineio==3.0.0
--e git+git@github.com:miguelgrinberg/python-socketio@b214380d056dbbfb08273ac482633254176cb847#egg=python_socketio
+httptools==0.0.13
+python-engineio
+python_socketio
 six==1.11.0
-uvicorn==0.3.21
-uvloop==0.11.3
+uvicorn==0.7.0
+uvloop==0.12.2
 websockets==7.0
