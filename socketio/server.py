@@ -583,8 +583,6 @@ class Server(object):
         if namespace == '/' and self.manager.is_connected(sid, namespace):
             self._trigger_event('disconnect', '/', sid)
             self.manager.disconnect(sid, '/')
-            if sid in self.environ:
-                del self.environ[sid]
 
     def _handle_event(self, sid, namespace, id, data):
         """Handle an incoming client event."""
@@ -673,6 +671,8 @@ class Server(object):
     def _handle_eio_disconnect(self, sid):
         """Handle Engine.IO disconnect event."""
         self._handle_disconnect(sid, '/')
+        if sid in self.environ:
+            del self.environ[sid]
 
     def _engineio_server_class(self):
         return engineio.Server

@@ -409,8 +409,6 @@ class AsyncServer(server.Server):
         if namespace == '/' and self.manager.is_connected(sid, namespace):
             await self._trigger_event('disconnect', '/', sid)
             self.manager.disconnect(sid, '/')
-            if sid in self.environ:
-                del self.environ[sid]
 
     async def _handle_event(self, sid, namespace, id, data):
         """Handle an incoming client event."""
@@ -505,6 +503,8 @@ class AsyncServer(server.Server):
     async def _handle_eio_disconnect(self, sid):
         """Handle Engine.IO disconnect event."""
         await self._handle_disconnect(sid, '/')
+        if sid in self.environ:
+            del self.environ[sid]
 
     def _engineio_server_class(self):
         return engineio.AsyncServer
