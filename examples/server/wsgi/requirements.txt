@@ -1,4 +1,4 @@
-Click-7.0
+Click==7.0
 enum-compat==0.0.2
 enum34==1.1.6
 eventlet==0.20.1
