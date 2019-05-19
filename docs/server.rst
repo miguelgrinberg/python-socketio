@@ -522,7 +522,7 @@ explicitly, the ``async_mode`` option can be given in the constructor::
 
 A server configured for aiohttp must be attached to an existing application::
 
-    app = web.Application()
+    app = Sanic()
     sio.attach(app)
 
 The Sanic application can define regular routes that will coexist with the
