@@ -255,6 +255,19 @@ class TestAsyncManager(unittest.TestCase):
         self.bm.server._emit_internal.mock.assert_any_call(
             '789', 'my event', {'foo': 'bar'}, '/foo', None)
 
+    def test_emit_to_all_skip_two(self):
+        self.bm.connect('123', '/foo')
+        self.bm.enter_room('123', '/foo', 'bar')
+        self.bm.connect('456', '/foo')
+        self.bm.enter_room('456', '/foo', 'bar')
+        self.bm.connect('789', '/foo')
+        self.bm.connect('abc', '/bar')
+        _run(self.bm.emit('my event', {'foo': 'bar'}, namespace='/foo',
+                          skip_sid=['123', '789']))
+        self.assertEqual(self.bm.server._emit_internal.mock.call_count, 1)
+        self.bm.server._emit_internal.mock.assert_any_call(
+            '456', 'my event', {'foo': 'bar'}, '/foo', None)
+
     def test_emit_with_callback(self):
         self.bm.connect('123', '/foo')
         self.bm._generate_ack_id = mock.MagicMock()

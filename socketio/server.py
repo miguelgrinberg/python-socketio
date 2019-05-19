@@ -218,7 +218,8 @@ class Server(object):
                      connected clients.
         :param skip_sid: The session ID of a client to skip when broadcasting
                          to a room or to all clients. This can be used to
-                         prevent a message from being sent to the sender.
+                         prevent a message from being sent to the sender. To
+                         skip multiple sids, pass a list.
         :param namespace: The Socket.IO namespace for the event. If this
                           argument is omitted the event is emitted to the
                           default namespace.
@@ -258,7 +259,8 @@ class Server(object):
                      connected clients.
         :param skip_sid: The session ID of a client to skip when broadcasting
                          to a room or to all clients. This can be used to
-                         prevent a message from being sent to the sender.
+                         prevent a message from being sent to the sender. To
+                         skip multiple sids, pass a list.
         :param namespace: The Socket.IO namespace for the event. If this
                           argument is omitted the event is emitted to the
                           default namespace.

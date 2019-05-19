@@ -15,8 +15,10 @@ class AsyncManager(BaseManager):
         if namespace not in self.rooms or room not in self.rooms[namespace]:
             return
         tasks = []
+        if not isinstance(skip_sid, list):
+            skip_sid = [skip_sid]
         for sid in self.get_participants(namespace, room):
-            if sid != skip_sid:
+            if sid not in skip_sid:
                 if callback is not None:
                     id = self._generate_ack_id(sid, namespace, callback)
                 else:
