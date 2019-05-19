@@ -534,6 +534,18 @@ The Sanic application is then executed in the usual manner::
     if __name__ == '__main__':
         app.run()
 
+It has been reported that the CORS support provided by the Sanic extension
+`sanic-cors <https://github.com/ashleysommer/sanic-cors>`_ is incomaptible with
+this package's own support for this protocol. To disable CORS support in this
+package and let Sanic take full control, initialize the server as follows::
+
+    sio = socketio.AsyncServer(async_mode='sanic', cors_allowed_origins=[])
+
+On the Sanic side you will need to enable the `CORS_SUPPORTS_CREDENTIALS`
+setting in addition to any other configuration that you use::
+
+    app.config['CORS_SUPPORTS_CREDENTIALS'] = True
+
 Uvicorn, Daphne, and other ASGI servers
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
