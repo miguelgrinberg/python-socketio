@@ -1,5 +1,15 @@
 # pyton-socketio change log
 
+**Release 4.0.3** - 2019-05-25
+
+- skip_sid parameter can also be a list [#202](https://github.com/miguelgrinberg/python-socketio/issues/202) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/00d39ca6985e94e283f5c766c18cacb760e0658d))
+- Fixed Sanic documentation [#193](https://github.com/miguelgrinberg/python-socketio/issues/193) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/0249f05a2fb94c29f3be5cb33248b30d6c748eba))
+- Added note on CORS support for sanic [#205](https://github.com/miguelgrinberg/python-socketio/issues/205) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/d3e19b7e52debe0db759f56e25eb2706ad2434b6))
+- flake8 fixes ([commit](https://github.com/miguelgrinberg/python-socketio/commit/18fa5286c7505813aca2a8c99606bdcce7cadf31))
+- added python 3.7 build ([commit](https://github.com/miguelgrinberg/python-socketio/commit/7348d923e3af0331706c51053120e672fa0dabc1))
+- added change log ([commit](https://github.com/miguelgrinberg/python-socketio/commit/7803a7bce0fca52f8b40668e97395018be339c16))
+- auto-generate change log during release ([commit](https://github.com/miguelgrinberg/python-socketio/commit/b46dc0fa1a1435dcbd43d21b2c6d0bc33a4da6ea))
+
 **Release 4.0.2** - 2019-05-19
 
 - properly handle disconnects from ios client ([commit](https://github.com/miguelgrinberg/python-socketio/commit/c0c1bf8d21e3597389b18938550a0724dd9676b7))
