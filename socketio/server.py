@@ -321,7 +321,7 @@ class Server(object):
             raise exceptions.TimeoutError()
         return callback_args[0] if len(callback_args[0]) > 1 \
             else callback_args[0][0] if len(callback_args[0]) == 1 \
-                else None
+            else None
 
     def enter_room(self, sid, room, namespace=None):
         """Enter a room.

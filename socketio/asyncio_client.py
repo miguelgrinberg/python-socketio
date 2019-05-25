@@ -218,7 +218,7 @@ class AsyncClient(client.Client):
             six.raise_from(exceptions.TimeoutError(), None)
         return callback_args[0] if len(callback_args[0]) > 1 \
             else callback_args[0][0] if len(callback_args[0]) == 1 \
-                else None
+            else None
 
     async def disconnect(self):
         """Disconnect from the server.

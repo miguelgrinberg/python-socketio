@@ -14,7 +14,7 @@ class Packet(object):
 
     # the format of the Socket.IO packet is as follows:
     #
-    # type: 1 byte, values 0-6
+    # packet type: 1 byte, values 0-6
     # num_attachments: ASCII encoded, only if num_attachments != 0
     # '-': only if num_attachments != 0
     # namespace: only if namespace != '/'

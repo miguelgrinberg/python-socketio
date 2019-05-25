@@ -424,7 +424,8 @@ class TestServer(unittest.TestCase):
 
     def test_handle_event_with_ack_binary(self, eio):
         mgr = mock.MagicMock()
-        s = server.Server(client_manager=mgr, binary=True, async_handlers=False)
+        s = server.Server(client_manager=mgr, binary=True,
+                          async_handlers=False)
         handler = mock.MagicMock(return_value=b'foo')
         s.on('my message', handler)
         s._handle_eio_message('123', '21000["my message","foo"]')

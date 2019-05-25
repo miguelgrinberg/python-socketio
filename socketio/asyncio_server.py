@@ -200,7 +200,7 @@ class AsyncServer(server.Server):
             six.raise_from(exceptions.TimeoutError(), None)
         return callback_args[0] if len(callback_args[0]) > 1 \
             else callback_args[0][0] if len(callback_args[0]) == 1 \
-                else None
+            else None
 
     async def close_room(self, room, namespace=None):
         """Close a room.
