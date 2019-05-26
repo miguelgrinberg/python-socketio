@@ -43,6 +43,7 @@ class TestClient(unittest.TestCase):
         self.assertEqual(c.connection_transports, None)
         self.assertEqual(c.connection_namespaces, None)
         self.assertEqual(c.socketio_path, None)
+        self.assertEqual(c.sid, None)
 
         self.assertEqual(c.namespaces, [])
         self.assertEqual(c.handlers, {})
@@ -689,6 +690,13 @@ class TestClient(unittest.TestCase):
         ])
         self.assertEqual(c._reconnect_task, 'foo')
 
+    def test_handle_eio_connect(self):
+        c = client.Client()
+        c.eio.sid = 'foo'
+        self.assertIsNone(c.sid)
+        c._handle_eio_connect()
+        self.assertEqual(c.sid, 'foo')
+
     def test_handle_eio_message(self):
         c = client.Client()
         c._handle_connect = mock.MagicMock()
@@ -730,20 +738,24 @@ class TestClient(unittest.TestCase):
         c = client.Client()
         c._trigger_event = mock.MagicMock()
         c.start_background_task = mock.MagicMock()
+        c.sid = 'foo'
         c.eio.state = 'connected'
         c._handle_eio_disconnect()
         c._trigger_event.assert_called_once_with('disconnect', namespace='/')
+        self.assertIsNone(c.sid)
 
     def test_eio_disconnect_namespaces(self):
         c = client.Client()
         c.namespaces = ['/foo', '/bar']
         c._trigger_event = mock.MagicMock()
         c.start_background_task = mock.MagicMock()
+        c.sid = 'foo'
         c.eio.state = 'connected'
         c._handle_eio_disconnect()
         c._trigger_event.assert_any_call('disconnect', namespace='/foo')
         c._trigger_event.assert_any_call('disconnect', namespace='/bar')
         c._trigger_event.assert_any_call('disconnect', namespace='/')
+        self.assertIsNone(c.sid)
 
     def test_eio_disconnect_reconnect(self):
         c = client.Client(reconnection=True)

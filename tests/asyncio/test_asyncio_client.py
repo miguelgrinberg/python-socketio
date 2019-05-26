@@ -589,6 +589,13 @@ class TestAsyncClient(unittest.TestCase):
         ])
         self.assertEqual(c._reconnect_task, 'foo')
 
+    def test_eio_connect(self):
+        c = asyncio_client.AsyncClient()
+        c.eio.sid = 'foo'
+        self.assertIsNone(c.sid)
+        c._handle_eio_connect()
+        self.assertEqual(c.sid, 'foo')
+
     def test_handle_eio_message(self):
         c = asyncio_client.AsyncClient()
         c._handle_connect = AsyncMock()
@@ -630,20 +637,24 @@ class TestAsyncClient(unittest.TestCase):
     def test_eio_disconnect(self):
         c = asyncio_client.AsyncClient()
         c._trigger_event = AsyncMock()
+        c.sid = 'foo'
         c.eio.state = 'connected'
         _run(c._handle_eio_disconnect())
         c._trigger_event.mock.assert_called_once_with(
             'disconnect', namespace='/')
+        self.assertIsNone(c.sid)
 
     def test_eio_disconnect_namespaces(self):
         c = asyncio_client.AsyncClient()
         c.namespaces = ['/foo', '/bar']
         c._trigger_event = AsyncMock()
+        c.sid = 'foo'
         c.eio.state = 'connected'
         _run(c._handle_eio_disconnect())
         c._trigger_event.mock.assert_any_call('disconnect', namespace='/foo')
         c._trigger_event.mock.assert_any_call('disconnect', namespace='/bar')
         c._trigger_event.mock.assert_any_call('disconnect', namespace='/')
+        self.assertIsNone(c.sid)
 
     def test_eio_disconnect_reconnect(self):
         c = asyncio_client.AsyncClient(reconnection=True)

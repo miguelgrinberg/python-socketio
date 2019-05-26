@@ -386,9 +386,10 @@ class AsyncClient(client.Client):
                     'Maximum reconnection attempts reached, giving up')
                 break
 
-    def _handle_eio_connect(self):  # pragma: no cover
+    def _handle_eio_connect(self):
         """Handle the Engine.IO connection event."""
         self.logger.info('Engine.IO connection established')
+        self.sid = self.eio.sid
 
     async def _handle_eio_message(self, data):
         """Dispatch Engine.IO messages."""
@@ -426,6 +427,7 @@ class AsyncClient(client.Client):
         await self._trigger_event('disconnect', namespace='/')
         self.callbacks = {}
         self._binary_packet = None
+        self.sid = None
         if self.eio.state == 'connected' and self.reconnection:
             self._reconnect_task = self.start_background_task(
                 self._handle_reconnect)
