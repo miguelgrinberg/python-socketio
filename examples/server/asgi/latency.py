@@ -5,9 +5,8 @@ import socketio
 
 sio = socketio.AsyncServer(async_mode='asgi')
 app = socketio.ASGIApp(sio, static_files={
-    '/': {'content_type': 'text/html', 'filename': 'latency.html'},
-    '/static/style.css': {'content_type': 'text/css',
-                          'filename': 'static/style.css'},
+    '/': 'latency.html',
+    '/static': 'static',
 })
 
 

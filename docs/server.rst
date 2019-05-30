@@ -49,27 +49,85 @@ ASGI application::
     # wrap with ASGI application
     app = socketio.ASGIApp(sio)
 
-The WSGI and ASGI application wrappers support serving static files, which is
-a convenient way to deliver JavaScript based Socket.IO clients to the web
-browser::
-
-   app = socketio.ASGIApp(sio, static_files={
-      '/': {'content_type': 'text/html', 'filename': 'latency.html'},
-      '/static/style.css': {'content_type': 'text/css',
-                            'filename': 'static/style.css'},
-   })
-
-The dictionary provided with the ``static_files`` argument has static file
-endpoints as keys. For each of these endpoints, a dictionary with the file's
-content type and local filename is given.
-
-These wrappers can also act as middlewares, forwarding any traffic that is not
-intended to Socket.IO server to another application. This allows Socket.IO
-servers to integrate easily into existing WSGI or ASGI applications::
+These two wrappers can also act as middlewares, forwarding any traffic that is
+not intended to the Socket.IO server to another application. This allows
+Socket.IO servers to integrate easily into existing WSGI or ASGI applications::
 
    from wsgi import app  # a Flask, Django, etc. application
-
    app = socketio.WSGIApp(sio, app)
+
+Serving Static Files
+--------------------
+
+This package offers the option to configure the serving of static files. This
+is particularly useful to deliver HTML, CSS and JavaScript files to clients
+when this package is used without a companion web framework.
+
+Static files are configured with a Python dictionary in which each key/value
+pair is a static file mapping rule. In its simplest form, this dictionary has
+one or more static file URLs as keys, and the corresponding files in the server
+as values::
+
+    static_files = {
+        '/': 'latency.html',
+        '/static/socket.io.js': 'static/socket.io.js',
+        '/static/style.css': 'static/style.css',
+    }
+
+With this example configuration, when the server receives a request for ``/``
+(the root URL) it will return the contents of the file ``latency.html`` in the
+current directory, and will assign a content type based on the file extension,
+in this case ``text/html``.
+
+Files with the ``.html``, ``.css``, ``.js``, ``.json``, ``.jpg``, ``.png``,
+``.gif`` and ``.txt`` file extensions are automatically recognized and
+assigned the correct content type. For files with other file extensions or
+with no file extension, the ``application/octet-stream`` content type is used
+as a default.
+
+If desired, an explicit content type for a static file can be given as follows::
+
+    static_files = {
+        '/': {'filename': 'latency.html', 'content_type': 'text/plain'},
+    }
+
+Finally, it is also possible to configure an entire directory in a single rule,
+so that all the files in it are served as static files::
+
+    static_files = {
+        '/static': './public',
+        '/': './public/index.html',
+    }
+
+In this example any files with URLs starting with ``/static`` will be served
+directly from the ``public`` folder in the current directory, so for example,
+the URL ``/static/index.html`` will return local file ``./public/index.html``
+and the URL ``/static/css/styles.css`` will return local file
+``./public/css/styles.css``. The second rule creates a default mapping for the
+``index.html`` file when the root URL is requested.
+
+The static file configuration dictionary is given as the ``static_files``
+argument to the ``socketio.WSGIApp`` or ``socketio.ASGIApp`` classes::
+
+    # for standard WSGI applications
+    sio = socketio.Server()
+    app = socketio.WSGIApp(sio, static_files=static_files)
+
+    # for asyncio-based ASGI applications
+    sio = socketio.AsyncServer()
+    app = socketio.ASGIApp(sio, static_files=static_files)
+
+The routing precedence in these two classes is as follows:
+
+- First, the path is checked against the Socket.IO endpoint.
+- Next, the path is checked against the static file configuration, if present.
+- If the path did not match the Socket.IO endpoint or any static file, control
+  is passed to the secondary application if configured, else a 404 error is
+  returned.
+
+Note: static file serving is intended for development use only, and as such
+it lacks important features such as caching. Do not use in a production
+environment.
 
 Defining Event Handlers
 -----------------------
@@ -490,7 +548,7 @@ explicitly, the ``async_mode`` option can be given in the constructor::
     sio = socketio.AsyncServer(async_mode='tornado')
 
 A server configured for tornado must include a request handler for
-Engine.IO::
+Socket.IO::
 
     app = tornado.web.Application(
         [
@@ -572,10 +630,10 @@ explicitly, the ``async_mode`` option can be given in the constructor::
 
     sio = socketio.Server(async_mode='eventlet')
 
-A server configured for eventlet is deployed as a regular WSGI application,
-using the provided ``socketio.Middleware``::
+A server configured for eventlet is deployed as a regular WSGI application
+using the provided ``socketio.WSGIApp``::
 
-    app = socketio.Middleware(sio)
+    app = socketio.WSGIApp(sio)
     import eventlet
     eventlet.wsgi.server(eventlet.listen(('', 8000)), app)
 
@@ -614,10 +672,10 @@ option can be given in the constructor::
 
     sio = socketio.Server(async_mode='gevent')
 
-A server configured for gevent is deployed as a regular WSGI application,
-using the provided ``socketio.Middleware``::
+A server configured for gevent is deployed as a regular WSGI application
+using the provided ``socketio.WSGIApp``::
 
-    app = socketio.Middleware(sio)
+    app = socketio.WSGIApp(sio)
     from gevent import pywsgi
     pywsgi.WSGIServer(('', 8000), app).serve_forever()
 
@@ -626,7 +684,7 @@ follows::
 
     from gevent import pywsgi
     from geventwebsocket.handler import WebSocketHandler
-    app = socketio.Middleware(sio)
+    app = socketio.WSGIApp(sio)
     pywsgi.WSGIServer(('', 8000), app,
                       handler_class=WebSocketHandler).serve_forever()
 
@@ -699,7 +757,7 @@ development web server based on Werkzeug::
 
     sio = socketio.Server(async_mode='threading')
     app = Flask(__name__)
-    app.wsgi_app = socketio.Middleware(sio, app.wsgi_app)
+    app.wsgi_app = socketio.WSGIApp(sio, app.wsgi_app)
 
     # ... Socket.IO and Flask handler functions ...
 

@@ -11,11 +11,8 @@ class WSGIApp(engineio.WSGIApp):
     :param socketio_app: The Socket.IO server. Must be an instance of the
                          ``socketio.Server`` class.
     :param wsgi_app: The WSGI app that receives all other traffic.
-    :param static_files: A dictionary where the keys are URLs that should be
-                         served as static files. For each URL, the value is
-                         a dictionary with ``content_type`` and ``filename``
-                         keys. This option is intended to be used for serving
-                         client files during development.
+    :param static_files: A dictionary with static file mapping rules. See the
+                         documentation for details on this argument.
     :param socketio_path: The endpoint where the Socket.IO application should
                           be installed. The default value is appropriate for
                           most cases.
