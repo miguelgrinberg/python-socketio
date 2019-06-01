@@ -135,30 +135,39 @@ Defining Event Handlers
 The Socket.IO protocol is event based. When a client wants to communicate with
 the server it *emits* an event. Each event has a name, and a list of
 arguments. The server registers event handler functions with the
-:func:`socketio.Server.on` decorator::
+:func:`socketio.Server.event` or :func:`socketio.Server.on` decorators::
+
+    @sio.event
+    def my_event(sid, data):
+        pass
 
     @sio.on('my custom event')
-    def my_custom_event(sid, data):
+    def another_event(sid, data):
         pass
+
+In the first example the event name is obtained from the name of the handler
+function. The second example is slightly more verbose, but it allows the event
+name to be different than the function name or to include characters that are
+illegal in function names, such as spaces.
 
 For asyncio servers, event handlers can optionally be given as coroutines::
 
-    @sio.on('my custom event')
-    async def my_custom_event(sid, data):
+    @sio.event
+    async def my_event(sid, data):
         pass
 
 The ``sid`` argument is the Socket.IO session id, a unique identifier of each
 client connection. All the events sent by a given client will have the same
 ``sid`` value.
 
-The ``connect`` and ``disconnect`` are special; they are invoked automatically
-when a client connects or disconnects from the server::
+The ``connect`` and ``disconnect`` events are special; they are invoked
+automatically when a client connects or disconnects from the server::
 
-    @sio.on('connect')
+    @sio.event
     def connect(sid, environ):
         print('connect ', sid)
 
-    @sio.on('disconnect')
+    @sio.event
     def disconnect(sid):
         print('disconnect ', sid)
 
@@ -172,9 +181,9 @@ headers. After inspecting the request, the connect event handler can return
 Sometimes it is useful to pass data back to the client being rejected. In that
 case instead of returning ``False``
 :class:`socketio.exceptions.ConnectionRefusedError` can be raised, and all of
-its argument will be sent to the client with the rejection::
+its arguments will be sent to the client with the rejection message::
 
-    @sio.on('connect')
+    @sio.event
     def connect(sid, environ):
         raise ConnectionRefusedError('authentication failed')
 
@@ -210,8 +219,8 @@ has processed the event. While this is entirely managed by the client, the
 server can provide a list of values that are to be passed on to the callback
 function, simply by returning them from the handler function::
 
-    @sio.on('my event', namespace='/chat')
-    def my_event_handler(sid, data):
+    @sio.event
+    def my_event(sid, data):
         # handle the message
         return "OK", 123
 
@@ -239,6 +248,10 @@ IDs (``sid``\ s), event handlers and rooms. It is important that applications
 that use multiple namespaces specify the correct namespace when setting up
 their event handlers and rooms, using the optional ``namespace`` argument
 available in all the methods in the :class:`socketio.Server` class::
+
+    @sio.event(namespace='/chat')
+    def my_custom_event(sid, data):
+        pass
 
     @sio.on('my custom event', namespace='/chat')
     def my_custom_event(sid, data):
@@ -322,11 +335,11 @@ rooms as needed and can be moved between rooms as often as necessary.
 
 ::
 
-   @sio.on('chat')
+   @sio.event
    def begin_chat(sid):
       sio.enter_room(sid, 'chat_users')
 
-    @sio.on('exit_chat')
+    @sio.event
     def exit_chat(sid):
         sio.leave_room(sid, 'chat_users')
 
@@ -338,8 +351,8 @@ during the broadcast.
 
 ::
 
-    @sio.on('my message')
-    def message(sid, data):
+    @sio.event
+    def my_message(sid, data):
         sio.emit('my reply', data, room='chat_users', skip_sid=sid)
 
 User Sessions
@@ -353,52 +366,52 @@ of the connection, such as usernames or user ids.
 The ``save_session()`` and ``get_session()`` methods are used to store and
 retrieve information in the user session::
 
-    @sio.on('connect')
-    def on_connect(sid, environ):
+    @sio.event
+    def connect(sid, environ):
         username = authenticate_user(environ)
         sio.save_session(sid, {'username': username})
 
-    @sio.on('message')
-    def on_message(sid, data):
+    @sio.event
+    def message(sid, data):
         session = sio.get_session(sid)
         print('message from ', session['username'])
 
 For the ``asyncio`` server, these methods are coroutines::
 
 
-    @sio.on('connect')
-    async def on_connect(sid, environ):
+    @sio.event
+    async def connect(sid, environ):
         username = authenticate_user(environ)
         await sio.save_session(sid, {'username': username})
 
-    @sio.on('message')
-    async def on_message(sid, data):
+    @sio.event
+    async def message(sid, data):
         session = await sio.get_session(sid)
         print('message from ', session['username'])
 
 The session can also be manipulated with the `session()` context manager::
 
-    @sio.on('connect')
-    def on_connect(sid, environ):
+    @sio.event
+    def connect(sid, environ):
         username = authenticate_user(environ)
         with sio.session(sid) as session:
             session['username'] = username
 
-    @sio.on('message')
-    def on_message(sid, data):
+    @sio.event
+    def message(sid, data):
         with sio.session(sid) as session:
             print('message from ', session['username'])
 
 For the ``asyncio`` server, an asynchronous context manager is used::
 
-    @sio.on('connect')
-    def on_connect(sid, environ):
+    @sio.event
+    def connect(sid, environ):
         username = authenticate_user(environ)
         async with sio.session(sid) as session:
             session['username'] = username
 
-    @sio.on('message')
-    def on_message(sid, data):
+    @sio.event
+    def message(sid, data):
         async with sio.session(sid) as session:
             print('message from ', session['username'])
 

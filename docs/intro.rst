@@ -26,17 +26,17 @@ The example that follows shows a simple Python client:
 
     sio = socketio.Client()
 
-    @sio.on('connect')
-    def on_connect():
+    @sio.event
+    def connect():
         print('connection established')
 
-    @sio.on('my message')
-    def on_message(data):
+    @sio.event
+    def my_message(data):
         print('message received with ', data)
         sio.emit('my response', {'response': 'my response'})
 
-    @sio.on('disconnect')
-    def on_disconnect():
+    @sio.event
+    def disconnect():
         print('disconnected from server')
 
     sio.connect('http://localhost:5000')
@@ -71,15 +71,15 @@ asynchronous server:
         '/': {'content_type': 'text/html', 'filename': 'index.html'}
     })
 
-    @sio.on('connect')
+    @sio.event
     def connect(sid, environ):
         print('connect ', sid)
 
-    @sio.on('my message')
-    def message(sid, data):
+    @sio.event
+    def my_message(sid, data):
         print('message ', data)
 
-    @sio.on('disconnect')
+    @sio.event
     def disconnect(sid):
         print('disconnect ', sid)
 
@@ -103,16 +103,16 @@ Uvicorn web server:
         with open('index.html') as f:
             return web.Response(text=f.read(), content_type='text/html')
 
-    @sio.on('connect', namespace='/chat')
+    @sio.event
     def connect(sid, environ):
         print("connect ", sid)
 
-    @sio.on('chat message', namespace='/chat')
-    async def message(sid, data):
+    @sio.event
+    async def chat_message(sid, data):
         print("message ", data)
         await sio.emit('reply', room=sid)
 
-    @sio.on('disconnect', namespace='/chat')
+    @sio.event
     def disconnect(sid):
         print('disconnect ', sid)
 

@@ -96,6 +96,30 @@ class TestClient(unittest.TestCase):
         self.assertEqual(c.handlers['/']['disconnect'], bar)
         self.assertEqual(c.handlers['/foo']['disconnect'], bar)
 
+    def test_event(self):
+        c = client.Client()
+
+        @c.event
+        def connect():
+            pass
+
+        @c.event
+        def foo():
+            pass
+
+        @c.event
+        def bar():
+            pass
+
+        @c.event(namespace='/foo')
+        def disconnect():
+            pass
+
+        self.assertEqual(c.handlers['/']['connect'], connect)
+        self.assertEqual(c.handlers['/']['foo'], foo)
+        self.assertEqual(c.handlers['/']['bar'], bar)
+        self.assertEqual(c.handlers['/foo']['disconnect'], disconnect)
+
     def test_namespace_handler(self):
         class MyNamespace(namespace.ClientNamespace):
             pass

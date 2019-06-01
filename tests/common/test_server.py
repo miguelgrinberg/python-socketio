@@ -48,6 +48,30 @@ class TestServer(unittest.TestCase):
         self.assertEqual(s.handlers['/']['disconnect'], bar)
         self.assertEqual(s.handlers['/foo']['disconnect'], bar)
 
+    def test_event(self, eio):
+        s = server.Server()
+
+        @s.event
+        def connect():
+            pass
+
+        @s.event
+        def foo():
+            pass
+
+        @s.event()
+        def bar():
+            pass
+
+        @s.event(namespace='/foo')
+        def disconnect():
+            pass
+
+        self.assertEqual(s.handlers['/']['connect'], connect)
+        self.assertEqual(s.handlers['/']['foo'], foo)
+        self.assertEqual(s.handlers['/']['bar'], bar)
+        self.assertEqual(s.handlers['/foo']['disconnect'], disconnect)
+
     def test_emit(self, eio):
         mgr = mock.MagicMock()
         s = server.Server(client_manager=mgr)

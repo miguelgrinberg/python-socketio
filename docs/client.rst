@@ -40,45 +40,51 @@ appropriate client class::
 Defining Event Handlers
 -----------------------
 
-To responds to events triggered by the connection or the server, event Handler
-functions must be defined using the ``on`` decorator::
+The Socket.IO protocol is event based. When a server wants to communicate with
+a client it *emits* an event. Each event has a name, and a list of
+arguments. The client registers event handler functions with the
+:func:`socketio.Client.event` or :func:`socketio.Client.on` decorators::
 
-    @sio.on('connect')
-    def on_connect():
-        print('I\'m connected!')
-
-    @sio.on('message')
-    def on_message(data):
+    @sio.event
+    def message(data):
         print('I received a message!')
 
     @sio.on('my message')
     def on_message(data):
-        print('I received a custom message!')
-
-    @sio.on('disconnect')
-    def on_disconnect():
-        print('I\'m disconnected!')
-
-For the ``asyncio`` server, event handlers can be regular functions as above,
-or can also be coroutines::
-
-    @sio.on('message')
-    async def on_message(data):
         print('I received a message!')
 
-The argument given to the ``on`` decorator is the event name. The predefined
-events that are supported are ``connect``, ``message`` and ``disconnect``. The
-application can define any other desired event names.
+In the first example the event name is obtained from the name of the
+handler function. The second example is slightly more verbose, but it
+allows the event name to be different than the function name or to include
+characters that are illegal in function names, such as spaces.
+
+For the ``asyncio`` client, event handlers can be regular functions as above,
+or can also be coroutines::
+
+    @sio.event
+    async def message(data):
+        print('I received a message!')
+
+The ``connect`` and ``disconnect`` events are special; they are invoked
+automatically when a client connects or disconnects from the server::
+
+    @sio.event
+    def connect():
+        print("I'm connected!")
+
+    @sio.event
+    def disconnect():
+        print("I'm disconnected!")
 
 Note that the ``disconnect`` handler is invoked for application initiated
 disconnects, server initiated disconnects, or accidental disconnects, for 
-example due to networking failures. In the case of an accidental disconnection,
-the client is going to attempt to reconnect immediately after invoking the
-disconnect handler. As soon as the connection is re-established the connect
-handler will be invoked once again.
+example due to networking failures. In the case of an accidental
+disconnection, the client is going to attempt to reconnect immediately after
+invoking the disconnect handler. As soon as the connection is re-established
+the connect handler will be invoked once again.
 
-The ``data`` argument passed to the ``'message'`` and custom event Handlers
-contains application-specific data provided by the server.
+If the server includes arguments with an event, those are passed to the
+handler function as arguments.
 
 Connecting to a Server
 ----------------------
@@ -109,23 +115,14 @@ Or in the case of ``asyncio``, as a coroutine::
     await sio.emit('my message', {'foo': 'bar'})
 
 The single argument provided to the method is the data that is passed on
-to the server. The data can be of type ``str``, ``bytes``, ``dict`` or
-``list``. The data included inside dictionaries and lists is also
-constrained to these types.
+to the server. The data can be of type ``str``, ``bytes``, ``dict``,
+``list`` or ``tuple``. When sending a ``tuple``, the elements in it need to
+be of any of the other four allowed types. The elements of the tuple will be
+passed as multiple arguments to the server-side event handler function.
 
 The ``emit()`` method can be invoked inside an event handler as a response
 to a server event, or in any other part of the application, including in
 background tasks.
-
-For convenience, a ``send()`` method is also provided. This method accepts
-a data element as its only argument, and emits the standard ``message``
-event with it::
-
-    sio.send('some data')
-
-In the case of ``asyncio``, ``send()`` is a coroutine::
-
-    await sio.send('some data')
 
 Event Callbacks
 ---------------
@@ -137,8 +134,8 @@ client can provide a list of return values that are to be passed on to the
 callback function set up by the server. This is achieves simply by returning
 the desired values from the handler function::
 
-    @sio.on('my event', namespace='/chat')
-    def my_event_handler(sid, data):
+    @sio.event
+    def my_event(sid, data):
         # handle the message
         return "OK", 123
 
@@ -163,11 +160,15 @@ namespace::
     sio.connect('http://localhost:5000', namespaces=['/chat'])
 
 To define event handlers on a namespace, the ``namespace`` argument must be
-added to the ``on`` decorator::
+added to the corresponding decorator::
+
+    @sio.event(namespace='/chat')
+    def my_custom_event(sid, data):
+        pass
 
     @sio.on('connect', namespace='/chat')
     def on_connect():
-        print('I\'m connected to the /chat namespace!')
+        print("I'm connected to the /chat namespace!")
 
 Likewise, the client can emit an event to the server on a namespace by
 providing its in the ``emit()`` call::
