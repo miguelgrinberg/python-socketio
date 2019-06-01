@@ -12,8 +12,8 @@ async def index(request):
         return web.Response(text=f.read(), content_type='text/html')
 
 
-@sio.on('ping_from_client')
-async def ping(sid):
+@sio.event
+async def ping_from_client(sid):
     await sio.emit('pong_from_server', room=sid)
 
 

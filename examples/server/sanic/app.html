@@ -5,17 +5,16 @@
     <script type="text/javascript" src="//code.jquery.com/jquery-2.1.4.min.js"></script>
     <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/socket.io/2.0.4/socket.io.slim.js"></script>
     <script type="text/javascript" charset="utf-8">
-        $(document).ready(function(){
-            namespace = '/test';
-            var socket = io.connect('http://' + document.domain + ':' + location.port + namespace);
+        $(document).ready(function() {
+            var socket = io.connect();
 
             socket.on('connect', function() {
-                socket.emit('my event', {data: 'I\'m connected!'});
+                socket.emit('my_event', {data: 'I\'m connected!'});
             });
             socket.on('disconnect', function() {
                 $('#log').append('<br>Disconnected');
             });
-            socket.on('my response', function(msg) {
+            socket.on('my_response', function(msg) {
                 $('#log').append('<br>Received: ' + msg.data);
             });
 
@@ -24,11 +23,11 @@
             // handlers for the different forms in the page
             // these send data to the server in a variety of ways
             $('form#emit').submit(function(event) {
-                socket.emit('my event', {data: $('#emit_data').val()});
+                socket.emit('my_event', {data: $('#emit_data').val()});
                 return false;
             });
             $('form#broadcast').submit(function(event) {
-                socket.emit('my broadcast event', {data: $('#broadcast_data').val()});
+                socket.emit('my_broadcast_event', {data: $('#broadcast_data').val()});
                 return false;
             });
             $('form#join').submit(function(event) {
@@ -40,15 +39,15 @@
                 return false;
             });
             $('form#send_room').submit(function(event) {
-                socket.emit('my room event', {room: $('#room_name').val(), data: $('#room_data').val()});
+                socket.emit('my_room_event', {room: $('#room_name').val(), data: $('#room_data').val()});
                 return false;
             });
             $('form#close').submit(function(event) {
-                socket.emit('close room', {room: $('#close_room').val()});
+                socket.emit('close_room', {room: $('#close_room').val()});
                 return false;
             });
             $('form#disconnect').submit(function(event) {
-                socket.emit('disconnect request');
+                socket.emit('disconnect_request');
                 return false;
             });
         });

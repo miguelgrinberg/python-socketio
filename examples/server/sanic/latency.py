@@ -14,8 +14,8 @@ def index(request):
         return html(f.read())
 
 
-@sio.on('ping_from_client')
-async def ping(sid):
+@sio.event
+async def ping_from_client(sid):
     await sio.emit('pong_from_server', room=sid)
 
 app.static('/static', './static')

@@ -16,8 +16,8 @@ def index():
     return render_template('latency.html')
 
 
-@sio.on('ping_from_client')
-def ping(sid):
+@sio.event
+def ping_from_client(sid):
     sio.emit('pong_from_server', room=sid)
 
 

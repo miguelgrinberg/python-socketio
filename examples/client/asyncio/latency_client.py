@@ -13,14 +13,14 @@ async def send_ping():
     await sio.emit('ping_from_client')
 
 
-@sio.on('connect')
-async def on_connect():
+@sio.event
+async def connect():
     print('connected to server')
     await send_ping()
 
 
-@sio.on('pong_from_server')
-async def on_pong(data):
+@sio.event
+async def pong_from_server(data):
     global start_timer
     latency = time.time() - start_timer
     print('latency is {0:.2f} ms'.format(latency * 1000))

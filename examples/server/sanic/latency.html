@@ -14,7 +14,7 @@
     <script src="//cdnjs.cloudflare.com/ajax/libs/socket.io/2.0.4/socket.io.slim.js"></script>
     <script>
       // socket
-      var socket = io.connect('http://' + document.domain + ':' + location.port);
+      var socket = io.connect();
       var char = $('chart').get(0);
       socket.on('connect', function() {
           if (chart.getContext) {

@@ -11,14 +11,14 @@ def send_ping():
     sio.emit('ping_from_client')
 
 
-@sio.on('connect')
-def on_connect():
+@sio.event
+def connect():
     print('connected to server')
     send_ping()
 
 
-@sio.on('pong_from_server')
-def on_pong(data):
+@sio.event
+def pong_from_server(data):
     global start_timer
     latency = time.time() - start_timer
     print('latency is {0:.2f} ms'.format(latency * 1000))
