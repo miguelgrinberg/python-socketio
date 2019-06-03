@@ -1,5 +1,13 @@
 # python-socketio change log
 
+**Release 4.1.0** - 2019-06-03
+
+- New @event decorator for handler registration ([commit](https://github.com/miguelgrinberg/python-socketio/commit/70ebfdbfa1ad40e471b93dc9b0d3a9c2e7025ce0))
+- Much more flexible support for static files in the server ([commit](https://github.com/miguelgrinberg/python-socketio/commit/aaa87a82779c5dbd5f2cac19991a6ca93bde90ae))
+- Move python-engineio dependency to versions 3.8 and up ([commit](https://github.com/miguelgrinberg/python-socketio/commit/814ff84ec310ce208522c8fd00302fdc1a689f44))
+- Various simplifications to examples ([commit](https://github.com/miguelgrinberg/python-socketio/commit/0f42c181da7c56ca270814442bdebeecb0e38bf6))
+- Expose the sid for the connection as `sio.sid` ([commit](https://github.com/miguelgrinberg/python-socketio/commit/3b32dbde8d59d0df7c958534732f5d5437f8decf))
+
 **Release 4.0.3** - 2019-05-25
 
 - skip_sid parameter can also be a list [#202](https://github.com/miguelgrinberg/python-socketio/issues/202) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/00d39ca6985e94e283f5c766c18cacb760e0658d))
