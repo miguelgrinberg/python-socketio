@@ -37,6 +37,6 @@ class TestMiddleware(unittest.TestCase):
         environ = {'PATH_INFO': '/foo/bar'}
         start_response = mock.MagicMock()
         r = m(environ, start_response)
-        self.assertEqual(r, ['Not Found'])
+        self.assertEqual(r, [b'Not Found'])
         start_response.assert_called_once_with(
-            "404 Not Found", [('Content-type', 'text/plain')])
+            "404 Not Found", [('Content-Type', 'text/plain')])

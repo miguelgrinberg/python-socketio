@@ -59,7 +59,7 @@ Socket.IO servers to integrate easily into existing WSGI or ASGI applications::
 Serving Static Files
 --------------------
 
-This package offers the option to configure the serving of static files. This
+The Engine.IO server can be configured to serve static files to clients. This
 is particularly useful to deliver HTML, CSS and JavaScript files to clients
 when this package is used without a companion web framework.
 
@@ -91,20 +91,38 @@ If desired, an explicit content type for a static file can be given as follows::
         '/': {'filename': 'latency.html', 'content_type': 'text/plain'},
     }
 
-Finally, it is also possible to configure an entire directory in a single rule,
-so that all the files in it are served as static files::
+It is also possible to configure an entire directory in a single rule, so that all
+the files in it are served as static files::
 
     static_files = {
         '/static': './public',
-        '/': './public/index.html',
     }
 
 In this example any files with URLs starting with ``/static`` will be served
 directly from the ``public`` folder in the current directory, so for example,
 the URL ``/static/index.html`` will return local file ``./public/index.html``
 and the URL ``/static/css/styles.css`` will return local file
-``./public/css/styles.css``. The second rule creates a default mapping for the
-``index.html`` file when the root URL is requested.
+``./public/css/styles.css``.
+
+If a URL that ends in a ``/`` is requested, then a default filename of
+``index.html`` is appended to it. In the previous example, a request for the
+``/static/`` URL would return local file ``./public/index.html``. The default
+filename to serve for slash-ending URLs can be set in the static files
+dictionary with an empty key::
+
+    static_files = {
+        '/static': './public',
+        '': 'image.gif',
+    }
+
+With this configuration, a request for ``/static/`` would return
+local file ``./public/image.gif``. A non-standard content type can also be
+specified if needed::
+
+    static_files = {
+        '/static': './public',
+        '': {'filename': 'image.gif', 'content_type': 'text/plain'},
+    }
 
 The static file configuration dictionary is given as the ``static_files``
 argument to the ``socketio.WSGIApp`` or ``socketio.ASGIApp`` classes::
