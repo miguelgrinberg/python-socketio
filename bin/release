@@ -5,6 +5,7 @@ VERSION_FILE=socketio/__init__.py
 
 if [[ "$VERSION" == "" ]]; then
     echo "Usage: $0 <version>"
+    exit 1
 fi
 
 # update change log
