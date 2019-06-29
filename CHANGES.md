@@ -1,5 +1,12 @@
 # python-socketio change log
 
+**Release 4.2.0** - 2019-06-29
+
+- Handle keyboard interrupt during reconnect [#301](https://github.com/miguelgrinberg/python-socketio/issues/301) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/fa53e3869ce27af3d497d6e021aa2e3d5c808ece))
+- Added "to" parameter as an alias to "room" ([commit](https://github.com/miguelgrinberg/python-socketio/commit/8a4e5ffa5ceb03b63156b9520e79a4c7414ac214))
+- Correctly autodetect asgi async mode ([commit](https://github.com/miguelgrinberg/python-socketio/commit/eecd3676c15bb7c4c0e165eb02c814cba53a6bb4))
+- Improved documentation on user session behavior on disconnections [#308](https://github.com/miguelgrinberg/python-socketio/issues/308) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/2aa8636223d714b1c87323f625645a433ac7e010))
+
 **Release 4.1.0** - 2019-06-03
 
 - New @event decorator for handler registration ([commit](https://github.com/miguelgrinberg/python-socketio/commit/70ebfdbfa1ad40e471b93dc9b0d3a9c2e7025ce0))
