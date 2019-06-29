@@ -4,8 +4,7 @@ if sys.version_info >= (3, 5):
         from engineio.async_drivers.tornado import get_tornado_handler as \
             get_engineio_handler
     except ImportError:  # pragma: no cover
-        from engineio.async_tornado import get_tornado_handler as \
-            get_engineio_handler
+        get_engineio_handler = None
 
 
 def get_tornado_handler(socketio_server):  # pragma: no cover
