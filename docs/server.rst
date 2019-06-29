@@ -396,7 +396,6 @@ retrieve information in the user session::
 
 For the ``asyncio`` server, these methods are coroutines::
 
-
     @sio.event
     async def connect(sid, environ):
         username = authenticate_user(environ)
@@ -436,6 +435,10 @@ For the ``asyncio`` server, an asynchronous context manager is used::
 The ``get_session()``, ``save_session()`` and ``session()`` methods take an
 optional ``namespace`` argument. If this argument isn't provided, the session
 is attached to the default namespace.
+
+Note: the contents of the user session are destroyed when the client
+disconnects. In particular, user session contents are not preserved when a
+client reconnects after an unexpected disconnection from the server.
 
 Using a Message Queue
 ---------------------
