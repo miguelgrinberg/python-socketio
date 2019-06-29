@@ -84,26 +84,42 @@ class TestAsyncServer(unittest.TestCase):
     def test_emit(self, eio):
         mgr = self._get_mock_manager()
         s = asyncio_server.AsyncServer(client_manager=mgr)
-        _run(s.emit('my event', {'foo': 'bar'}, room='room',
+        _run(s.emit('my event', {'foo': 'bar'}, to='room',
                     skip_sid='123', namespace='/foo', callback='cb'))
         s.manager.emit.mock.assert_called_once_with(
+            'my event', {'foo': 'bar'}, '/foo', room='room', skip_sid='123',
+            callback='cb')
+        _run(s.emit('my event', {'foo': 'bar'}, room='room',
+                    skip_sid='123', namespace='/foo', callback='cb'))
+        s.manager.emit.mock.assert_called_with(
             'my event', {'foo': 'bar'}, '/foo', room='room', skip_sid='123',
             callback='cb')
 
     def test_emit_default_namespace(self, eio):
         mgr = self._get_mock_manager()
         s = asyncio_server.AsyncServer(client_manager=mgr)
-        _run(s.emit('my event', {'foo': 'bar'}, room='room',
+        _run(s.emit('my event', {'foo': 'bar'}, to='room',
                     skip_sid='123', callback='cb'))
         s.manager.emit.mock.assert_called_once_with(
+            'my event', {'foo': 'bar'}, '/', room='room', skip_sid='123',
+            callback='cb')
+        _run(s.emit('my event', {'foo': 'bar'}, room='room',
+                    skip_sid='123', callback='cb'))
+        s.manager.emit.mock.assert_called_with(
             'my event', {'foo': 'bar'}, '/', room='room', skip_sid='123',
             callback='cb')
 
     def test_send(self, eio):
         mgr = self._get_mock_manager()
         s = asyncio_server.AsyncServer(client_manager=mgr)
-        _run(s.send('foo', 'room', '123', namespace='/foo', callback='cb'))
+        _run(s.send('foo', to='room', skip_sid='123', namespace='/foo',
+                    callback='cb'))
         s.manager.emit.mock.assert_called_once_with(
+            'message', 'foo', '/foo', room='room', skip_sid='123',
+            callback='cb')
+        _run(s.send('foo', room='room', skip_sid='123', namespace='/foo',
+                    callback='cb'))
+        s.manager.emit.mock.assert_called_with(
             'message', 'foo', '/foo', room='room', skip_sid='123',
             callback='cb')
 

@@ -75,7 +75,7 @@ class AsyncServer(server.Server):
         """Attach the Socket.IO server to an application."""
         self.eio.attach(app, socketio_path)
 
-    async def emit(self, event, data=None, room=None, skip_sid=None,
+    async def emit(self, event, data=None, to=None, room=None, skip_sid=None,
                    namespace=None, callback=None, **kwargs):
         """Emit a custom event to one or more connected clients.
 
@@ -85,11 +85,12 @@ class AsyncServer(server.Server):
         :param data: The data to send to the client or clients. Data can be of
                      type ``str``, ``bytes``, ``list`` or ``dict``. If a
                      ``list`` or ``dict``, the data will be serialized as JSON.
-        :param room: The recipient of the message. This can be set to the
-                     session ID of a client to address that client's room, or
-                     to any custom room created by the application, If this
-                     argument is omitted the event is broadcasted to all
-                     connected clients.
+        :param to: The recipient of the message. This can be set to the
+                   session ID of a client to address only that client, or to
+                   to any custom room created by the application to address all
+                   the clients in that room, If this argument is omitted the
+                   event is broadcasted to all connected clients.
+        :param room: Alias for the ``to`` parameter.
         :param skip_sid: The session ID of a client to skip when broadcasting
                          to a room or to all clients. This can be used to
                          prevent a message from being sent to the sender.
@@ -112,14 +113,15 @@ class AsyncServer(server.Server):
         Note: this method is a coroutine.
         """
         namespace = namespace or '/'
+        room = to or room
         self.logger.info('emitting event "%s" to %s [%s]', event,
                          room or 'all', namespace)
         await self.manager.emit(event, data, namespace, room=room,
                                 skip_sid=skip_sid, callback=callback,
                                 **kwargs)
 
-    async def send(self, data, room=None, skip_sid=None, namespace=None,
-                   callback=None, **kwargs):
+    async def send(self, data, to=None, room=None, skip_sid=None,
+                   namespace=None, callback=None, **kwargs):
         """Send a message to one or more connected clients.
 
         This function emits an event with the name ``'message'``. Use
@@ -128,11 +130,12 @@ class AsyncServer(server.Server):
         :param data: The data to send to the client or clients. Data can be of
                      type ``str``, ``bytes``, ``list`` or ``dict``. If a
                      ``list`` or ``dict``, the data will be serialized as JSON.
-        :param room: The recipient of the message. This can be set to the
-                     session ID of a client to address that client's room, or
-                     to any custom room created by the application, If this
-                     argument is omitted the event is broadcasted to all
-                     connected clients.
+        :param to: The recipient of the message. This can be set to the
+                   session ID of a client to address only that client, or to
+                   to any custom room created by the application to address all
+                   the clients in that room, If this argument is omitted the
+                   event is broadcasted to all connected clients.
+        :param room: Alias for the ``to`` parameter.
         :param skip_sid: The session ID of a client to skip when broadcasting
                          to a room or to all clients. This can be used to
                          prevent a message from being sent to the sender.
@@ -154,10 +157,11 @@ class AsyncServer(server.Server):
 
         Note: this method is a coroutine.
         """
-        await self.emit('message', data=data, room=room, skip_sid=skip_sid,
-                        namespace=namespace, callback=callback, **kwargs)
+        await self.emit('message', data=data, to=to, room=room,
+                        skip_sid=skip_sid, namespace=namespace,
+                        callback=callback, **kwargs)
 
-    async def call(self, event, data=None, sid=None, namespace=None,
+    async def call(self, event, data=None, to=None, sid=None, namespace=None,
                    timeout=60, **kwargs):
         """Emit a custom event to a client and wait for the response.
 
@@ -167,7 +171,8 @@ class AsyncServer(server.Server):
         :param data: The data to send to the client or clients. Data can be of
                      type ``str``, ``bytes``, ``list`` or ``dict``. If a
                      ``list`` or ``dict``, the data will be serialized as JSON.
-        :param sid: The session ID of the recipient client.
+        :param to: The session ID of the recipient client.
+        :param sid: Alias for the ``to`` parameter.
         :param namespace: The Socket.IO namespace for the event. If this
                           argument is omitted the event is emitted to the
                           default namespace.
@@ -192,7 +197,7 @@ class AsyncServer(server.Server):
             callback_args.append(args)
             callback_event.set()
 
-        await self.emit(event, data=data, room=sid, namespace=namespace,
+        await self.emit(event, data=data, room=to or sid, namespace=namespace,
                         callback=event_callback, **kwargs)
         try:
             await asyncio.wait_for(callback_event.wait(), timeout)
