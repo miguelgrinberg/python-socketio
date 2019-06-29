@@ -355,6 +355,8 @@ class AsyncClient(client.Client):
                 event, *args)
 
     async def _handle_reconnect(self):
+        self._reconnect_abort.clear()
+        client.reconnecting_clients.append(self)
         attempt_count = 0
         current_delay = self.reconnection_delay
         while True:
@@ -366,7 +368,12 @@ class AsyncClient(client.Client):
             self.logger.info(
                 'Connection failed, new attempt in {:.02f} seconds'.format(
                     delay))
-            await self.sleep(delay)
+            try:
+                await asyncio.wait_for(self._reconnect_abort.wait(), delay)
+                self.logger.info('Reconnect task aborted')
+                break
+            except (asyncio.TimeoutError, asyncio.CancelledError):
+                pass
             attempt_count += 1
             try:
                 await self.connect(self.connection_url,
@@ -385,6 +392,7 @@ class AsyncClient(client.Client):
                 self.logger.info(
                     'Maximum reconnection attempts reached, giving up')
                 break
+        client.reconnecting_clients.remove(self)
 
     def _handle_eio_connect(self):
         """Handle the Engine.IO connection event."""
@@ -422,6 +430,7 @@ class AsyncClient(client.Client):
     async def _handle_eio_disconnect(self):
         """Handle the Engine.IO disconnection event."""
         self.logger.info('Engine.IO connection dropped')
+        self._reconnect_abort.set()
         for n in self.namespaces:
             await self._trigger_event('disconnect', namespace=n)
         await self._trigger_event('disconnect', namespace='/')

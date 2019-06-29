@@ -1,6 +1,7 @@
 import itertools
 import logging
 import random
+import signal
 
 import engineio
 import six
@@ -10,6 +11,21 @@ from . import namespace
 from . import packet
 
 default_logger = logging.getLogger('socketio.client')
+reconnecting_clients = []
+
+
+def signal_handler(sig, frame):  # pragma: no cover
+    """SIGINT handler.
+
+    Notify any clients that are in a reconnect loop to abort. Other
+    disconnection tasks are handled at the engine.io level.
+    """
+    for client in reconnecting_clients[:]:
+        client._reconnect_abort.set()
+    return original_signal_handler(sig, frame)
+
+
+original_signal_handler = signal.signal(signal.SIGINT, signal_handler)
 
 
 class Client(object):
@@ -102,6 +118,7 @@ class Client(object):
         self.callbacks = {}
         self._binary_packet = None
         self._reconnect_task = None
+        self._reconnect_abort = self.eio.create_event()
 
     def is_asyncio_based(self):
         return False
@@ -486,6 +503,8 @@ class Client(object):
                 event, *args)
 
     def _handle_reconnect(self):
+        self._reconnect_abort.clear()
+        reconnecting_clients.append(self)
         attempt_count = 0
         current_delay = self.reconnection_delay
         while True:
@@ -497,7 +516,10 @@ class Client(object):
             self.logger.info(
                 'Connection failed, new attempt in {:.02f} seconds'.format(
                     delay))
-            self.sleep(delay)
+            print('***', self._reconnect_abort.wait)
+            if self._reconnect_abort.wait(delay):
+                self.logger.info('Reconnect task aborted')
+                break
             attempt_count += 1
             try:
                 self.connect(self.connection_url,
@@ -516,6 +538,7 @@ class Client(object):
                 self.logger.info(
                     'Maximum reconnection attempts reached, giving up')
                 break
+        reconnecting_clients.remove(self)
 
     def _handle_eio_connect(self):
         """Handle the Engine.IO connection event."""

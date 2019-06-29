@@ -1,4 +1,5 @@
 import asyncio
+from contextlib import contextmanager
 import sys
 import unittest
 
@@ -24,6 +25,19 @@ def AsyncMock(*args, **kwargs):
 
     mock_coro.mock = m
     return mock_coro
+
+
+@contextmanager
+def mock_wait_for():
+    async def fake_wait_for(coro, timeout):
+        await coro
+        await fake_wait_for._mock(timeout)
+
+    original_wait_for = asyncio.wait_for
+    asyncio.wait_for = fake_wait_for
+    fake_wait_for._mock = AsyncMock()
+    yield
+    asyncio.wait_for = original_wait_for
 
 
 def _run(coro):
@@ -542,51 +556,64 @@ class TestAsyncClient(unittest.TestCase):
         _run(c._trigger_event('foo', '/', 1, '2'))
         self.assertEqual(result, [1, '2'])
 
+    @mock.patch('asyncio.wait_for', new_callable=AsyncMock,
+                side_effect=asyncio.TimeoutError)
     @mock.patch('socketio.client.random.random', side_effect=[1, 0, 0.5])
-    def test_handle_reconnect(self, random):
+    def test_handle_reconnect(self, random, wait_for):
         c = asyncio_client.AsyncClient()
         c._reconnect_task = 'foo'
-        c.sleep = AsyncMock()
         c.connect = AsyncMock(
             side_effect=[ValueError, exceptions.ConnectionError, None])
         _run(c._handle_reconnect())
-        self.assertEqual(c.sleep.mock.call_count, 3)
-        self.assertEqual(c.sleep.mock.call_args_list, [
-            mock.call(1.5),
-            mock.call(1.5),
-            mock.call(4.0)
-        ])
+        self.assertEqual(wait_for.mock.call_count, 3)
+        self.assertEqual(
+            [x[0][1] for x in asyncio.wait_for.mock.call_args_list],
+            [1.5, 1.5, 4.0])
         self.assertEqual(c._reconnect_task, None)
 
+    @mock.patch('asyncio.wait_for', new_callable=AsyncMock,
+                side_effect=asyncio.TimeoutError)
     @mock.patch('socketio.client.random.random', side_effect=[1, 0, 0.5])
-    def test_handle_reconnect_max_delay(self, random):
+    def test_handle_reconnect_max_delay(self, random, wait_for):
         c = asyncio_client.AsyncClient(reconnection_delay_max=3)
         c._reconnect_task = 'foo'
-        c.sleep = AsyncMock()
         c.connect = AsyncMock(
             side_effect=[ValueError, exceptions.ConnectionError, None])
         _run(c._handle_reconnect())
-        self.assertEqual(c.sleep.mock.call_count, 3)
-        self.assertEqual(c.sleep.mock.call_args_list, [
-            mock.call(1.5),
-            mock.call(1.5),
-            mock.call(3.0)
-        ])
+        self.assertEqual(wait_for.mock.call_count, 3)
+        self.assertEqual(
+            [x[0][1] for x in asyncio.wait_for.mock.call_args_list],
+            [1.5, 1.5, 3.0])
         self.assertEqual(c._reconnect_task, None)
 
+    @mock.patch('asyncio.wait_for', new_callable=AsyncMock,
+                side_effect=asyncio.TimeoutError)
     @mock.patch('socketio.client.random.random', side_effect=[1, 0, 0.5])
-    def test_handle_reconnect_max_attempts(self, random):
+    def test_handle_reconnect_max_attempts(self, random, wait_for):
         c = asyncio_client.AsyncClient(reconnection_attempts=2)
         c._reconnect_task = 'foo'
-        c.sleep = AsyncMock()
         c.connect = AsyncMock(
             side_effect=[ValueError, exceptions.ConnectionError, None])
         _run(c._handle_reconnect())
-        self.assertEqual(c.sleep.mock.call_count, 2)
-        self.assertEqual(c.sleep.mock.call_args_list, [
-            mock.call(1.5),
-            mock.call(1.5)
-        ])
+        self.assertEqual(wait_for.mock.call_count, 2)
+        self.assertEqual(
+            [x[0][1] for x in asyncio.wait_for.mock.call_args_list],
+            [1.5, 1.5])
+        self.assertEqual(c._reconnect_task, 'foo')
+
+    @mock.patch('asyncio.wait_for', new_callable=AsyncMock,
+                side_effect=[asyncio.TimeoutError, None])
+    @mock.patch('socketio.client.random.random', side_effect=[1, 0, 0.5])
+    def test_handle_reconnect_aborted(self, random, wait_for):
+        c = asyncio_client.AsyncClient()
+        c._reconnect_task = 'foo'
+        c.connect = AsyncMock(
+            side_effect=[ValueError, exceptions.ConnectionError, None])
+        _run(c._handle_reconnect())
+        self.assertEqual(wait_for.mock.call_count, 2)
+        self.assertEqual(
+            [x[0][1] for x in asyncio.wait_for.mock.call_args_list],
+            [1.5, 1.5])
         self.assertEqual(c._reconnect_task, 'foo')
 
     def test_eio_connect(self):
