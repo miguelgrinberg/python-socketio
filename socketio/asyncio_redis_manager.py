@@ -56,7 +56,9 @@ class AsyncRedisManager(AsyncPubSubManager):  # pragma: no cover
             raise RuntimeError('Redis package is not installed '
                                '(Run "pip install aioredis" in your '
                                'virtualenv).')
-        self.host, self.port, self.password, self.db, self.ssl = _parse_redis_url(url)
+        (
+            self.host, self.port, self.password, self.db, self.ssl
+        ) = _parse_redis_url(url)
         self.pub = None
         self.sub = None
         super().__init__(channel=channel, write_only=write_only, logger=logger)
