@@ -283,7 +283,7 @@ Class-Based Namespaces
 ----------------------
 
 As an alternative to the decorator-based event handlers, the event handlers
-that belong to a namespace can be created as methods of a subclass of 
+that belong to a namespace can be created as methods of a subclass of
 :class:`socketio.Namespace`::
 
     class MyCustomNamespace(socketio.Namespace):
@@ -322,7 +322,7 @@ the namespace class, then the event is ignored. All event names used in
 class-based namespaces must use characters that are legal in method names.
 
 As a convenience to methods defined in a class-based namespace, the namespace
-instance includes versions of several of the methods in the 
+instance includes versions of several of the methods in the
 :class:`socketio.Server` and :class:`socketio.AsyncServer` classes that default
 to the proper namespace when the ``namespace`` argument is not given.
 
@@ -349,7 +349,7 @@ personal room for each client is created and named with the ``sid`` assigned
 to the connection. The application is then free to create additional rooms and
 manage which clients are in them using the :func:`socketio.Server.enter_room`
 and :func:`socketio.Server.leave_room` methods. Clients can be in as many
-rooms as needed and can be moved between rooms as often as necessary. 
+rooms as needed and can be moved between rooms as often as necessary.
 
 ::
 
@@ -472,7 +472,7 @@ To use a Redis message queue, a Python Redis client must be installed::
     # socketio.AsyncServer class
     pip install aioredis
 
-The Redis queue is configured through the :class:`socketio.RedisManager` and 
+The Redis queue is configured through the :class:`socketio.RedisManager` and
 :class:`socketio.AsyncRedisManager` classes. These classes connect directly to
 the Redis store and use the queue's pub/sub functionality::
 
@@ -517,6 +517,60 @@ the correct URL for a given message queue.
 Note that Kombu currently does not support asyncio, so it cannot be used with
 the :class:`socketio.AsyncServer` class.
 
+AioPika as a pubsub
+~~~~~~~~~~~~~~~~~~~
+
+If you want to combine a RabbitMQ based manager with asyncio and a
+:class:`socketio.AsyncServer` class, you can use the
+`AioPika <https://aio-pika.readthedocs.io/en/latest/>`_ based manager.
+You need to install aio_pika with pip::
+
+    pip install aio_pika
+
+The RabbitMQ queue is configured through the
+:class:`socketio.AsyncPubSubAioPikaManager`::
+
+    mgr = socketio.AsyncPubSubAioPikaManager('amqp://')
+    sio = socketio.AsyncServer(client_manager=mgr)
+
+AioPika as task queue
+~~~~~~~~~~~~~~~~~~~~~
+
+Using a pubsub manager does not guarantee message delivery, in the case where a
+client you want to deliver a message to is disconnected during the publication
+of the event. When this client reconnects, the message was already published,
+so it will miss it.
+Using a task queue by client to publish this message will solve this use case.
+This comes with a limitation: you have to publish the message once for each
+client you want to deliver it to, which is inconvenient if you need to dispatch
+messages to multiple clients at once.
+
+You can use RabbitMQ as a task queue with
+:class:`socketio.AsyncTaskQueueAioPikaManager`::
+
+    mgr = socketio.AsyncTaskQueueAioPikaManager('amqp://')
+    sio = socketio.AsyncServer(client_manager=mgr)
+
+Then, you can register tasks to this manager to start listening for events to
+emit to a specific client, for example::
+
+    @sio.event
+    async def connect(sid, environ):
+        mgr.register_task('some token to uniquely identify your client')
+
+    @sio.event
+    async def disconnect(sid):
+        mgr.cancel_task('some token to uniquely identify your client')
+
+You can them emit events to this client::
+
+    mgr.emit('event', data='data',
+             task_queue='some token to uniquely identify your client',
+             room='room', namespace='namespace')
+
+The event will be emitted even if the client is currently disconnected but
+reconnects later.
+
 Emitting from external processes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -528,7 +582,7 @@ example::
 
     # connect to the redis queue as an external process
     external_sio = socketio.RedisManager('redis://', write_only=True)
-    
+
     # emit an event
     external_sio.emit('my event', data={'foo': 'bar'}, room='my room')
 
