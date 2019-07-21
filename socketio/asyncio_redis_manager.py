@@ -12,8 +12,9 @@ from .asyncio_pubsub_manager import AsyncPubSubManager
 
 def _parse_redis_url(url):
     p = urlparse(url)
-    if p.scheme != 'redis':
+    if p.scheme not in {'redis', 'rediss'}:
         raise ValueError('Invalid redis url')
+    ssl = p.scheme == 'rediss'
     host = p.hostname or 'localhost'
     port = p.port or 6379
     password = p.password
@@ -21,7 +22,7 @@ def _parse_redis_url(url):
         db = int(p.path[1:])
     else:
         db = 0
-    return host, port, password, db
+    return host, port, password, db, ssl
 
 
 class AsyncRedisManager(AsyncPubSubManager):  # pragma: no cover
@@ -39,7 +40,8 @@ class AsyncRedisManager(AsyncPubSubManager):  # pragma: no cover
             'redis://hostname:port/0'))
 
     :param url: The connection URL for the Redis server. For a default Redis
-                store running on the same host, use ``redis://``.
+                store running on the same host, use ``redis://``.  To use an
+                SSL connection, use ``rediss://``.
     :param channel: The channel name on which the server sends and receives
                     notifications. Must be the same in all the servers.
     :param write_only: If set ot ``True``, only initialize to emit events. The
@@ -54,7 +56,9 @@ class AsyncRedisManager(AsyncPubSubManager):  # pragma: no cover
             raise RuntimeError('Redis package is not installed '
                                '(Run "pip install aioredis" in your '
                                'virtualenv).')
-        self.host, self.port, self.password, self.db = _parse_redis_url(url)
+        (
+            self.host, self.port, self.password, self.db, self.ssl
+        ) = _parse_redis_url(url)
         self.pub = None
         self.sub = None
         super().__init__(channel=channel, write_only=write_only, logger=logger)
@@ -66,7 +70,8 @@ class AsyncRedisManager(AsyncPubSubManager):  # pragma: no cover
                 if self.pub is None:
                     self.pub = await aioredis.create_redis(
                         (self.host, self.port), db=self.db,
-                        password=self.password)
+                        password=self.password, ssl=self.ssl
+                    )
                 return await self.pub.publish(self.channel,
                                               pickle.dumps(data))
             except (aioredis.RedisError, OSError):
@@ -87,7 +92,8 @@ class AsyncRedisManager(AsyncPubSubManager):  # pragma: no cover
                 if self.sub is None:
                     self.sub = await aioredis.create_redis(
                         (self.host, self.port), db=self.db,
-                        password=self.password)
+                        password=self.password, ssl=self.ssl
+                    )
                 self.ch = (await self.sub.subscribe(self.channel))[0]
                 return await self.ch.get()
             except (aioredis.RedisError, OSError):
