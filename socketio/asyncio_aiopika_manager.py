@@ -9,7 +9,7 @@ except ImportError:
     aio_pika = None
 
 
-class AsyncPubSubAioPikaManager(AsyncPubSubManager):
+class AsyncAioPikaManager(AsyncPubSubManager):
     """Client manager that uses aio_pika for inter-process messaging under
     asyncio.
 
@@ -34,7 +34,7 @@ class AsyncPubSubAioPikaManager(AsyncPubSubManager):
                        and receiving.
     """
 
-    name = 'asyncpubsubaiopika'
+    name = 'asyncaiopika'
 
     def __init__(self, url='amqp://guest:guest@localhost:5672//',
                  channel='socketio', write_only=False, logger=None):

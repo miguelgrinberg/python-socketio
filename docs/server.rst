@@ -517,8 +517,8 @@ the correct URL for a given message queue.
 Note that Kombu currently does not support asyncio, so it cannot be used with
 the :class:`socketio.AsyncServer` class.
 
-AioPika as a pubsub
-~~~~~~~~~~~~~~~~~~~
+AioPika
+~~~~~~~
 
 If you want to combine a RabbitMQ based manager with asyncio and a
 :class:`socketio.AsyncServer` class, you can use the
@@ -532,44 +532,6 @@ The RabbitMQ queue is configured through the
 
     mgr = socketio.AsyncPubSubAioPikaManager('amqp://')
     sio = socketio.AsyncServer(client_manager=mgr)
-
-AioPika as task queue
-~~~~~~~~~~~~~~~~~~~~~
-
-Using a pubsub manager does not guarantee message delivery, in the case where a
-client you want to deliver a message to is disconnected during the publication
-of the event. When this client reconnects, the message was already published,
-so it will miss it.
-Using a task queue by client to publish this message will solve this use case.
-This comes with a limitation: you have to publish the message once for each
-client you want to deliver it to, which is inconvenient if you need to dispatch
-messages to multiple clients at once.
-
-You can use RabbitMQ as a task queue with
-:class:`socketio.AsyncTaskQueueAioPikaManager`::
-
-    mgr = socketio.AsyncTaskQueueAioPikaManager('amqp://')
-    sio = socketio.AsyncServer(client_manager=mgr)
-
-Then, you can register tasks to this manager to start listening for events to
-emit to a specific client, for example::
-
-    @sio.event
-    async def connect(sid, environ):
-        mgr.register_task('some token to uniquely identify your client')
-
-    @sio.event
-    async def disconnect(sid):
-        mgr.cancel_task('some token to uniquely identify your client')
-
-You can them emit events to this client::
-
-    mgr.emit('event', data='data',
-             task_queue='some token to uniquely identify your client',
-             room='room', namespace='namespace')
-
-The event will be emitted even if the client is currently disconnected but
-reconnects later.
 
 Emitting from external processes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
