@@ -20,7 +20,8 @@ class AsyncAioPikaManager(AsyncPubSubManager):
     follows::
 
         url = 'amqp://user:password@hostname:port//'
-        server = socketio.Server(client_manager=socketio.AsyncAioPikaManager(url))
+        server = socketio.Server(client_manager=socketio.AsyncAioPikaManager(
+            url))
 
     :param url: The connection URL for the backend messaging queue. Example
                 connection URLs are ``'amqp://guest:guest@localhost:5672//'``
