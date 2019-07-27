@@ -1,5 +1,9 @@
 # python-socketio change log
 
+**Release 4.2.1** - 2019-07-27
+
+- Added rediss:// URL scheme to AsyncRedisManager [#319](https://github.com/miguelgrinberg/python-socketio/issues/319) * Added rediss:// URL scheme to AsyncRedisManager * Obeyed flake8 ([commit](https://github.com/miguelgrinberg/python-socketio/commit/0b25ff42b8927ac881be7c8ebe1785819bc4c35e)) (thanks **Dylan Anthony**!)
+
 **Release 4.2.0** - 2019-06-29
 
 - Handle keyboard interrupt during reconnect [#301](https://github.com/miguelgrinberg/python-socketio/issues/301) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/fa53e3869ce27af3d497d6e021aa2e3d5c808ece))
