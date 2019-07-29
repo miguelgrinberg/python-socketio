@@ -1,5 +1,10 @@
 # python-socketio change log
 
+**Release 4.3.0** - 2019-07-29
+
+- Address potential websocket cross-origin attacks [#128](https://github.com/miguelgrinberg/python-engineio/issues/128) ([commit](https://github.com/miguelgrinberg/python-engineio/commit/7548f704a0a3000b7ac8a6c88796c4ae58aa9c37))
+- Documentation for the Same Origin security policy ([commit](https://github.com/miguelgrinberg/python-socketio/commit/045188c63dffeec82539354fd0498fca969e444e))
+
 **Release 4.2.1** - 2019-07-27
 
 - Added rediss:// URL scheme to AsyncRedisManager [#319](https://github.com/miguelgrinberg/python-socketio/issues/319) * Added rediss:// URL scheme to AsyncRedisManager * Obeyed flake8 ([commit](https://github.com/miguelgrinberg/python-socketio/commit/0b25ff42b8927ac881be7c8ebe1785819bc4c35e)) (thanks **Dylan Anthony**!)
