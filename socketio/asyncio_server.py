@@ -58,6 +58,10 @@ class AsyncServer(server.Server):
                                  disable CORS handling.
     :param cors_credentials: Whether credentials (cookies, authentication) are
                              allowed in requests to this server.
+    :param monitor_clients: If set to ``True``, a background task will ensure
+                            inactive clients are closed. Set to ``False`` to
+                            disable the monitoring task (not recommended). The
+                            default is ``True``.
     :param engineio_logger: To enable Engine.IO logging set to ``True`` or pass
                             a logger object to use. To disable logging set to
                             ``False``.
