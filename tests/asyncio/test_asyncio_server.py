@@ -596,27 +596,33 @@ class TestAsyncServer(unittest.TestCase):
 
     def test_disconnect(self, eio):
         eio.return_value.send = AsyncMock()
+        eio.return_value.disconnect = AsyncMock()
         s = asyncio_server.AsyncServer()
         _run(s._handle_eio_connect('123', 'environ'))
         _run(s.disconnect('123'))
         s.eio.send.mock.assert_any_call('123', '1', binary=False)
+        s.eio.disconnect.mock.assert_called_once_with('123')
 
     def test_disconnect_namespace(self, eio):
         eio.return_value.send = AsyncMock()
+        eio.return_value.disconnect = AsyncMock()
         s = asyncio_server.AsyncServer()
         _run(s._handle_eio_connect('123', 'environ'))
         _run(s._handle_eio_message('123', '0/foo'))
         _run(s.disconnect('123', namespace='/foo'))
         s.eio.send.mock.assert_any_call('123', '1/foo', binary=False)
+        s.eio.disconnect.mock.assert_not_called()
 
     def test_disconnect_twice(self, eio):
         eio.return_value.send = AsyncMock()
+        eio.return_value.disconnect = AsyncMock()
         s = asyncio_server.AsyncServer()
         _run(s._handle_eio_connect('123', 'environ'))
         _run(s.disconnect('123'))
         calls = s.eio.send.mock.call_count
         _run(s.disconnect('123'))
         self.assertEqual(calls, s.eio.send.mock.call_count)
+        self.assertEqual(s.eio.disconnect.mock.call_count, 1)
 
     def test_disconnect_twice_namespace(self, eio):
         eio.return_value.send = AsyncMock()

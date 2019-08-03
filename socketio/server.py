@@ -504,6 +504,8 @@ class Server(object):
                                                  namespace=namespace))
             self._trigger_event('disconnect', namespace, sid)
             self.manager.disconnect(sid, namespace=namespace)
+            if namespace == '/':
+                self.eio.disconnect(sid)
 
     def transport(self, sid):
         """Return the name of the transport used by the client.

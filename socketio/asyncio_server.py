@@ -312,6 +312,8 @@ class AsyncServer(server.Server):
                                                        namespace=namespace))
             await self._trigger_event('disconnect', namespace, sid)
             self.manager.disconnect(sid, namespace=namespace)
+            if namespace == '/':
+                await self.eio.disconnect(sid)
 
     async def handle_request(self, *args, **kwargs):
         """Handle an HTTP request from the client.

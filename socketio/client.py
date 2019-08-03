@@ -112,6 +112,7 @@ class Client(object):
         self.socketio_path = None
         self.sid = None
 
+        self.connected = False
         self.namespaces = []
         self.handlers = {}
         self.namespace_handlers = {}
@@ -261,6 +262,7 @@ class Client(object):
                              engineio_path=socketio_path)
         except engineio.exceptions.ConnectionError as exc:
             six.raise_from(exceptions.ConnectionError(exc.args[0]), None)
+        self.connected = True
 
     def wait(self):
         """Wait until the connection with the server ends.
@@ -377,6 +379,7 @@ class Client(object):
             self._send_packet(packet.Packet(packet.DISCONNECT, namespace=n))
         self._send_packet(packet.Packet(
             packet.DISCONNECT, namespace='/'))
+        self.connected = False
         self.eio.disconnect(abort=True)
 
     def transport(self):
@@ -445,10 +448,18 @@ class Client(object):
             self.namespaces.append(namespace)
 
     def _handle_disconnect(self, namespace):
+        if not self.connected:
+            return
         namespace = namespace or '/'
+        if namespace == '/':
+            for n in self.namespaces:
+                self._trigger_event('disconnect', namespace=n)
+            self.namespaces = []
         self._trigger_event('disconnect', namespace=namespace)
         if namespace in self.namespaces:
             self.namespaces.remove(namespace)
+        if namespace == '/':
+            self.connected = False
 
     def _handle_event(self, namespace, id, data):
         namespace = namespace or '/'
@@ -490,6 +501,9 @@ class Client(object):
             namespace))
         if namespace in self.namespaces:
             self.namespaces.remove(namespace)
+        if namespace == '/':
+            self.namespaces = []
+            self.connected = False
 
     def _trigger_event(self, event, namespace, *args):
         """Invoke an application event handler."""
@@ -516,7 +530,6 @@ class Client(object):
             self.logger.info(
                 'Connection failed, new attempt in {:.02f} seconds'.format(
                     delay))
-            print('***', self._reconnect_abort.wait)
             if self._reconnect_abort.wait(delay):
                 self.logger.info('Reconnect task aborted')
                 break
@@ -576,9 +589,12 @@ class Client(object):
     def _handle_eio_disconnect(self):
         """Handle the Engine.IO disconnection event."""
         self.logger.info('Engine.IO connection dropped')
-        for n in self.namespaces:
-            self._trigger_event('disconnect', namespace=n)
-        self._trigger_event('disconnect', namespace='/')
+        if self.connected:
+            for n in self.namespaces:
+                self._trigger_event('disconnect', namespace=n)
+            self._trigger_event('disconnect', namespace='/')
+            self.namespaces = []
+            self.connected = False
         self.callbacks = {}
         self._binary_packet = None
         self.sid = None

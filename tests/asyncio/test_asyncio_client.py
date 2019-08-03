@@ -411,28 +411,51 @@ class TestAsyncClient(unittest.TestCase):
 
     def test_handle_disconnect(self):
         c = asyncio_client.AsyncClient()
+        c.connected = True
         c._trigger_event = AsyncMock()
         _run(c._handle_disconnect('/'))
         c._trigger_event.mock.assert_called_once_with(
             'disconnect', namespace='/')
+        self.assertFalse(c.connected)
+        _run(c._handle_disconnect('/'))
+        self.assertEqual(c._trigger_event.mock.call_count, 1)
 
     def test_handle_disconnect_namespace(self):
         c = asyncio_client.AsyncClient()
+        c.connected = True
         c.namespaces = ['/foo', '/bar']
         c._trigger_event = AsyncMock()
         _run(c._handle_disconnect('/foo'))
         c._trigger_event.mock.assert_called_once_with(
             'disconnect', namespace='/foo')
         self.assertEqual(c.namespaces, ['/bar'])
+        self.assertTrue(c.connected)
 
     def test_handle_disconnect_unknown_namespace(self):
         c = asyncio_client.AsyncClient()
+        c.connected = True
         c.namespaces = ['/foo', '/bar']
         c._trigger_event = AsyncMock()
         _run(c._handle_disconnect('/baz'))
         c._trigger_event.mock.assert_called_once_with(
             'disconnect', namespace='/baz')
         self.assertEqual(c.namespaces, ['/foo', '/bar'])
+        self.assertTrue(c.connected)
+
+    def test_handle_disconnect_all_namespaces(self):
+        c = asyncio_client.AsyncClient()
+        c.connected = True
+        c.namespaces = ['/foo', '/bar']
+        c._trigger_event = AsyncMock()
+        _run(c._handle_disconnect('/'))
+        c._trigger_event.mock.assert_any_call(
+            'disconnect', namespace='/')
+        c._trigger_event.mock.assert_any_call(
+            'disconnect', namespace='/foo')
+        c._trigger_event.mock.assert_any_call(
+            'disconnect', namespace='/bar')
+        self.assertEqual(c.namespaces, [])
+        self.assertFalse(c.connected)
 
     def test_handle_event(self):
         c = asyncio_client.AsyncClient()
@@ -519,15 +542,27 @@ class TestAsyncClient(unittest.TestCase):
 
     def test_handle_error(self):
         c = asyncio_client.AsyncClient()
+        c.connected = True
+        c.namespaces = ['/foo', '/bar']
+        c._handle_error('/')
+        self.assertEqual(c.namespaces, [])
+        self.assertFalse(c.connected)
+
+    def test_handle_error_namespace(self):
+        c = asyncio_client.AsyncClient()
+        c.connected = True
         c.namespaces = ['/foo', '/bar']
         c._handle_error('/bar')
         self.assertEqual(c.namespaces, ['/foo'])
+        self.assertTrue(c.connected)
 
     def test_handle_error_unknown_namespace(self):
         c = asyncio_client.AsyncClient()
+        c.connected = True
         c.namespaces = ['/foo', '/bar']
         c._handle_error('/baz')
         self.assertEqual(c.namespaces, ['/foo', '/bar'])
+        self.assertTrue(c.connected)
 
     def test_trigger_event(self):
         c = asyncio_client.AsyncClient()
@@ -555,6 +590,19 @@ class TestAsyncClient(unittest.TestCase):
         c.register_namespace(MyNamespace('/'))
         _run(c._trigger_event('foo', '/', 1, '2'))
         self.assertEqual(result, [1, '2'])
+
+    def test_trigger_event_unknown_namespace(self):
+        c = asyncio_client.AsyncClient()
+        result = []
+
+        class MyNamespace(asyncio_namespace.AsyncClientNamespace):
+            def on_foo(self, a, b):
+                result.append(a)
+                result.append(b)
+
+        c.register_namespace(MyNamespace('/'))
+        _run(c._trigger_event('foo', '/bar', 1, '2'))
+        self.assertEqual(result, [])
 
     @mock.patch('asyncio.wait_for', new_callable=AsyncMock,
                 side_effect=asyncio.TimeoutError)
@@ -663,6 +711,7 @@ class TestAsyncClient(unittest.TestCase):
 
     def test_eio_disconnect(self):
         c = asyncio_client.AsyncClient()
+        c.connected = True
         c._trigger_event = AsyncMock()
         c.sid = 'foo'
         c.eio.state = 'connected'
@@ -670,9 +719,11 @@ class TestAsyncClient(unittest.TestCase):
         c._trigger_event.mock.assert_called_once_with(
             'disconnect', namespace='/')
         self.assertIsNone(c.sid)
+        self.assertFalse(c.connected)
 
     def test_eio_disconnect_namespaces(self):
         c = asyncio_client.AsyncClient()
+        c.connected = True
         c.namespaces = ['/foo', '/bar']
         c._trigger_event = AsyncMock()
         c.sid = 'foo'
@@ -682,6 +733,7 @@ class TestAsyncClient(unittest.TestCase):
         c._trigger_event.mock.assert_any_call('disconnect', namespace='/bar')
         c._trigger_event.mock.assert_any_call('disconnect', namespace='/')
         self.assertIsNone(c.sid)
+        self.assertFalse(c.connected)
 
     def test_eio_disconnect_reconnect(self):
         c = asyncio_client.AsyncClient(reconnection=True)
