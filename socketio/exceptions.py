@@ -24,3 +24,7 @@ class ConnectionRefusedError(ConnectionError):
 
 class TimeoutError(SocketIOError):
     pass
+
+
+class BadNamespaceError(SocketIOError):
+    pass

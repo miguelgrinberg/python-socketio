@@ -194,6 +194,7 @@ class TestAsyncClient(unittest.TestCase):
 
     def test_emit_namespace(self):
         c = asyncio_client.AsyncClient()
+        c.namespaces = ['/foo']
         c._send_packet = AsyncMock()
         _run(c.emit('foo', namespace='/foo'))
         expected_packet = packet.Packet(packet.EVENT, namespace='/foo',
@@ -201,6 +202,12 @@ class TestAsyncClient(unittest.TestCase):
         self.assertEqual(c._send_packet.mock.call_count, 1)
         self.assertEqual(c._send_packet.mock.call_args_list[0][0][0].encode(),
                          expected_packet.encode())
+
+    def test_emit_unknown_namespace(self):
+        c = asyncio_client.AsyncClient()
+        c.namespaces = ['/foo']
+        self.assertRaises(exceptions.BadNamespaceError, _run,
+                          c.emit('foo', namespace='/bar'))
 
     def test_emit_with_callback(self):
         c = asyncio_client.AsyncClient()
@@ -216,6 +223,7 @@ class TestAsyncClient(unittest.TestCase):
 
     def test_emit_namespace_with_callback(self):
         c = asyncio_client.AsyncClient()
+        c.namespaces = ['/foo']
         c._send_packet = AsyncMock()
         c._generate_ack_id = mock.MagicMock(return_value=123)
         _run(c.emit('foo', namespace='/foo', callback='cb'))

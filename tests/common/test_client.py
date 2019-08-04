@@ -288,6 +288,7 @@ class TestClient(unittest.TestCase):
 
     def test_emit_namespace(self):
         c = client.Client()
+        c.namespaces = ['/foo']
         c._send_packet = mock.MagicMock()
         c.emit('foo', namespace='/foo')
         expected_packet = packet.Packet(packet.EVENT, namespace='/foo',
@@ -295,6 +296,12 @@ class TestClient(unittest.TestCase):
         self.assertEqual(c._send_packet.call_count, 1)
         self.assertEqual(c._send_packet.call_args_list[0][0][0].encode(),
                          expected_packet.encode())
+
+    def test_emit_unknown_namespace(self):
+        c = client.Client()
+        c.namespaces = ['/foo']
+        self.assertRaises(exceptions.BadNamespaceError, c.emit, 'foo',
+                          namespace='/bar')
 
     def test_emit_with_callback(self):
         c = client.Client()
@@ -310,6 +317,7 @@ class TestClient(unittest.TestCase):
 
     def test_emit_namespace_with_callback(self):
         c = client.Client()
+        c.namespaces = ['/foo']
         c._send_packet = mock.MagicMock()
         c._generate_ack_id = mock.MagicMock(return_value=123)
         c.emit('foo', namespace='/foo', callback='cb')

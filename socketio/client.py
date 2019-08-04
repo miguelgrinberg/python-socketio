@@ -298,6 +298,9 @@ class Client(object):
                          when addressing an individual client.
         """
         namespace = namespace or '/'
+        if namespace != '/' and namespace not in self.namespaces:
+            raise exceptions.BadNamespaceError(
+                namespace + ' is not a connected namespace.')
         self.logger.info('Emitting event "%s" [%s]', event, namespace)
         if callback is not None:
             id = self._generate_ack_id(namespace, callback)
