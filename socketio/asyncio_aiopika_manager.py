@@ -9,7 +9,7 @@ except ImportError:
     aio_pika = None
 
 
-class AsyncAioPikaManager(AsyncPubSubManager):
+class AsyncAioPikaManager(AsyncPubSubManager):  # pragma: no cover
     """Client manager that uses aio_pika for inter-process messaging under
     asyncio.
 
