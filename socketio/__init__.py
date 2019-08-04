@@ -16,6 +16,7 @@ if sys.version_info >= (3, 5):  # pragma: no cover
     from .asyncio_manager import AsyncManager
     from .asyncio_namespace import AsyncNamespace, AsyncClientNamespace
     from .asyncio_redis_manager import AsyncRedisManager
+    from .asyncio_aiopika_manager import AsyncAioPikaManager
     from .asgi import ASGIApp
 else:  # pragma: no cover
     AsyncClient = None
@@ -23,6 +24,7 @@ else:  # pragma: no cover
     AsyncManager = None
     AsyncNamespace = None
     AsyncRedisManager = None
+    AsyncAioPikaManager = None
 
 __version__ = '4.3.1dev'
 
@@ -32,4 +34,4 @@ __all__ = ['__version__', 'Client', 'Server', 'BaseManager', 'PubSubManager',
 if AsyncServer is not None:  # pragma: no cover
     __all__ += ['AsyncClient', 'AsyncServer', 'AsyncNamespace',
                 'AsyncClientNamespace', 'AsyncManager', 'AsyncRedisManager',
-                'ASGIApp', 'get_tornado_handler']
+                'ASGIApp', 'get_tornado_handler', 'AsyncAioPikaManager']
