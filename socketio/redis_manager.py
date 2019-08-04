@@ -33,16 +33,19 @@ class RedisManager(PubSubManager):  # pragma: no cover
     :param write_only: If set ot ``True``, only initialize to emit events. The
                        default of ``False`` initializes the class for emitting
                        and receiving.
+    :param redis_options: additional keyword arguments to be passed to
+                          ``Redis.from_url()``.
     """
     name = 'redis'
 
     def __init__(self, url='redis://localhost:6379/0', channel='socketio',
-                 write_only=False, logger=None):
+                 write_only=False, logger=None, redis_options=None):
         if redis is None:
             raise RuntimeError('Redis package is not installed '
                                '(Run "pip install redis" in your '
                                'virtualenv).')
         self.redis_url = url
+        self.redis_options = redis_options or {}
         self._redis_connect()
         super(RedisManager, self).__init__(channel=channel,
                                            write_only=write_only,
@@ -64,7 +67,8 @@ class RedisManager(PubSubManager):  # pragma: no cover
                 'with ' + self.server.async_mode)
 
     def _redis_connect(self):
-        self.redis = redis.Redis.from_url(self.redis_url)
+        self.redis = redis.Redis.from_url(self.redis_url,
+                                          **self.redis_options)
         self.pubsub = self.redis.pubsub()
 
     def _publish(self, data):
