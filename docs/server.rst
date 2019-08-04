@@ -517,20 +517,37 @@ the correct URL for a given message queue.
 Note that Kombu currently does not support asyncio, so it cannot be used with
 the :class:`socketio.AsyncServer` class.
 
+Kafka
+~~~~~
+
+`Apache Kafka <https://kafka.apache.org/>`_ is supported through the
+`kafka-python <https://kafka-python.readthedocs.io/en/master/index.html>`_
+package::
+
+    pip install kafka-python
+
+Access to Kafka is configured through the :class:`socketio.KafkaManager`
+class::
+
+    mgr = socketio.KafkaManager('kafka://')
+    sio = socketio.Server(client_manager=mgr)
+
+Note that Kafka currently does not support asyncio, so it cannot be used with
+the :class:`socketio.AsyncServer` class.
+
 AioPika
 ~~~~~~~
 
-If you want to combine a RabbitMQ based manager with asyncio and a
-:class:`socketio.AsyncServer` class, you can use the
-`AioPika <https://aio-pika.readthedocs.io/en/latest/>`_ based manager.
+A RabbitMQ message queue is supported in asyncio applications through the 
+`AioPika <https://aio-pika.readthedocs.io/en/latest/>`_ package::
 You need to install aio_pika with pip::
 
     pip install aio_pika
 
 The RabbitMQ queue is configured through the
-:class:`socketio.AsyncPubSubAioPikaManager`::
+:class:`socketio.AsyncAioPikaManager` class::
 
-    mgr = socketio.AsyncPubSubAioPikaManager('amqp://')
+    mgr = socketio.AsyncAioPikaManager('amqp://')
     sio = socketio.AsyncServer(client_manager=mgr)
 
 Emitting from external processes

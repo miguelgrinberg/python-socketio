@@ -108,6 +108,12 @@ API Reference
 .. autoclass:: RedisManager
    :members:
 
+``KafkaManager`` class
+----------------------
+
+.. autoclass:: KafkaManager
+   :members:
+
 ``AsyncManager`` class
 ----------------------
 
@@ -119,4 +125,10 @@ API Reference
 ---------------------------
 
 .. autoclass:: AsyncRedisManager
+   :members:
+
+``AsyncAioPikaManager`` class
+---------------------------
+
+.. autoclass:: AsyncAioPikaManager
    :members:
