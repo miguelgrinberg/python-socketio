@@ -5,6 +5,7 @@ from .base_manager import BaseManager
 from .pubsub_manager import PubSubManager
 from .kombu_manager import KombuManager
 from .redis_manager import RedisManager
+from .kafka_manager import KafkaManager
 from .zmq_manager import ZmqManager
 from .server import Server
 from .namespace import Namespace, ClientNamespace
@@ -29,8 +30,8 @@ else:  # pragma: no cover
 __version__ = '4.3.1dev'
 
 __all__ = ['__version__', 'Client', 'Server', 'BaseManager', 'PubSubManager',
-           'KombuManager', 'RedisManager', 'ZmqManager', 'Namespace',
-           'ClientNamespace', 'WSGIApp', 'Middleware']
+           'KombuManager', 'RedisManager', 'ZmqManager', 'KafkaManager',
+           'Namespace', 'ClientNamespace', 'WSGIApp', 'Middleware']
 if AsyncServer is not None:  # pragma: no cover
     __all__ += ['AsyncClient', 'AsyncServer', 'AsyncNamespace',
                 'AsyncClientNamespace', 'AsyncManager', 'AsyncRedisManager',
