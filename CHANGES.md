@@ -1,5 +1,16 @@
 # python-socketio change log
 
+**Release 4.3.1** - 2019-08-05
+
+- New asyncio based RabbitMQ manager [#320](https://github.com/miguelgrinberg/python-socketio/issues/320) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/d984f32e76cc3c204fb6099cbb3c3cd91bfe6e3a)) (thanks **salimaboubacar**!)
+- New Apache Kafka manager ([commit](https://github.com/miguelgrinberg/python-socketio/commit/36d17856f43c6ce750e6318e8994b4e2426f480a))
+- Pass additional options to Redis and Kombu managers [#307](https://github.com/miguelgrinberg/python-socketio/issues/307) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/7dbc47049a605f78d795b6f59d458522d67c6fe6))
+- Do not allow emits on a namespace that is not connected [#325](https://github.com/miguelgrinberg/python-socketio/issues/325) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/f2c1cf7f04cefa57182eeb646c4f3fe246e69b0c))
+- Disconnect Engine.IO connection when server disconnects a client [#1017](https://github.com/miguelgrinberg/Flask-SocketIO/issues/1017) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/516a2958f4e87041aeeea0a0a8e3622d3d636184))
+- Update CORS documentation [#327](https://github.com/miguelgrinberg/python-socketio/issues/327) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/6848bed1d74219eeb7f2ead40a77e775f48c68ee))
+- Updated documentation on message queue manager classes ([commit](https://github.com/miguelgrinberg/python-socketio/commit/f36fa88d9e4cba33e1c008b5535448326ea3a461))
+- Documentation fixes ([commit](https://github.com/miguelgrinberg/python-socketio/commit/d23581e657413043afa378d7be6020940ebf4af8))
+
 **Release 4.3.0** - 2019-07-29
 
 - Address potential websocket cross-origin attacks [#128](https://github.com/miguelgrinberg/python-engineio/issues/128) ([commit](https://github.com/miguelgrinberg/python-engineio/commit/7548f704a0a3000b7ac8a6c88796c4ae58aa9c37))
