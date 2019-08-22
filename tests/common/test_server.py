@@ -392,6 +392,7 @@ class TestServer(unittest.TestCase):
 
     def test_handle_event(self, eio):
         s = server.Server(async_handlers=False)
+        s.manager.connect('123', '/')
         handler = mock.MagicMock()
         s.on('my message', handler)
         s._handle_eio_message('123', '2["my message","a","b","c"]')
@@ -399,13 +400,23 @@ class TestServer(unittest.TestCase):
 
     def test_handle_event_with_namespace(self, eio):
         s = server.Server(async_handlers=False)
+        s.manager.connect('123', '/foo')
         handler = mock.MagicMock()
         s.on('my message', handler, namespace='/foo')
         s._handle_eio_message('123', '2/foo,["my message","a","b","c"]')
         handler.assert_called_once_with('123', 'a', 'b', 'c')
 
+    def test_handle_event_with_disconnected_namespace(self, eio):
+        s = server.Server(async_handlers=False)
+        s.manager.connect('123', '/foo')
+        handler = mock.MagicMock()
+        s.on('my message', handler, namespace='/bar')
+        s._handle_eio_message('123', '2/bar,["my message","a","b","c"]')
+        handler.assert_not_called()
+
     def test_handle_event_binary(self, eio):
         s = server.Server(async_handlers=False)
+        s.manager.connect('123', '/')
         handler = mock.MagicMock()
         s.on('my message', handler)
         s._handle_eio_message('123', '52-["my message","a",'
@@ -418,7 +429,6 @@ class TestServer(unittest.TestCase):
     def test_handle_event_binary_ack(self, eio):
         mgr = mock.MagicMock()
         s = server.Server(client_manager=mgr)
-        s.manager.initialize(s)
         s._handle_eio_message('123', '61-321["my message","a",'
                                      '{"_placeholder":true,"num":0}]')
         s._handle_eio_message('123', b'foo')
@@ -427,6 +437,7 @@ class TestServer(unittest.TestCase):
 
     def test_handle_event_with_ack(self, eio):
         s = server.Server(async_handlers=False)
+        s.manager.connect('123', '/')
         handler = mock.MagicMock(return_value='foo')
         s.on('my message', handler)
         s._handle_eio_message('123', '21000["my message","foo"]')
@@ -436,6 +447,7 @@ class TestServer(unittest.TestCase):
 
     def test_handle_event_with_ack_none(self, eio):
         s = server.Server(async_handlers=False)
+        s.manager.connect('123', '/')
         handler = mock.MagicMock(return_value=None)
         s.on('my message', handler)
         s._handle_eio_message('123', '21000["my message","foo"]')
@@ -655,6 +667,7 @@ class TestServer(unittest.TestCase):
 
     def test_async_handlers(self, eio):
         s = server.Server(async_handlers=True)
+        s.manager.connect('123', '/')
         s._handle_eio_message('123', '2["my message","a","b","c"]')
         s.eio.start_background_task.assert_called_once_with(
             s._handle_event_internal, s, '123', ['my message', 'a', 'b', 'c'],

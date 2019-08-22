@@ -638,6 +638,10 @@ class Server(object):
         namespace = namespace or '/'
         self.logger.info('received event "%s" from %s [%s]', data[0], sid,
                          namespace)
+        if not self.manager.is_connected(sid, namespace):
+            self.logger.warning('%s is not connected to namespace %s',
+                                sid, namespace)
+            return
         if self.async_handlers:
             self.start_background_task(self._handle_event_internal, self, sid,
                                        data, namespace, id)
