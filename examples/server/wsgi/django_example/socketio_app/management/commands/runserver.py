@@ -1,9 +1,10 @@
 from django.core.management.commands.runserver import Command as RunCommand
+from django.contrib.staticfiles.management.commands import runserver 
 
 from socketio_app.views import sio
 
 
-class Command(RunCommand):
+class Command(runserver.Command):
     help = 'Run the Socket.IO server'
 
     def handle(self, *args, **options):
