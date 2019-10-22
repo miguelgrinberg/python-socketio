@@ -49,6 +49,12 @@ class AsyncClient(client.Client):
 
     The Engine.IO configuration supports the following settings:
 
+    :param request_timeout: A timeout in seconds for requests. The default is
+                            5 seconds.
+    :param ssl_verify: ``True`` to verify SSL certificates, or ``False`` to
+                       skip SSL certificate verification, allowing
+                       connections to servers with self signed certificates.
+                       The default is ``True``.
     :param engineio_logger: To enable Engine.IO logging set to ``True`` or pass
                             a logger object to use. To disable logging set to
                             ``False``. The default is ``False``.
