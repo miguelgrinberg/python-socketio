@@ -131,7 +131,7 @@ When a server emits an event to a client, it can optionally provide a
 callback function, to be invoked as a way of acknowledgment that the server
 has processed the event. While this is entirely managed by the server, the
 client can provide a list of return values that are to be passed on to the
-callback function set up by the server. This is achieves simply by returning
+callback function set up by the server. This is achieved simply by returning
 the desired values from the handler function::
 
     @sio.event
