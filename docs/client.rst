@@ -197,7 +197,7 @@ that belong to a namespace can be created as methods of a subclass of
 
     sio.register_namespace(MyCustomNamespace('/chat'))
 
-For asyncio based severs, namespaces must inherit from
+For asyncio based servers, namespaces must inherit from
 :class:`socketio.AsyncClientNamespace`, and can define event handlers as
 coroutines if desired::
 
