@@ -1,5 +1,12 @@
 # python-socketio change log
 
+**Release 4.4.0** - 2019-11-24
+
+- Support the `connect_error` event in the client [#344](https://github.com/miguelgrinberg/python-socketio/issues/344) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/805d5f37413a1e3bbad22012237412803217b4b9))
+- Do not dispatch events for disconnected namespaces [#333](https://github.com/miguelgrinberg/python-socketio/issues/333) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/a839a36fa0fa7f0e5d8976ff47b217f6b1e8a44b))
+- Fix documentation typos [#374](https://github.com/miguelgrinberg/python-socketio/issues/374) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/b60bbc0307edd0bef2c8b11197ef5a04b2d11b71)) (thanks **Dmitry Volodin**!)
+- Updated documentation with new Engine.IO client options ([commit](https://github.com/miguelgrinberg/python-socketio/commit/7c32b379aeeafdb4d6e24e8695734c985753a9d7))
+
 **Release 4.3.1** - 2019-08-05
 
 - New asyncio based RabbitMQ manager [#320](https://github.com/miguelgrinberg/python-socketio/issues/320) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/d984f32e76cc3c204fb6099cbb3c3cd91bfe6e3a)) (thanks **salimaboubacar**!)
