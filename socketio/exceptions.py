@@ -16,7 +16,7 @@ class ConnectionRefusedError(ConnectionError):
     def __init__(self, *args):
         if len(args) == 0:
             self.error_args = None
-        elif len(args) == 1:
+        elif len(args) == 1 and not isinstance(args[0], list):
             self.error_args = args[0]
         else:
             self.error_args = args

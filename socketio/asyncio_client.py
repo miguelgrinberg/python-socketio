@@ -348,10 +348,15 @@ class AsyncClient(client.Client):
             else:
                 callback(*data)
 
-    def _handle_error(self, namespace):
+    async def _handle_error(self, namespace, data):
         namespace = namespace or '/'
         self.logger.info('Connection to namespace {} was rejected'.format(
             namespace))
+        if data is None:
+            data = tuple()
+        elif not isinstance(data, (tuple, list)):
+            data = (data,)
+        await self._trigger_event('connect_error', namespace, *data)
         if namespace in self.namespaces:
             self.namespaces.remove(namespace)
         if namespace == '/':
@@ -445,7 +450,7 @@ class AsyncClient(client.Client):
                     pkt.packet_type == packet.BINARY_ACK:
                 self._binary_packet = pkt
             elif pkt.packet_type == packet.ERROR:
-                self._handle_error(pkt.namespace)
+                await self._handle_error(pkt.namespace, pkt.data)
             else:
                 raise ValueError('Unknown packet type.')
 

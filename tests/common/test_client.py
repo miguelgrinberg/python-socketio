@@ -660,23 +660,48 @@ class TestClient(unittest.TestCase):
         c = client.Client()
         c.connected = True
         c.namespaces = ['/foo', '/bar']
-        c._handle_error('/')
+        c._trigger_event = mock.MagicMock()
+        c._handle_error('/', 'error')
         self.assertEqual(c.namespaces, [])
         self.assertFalse(c.connected)
+        c._trigger_event.assert_called_once_with('connect_error', '/', 'error')
+
+    def test_handle_error_with_no_arguments(self):
+        c = client.Client()
+        c.connected = True
+        c.namespaces = ['/foo', '/bar']
+        c._trigger_event = mock.MagicMock()
+        c._handle_error('/', None)
+        self.assertEqual(c.namespaces, [])
+        self.assertFalse(c.connected)
+        c._trigger_event.assert_called_once_with('connect_error', '/')
 
     def test_handle_error_namespace(self):
         c = client.Client()
         c.connected = True
         c.namespaces = ['/foo', '/bar']
-        c._handle_error('/bar')
+        c._trigger_event = mock.MagicMock()
+        c._handle_error('/bar', ['error', 'message'])
         self.assertEqual(c.namespaces, ['/foo'])
         self.assertTrue(c.connected)
+        c._trigger_event.assert_called_once_with('connect_error', '/bar',
+                                                 'error', 'message')
+
+    def test_handle_error_namespace_with_no_arguments(self):
+        c = client.Client()
+        c.connected = True
+        c.namespaces = ['/foo', '/bar']
+        c._trigger_event = mock.MagicMock()
+        c._handle_error('/bar', None)
+        self.assertEqual(c.namespaces, ['/foo'])
+        self.assertTrue(c.connected)
+        c._trigger_event.assert_called_once_with('connect_error', '/bar')
 
     def test_handle_error_unknown_namespace(self):
         c = client.Client()
         c.connected = True
         c.namespaces = ['/foo', '/bar']
-        c._handle_error('/baz')
+        c._handle_error('/baz', 'error')
         self.assertEqual(c.namespaces, ['/foo', '/bar'])
         self.assertTrue(c.connected)
 
@@ -809,9 +834,15 @@ class TestClient(unittest.TestCase):
         c._handle_eio_message('3/foo,["bar"]')
         c._handle_ack.assert_called_with('/foo', None, ['bar'])
         c._handle_eio_message('4')
-        c._handle_error.assert_called_with(None)
+        c._handle_error.assert_called_with(None, None)
+        c._handle_eio_message('4"foo"')
+        c._handle_error.assert_called_with(None, 'foo')
+        c._handle_eio_message('4["foo"]')
+        c._handle_error.assert_called_with(None, ['foo'])
         c._handle_eio_message('4/foo')
-        c._handle_error.assert_called_with('/foo')
+        c._handle_error.assert_called_with('/foo', None)
+        c._handle_eio_message('4/foo,["foo","bar"]')
+        c._handle_error.assert_called_with('/foo', ['foo', 'bar'])
         c._handle_eio_message('51-{"_placeholder":true,"num":0}')
         self.assertEqual(c._binary_packet.packet_type, packet.BINARY_EVENT)
         c._handle_eio_message(b'foo')

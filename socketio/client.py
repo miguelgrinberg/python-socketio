@@ -504,10 +504,15 @@ class Client(object):
         if callback is not None:
             callback(*data)
 
-    def _handle_error(self, namespace):
+    def _handle_error(self, namespace, data):
         namespace = namespace or '/'
         self.logger.info('Connection to namespace {} was rejected'.format(
             namespace))
+        if data is None:
+            data = tuple()
+        elif not isinstance(data, (tuple, list)):
+            data = (data,)
+        self._trigger_event('connect_error', namespace, *data)
         if namespace in self.namespaces:
             self.namespaces.remove(namespace)
         if namespace == '/':
@@ -591,7 +596,7 @@ class Client(object):
                     pkt.packet_type == packet.BINARY_ACK:
                 self._binary_packet = pkt
             elif pkt.packet_type == packet.ERROR:
-                self._handle_error(pkt.namespace)
+                self._handle_error(pkt.namespace, pkt.data)
             else:
                 raise ValueError('Unknown packet type.')
 

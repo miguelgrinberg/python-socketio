@@ -613,7 +613,6 @@ class Server(object):
                     packet.ERROR, data=fail_reason, namespace=namespace))
             if sid in self.environ:  # pragma: no cover
                 del self.environ[sid]
-            return False
         elif not self.always_connect:
             self._send_packet(sid, packet.Packet(packet.CONNECT,
                                                  namespace=namespace))

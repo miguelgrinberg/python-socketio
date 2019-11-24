@@ -551,24 +551,50 @@ class TestAsyncClient(unittest.TestCase):
     def test_handle_error(self):
         c = asyncio_client.AsyncClient()
         c.connected = True
+        c._trigger_event = AsyncMock()
         c.namespaces = ['/foo', '/bar']
-        c._handle_error('/')
+        _run(c._handle_error('/', 'error'))
         self.assertEqual(c.namespaces, [])
         self.assertFalse(c.connected)
+        c._trigger_event.mock.assert_called_once_with('connect_error', '/',
+                                                      'error')
+
+    def test_handle_error_with_no_arguments(self):
+        c = asyncio_client.AsyncClient()
+        c.connected = True
+        c._trigger_event = AsyncMock()
+        c.namespaces = ['/foo', '/bar']
+        _run(c._handle_error('/', None))
+        self.assertEqual(c.namespaces, [])
+        self.assertFalse(c.connected)
+        c._trigger_event.mock.assert_called_once_with('connect_error', '/')
 
     def test_handle_error_namespace(self):
         c = asyncio_client.AsyncClient()
         c.connected = True
         c.namespaces = ['/foo', '/bar']
-        c._handle_error('/bar')
+        c._trigger_event = AsyncMock()
+        _run(c._handle_error('/bar', ['error', 'message']))
         self.assertEqual(c.namespaces, ['/foo'])
         self.assertTrue(c.connected)
+        c._trigger_event.mock.assert_called_once_with('connect_error', '/bar',
+                                                      'error', 'message')
+
+    def test_handle_error_namespace_with_no_arguments(self):
+        c = asyncio_client.AsyncClient()
+        c.connected = True
+        c.namespaces = ['/foo', '/bar']
+        c._trigger_event = AsyncMock()
+        _run(c._handle_error('/bar', None))
+        self.assertEqual(c.namespaces, ['/foo'])
+        self.assertTrue(c.connected)
+        c._trigger_event.mock.assert_called_once_with('connect_error', '/bar')
 
     def test_handle_error_unknown_namespace(self):
         c = asyncio_client.AsyncClient()
         c.connected = True
         c.namespaces = ['/foo', '/bar']
-        c._handle_error('/baz')
+        _run(c._handle_error('/baz', 'error'))
         self.assertEqual(c.namespaces, ['/foo', '/bar'])
         self.assertTrue(c.connected)
 
@@ -685,7 +711,7 @@ class TestAsyncClient(unittest.TestCase):
         c._handle_disconnect = AsyncMock()
         c._handle_event = AsyncMock()
         c._handle_ack = AsyncMock()
-        c._handle_error = mock.MagicMock()
+        c._handle_error = AsyncMock()
 
         _run(c._handle_eio_message('0'))
         c._handle_connect.mock.assert_called_with(None)
@@ -700,9 +726,15 @@ class TestAsyncClient(unittest.TestCase):
         _run(c._handle_eio_message('3/foo,["bar"]'))
         c._handle_ack.mock.assert_called_with('/foo', None, ['bar'])
         _run(c._handle_eio_message('4'))
-        c._handle_error.assert_called_with(None)
+        c._handle_error.mock.assert_called_with(None, None)
+        _run(c._handle_eio_message('4"foo"'))
+        c._handle_error.mock.assert_called_with(None, 'foo')
+        _run(c._handle_eio_message('4["foo"]'))
+        c._handle_error.mock.assert_called_with(None, ['foo'])
         _run(c._handle_eio_message('4/foo'))
-        c._handle_error.assert_called_with('/foo')
+        c._handle_error.mock.assert_called_with('/foo', None)
+        _run(c._handle_eio_message('4/foo,["foo","bar"]'))
+        c._handle_error.mock.assert_called_with('/foo', ['foo', 'bar'])
         _run(c._handle_eio_message('51-{"_placeholder":true,"num":0}'))
         self.assertEqual(c._binary_packet.packet_type, packet.BINARY_EVENT)
         _run(c._handle_eio_message(b'foo'))

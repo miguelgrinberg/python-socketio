@@ -65,12 +65,17 @@ or can also be coroutines::
     async def message(data):
         print('I received a message!')
 
-The ``connect`` and ``disconnect`` events are special; they are invoked
-automatically when a client connects or disconnects from the server::
+The ``connect``, ``connect_error`` and ``disconnect`` events are special; they 
+are invoked automatically when a client connects or disconnects from the
+server::
 
     @sio.event
     def connect():
         print("I'm connected!")
+
+    @sio.event
+    def connect_error():
+        print("The connection failed!")
 
     @sio.event
     def disconnect():

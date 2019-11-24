@@ -341,7 +341,6 @@ class TestServer(unittest.TestCase):
         s._handle_eio_message('123', '0/foo')
         self.assertEqual(s.manager.connect.call_count, 2)
         self.assertEqual(s.manager.disconnect.call_count, 1)
-        print(s.eio.send.call_args)
         s.eio.send.assert_any_call('123', '4/foo,"fail_reason"', binary=False)
 
     def test_handle_disconnect(self, eio):
