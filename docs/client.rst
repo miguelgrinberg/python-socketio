@@ -268,7 +268,7 @@ Or in the ``asyncio`` version::
 For the convenience of the application, a helper function is provided to
 start a custom background task::
 
-    def my_background_task(my_argument)
+    def my_background_task(my_argument):
         # do some background work here!
         pass
 
@@ -279,7 +279,7 @@ positional or keyword arguments to invoke the function with.
 
 Here is the ``asyncio`` version::
 
-    async def my_background_task(my_argument)
+    async def my_background_task(my_argument):
         # do some background work here!
         pass
 
