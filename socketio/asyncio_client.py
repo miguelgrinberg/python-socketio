@@ -86,7 +86,7 @@ class AsyncClient(client.Client):
 
         Example usage::
 
-            sio = socketio.Client()
+            sio = socketio.AsyncClient()
             sio.connect('http://localhost:5000')
         """
         self.connection_url = url
