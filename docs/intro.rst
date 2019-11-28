@@ -45,7 +45,7 @@ The example that follows shows a simple Python client:
 Client Features
 ---------------
 
-- Can connect to other Socket.IO complaint servers besides the one in
+- Can connect to other Socket.IO compliant servers besides the one in
   this package.
 - Compatible with Python 2.7 and 3.5+.
 - Two versions of the client, one for standard Python and another for
