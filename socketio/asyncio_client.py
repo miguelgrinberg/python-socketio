@@ -242,7 +242,7 @@ class AsyncClient(client.Client):
                                     namespace=n))
         await self._send_packet(packet.Packet(
             packet.DISCONNECT, namespace='/'))
-        self.connected = False
+        # self.connected = False
         await self.eio.disconnect(abort=True)
 
     def start_background_task(self, target, *args, **kwargs):
