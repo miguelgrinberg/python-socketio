@@ -229,6 +229,13 @@ class TestAsyncServer(unittest.TestCase):
         s.eio.send.mock.assert_called_once_with(
             '123', '2/foo,["my event",["foo","bar"]]', binary=False)
 
+    def test_emit_internal_with_none(self, eio):
+        eio.return_value.send = AsyncMock()
+        s = asyncio_server.AsyncServer()
+        _run(s._emit_internal('123', 'my event', None, namespace='/foo'))
+        s.eio.send.mock.assert_called_once_with(
+            '123', '2/foo,["my event"]', binary=False)
+
     def test_emit_internal_with_callback(self, eio):
         eio.return_value.send = AsyncMock()
         s = asyncio_server.AsyncServer()
