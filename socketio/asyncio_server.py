@@ -362,8 +362,10 @@ class AsyncServer(server.Server):
         # as a single argument
         if isinstance(data, tuple):
             data = list(data)
-        else:
+        elif data is not None:
             data = [data]
+        else:
+            data = []
         await self._send_packet(sid, packet.Packet(
             packet.EVENT, namespace=namespace, data=[event] + data, id=id,
             binary=None))
