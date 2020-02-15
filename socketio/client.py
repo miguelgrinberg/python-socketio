@@ -2,6 +2,7 @@ import itertools
 import logging
 import random
 import signal
+import threading
 
 import engineio
 import six
@@ -25,7 +26,7 @@ def signal_handler(sig, frame):  # pragma: no cover
     return original_signal_handler(sig, frame)
 
 
-original_signal_handler = signal.signal(signal.SIGINT, signal_handler)
+original_signal_handler = None
 
 
 class Client(object):
@@ -82,6 +83,11 @@ class Client(object):
                  reconnection_delay=1, reconnection_delay_max=5,
                  randomization_factor=0.5, logger=False, binary=False,
                  json=None, **kwargs):
+        global original_signal_handler
+        if original_signal_handler is None and \
+                threading.current_thread() == threading.main_thread():
+            original_signal_handler = signal.signal(signal.SIGINT,
+                                                    signal_handler)
         self.reconnection = reconnection
         self.reconnection_attempts = reconnection_attempts
         self.reconnection_delay = reconnection_delay
