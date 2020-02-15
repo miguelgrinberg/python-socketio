@@ -20,7 +20,7 @@ async def connect():
 
 
 @sio.event
-async def pong_from_server(data):
+async def pong_from_server():
     global start_timer
     latency = time.time() - start_timer
     print('latency is {0:.2f} ms'.format(latency * 1000))

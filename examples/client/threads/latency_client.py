@@ -1,7 +1,7 @@
 import time
 import socketio
 
-sio = socketio.Client()
+sio = socketio.Client(engineio_logger=True)
 start_timer = None
 
 
@@ -18,7 +18,7 @@ def connect():
 
 
 @sio.event
-def pong_from_server(data):
+def pong_from_server():
     global start_timer
     latency = time.time() - start_timer
     print('latency is {0:.2f} ms'.format(latency * 1000))
