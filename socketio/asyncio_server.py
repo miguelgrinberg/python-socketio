@@ -118,7 +118,13 @@ class AsyncServer(server.Server):
                              to always leave this parameter with its default
                              value of ``False``.
 
-        Note: this method is a coroutine.
+        Note: this method is not designed to be used concurrently. If multiple
+        tasks are emitting at the same time to the same client connection, then
+        messages composed of multiple packets may end up being sent in an
+        incorrect sequence. Use standard concurrency solutions (such as a Lock
+        object) to prevent this situation.
+
+        Note 2: this method is a coroutine.
         """
         namespace = namespace or '/'
         room = to or room
@@ -194,6 +200,14 @@ class AsyncServer(server.Server):
                              single server process is used. It is recommended
                              to always leave this parameter with its default
                              value of ``False``.
+
+        Note: this method is not designed to be used concurrently. If multiple
+        tasks are emitting at the same time to the same client connection, then
+        messages composed of multiple packets may end up being sent in an
+        incorrect sequence. Use standard concurrency solutions (such as a Lock
+        object) to prevent this situation.
+
+        Note 2: this method is a coroutine.
         """
         if not self.async_handlers:
             raise RuntimeError(

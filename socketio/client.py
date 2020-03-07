@@ -311,6 +311,12 @@ class Client(object):
                          that will be passed to the function are those provided
                          by the client. Callback functions can only be used
                          when addressing an individual client.
+
+        Note: this method is not thread safe. If multiple threads are emitting
+        at the same time on the same client connection, messages composed of
+        multiple packets may end up being sent in an incorrect sequence. Use
+        standard concurrency solutions (such as a Lock object) to prevent this
+        situation.
         """
         namespace = namespace or '/'
         if namespace != '/' and namespace not in self.namespaces:
@@ -373,6 +379,12 @@ class Client(object):
         :param timeout: The waiting timeout. If the timeout is reached before
                         the client acknowledges the event, then a
                         ``TimeoutError`` exception is raised.
+
+        Note: this method is not thread safe. If multiple threads are emitting
+        at the same time on the same client connection, messages composed of
+        multiple packets may end up being sent in an incorrect sequence. Use
+        standard concurrency solutions (such as a Lock object) to prevent this
+        situation.
         """
         callback_event = self.eio.create_event()
         callback_args = []

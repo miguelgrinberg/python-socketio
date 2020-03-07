@@ -148,7 +148,13 @@ class AsyncClient(client.Client):
                          by the client. Callback functions can only be used
                          when addressing an individual client.
 
-        Note: this method is a coroutine.
+        Note: this method is not designed to be used concurrently. If multiple
+        tasks are emitting at the same time on the same client connection, then
+        messages composed of multiple packets may end up being sent in an
+        incorrect sequence. Use standard concurrency solutions (such as a Lock
+        object) to prevent this situation.
+
+        Note 2: this method is a coroutine.
         """
         namespace = namespace or '/'
         if namespace != '/' and namespace not in self.namespaces:
@@ -214,7 +220,13 @@ class AsyncClient(client.Client):
                         the client acknowledges the event, then a
                         ``TimeoutError`` exception is raised.
 
-        Note: this method is a coroutine.
+        Note: this method is not designed to be used concurrently. If multiple
+        tasks are emitting at the same time on the same client connection, then
+        messages composed of multiple packets may end up being sent in an
+        incorrect sequence. Use standard concurrency solutions (such as a Lock
+        object) to prevent this situation.
+
+        Note 2: this method is a coroutine.
         """
         callback_event = self.eio.create_event()
         callback_args = []

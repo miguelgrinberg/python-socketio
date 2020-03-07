@@ -280,6 +280,12 @@ class Server(object):
                              single server process is used. It is recommended
                              to always leave this parameter with its default
                              value of ``False``.
+
+        Note: this method is not thread safe. If multiple threads are emitting
+        at the same time to the same client, then messages composed of
+        multiple packets may end up being sent in an incorrect sequence. Use
+        standard concurrency solutions (such as a Lock object) to prevent this
+        situation.
         """
         namespace = namespace or '/'
         room = to or room
@@ -352,6 +358,12 @@ class Server(object):
                              single server process is used. It is recommended
                              to always leave this parameter with its default
                              value of ``False``.
+
+        Note: this method is not thread safe. If multiple threads are emitting
+        at the same time to the same client, then messages composed of
+        multiple packets may end up being sent in an incorrect sequence. Use
+        standard concurrency solutions (such as a Lock object) to prevent this
+        situation.
         """
         if not self.async_handlers:
             raise RuntimeError(
