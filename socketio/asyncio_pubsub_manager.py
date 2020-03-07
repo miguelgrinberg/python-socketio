@@ -69,6 +69,19 @@ class AsyncPubSubManager(AsyncManager):
                              'skip_sid': skip_sid, 'callback': callback,
                              'host_id': self.host_id})
 
+    async def can_disconnect(self, sid, namespace):
+        await self._publish({'method': 'disconnect', 'sid': sid,
+                             'namespace': namespace or '/'})
+
+    async def disconnect(self, sid, namespace=None):
+        """Disconnect a client."""
+        # this is a bit weird, the can_disconnect call on pubsub managers just
+        # issues a disconnect request to the message queue and returns None,
+        # indicating that the client cannot disconnect immediately. The
+        # server(s) listening on the queue will get this request and carry out
+        # the disconnect appropriately.
+        await self.can_disconnect(sid, namespace)
+
     async def close_room(self, room, namespace=None):
         await self._publish({'method': 'close_room', 'room': room,
                              'namespace': namespace or '/'})
@@ -128,6 +141,11 @@ class AsyncPubSubManager(AsyncManager):
                              'sid': sid, 'namespace': namespace,
                              'id': callback_id, 'args': args})
 
+    async def _handle_disconnect(self, message):
+        await self.server.disconnect(sid=message.get('sid'),
+                                     namespace=message.get('namespace'),
+                                     ignore_queue=True)
+
     async def _handle_close_room(self, message):
         await super().close_room(
             room=message.get('room'), namespace=message.get('namespace'))
@@ -155,9 +173,13 @@ class AsyncPubSubManager(AsyncManager):
                     except:
                         pass
             if data and 'method' in data:
+                self._get_logger().info('pubsub message: {}'.format(
+                    data['method']))
                 if data['method'] == 'emit':
                     await self._handle_emit(data)
                 elif data['method'] == 'callback':
                     await self._handle_callback(data)
+                elif data['method'] == 'disconnect':
+                    await self._handle_disconnect(data)
                 elif data['method'] == 'close_room':
                     await self._handle_close_room(data)

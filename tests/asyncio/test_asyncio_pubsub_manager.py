@@ -34,6 +34,7 @@ class TestAsyncPubSubManager(unittest.TestCase):
     def setUp(self):
         mock_server = mock.MagicMock()
         mock_server._emit_internal = AsyncMock()
+        mock_server.disconnect = AsyncMock()
         self.pm = asyncio_pubsub_manager.AsyncPubSubManager()
         self.pm._publish = AsyncMock()
         self.pm.set_server(mock_server)
@@ -115,6 +116,11 @@ class TestAsyncPubSubManager(unittest.TestCase):
         self.pm.server._emit_internal.mock.assert_called_once_with(
             '123', 'foo', 'bar', '/', None)
 
+    def test_disconnect(self):
+        _run(self.pm.disconnect('123', '/foo'))
+        self.pm._publish.mock.assert_called_once_with(
+            {'method': 'disconnect', 'sid': '123', 'namespace': '/foo'})
+
     def test_close_room(self):
         _run(self.pm.close_room('foo'))
         self.pm._publish.mock.assert_called_once_with(
@@ -142,7 +148,7 @@ class TestAsyncPubSubManager(unittest.TestCase):
                 self.pm, 'foo', 'bar', namespace='/baz', room=None,
                 skip_sid=None, callback=None)
 
-    def test_handle_emiti_with_room(self):
+    def test_handle_emit_with_room(self):
         with mock.patch.object(asyncio_manager.AsyncManager, 'emit',
                                new=AsyncMock()) as super_emit:
             _run(self.pm._handle_emit({'event': 'foo', 'data': 'bar',
@@ -216,6 +222,12 @@ class TestAsyncPubSubManager(unittest.TestCase):
                                            'host_id': host_id}))
             self.assertEqual(trigger.mock.call_count, 0)
 
+    def test_handle_disconnect(self):
+        _run(self.pm._handle_disconnect({'method': 'disconnect', 'sid': '123',
+                                         'namespace': '/foo'}))
+        self.pm.server.disconnect.mock.assert_called_once_with(
+            sid='123', namespace='/foo', ignore_queue=True)
+
     def test_handle_close_room(self):
         with mock.patch.object(asyncio_manager.AsyncManager, 'close_room',
                                new=AsyncMock()) as super_close_room:
@@ -236,6 +248,7 @@ class TestAsyncPubSubManager(unittest.TestCase):
     def test_background_thread(self):
         self.pm._handle_emit = AsyncMock()
         self.pm._handle_callback = AsyncMock()
+        self.pm._handle_disconnect = AsyncMock()
         self.pm._handle_close_room = AsyncMock()
 
         def messages():
@@ -243,6 +256,7 @@ class TestAsyncPubSubManager(unittest.TestCase):
             yield {'method': 'emit', 'value': 'foo'}
             yield {'missing': 'method'}
             yield '{"method": "callback", "value": "bar"}'
+            yield {'method': 'disconnect', 'sid': '123', 'namespace': '/foo'}
             yield {'method': 'bogus'}
             yield pickle.dumps({'method': 'close_room', 'value': 'baz'})
             yield 'bad json'
@@ -258,5 +272,7 @@ class TestAsyncPubSubManager(unittest.TestCase):
             {'method': 'emit', 'value': 'foo'})
         self.pm._handle_callback.mock.assert_called_once_with(
             {'method': 'callback', 'value': 'bar'})
+        self.pm._handle_disconnect.mock.assert_called_once_with(
+            {'method': 'disconnect', 'sid': '123', 'namespace': '/foo'})
         self.pm._handle_close_room.mock.assert_called_once_with(
             {'method': 'close_room', 'value': 'baz'})

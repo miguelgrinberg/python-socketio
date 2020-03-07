@@ -112,6 +112,11 @@ class TestBaseManager(unittest.TestCase):
         self.pm.server._emit_internal.assert_called_once_with('123', 'foo',
                                                               'bar', '/', None)
 
+    def test_disconnect(self):
+        self.pm.disconnect('123', '/foo')
+        self.pm._publish.assert_called_once_with(
+            {'method': 'disconnect', 'sid': '123', 'namespace': '/foo'})
+
     def test_close_room(self):
         self.pm.close_room('foo')
         self.pm._publish.assert_called_once_with(
@@ -137,7 +142,7 @@ class TestBaseManager(unittest.TestCase):
                                                room=None, skip_sid=None,
                                                callback=None)
 
-    def test_handle_emiti_with_room(self):
+    def test_handle_emit_with_room(self):
         with mock.patch.object(base_manager.BaseManager, 'emit') as super_emit:
             self.pm._handle_emit({'event': 'foo', 'data': 'bar',
                                   'room': 'baz'})
@@ -204,6 +209,13 @@ class TestBaseManager(unittest.TestCase):
                                       'host_id': host_id})
             self.assertEqual(trigger.call_count, 0)
 
+    def test_handle_disconnect(self):
+        self.pm._handle_disconnect({'method': 'disconnect', 'sid': '123',
+                                    'namespace': '/foo'})
+        self.pm.server.disconnect.assert_called_once_with(sid='123',
+                                                          namespace='/foo',
+                                                          ignore_queue=True)
+
     def test_handle_close_room(self):
         with mock.patch.object(base_manager.BaseManager, 'close_room') \
                 as super_close_room:
@@ -223,6 +235,7 @@ class TestBaseManager(unittest.TestCase):
     def test_background_thread(self):
         self.pm._handle_emit = mock.MagicMock()
         self.pm._handle_callback = mock.MagicMock()
+        self.pm._handle_disconnect = mock.MagicMock()
         self.pm._handle_close_room = mock.MagicMock()
 
         def messages():
@@ -230,6 +243,7 @@ class TestBaseManager(unittest.TestCase):
             yield {'method': 'emit', 'value': 'foo'}
             yield {'missing': 'method'}
             yield '{"method": "callback", "value": "bar"}'
+            yield {'method': 'disconnect', 'sid': '123', 'namespace': '/foo'}
             yield {'method': 'bogus'}
             yield pickle.dumps({'method': 'close_room', 'value': 'baz'})
             yield 'bad json'
@@ -245,5 +259,7 @@ class TestBaseManager(unittest.TestCase):
             {'method': 'emit', 'value': 'foo'})
         self.pm._handle_callback.assert_called_once_with(
             {'method': 'callback', 'value': 'bar'})
+        self.pm._handle_disconnect.assert_called_once_with(
+            {'method': 'disconnect', 'sid': '123', 'namespace': '/foo'})
         self.pm._handle_close_room.assert_called_once_with(
             {'method': 'close_room', 'value': 'baz'})

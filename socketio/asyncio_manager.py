@@ -5,6 +5,9 @@ from .base_manager import BaseManager
 
 class AsyncManager(BaseManager):
     """Manage a client list for an asyncio server."""
+    async def can_disconnect(self, sid, namespace):
+        return self.is_connected(sid, namespace)
+
     async def emit(self, event, data, namespace, room=None, skip_sid=None,
                    callback=None, **kwargs):
         """Emit a message to a single client, a room, or all the clients

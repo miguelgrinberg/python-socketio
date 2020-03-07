@@ -492,15 +492,21 @@ class Server(object):
 
         return _session_context_manager(self, sid, namespace)
 
-    def disconnect(self, sid, namespace=None):
+    def disconnect(self, sid, namespace=None, ignore_queue=False):
         """Disconnect a client.
 
         :param sid: Session ID of the client.
         :param namespace: The Socket.IO namespace to disconnect. If this
                           argument is omitted the default namespace is used.
+        :param ignore_queue: Only used when a message queue is configured. If
+                             set to ``True``, the disconnect is processed
+                             locally, without broadcasting on the queue. It is
+                             recommended to always leave this parameter with
+                             its default value of ``False``.
         """
         namespace = namespace or '/'
-        if self.manager.is_connected(sid, namespace=namespace):
+        if (ignore_queue and self.manager.is_connected(sid, namespace)) or \
+                self.manager.can_disconnect(sid, namespace):
             self.logger.info('Disconnecting %s [%s]', sid, namespace)
             self.manager.pre_disconnect(sid, namespace=namespace)
             self._send_packet(sid, packet.Packet(packet.DISCONNECT,

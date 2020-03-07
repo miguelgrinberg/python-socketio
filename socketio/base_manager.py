@@ -55,6 +55,9 @@ class BaseManager(object):
         except KeyError:
             pass
 
+    def can_disconnect(self, sid, namespace):
+        return self.is_connected(sid, namespace)
+
     def pre_disconnect(self, sid, namespace):
         """Put the client in the to-be-disconnected list.
 

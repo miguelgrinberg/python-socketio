@@ -67,6 +67,19 @@ class PubSubManager(BaseManager):
                        'skip_sid': skip_sid, 'callback': callback,
                        'host_id': self.host_id})
 
+    def can_disconnect(self, sid, namespace):
+        self._publish({'method': 'disconnect', 'sid': sid,
+                       'namespace': namespace or '/'})
+
+    def disconnect(self, sid, namespace=None):
+        """Disconnect a client."""
+        # this is a bit weird, the can_disconnect call on pubsub managers just
+        # issues a disconnect request to the message queue and returns None,
+        # indicating that the client cannot disconnect immediately. The
+        # server(s) listening on the queue will get this request and carry out
+        # the disconnect appropriately.
+        self.can_disconnect(sid, namespace)
+
     def close_room(self, room, namespace=None):
         self._publish({'method': 'close_room', 'room': room,
                        'namespace': namespace or '/'})
@@ -125,6 +138,11 @@ class PubSubManager(BaseManager):
                        'sid': sid, 'namespace': namespace, 'id': callback_id,
                        'args': args})
 
+    def _handle_disconnect(self, message):
+        self.server.disconnect(sid=message.get('sid'),
+                               namespace=message.get('namespace'),
+                               ignore_queue=True)
+
     def _handle_close_room(self, message):
         super(PubSubManager, self).close_room(
             room=message.get('room'), namespace=message.get('namespace'))
@@ -146,9 +164,13 @@ class PubSubManager(BaseManager):
                     except:
                         pass
             if data and 'method' in data:
+                self._get_logger().info('pubsub message: {}'.format(
+                    data['method']))
                 if data['method'] == 'emit':
                     self._handle_emit(data)
                 elif data['method'] == 'callback':
                     self._handle_callback(data)
+                elif data['method'] == 'disconnect':
+                    self._handle_disconnect(data)
                 elif data['method'] == 'close_room':
                     self._handle_close_room(data)

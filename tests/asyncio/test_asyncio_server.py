@@ -42,6 +42,7 @@ class TestAsyncServer(unittest.TestCase):
 
     def _get_mock_manager(self):
         mgr = mock.MagicMock()
+        mgr.can_disconnect = AsyncMock()
         mgr.emit = AsyncMock()
         mgr.close_room = AsyncMock()
         mgr.trigger_callback = AsyncMock()
