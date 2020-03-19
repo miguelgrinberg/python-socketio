@@ -517,8 +517,11 @@ class Server(object):
                              its default value of ``False``.
         """
         namespace = namespace or '/'
-        if (ignore_queue and self.manager.is_connected(sid, namespace)) or \
-                self.manager.can_disconnect(sid, namespace):
+        if ignore_queue:
+            do_it = self.manager.is_connected(sid, namespace)
+        else:
+            do_it = self.manager.can_disconnect(sid, namespace)
+        if do_it:
             self.logger.info('Disconnecting %s [%s]', sid, namespace)
             self.manager.pre_disconnect(sid, namespace=namespace)
             self._send_packet(sid, packet.Packet(packet.DISCONNECT,
@@ -649,9 +652,11 @@ class Server(object):
             namespace_list = [namespace]
         for n in namespace_list:
             if n != '/' and self.manager.is_connected(sid, n):
+                self.manager.pre_disconnect(sid, namespace=namespace)
                 self._trigger_event('disconnect', n, sid)
                 self.manager.disconnect(sid, n)
         if namespace == '/' and self.manager.is_connected(sid, namespace):
+            self.manager.pre_disconnect(sid, namespace=namespace)
             self._trigger_event('disconnect', '/', sid)
             self.manager.disconnect(sid, '/')
 

@@ -116,8 +116,10 @@ class TestAsyncPubSubManager(unittest.TestCase):
         self.pm.server._emit_internal.mock.assert_called_once_with(
             '123', 'foo', 'bar', '/', None)
 
-    def test_disconnect(self):
-        _run(self.pm.disconnect('123', '/foo'))
+    def test_can_disconnect(self):
+        self.pm.connect('123', '/')
+        self.assertTrue(_run(self.pm.can_disconnect('123', '/')))
+        _run(self.pm.can_disconnect('123', '/foo'))
         self.pm._publish.mock.assert_called_once_with(
             {'method': 'disconnect', 'sid': '123', 'namespace': '/foo'})
 

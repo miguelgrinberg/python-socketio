@@ -70,17 +70,13 @@ class AsyncPubSubManager(AsyncManager):
                              'host_id': self.host_id})
 
     async def can_disconnect(self, sid, namespace):
-        await self._publish({'method': 'disconnect', 'sid': sid,
-                             'namespace': namespace or '/'})
-
-    async def disconnect(self, sid, namespace=None):
-        """Disconnect a client."""
-        # this is a bit weird, the can_disconnect call on pubsub managers just
-        # issues a disconnect request to the message queue and returns None,
-        # indicating that the client cannot disconnect immediately. The
-        # server(s) listening on the queue will get this request and carry out
-        # the disconnect appropriately.
-        await self.can_disconnect(sid, namespace)
+        if self.is_connected(sid, namespace):
+            # client is in this server, so we can disconnect directly
+            return super().can_disconnect(sid, namespace)
+        else:
+            # client is in another server, so we post request to the queue
+            await self._publish({'method': 'disconnect', 'sid': sid,
+                                'namespace': namespace or '/'})
 
     async def close_room(self, room, namespace=None):
         await self._publish({'method': 'close_room', 'room': room,

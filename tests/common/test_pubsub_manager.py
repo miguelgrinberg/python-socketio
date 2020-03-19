@@ -112,8 +112,10 @@ class TestBaseManager(unittest.TestCase):
         self.pm.server._emit_internal.assert_called_once_with('123', 'foo',
                                                               'bar', '/', None)
 
-    def test_disconnect(self):
-        self.pm.disconnect('123', '/foo')
+    def test_can_disconnect(self):
+        self.pm.connect('123', '/')
+        self.assertTrue(self.pm.can_disconnect('123', '/'))
+        self.pm.can_disconnect('123', '/foo')
         self.pm._publish.assert_called_once_with(
             {'method': 'disconnect', 'sid': '123', 'namespace': '/foo'})
 
