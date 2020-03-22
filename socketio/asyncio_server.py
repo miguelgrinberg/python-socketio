@@ -327,10 +327,10 @@ class AsyncServer(server.Server):
         """
         namespace = namespace or '/'
         if ignore_queue:
-            do_it = self.manager.is_connected(sid, namespace)
+            delete_it = self.manager.is_connected(sid, namespace)
         else:
-            do_it = await self.manager.can_disconnect(sid, namespace)
-        if do_it:
+            delete_it = await self.manager.can_disconnect(sid, namespace)
+        if delete_it:
             self.logger.info('Disconnecting %s [%s]', sid, namespace)
             self.manager.pre_disconnect(sid, namespace=namespace)
             await self._send_packet(sid, packet.Packet(packet.DISCONNECT,

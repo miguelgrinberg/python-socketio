@@ -625,6 +625,15 @@ class TestAsyncServer(unittest.TestCase):
         s.eio.send.mock.assert_any_call('123', '1', binary=False)
         s.eio.disconnect.mock.assert_called_once_with('123')
 
+    def test_disconnect_ignore_queue(self, eio):
+        eio.return_value.send = AsyncMock()
+        eio.return_value.disconnect = AsyncMock()
+        s = asyncio_server.AsyncServer()
+        _run(s._handle_eio_connect('123', 'environ'))
+        _run(s.disconnect('123', ignore_queue=True))
+        s.eio.send.mock.assert_any_call('123', '1', binary=False)
+        s.eio.disconnect.mock.assert_called_once_with('123')
+
     def test_disconnect_namespace(self, eio):
         eio.return_value.send = AsyncMock()
         eio.return_value.disconnect = AsyncMock()

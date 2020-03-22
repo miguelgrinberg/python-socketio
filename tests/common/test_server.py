@@ -553,6 +553,12 @@ class TestServer(unittest.TestCase):
         s.disconnect('123')
         s.eio.send.assert_any_call('123', '1', binary=False)
 
+    def test_disconnect_ignore_queue(self, eio):
+        s = server.Server()
+        s._handle_eio_connect('123', 'environ')
+        s.disconnect('123', ignore_queue=True)
+        s.eio.send.assert_any_call('123', '1', binary=False)
+
     def test_disconnect_namespace(self, eio):
         s = server.Server()
         s._handle_eio_connect('123', 'environ')
