@@ -1,5 +1,9 @@
 # python-socketio change log
 
+**Release 4.5.1** - 2020-03-22
+
+- Fix endless loop when disconnecting on multi-server deployments [#441](https://github.com/miguelgrinberg/python-socketio/issues/441) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/16e873dbc7e100780c83a907a11299bd8269e5e3))
+
 **Release 4.5.0** - 2020-03-14
 
 - Add support for client disconnects in multi-server configurations [#1174](https://github.com/miguelgrinberg/Flask-SocketIO/issues/1174) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/01378ef1efca73330327006be467270462d504e0))
