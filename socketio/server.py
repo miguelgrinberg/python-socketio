@@ -172,7 +172,7 @@ class Server(object):
             def message_handler(sid, msg):
                 print('Received message: ', msg)
                 eio.send(sid, 'response')
-            socket_io.on('message', namespace='/chat', message_handler)
+            socket_io.on('message', namespace='/chat', handler=message_handler)
 
         The handler function receives the ``sid`` (session ID) for the
         client as first argument. The ``'connect'`` event handler receives the
