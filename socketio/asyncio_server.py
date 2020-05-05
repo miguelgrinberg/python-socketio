@@ -209,6 +209,8 @@ class AsyncServer(server.Server):
 
         Note 2: this method is a coroutine.
         """
+        if to == None and sid == None:
+            raise TypeError('Missing `to` or `sid`.')
         if not self.async_handlers:
             raise RuntimeError(
                 'Cannot use call() when async_handlers is False.')
