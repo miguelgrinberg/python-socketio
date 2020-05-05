@@ -365,6 +365,8 @@ class Server(object):
         standard concurrency solutions (such as a Lock object) to prevent this
         situation.
         """
+        if to is None and sid is None:
+            raise ValueError('Cannot use call() to broadcast.')
         if not self.async_handlers:
             raise RuntimeError(
                 'Cannot use call() when async_handlers is False.')

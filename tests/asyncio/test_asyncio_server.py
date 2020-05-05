@@ -146,6 +146,10 @@ class TestAsyncServer(unittest.TestCase):
         self.assertRaises(exceptions.TimeoutError, _run,
                           s.call('foo', sid='123', timeout=0.01))
 
+    def test_call_with_broadcast(self, eio):
+        s = asyncio_server.AsyncServer()
+        self.assertRaises(ValueError, _run, s.call('foo'))
+
     def test_call_without_async_handlers(self, eio):
         mgr = self._get_mock_manager()
         s = asyncio_server.AsyncServer(client_manager=mgr,

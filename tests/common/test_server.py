@@ -138,6 +138,10 @@ class TestServer(unittest.TestCase):
         self.assertRaises(exceptions.TimeoutError, s.call, 'foo',
                           sid='123', timeout=12)
 
+    def test_call_with_broadcast(self, eio):
+        s = server.Server()
+        self.assertRaises(ValueError, s.call, 'foo')
+
     def test_call_without_async_handlers(self, eio):
         mgr = mock.MagicMock()
         s = server.Server(client_manager=mgr, async_handlers=False)
