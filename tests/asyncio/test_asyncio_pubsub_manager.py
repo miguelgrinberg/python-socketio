@@ -118,7 +118,7 @@ class TestAsyncPubSubManager(unittest.TestCase):
 
     def test_can_disconnect(self):
         self.pm.connect('123', '/')
-        self.assertTrue(_run(self.pm.can_disconnect('123', '/')))
+        self.assertTrue(_run(self.pm.can_disconnect('123', '/')) is True)
         _run(self.pm.can_disconnect('123', '/foo'))
         self.pm._publish.mock.assert_called_once_with(
             {'method': 'disconnect', 'sid': '123', 'namespace': '/foo'})
