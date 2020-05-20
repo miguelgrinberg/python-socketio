@@ -72,7 +72,7 @@ class AsyncPubSubManager(AsyncManager):
     async def can_disconnect(self, sid, namespace):
         if self.is_connected(sid, namespace):
             # client is in this server, so we can disconnect directly
-            return super().can_disconnect(sid, namespace)
+            return await super().can_disconnect(sid, namespace)
         else:
             # client is in another server, so we post request to the queue
             await self._publish({'method': 'disconnect', 'sid': sid,
