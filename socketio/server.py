@@ -635,12 +635,13 @@ class Server(object):
                 self.manager.pre_disconnect(sid, namespace)
                 self._send_packet(sid, packet.Packet(
                     packet.DISCONNECT, data=fail_reason, namespace=namespace))
-            self.manager.disconnect(sid, namespace)
-            if not self.always_connect:
+            elif namespace != '/':
                 self._send_packet(sid, packet.Packet(
                     packet.ERROR, data=fail_reason, namespace=namespace))
-            if sid in self.environ:  # pragma: no cover
+            self.manager.disconnect(sid, namespace)
+            if namespace == '/' and sid in self.environ:  # pragma: no cover
                 del self.environ[sid]
+            return fail_reason or False
         elif not self.always_connect:
             self._send_packet(sid, packet.Packet(packet.CONNECT,
                                                  namespace=namespace))

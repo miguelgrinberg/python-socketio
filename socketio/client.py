@@ -276,6 +276,9 @@ class Client(object):
             self.eio.connect(url, headers=headers, transports=transports,
                              engineio_path=socketio_path)
         except engineio.exceptions.ConnectionError as exc:
+            self._trigger_event(
+                'connect_error', '/',
+                exc.args[1] if len(exc.args) > 1 else exc.args[0])
             six.raise_from(exceptions.ConnectionError(exc.args[0]), None)
         self.connected = True
 
