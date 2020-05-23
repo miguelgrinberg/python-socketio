@@ -1,5 +1,16 @@
 # python-socketio change log
 
+**Release 4.6.0** - 2020-05-23
+
+- Improved handling of rejected connections [#391](https://github.com/miguelgrinberg/python-socketio/issues/391) [#487](https://github.com/miguelgrinberg/python-socketio/issues/487) [#447](https://github.com/miguelgrinberg/python-socketio/issues/447) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/8d08096dc442e817b5e4ce53321ccf196daafcd1))
+- Fix multi-namespace disconnect logic [#456](https://github.com/miguelgrinberg/python-socketio/issues/456) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/76a9860abc11b5a18fa05e6a8fef815390642d09))
+- `AsyncPubSubManager` does not await for `can_disconnect()` [#488](https://github.com/miguelgrinberg/python-socketio/issues/488) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/b0518936b949f759f2be8da0cc7b9c30af440371)) (thanks **Andrei Neagu**!)
+- Require a recipient in `call()` function in the server [#476](https://github.com/miguelgrinberg/python-socketio/issues/476) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/bbb9a7f0b630b6932960ae2545c62d6e5aee4f09)) (thanks **tt2468**!)
+- ASGI startup and shutdown lifespan handlers [#468](https://github.com/miguelgrinberg/python-socketio/issues/468) Co-authored-by: avi <senavi@berkeley.edu> ([commit](https://github.com/miguelgrinberg/python-socketio/commit/87d51dd1e6cde94adf4f8fb23828e1537c4f1301)) (thanks **databasedav**!)
+- Remove references to Python 2.7 in the documentation ([commit](https://github.com/miguelgrinberg/python-socketio/commit/02a7ce32c00ed5e64b0fae62d2d5ef93f25367df))
+- Fix server example in docstring [#449](https://github.com/miguelgrinberg/python-socketio/issues/449) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/8caebfd524d77d118243878c4bd9d396c420e0a3)) (thanks **wangjiancn**!)
+- Fix documentation typo [#450](https://github.com/miguelgrinberg/python-socketio/issues/450) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/cdde846e575c98d1316b1857b933bfeabf159580)) (thanks **kizError**!)
+
 **Release 4.5.1** - 2020-03-22
 
 - Fix endless loop when disconnecting on multi-server deployments [#441](https://github.com/miguelgrinberg/python-socketio/issues/441) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/16e873dbc7e100780c83a907a11299bd8269e5e3))
