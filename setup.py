@@ -30,7 +30,7 @@ setup(
     platforms='any',
     install_requires=[
         'six>=1.9.0',
-        'python-engineio>=3.9.0'
+        'python-engineio>=3.13.0'
     ],
     extras_require={
         'client': [
