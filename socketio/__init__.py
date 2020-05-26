@@ -7,6 +7,7 @@ from .kombu_manager import KombuManager
 from .redis_manager import RedisManager
 from .kafka_manager import KafkaManager
 from .zmq_manager import ZmqManager
+from .uwsgi_manager import UWSGIManager
 from .server import Server
 from .namespace import Namespace, ClientNamespace
 from .middleware import WSGIApp, Middleware
@@ -31,7 +32,8 @@ __version__ = '4.6.1dev'
 
 __all__ = ['__version__', 'Client', 'Server', 'BaseManager', 'PubSubManager',
            'KombuManager', 'RedisManager', 'ZmqManager', 'KafkaManager',
-           'Namespace', 'ClientNamespace', 'WSGIApp', 'Middleware']
+           'UWSGIManager', 'Namespace', 'ClientNamespace', 'WSGIApp',
+           'Middleware']
 if AsyncServer is not None:  # pragma: no cover
     __all__ += ['AsyncClient', 'AsyncServer', 'AsyncNamespace',
                 'AsyncClientNamespace', 'AsyncManager', 'AsyncRedisManager',

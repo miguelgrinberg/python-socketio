@@ -108,6 +108,12 @@ API Reference
 .. autoclass:: RedisManager
    :members:
 
+``UWSGIManager`` class
+----------------------
+
+.. autoclass:: UWSGIManager
+   :members:
+
 ``KafkaManager`` class
 ----------------------
 

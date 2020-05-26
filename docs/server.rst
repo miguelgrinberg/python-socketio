@@ -461,6 +461,31 @@ to connect to a message queue such as `Redis <http://redis.io/>`_ or
 `RabbitMQ <https://www.rabbitmq.com/>`_, to communicate with other related
 Socket.IO servers or auxiliary workers.
 
+uWSGI
+~~~~~
+
+To use a uWSGI message queue, you need to run uWSGI server with option --queue::
+
+    # One queue with 1 slot
+    uwsgi --http :5000 --gevent 1000 --queue 1 --http-websockets --master --wsgi-file app.py --callable app
+
+Only one slot is required because only the last message is dequeued.
+The uWSGI queue is processed when a uWSGI signal is triggered on a specific channel (default 0).
+
+The uWSGI queue is configured through the :class:`socketio.UWSGIManager`::
+
+    # socketio.Server class
+    mgr = socketio.UWSGIManager()
+    sio = socketio.Server(client_manager=mgr)
+
+If you already use uWSGI signals you can specify on which channel the events will be triggered::
+
+    # channel must be a non-negative integer
+    socketio.UWSGIManager('uwsgi:8')
+
+Note that uWSGI currently was not tested with asyncio, so it cannot be used with
+the :class:`socketio.AsyncServer` class.
+
 Redis
 ~~~~~
 
