@@ -1,6 +1,6 @@
 import logging
 import pickle
-from queue import SimpleQueue
+from queue import Queue
 
 try:
     import uwsgi
@@ -34,7 +34,7 @@ class UWSGIManager(PubSubManager):  # pragma: no cover
     def __init__(self, url='uwsgi:0', channel='socketio', write_only=False, logger=None):
         self._check_configuration()
         self.signum = self._sig_number(url)
-        self.queue = SimpleQueue()  # uWSGI does not provide a a blocking queue
+        self.queue = Queue()  # uWSGI does not provide a a blocking queue
         super(UWSGIManager, self).__init__(channel=channel,
                                            write_only=write_only,
                                            logger=logger)
