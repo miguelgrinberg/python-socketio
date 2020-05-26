@@ -31,7 +31,8 @@ class UWSGIManager(PubSubManager):  # pragma: no cover
     """
     name = 'uwsgi'
 
-    def __init__(self, url='uwsgi:0', channel='socketio', write_only=False, logger=None):
+    def __init__(self, url='uwsgi:0', channel='socketio', write_only=False,
+                 logger=None):
         self._check_configuration()
         self.signum = self._sig_number(url)
         self.queue = Queue()  # uWSGI does not provide a a blocking queue
@@ -46,7 +47,8 @@ class UWSGIManager(PubSubManager):  # pragma: no cover
         try:
             uwsgi.queue_last()
         except AttributeError:
-            raise RuntimeError('uWSGI queue must be enabled with option --queue 1')
+            raise RuntimeError('uWSGI queue must be enabled with '
+                               'option --queue 1')
 
     @staticmethod
     def _sig_number(url):
@@ -54,7 +56,8 @@ class UWSGIManager(PubSubManager):  # pragma: no cover
             try:
                 sig = int(url.split(':')[1])
             except ValueError:
-                logger.warning('Bad URL format %s, uWSGI signal is listening on default (1)' % url)
+                logger.warning('Bad URL format %s, uWSGI signal '
+                               'is listening on default (1)' % url)
             else:
                 return sig
         return 0
