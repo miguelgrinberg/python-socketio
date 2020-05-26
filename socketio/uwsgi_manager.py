@@ -57,7 +57,7 @@ class UWSGIManager(PubSubManager):  # pragma: no cover
                 sig = int(url.split(':')[1])
             except ValueError:
                 logger.warning('Bad URL format %s, uWSGI signal '
-                               'is listening on default (1)' % url)
+                               'is listening on default (0)' % url)
             else:
                 return sig
         return 0
