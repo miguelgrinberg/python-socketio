@@ -23,6 +23,13 @@ class UWSGIManager(PubSubManager):  # pragma: no cover
 
         server = socketio.Server(client_manager=socketio.UWSGIManager())
 
+    Notes:
+        - uWSGI signal must be registered when app is starting.
+        - ``uwsgi.signal_wait()`` not working in async mode but
+          when fixed it will be a better approach for the listen part.
+        - uWSGI does not provide a blocking queue, the workaround is to use the
+          standard Python queue.
+
     :param url: The connection URL (only for compatibility).
                 To use the default signal number, use ``uwsgi:0``.
     :param channel: The channel name on which the server sends and receives
@@ -37,7 +44,8 @@ class UWSGIManager(PubSubManager):  # pragma: no cover
                  logger=None):
         self._check_configuration()
         self.signum = self._sig_number(url)
-        self.queue = Queue()  # uWSGI does not provide a a blocking queue
+        self.queue = Queue()
+        uwsgi.register_signal(self.signum, 'workers', self._enqueue)
         super(UWSGIManager, self).__init__(channel=channel,
                                            write_only=write_only,
                                            logger=logger)
@@ -72,7 +80,6 @@ class UWSGIManager(PubSubManager):  # pragma: no cover
         self.queue.put(uwsgi.queue_last())
 
     def _uwsgi_listen(self):
-        uwsgi.register_signal(self.signum, 'workers', self._enqueue)
         for message in iter(self.queue.get, None):
             if message is not None:
                 yield message
