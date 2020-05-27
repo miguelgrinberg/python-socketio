@@ -23,8 +23,10 @@ class UWSGIManager(PubSubManager):  # pragma: no cover
 
         server = socketio.Server(client_manager=socketio.UWSGIManager())
 
-    :param channel: The channel number on which the uWSGI Signal is propagated
-                    accross processes.
+    :param url: The connection URL (only for compatibility).
+                To use the default signal number, use ``uwsgi:0``.
+    :param channel: The channel name on which the server sends and receives
+                    notifications.
     :param write_only: If set ot ``True``, only initialize to emit events. The
                        default of ``False`` initializes the class for emitting
                        and receiving.
