@@ -64,7 +64,7 @@ class UWSGIManager(PubSubManager):  # pragma: no cover
         return 0
 
     def _publish(self, data):
-        logger.warning('pubish from worker %s' % uwsgi.worker_id())
+        logger.warning('publish from worker %s' % uwsgi.worker_id())
         uwsgi.queue_push(pickle.dumps(data))
         uwsgi.signal(self.signum)
 
