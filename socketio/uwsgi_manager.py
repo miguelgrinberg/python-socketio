@@ -44,6 +44,7 @@ class UWSGIManager(PubSubManager):  # pragma: no cover
         self._check_configuration()
         self.signum = self._sig_number(url)
         self.queue = Queue()
+        self.is_listener = False
         uwsgi.register_signal(self.signum, 'workers', self._enqueue)
         super(UWSGIManager, self).__init__(channel=channel,
                                            write_only=write_only,
@@ -76,7 +77,22 @@ class UWSGIManager(PubSubManager):  # pragma: no cover
         uwsgi.signal(self.signum)
 
     def _enqueue(self, signum):
-        self.queue.put(uwsgi.queue_last())
+        if self.is_listener:
+            self.queue.put(uwsgi.queue_last())
+        else:
+            self._internal_emit(uwsgi.queue_last())
+
+    def _internal_emit(self, data):
+        data = pickle.loads(data)
+        if data and 'method' in data:
+            if data['method'] == 'emit':
+                self._handle_emit(data)
+            elif data['method'] == 'callback':
+                self._handle_callback(data)
+            elif data['method'] == 'disconnect':
+                self._handle_disconnect(data)
+            elif data['method'] == 'close_room':
+                self._handle_close_room(data)
 
     def _uwsgi_listen(self):
         for message in iter(self.queue.get, None):
@@ -84,5 +100,6 @@ class UWSGIManager(PubSubManager):  # pragma: no cover
                 yield message
 
     def _listen(self):
+        self.is_listener = True
         for message in self._uwsgi_listen():
             yield pickle.loads(message)
