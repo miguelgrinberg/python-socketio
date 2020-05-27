@@ -44,6 +44,7 @@ class UWSGIManager(PubSubManager):  # pragma: no cover
         self._check_configuration()
         self.signum = self._sig_number(url)
         self.queue = Queue()
+        uwsgi.register_signal(self.signum, 'workers', self._enqueue)
         super(UWSGIManager, self).__init__(channel=channel,
                                            write_only=write_only,
                                            logger=logger)
@@ -78,7 +79,6 @@ class UWSGIManager(PubSubManager):  # pragma: no cover
         self.queue.put(uwsgi.queue_last())
 
     def _uwsgi_listen(self):
-        uwsgi.register_signal(self.signum, 'workers', self._enqueue)
         for message in iter(self.queue.get, None):
             if message is not None:
                 yield message
