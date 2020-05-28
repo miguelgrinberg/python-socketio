@@ -619,7 +619,7 @@ Socket.IO::
 
     app = tornado.web.Application(
         [
-            (r"/socketio.io/", socketio.get_tornado_handler(sio)),
+            (r"/socket.io/", socketio.get_tornado_handler(sio)),
         ],
         # ... other application options
     )
