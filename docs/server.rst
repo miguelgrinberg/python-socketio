@@ -350,12 +350,17 @@ to the connection. The application is then free to create additional rooms and
 manage which clients are in them using the :func:`socketio.Server.enter_room`
 and :func:`socketio.Server.leave_room` methods. Clients can be in as many
 rooms as needed and can be moved between rooms as often as necessary.
+Rooms are created in the default global namespace, but can be directed to a custom namespace with the optional argument :func:`namespace`.
 
 ::
 
    @sio.event
    def begin_chat(sid):
       sio.enter_room(sid, 'chat_users')
+      
+   @sio.event
+   def begin_chat(sid):
+      sio.enter_room(sid, 'chat_users', namespace='/chat')
 
     @sio.event
     def exit_chat(sid):
