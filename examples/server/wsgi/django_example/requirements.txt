@@ -1,4 +1,4 @@
-django==2.1.6
+django==2.2.13
 enum-compat==0.0.2
 eventlet==0.21.0
 greenlet==0.4.12
