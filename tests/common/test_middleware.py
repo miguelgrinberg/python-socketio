@@ -1,6 +1,7 @@
 import unittest
 
 import six
+
 if six.PY3:
     from unittest import mock
 else:
@@ -27,8 +28,9 @@ class TestMiddleware(unittest.TestCase):
         environ = {'PATH_INFO': '/socket.io/'}
         start_response = "foo"
         m(environ, start_response)
-        mock_sio_app.handle_request.assert_called_once_with(environ,
-                                                            start_response)
+        mock_sio_app.handle_request.assert_called_once_with(
+            environ, start_response
+        )
 
     def test_404(self):
         mock_wsgi_app = None
@@ -37,6 +39,7 @@ class TestMiddleware(unittest.TestCase):
         environ = {'PATH_INFO': '/foo/bar'}
         start_response = mock.MagicMock()
         r = m(environ, start_response)
-        self.assertEqual(r, [b'Not Found'])
+        assert r == [b'Not Found']
         start_response.assert_called_once_with(
-            "404 Not Found", [('Content-Type', 'text/plain')])
+            "404 Not Found", [('Content-Type', 'text/plain')]
+        )
