@@ -23,7 +23,11 @@ def signal_handler(sig, frame):  # pragma: no cover
     """
     for client in reconnecting_clients[:]:
         client._reconnect_abort.set()
-    return original_signal_handler(sig, frame)
+    if callable(original_signal_handler):
+        return original_signal_handler(sig, frame)
+    else:  # pragma: no cover
+        # Handle case where no original SIGINT handler was present.
+        return signal.default_int_handler(sig, frame)
 
 
 original_signal_handler = None
