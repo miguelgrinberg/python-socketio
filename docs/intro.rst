@@ -127,7 +127,7 @@ Server Features
 
 - Can connect to servers running other compliant Socket.IO clients besides
   the one in this package.
-- Compatible with Python Python 3.5+.
+- Compatible with Python 3.5+.
 - Two versions of the server, one for standard Python and another for
   asyncio.
 - Supports large number of clients even on modest hardware due to being
