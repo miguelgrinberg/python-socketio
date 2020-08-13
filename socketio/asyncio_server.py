@@ -91,8 +91,9 @@ class AsyncServer(server.Server):
                       ``'connect'``, ``'message'`` and ``'disconnect'`` are
                       reserved and should not be used.
         :param data: The data to send to the client or clients. Data can be of
-                     type ``str``, ``bytes``, ``list`` or ``dict``. If a
-                     ``list`` or ``dict``, the data will be serialized as JSON.
+                     type ``str``, ``bytes``, ``list`` or ``dict``. To send
+                     multiple arguments, use a tuple where each element is of
+                     one of the types indicated above.
         :param to: The recipient of the message. This can be set to the
                    session ID of a client to address only that client, or to
                    to any custom room created by the application to address all
@@ -142,8 +143,9 @@ class AsyncServer(server.Server):
         :func:`emit` to issue custom event names.
 
         :param data: The data to send to the client or clients. Data can be of
-                     type ``str``, ``bytes``, ``list`` or ``dict``. If a
-                     ``list`` or ``dict``, the data will be serialized as JSON.
+                     type ``str``, ``bytes``, ``list`` or ``dict``. To send
+                     multiple arguments, use a tuple where each element is of
+                     one of the types indicated above.
         :param to: The recipient of the message. This can be set to the
                    session ID of a client to address only that client, or to
                    to any custom room created by the application to address all
@@ -183,8 +185,9 @@ class AsyncServer(server.Server):
                       ``'connect'``, ``'message'`` and ``'disconnect'`` are
                       reserved and should not be used.
         :param data: The data to send to the client or clients. Data can be of
-                     type ``str``, ``bytes``, ``list`` or ``dict``. If a
-                     ``list`` or ``dict``, the data will be serialized as JSON.
+                     type ``str``, ``bytes``, ``list`` or ``dict``. To send
+                     multiple arguments, use a tuple where each element is of
+                     one of the types indicated above.
         :param to: The session ID of the recipient client.
         :param sid: Alias for the ``to`` parameter.
         :param namespace: The Socket.IO namespace for the event. If this

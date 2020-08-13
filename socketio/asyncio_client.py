@@ -139,17 +139,17 @@ class AsyncClient(client.Client):
         :param event: The event name. It can be any string. The event names
                       ``'connect'``, ``'message'`` and ``'disconnect'`` are
                       reserved and should not be used.
-        :param data: The data to send to the client or clients. Data can be of
-                     type ``str``, ``bytes``, ``list`` or ``dict``. If a
-                     ``list`` or ``dict``, the data will be serialized as JSON.
+        :param data: The data to send to the server. Data can be of
+                     type ``str``, ``bytes``, ``list`` or ``dict``. To send
+                     multiple arguments, use a tuple where each element is of
+                     one of the types indicated above.
         :param namespace: The Socket.IO namespace for the event. If this
                           argument is omitted the event is emitted to the
                           default namespace.
         :param callback: If given, this function will be called to acknowledge
-                         the the client has received the message. The arguments
+                         the the server has received the message. The arguments
                          that will be passed to the function are those provided
-                         by the client. Callback functions can only be used
-                         when addressing an individual client.
+                         by the server.
 
         Note: this method is not designed to be used concurrently. If multiple
         tasks are emitting at the same time on the same client connection, then
@@ -190,17 +190,17 @@ class AsyncClient(client.Client):
         This function emits an event with the name ``'message'``. Use
         :func:`emit` to issue custom event names.
 
-        :param data: The data to send to the client or clients. Data can be of
-                     type ``str``, ``bytes``, ``list`` or ``dict``. If a
-                     ``list`` or ``dict``, the data will be serialized as JSON.
+        :param data: The data to send to the server. Data can be of
+                     type ``str``, ``bytes``, ``list`` or ``dict``. To send
+                     multiple arguments, use a tuple where each element is of
+                     one of the types indicated above.
         :param namespace: The Socket.IO namespace for the event. If this
                           argument is omitted the event is emitted to the
                           default namespace.
         :param callback: If given, this function will be called to acknowledge
-                         the the client has received the message. The arguments
+                         the the server has received the message. The arguments
                          that will be passed to the function are those provided
-                         by the client. Callback functions can only be used
-                         when addressing an individual client.
+                         by the server.
 
         Note: this method is a coroutine.
         """
@@ -213,9 +213,10 @@ class AsyncClient(client.Client):
         :param event: The event name. It can be any string. The event names
                       ``'connect'``, ``'message'`` and ``'disconnect'`` are
                       reserved and should not be used.
-        :param data: The data to send to the client or clients. Data can be of
-                     type ``str``, ``bytes``, ``list`` or ``dict``. If a
-                     ``list`` or ``dict``, the data will be serialized as JSON.
+        :param data: The data to send to the server. Data can be of
+                     type ``str``, ``bytes``, ``list`` or ``dict``. To send
+                     multiple arguments, use a tuple where each element is of
+                     one of the types indicated above.
         :param namespace: The Socket.IO namespace for the event. If this
                           argument is omitted the event is emitted to the
                           default namespace.
