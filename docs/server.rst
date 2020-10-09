@@ -565,6 +565,29 @@ example::
     # emit an event
     external_sio.emit('my event', data={'foo': 'bar'}, room='my room')
 
+Debugging and Troubleshooting
+-----------------------------
+
+To help you debug issues, the server can be configured to output logs to the
+terminal::
+
+    import socketio
+
+    # standard Python
+    sio = socketio.Server(logger=True, engineio_logger=True)
+
+    # asyncio
+    sio = socketio.AsyncServer(logger=True, engineio_logger=True)
+
+The ``logger`` argument controls logging related to the Socket.IO protocol,
+while ``engineio_logger`` controls logs that originate in the low-level
+Engine.IO transport. These arguments can be set to ``True`` to output logs to
+``stderr``, or to an object compatible with Python's ``logging`` package
+where the logs should be emitted to. A value of ``False`` disables logging.
+
+Logging can help identify the cause of connection problems, 400 responses,
+bad performance and other issues.
+
 .. _deployment-strategies:
 
 Deployment Strategies
