@@ -1,8 +1,11 @@
 python-socketio
 ===============
 
-.. image:: https://travis-ci.org/miguelgrinberg/python-socketio.svg?branch=master
-    :target: https://travis-ci.org/miguelgrinberg/python-socketio
+.. image:: https://github.com/miguelgrinberg/python-socketio/workflows/build/badge.svg
+    :target: https://github.com/miguelgrinberg/python-socketio/actions
+
+.. image:: https://codecov.io/gh/miguelgrinberg/python-socketio/branch/master/graph/badge.svg
+    :target: https://codecov.io/gh/miguelgrinberg/python-socketio
 
 Python implementation of the `Socket.IO`_ realtime client and server.
 
