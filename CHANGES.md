@@ -1,5 +1,16 @@
 # python-socketio change log
 
+**Release 4.6.1** - 2020-11-28
+
+- Added troubleshooting section to the documentation ([commit](https://github.com/miguelgrinberg/python-socketio/commit/48906071307d79df356379fe6e05a73b0c65d9d4))
+- Document the use of tuples when emitting ([commit](https://github.com/miguelgrinberg/python-socketio/commit/3ac3437af781d54a343b4430d1f3546c580677e3))
+- Handle the case of not having a previous signal handler [#518](https://github.com/miguelgrinberg/python-socketio/issues/518) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/8107216848672792e420b3254b5217e51bcd4b32)) (thanks **David Brooks**!)
+- Simplify asserts in unit tests ([commit](https://github.com/miguelgrinberg/python-socketio/commit/a4f9992d34a49350a853d9f1a0c3d63034785ab3))
+- Fixed route path for tornado server [#494](https://github.com/miguelgrinberg/python-socketio/issues/494) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/4385057c34bb468b9741edcd918e926a17c9af7c)) (thanks **someApprentice**!)
+- Use pytest as test runner ([commit](https://github.com/miguelgrinberg/python-socketio/commit/280d132d284699cc1ae641b1e41403ceab6c66f5))
+- Move builds to GitHub actions ([commit](https://github.com/miguelgrinberg/python-socketio/commit/104d5dd97b207cf59f47f1c72b408ed4b1e6f770))
+- Fixed typo in documentation [#524](https://github.com/miguelgrinberg/python-socketio/issues/524) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/1fbf95940cfceca13a2033fb3d455810a3b34e83)) (thanks **Fover**!)
+
 **Release 4.6.0** - 2020-05-23
 
 - Improved handling of rejected connections [#391](https://github.com/miguelgrinberg/python-socketio/issues/391) [#487](https://github.com/miguelgrinberg/python-socketio/issues/487) [#447](https://github.com/miguelgrinberg/python-socketio/issues/447) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/8d08096dc442e817b5e4ce53321ccf196daafcd1))
