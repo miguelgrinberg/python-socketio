@@ -808,6 +808,8 @@ class TestAsyncClient(unittest.TestCase):
             side_effect=[ValueError, exceptions.ConnectionError, None]
         )
         _run(c._handle_reconnect())
+        print(wait_for.mock.call_count)  # logging to debug #572
+        print(wait_for.mock.call_args_list)
         assert wait_for.mock.call_count == 2
         assert [x[0][1] for x in asyncio.wait_for.mock.call_args_list] == [
             1.5,
