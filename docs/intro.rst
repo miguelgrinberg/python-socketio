@@ -45,8 +45,9 @@ The example that follows shows a simple Python client:
 Client Features
 ---------------
 
-- Can connect to other Socket.IO compliant servers besides the one in
-  this package.
+- Can connect to other Socket.IO servers that are compatible with the
+  JavaScript Socket.IO 1.x and 2.x releases. Work to support release 3.x is in
+  progress.
 - Compatible with Python 3.5+.
 - Two versions of the client, one for standard Python and another for
   asyncio.
@@ -125,8 +126,9 @@ Uvicorn web server:
 Server Features
 ---------------
 
-- Can connect to servers running other compliant Socket.IO clients besides
-  the one in this package.
+- Can connect to servers running other Socket.IO clients that are compatible
+  with the JavaScript client versions 1.x and 2.x. Work to support the 3.x
+  release is in progress.
 - Compatible with Python 3.5+.
 - Two versions of the server, one for standard Python and another for
   asyncio.
