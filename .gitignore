@@ -43,3 +43,5 @@ venv*
 tags
 htmlcov
 *.swp
+
+node_modules

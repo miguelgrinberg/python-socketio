@@ -28,3 +28,8 @@ tornado
 -------
 
 Examples that are compatible with the tornado framework.
+
+javascript
+----------
+
+Examples that use the JavaScript version of Socket.IO for compatiblity testing.

@@ -25,7 +25,8 @@ async def pong_from_server():
     latency = time.time() - start_timer
     print('latency is {0:.2f} ms'.format(latency * 1000))
     await sio.sleep(1)
-    await send_ping()
+    if sio.connected:
+        await send_ping()
 
 
 async def start_server():
