@@ -3,9 +3,9 @@ import json as _json
 
 import six
 
-(CONNECT, DISCONNECT, EVENT, ACK, ERROR, BINARY_EVENT, BINARY_ACK) = \
+(CONNECT, DISCONNECT, EVENT, ACK, CONNECT_ERROR, BINARY_EVENT, BINARY_ACK) = \
     (0, 1, 2, 3, 4, 5, 6)
-packet_names = ['CONNECT', 'DISCONNECT', 'EVENT', 'ACK', 'ERROR',
+packet_names = ['CONNECT', 'DISCONNECT', 'EVENT', 'ACK', 'CONNECT_ERROR',
                 'BINARY_EVENT', 'BINARY_ACK']
 
 

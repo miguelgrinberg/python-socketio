@@ -427,7 +427,8 @@ class AsyncServer(server.Server):
                     packet.DISCONNECT, data=fail_reason, namespace=namespace))
             elif namespace != '/':
                 await self._send_packet(sid, packet.Packet(
-                    packet.ERROR, data=fail_reason, namespace=namespace))
+                    packet.CONNECT_ERROR, data=fail_reason,
+                    namespace=namespace))
             self.manager.disconnect(sid, namespace)
             if namespace == '/' and sid in self.environ:  # pragma: no cover
                 del self.environ[sid]
@@ -541,8 +542,8 @@ class AsyncServer(server.Server):
             elif pkt.packet_type == packet.BINARY_EVENT or \
                     pkt.packet_type == packet.BINARY_ACK:
                 self._binary_packet[sid] = pkt
-            elif pkt.packet_type == packet.ERROR:
-                raise ValueError('Unexpected ERROR packet.')
+            elif pkt.packet_type == packet.CONNECT_ERROR:
+                raise ValueError('Unexpected CONNECT_ERROR packet.')
             else:
                 raise ValueError('Unknown packet type.')
 

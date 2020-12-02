@@ -605,7 +605,7 @@ class Client(object):
             elif pkt.packet_type == packet.BINARY_EVENT or \
                     pkt.packet_type == packet.BINARY_ACK:
                 self._binary_packet = pkt
-            elif pkt.packet_type == packet.ERROR:
+            elif pkt.packet_type == packet.CONNECT_ERROR:
                 self._handle_error(pkt.namespace, pkt.data)
             else:
                 raise ValueError('Unknown packet type.')

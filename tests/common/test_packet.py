@@ -87,7 +87,7 @@ class TestPacket(unittest.TestCase):
 
     def test_invalid_binary_packet(self):
         with pytest.raises(ValueError):
-            packet.Packet(packet_type=packet.ERROR, data=b'123')
+            packet.Packet(packet_type=packet.CONNECT_ERROR, data=b'123')
 
     def test_encode_namespace(self):
         pkt = packet.Packet(
