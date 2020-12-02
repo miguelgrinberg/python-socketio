@@ -73,8 +73,7 @@ class AsyncServer(server.Server):
         if client_manager is None:
             client_manager = asyncio_manager.AsyncManager()
         super().__init__(client_manager=client_manager, logger=logger,
-                         binary=False, json=json,
-                         async_handlers=async_handlers, **kwargs)
+                         json=json, async_handlers=async_handlers, **kwargs)
 
     def is_asyncio_based(self):
         return True
@@ -395,19 +394,16 @@ class AsyncServer(server.Server):
         else:
             data = []
         await self._send_packet(sid, packet.Packet(
-            packet.EVENT, namespace=namespace, data=[event] + data, id=id,
-            binary=None))
+            packet.EVENT, namespace=namespace, data=[event] + data, id=id))
 
     async def _send_packet(self, sid, pkt):
         """Send a Socket.IO packet to a client."""
         encoded_packet = pkt.encode()
         if isinstance(encoded_packet, list):
-            binary = False
             for ep in encoded_packet:
-                await self.eio.send(sid, ep, binary=binary)
-                binary = True
+                await self.eio.send(sid, ep)
         else:
-            await self.eio.send(sid, encoded_packet, binary=False)
+            await self.eio.send(sid, encoded_packet)
 
     async def _handle_connect(self, sid, namespace):
         """Handle a client connection request."""
@@ -485,8 +481,7 @@ class AsyncServer(server.Server):
                 data = [r]
             await server._send_packet(sid, packet.Packet(packet.ACK,
                                                          namespace=namespace,
-                                                         id=id, data=data,
-                                                         binary=None))
+                                                         id=id, data=data))
 
     async def _handle_ack(self, sid, namespace, id, data):
         """Handle ACK packets from the client."""

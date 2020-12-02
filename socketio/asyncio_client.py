@@ -37,12 +37,6 @@ class AsyncClient(client.Client):
                    use. To disable logging set to ``False``. The default is
                    ``False``. Note that fatal errors are logged even when
                    ``logger`` is ``False``.
-    :param binary: ``True`` to support binary payloads, ``False`` to treat all
-                   payloads as text. On Python 2, if this is set to ``True``,
-                   ``unicode`` values are treated as text, and ``str`` and
-                   ``bytes`` values are treated as binary.  This option has no
-                   effect on Python 3, where text and binary payloads are
-                   always automatically discovered.
     :param json: An alternative json module to use for encoding and decoding
                  packets. Custom json modules must have ``dumps`` and ``loads``
                  functions that are compatible with the standard library
@@ -168,10 +162,6 @@ class AsyncClient(client.Client):
             id = self._generate_ack_id(namespace, callback)
         else:
             id = None
-        if six.PY2 and not self.binary:
-            binary = False  # pragma: nocover
-        else:
-            binary = None
         # tuples are expanded to multiple arguments, everything else is sent
         # as a single argument
         if isinstance(data, tuple):
@@ -181,8 +171,7 @@ class AsyncClient(client.Client):
         else:
             data = []
         await self._send_packet(packet.Packet(
-            packet.EVENT, namespace=namespace, data=[event] + data, id=id,
-            binary=binary))
+            packet.EVENT, namespace=namespace, data=[event] + data, id=id))
 
     async def send(self, data, namespace=None, callback=None):
         """Send a message to one or more connected clients.
@@ -297,12 +286,10 @@ class AsyncClient(client.Client):
         """Send a Socket.IO packet to the server."""
         encoded_packet = pkt.encode()
         if isinstance(encoded_packet, list):
-            binary = False
             for ep in encoded_packet:
-                await self.eio.send(ep, binary=binary)
-                binary = True
+                await self.eio.send(ep)
         else:
-            await self.eio.send(encoded_packet, binary=False)
+            await self.eio.send(encoded_packet)
 
     async def _handle_connect(self, namespace):
         namespace = namespace or '/'
@@ -342,13 +329,8 @@ class AsyncClient(client.Client):
                 data = list(r)
             else:
                 data = [r]
-            if six.PY2 and not self.binary:
-                binary = False  # pragma: nocover
-            else:
-                binary = None
             await self._send_packet(packet.Packet(
-                packet.ACK, namespace=namespace, id=id, data=data,
-                binary=binary))
+                packet.ACK, namespace=namespace, id=id, data=data))
 
     async def _handle_ack(self, namespace, id, data):
         namespace = namespace or '/'

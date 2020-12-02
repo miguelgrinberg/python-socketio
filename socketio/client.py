@@ -58,12 +58,6 @@ class Client(object):
                    use. To disable logging set to ``False``. The default is
                    ``False``. Note that fatal errors are logged even when
                    ``logger`` is ``False``.
-    :param binary: ``True`` to support binary payloads, ``False`` to treat all
-                   payloads as text. On Python 2, if this is set to ``True``,
-                   ``unicode`` values are treated as text, and ``str`` and
-                   ``bytes`` values are treated as binary.  This option has no
-                   effect on Python 3, where text and binary payloads are
-                   always automatically discovered.
     :param json: An alternative json module to use for encoding and decoding
                  packets. Custom json modules must have ``dumps`` and ``loads``
                  functions that are compatible with the standard library
@@ -85,8 +79,7 @@ class Client(object):
     """
     def __init__(self, reconnection=True, reconnection_attempts=0,
                  reconnection_delay=1, reconnection_delay_max=5,
-                 randomization_factor=0.5, logger=False, binary=False,
-                 json=None, **kwargs):
+                 randomization_factor=0.5, logger=False, json=None, **kwargs):
         global original_signal_handler
         if original_signal_handler is None and \
                 threading.current_thread() == threading.main_thread():
@@ -97,7 +90,6 @@ class Client(object):
         self.reconnection_delay = reconnection_delay
         self.reconnection_delay_max = reconnection_delay_max
         self.randomization_factor = randomization_factor
-        self.binary = binary
 
         engineio_options = kwargs
         engineio_logger = engineio_options.pop('engineio_logger', None)
@@ -334,10 +326,6 @@ class Client(object):
             id = self._generate_ack_id(namespace, callback)
         else:
             id = None
-        if six.PY2 and not self.binary:
-            binary = False  # pragma: nocover
-        else:
-            binary = None
         # tuples are expanded to multiple arguments, everything else is sent
         # as a single argument
         if isinstance(data, tuple):
@@ -347,8 +335,7 @@ class Client(object):
         else:
             data = []
         self._send_packet(packet.Packet(packet.EVENT, namespace=namespace,
-                                        data=[event] + data, id=id,
-                                        binary=binary))
+                                        data=[event] + data, id=id))
 
     def send(self, data, namespace=None, callback=None):
         """Send a message to one or more connected clients.
@@ -459,12 +446,10 @@ class Client(object):
         """Send a Socket.IO packet to the server."""
         encoded_packet = pkt.encode()
         if isinstance(encoded_packet, list):
-            binary = False
             for ep in encoded_packet:
-                self.eio.send(ep, binary=binary)
-                binary = True
+                self.eio.send(ep)
         else:
-            self.eio.send(encoded_packet, binary=False)
+            self.eio.send(encoded_packet)
 
     def _generate_ack_id(self, namespace, callback):
         """Generate a unique identifier for an ACK packet."""
@@ -512,12 +497,8 @@ class Client(object):
                 data = list(r)
             else:
                 data = [r]
-            if six.PY2 and not self.binary:
-                binary = False  # pragma: nocover
-            else:
-                binary = None
             self._send_packet(packet.Packet(packet.ACK, namespace=namespace,
-                              id=id, data=data, binary=binary))
+                              id=id, data=data))
 
     def _handle_ack(self, namespace, id, data):
         namespace = namespace or '/'

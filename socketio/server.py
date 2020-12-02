@@ -25,12 +25,6 @@ class Server(object):
                    use. To disable logging set to ``False``. The default is
                    ``False``. Note that fatal errors are logged even when
                    ``logger`` is ``False``.
-    :param binary: ``True`` to support binary payloads, ``False`` to treat all
-                   payloads as text. On Python 2, if this is set to ``True``,
-                   ``unicode`` values are treated as text, and ``str`` and
-                   ``bytes`` values are treated as binary.  This option has no
-                   effect on Python 3, where text and binary payloads are
-                   always automatically discovered.
     :param json: An alternative json module to use for encoding and decoding
                  packets. Custom json modules must have ``dumps`` and ``loads``
                  functions that are compatible with the standard library
@@ -97,9 +91,8 @@ class Server(object):
                             fatal errors are logged even when
                             ``engineio_logger`` is ``False``.
     """
-    def __init__(self, client_manager=None, logger=False, binary=False,
-                 json=None, async_handlers=True, always_connect=False,
-                 **kwargs):
+    def __init__(self, client_manager=None, logger=False, json=None,
+                 async_handlers=True, always_connect=False, **kwargs):
         engineio_options = kwargs
         engineio_logger = engineio_options.pop('engineio_logger', None)
         if engineio_logger is not None:
@@ -112,7 +105,6 @@ class Server(object):
         self.eio.on('connect', self._handle_eio_connect)
         self.eio.on('message', self._handle_eio_message)
         self.eio.on('disconnect', self._handle_eio_disconnect)
-        self.binary = binary
 
         self.environ = {}
         self.handlers = {}
@@ -591,10 +583,6 @@ class Server(object):
 
     def _emit_internal(self, sid, event, data, namespace=None, id=None):
         """Send a message to a client."""
-        if six.PY2 and not self.binary:
-            binary = False  # pragma: nocover
-        else:
-            binary = None
         # tuples are expanded to multiple arguments, everything else is sent
         # as a single argument
         if isinstance(data, tuple):
@@ -604,19 +592,16 @@ class Server(object):
         else:
             data = []
         self._send_packet(sid, packet.Packet(packet.EVENT, namespace=namespace,
-                                             data=[event] + data, id=id,
-                                             binary=binary))
+                                             data=[event] + data, id=id))
 
     def _send_packet(self, sid, pkt):
         """Send a Socket.IO packet to a client."""
         encoded_packet = pkt.encode()
         if isinstance(encoded_packet, list):
-            binary = False
             for ep in encoded_packet:
-                self.eio.send(sid, ep, binary=binary)
-                binary = True
+                self.eio.send(sid, ep)
         else:
-            self.eio.send(sid, encoded_packet, binary=False)
+            self.eio.send(sid, encoded_packet)
 
     def _handle_connect(self, sid, namespace):
         """Handle a client connection request."""
@@ -692,14 +677,9 @@ class Server(object):
                 data = list(r)
             else:
                 data = [r]
-            if six.PY2 and not self.binary:
-                binary = False  # pragma: nocover
-            else:
-                binary = None
             server._send_packet(sid, packet.Packet(packet.ACK,
                                                    namespace=namespace,
-                                                   id=id, data=data,
-                                                   binary=binary))
+                                                   id=id, data=data))
 
     def _handle_ack(self, sid, namespace, id, data):
         """Handle ACK packets from the client."""
