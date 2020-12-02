@@ -515,7 +515,6 @@ class AsyncServer(server.Server):
             self.manager_initialized = True
             self.manager.initialize()
         self.environ[sid] = environ
-        return await self._handle_connect(sid, '/')
 
     async def _handle_eio_message(self, sid, data):
         """Dispatch Engine.IO messages."""

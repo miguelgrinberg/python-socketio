@@ -124,7 +124,7 @@ class Client(object):
         self.sid = None
 
         self.connected = False
-        self.namespaces = []
+        self.namespaces = {}
         self.handlers = {}
         self.namespace_handlers = {}
         self.callbacks = {}
@@ -242,13 +242,16 @@ class Client(object):
                            are ``'polling'`` and ``'websocket'``. If not
                            given, the polling transport is connected first,
                            then an upgrade to websocket is attempted.
-        :param namespaces: The list of custom namespaces to connect, in
-                           addition to the default namespace. If not given,
-                           the namespace list is obtained from the registered
-                           event handlers.
+        :param namespaces: The namespaces to connect as a string or list of
+                           strings. If not given, the namespaces that have
+                           registered event handlers are connected.
         :param socketio_path: The endpoint where the Socket.IO server is
                               installed. The default value is appropriate for
                               most cases.
+
+        Note: The connection mechannism occurs in the background and will
+        complete at some point after this function returns. The connection
+        will be established when the ``connect`` event is invoked.
 
         Example usage::
 
@@ -266,8 +269,7 @@ class Client(object):
                 set(self.namespace_handlers.keys()))
         elif isinstance(namespaces, six.string_types):
             namespaces = [namespaces]
-            self.connection_namespaces = namespaces
-        self.namespaces = [n for n in namespaces if n != '/']
+        self.connection_namespaces = namespaces
         try:
             self.eio.connect(url, headers=headers, transports=transports,
                              engineio_path=socketio_path)
@@ -318,7 +320,7 @@ class Client(object):
         situation.
         """
         namespace = namespace or '/'
-        if namespace != '/' and namespace not in self.namespaces:
+        if namespace not in self.namespaces:
             raise exceptions.BadNamespaceError(
                 namespace + ' is not a connected namespace.')
         self.logger.info('Emitting event "%s" [%s]', event, namespace)
@@ -402,10 +404,22 @@ class Client(object):
         # later in _handle_eio_disconnect we invoke the disconnect handler
         for n in self.namespaces:
             self._send_packet(packet.Packet(packet.DISCONNECT, namespace=n))
-        self._send_packet(packet.Packet(
-            packet.DISCONNECT, namespace='/'))
         self.connected = False
         self.eio.disconnect(abort=True)
+
+    def get_sid(self, namespace=None):
+        """Return the ``sid`` associated with a connection.
+
+        :param namespace: The Socket.IO namespace. If this argument is omitted
+                          the handler is associated with the default
+                          namespace. Note that unlike previous versions, the
+                          current version of the Socket.IO protocol uses
+                          different ``sid`` values per namespace.
+
+        This method returns the ``sid`` for the requested namespace as a
+        string.
+        """
+        return self.namespaces.get(namespace or '/')
 
     def transport(self):
         """Return the name of the transport used by the client.
@@ -460,29 +474,22 @@ class Client(object):
         self.callbacks[namespace][id] = callback
         return id
 
-    def _handle_connect(self, namespace):
+    def _handle_connect(self, namespace, data):
         namespace = namespace or '/'
         self.logger.info('Namespace {} is connected'.format(namespace))
+        if namespace not in self.namespaces:
+            self.namespaces[namespace] = (data or {}).get('sid', self.sid)
         self._trigger_event('connect', namespace=namespace)
-        if namespace == '/':
-            for n in self.namespaces:
-                self._send_packet(packet.Packet(packet.CONNECT, namespace=n))
-        elif namespace not in self.namespaces:
-            self.namespaces.append(namespace)
 
     def _handle_disconnect(self, namespace):
         if not self.connected:
             return
         namespace = namespace or '/'
-        if namespace == '/':
-            for n in self.namespaces:
-                self._trigger_event('disconnect', namespace=n)
-            self.namespaces = []
         self._trigger_event('disconnect', namespace=namespace)
         if namespace in self.namespaces:
-            self.namespaces.remove(namespace)
-        if namespace == '/':
-            self.connected = False
+            del self.namespaces[namespace]
+        if not self.namespaces:
+            self.eio.disconnect(abort=True)
 
     def _handle_event(self, namespace, id, data):
         namespace = namespace or '/'
@@ -524,7 +531,7 @@ class Client(object):
             data = (data,)
         self._trigger_event('connect_error', namespace, *data)
         if namespace in self.namespaces:
-            self.namespaces.remove(namespace)
+            del self.namespaces[namespace]
         if namespace == '/':
             self.namespaces = []
             self.connected = False
@@ -581,6 +588,8 @@ class Client(object):
         """Handle the Engine.IO connection event."""
         self.logger.info('Engine.IO connection established')
         self.sid = self.eio.sid
+        for n in self.connection_namespaces:
+            self._send_packet(packet.Packet(packet.CONNECT, namespace=n))
 
     def _handle_eio_message(self, data):
         """Dispatch Engine.IO messages."""
@@ -595,7 +604,7 @@ class Client(object):
         else:
             pkt = packet.Packet(encoded_packet=data)
             if pkt.packet_type == packet.CONNECT:
-                self._handle_connect(pkt.namespace)
+                self._handle_connect(pkt.namespace, pkt.data)
             elif pkt.packet_type == packet.DISCONNECT:
                 self._handle_disconnect(pkt.namespace)
             elif pkt.packet_type == packet.EVENT:
@@ -616,7 +625,6 @@ class Client(object):
         if self.connected:
             for n in self.namespaces:
                 self._trigger_event('disconnect', namespace=n)
-            self._trigger_event('disconnect', namespace='/')
             self.namespaces = []
             self.connected = False
         self.callbacks = {}

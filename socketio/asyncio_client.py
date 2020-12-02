@@ -71,15 +71,18 @@ class AsyncClient(client.Client):
                            are ``'polling'`` and ``'websocket'``. If not
                            given, the polling transport is connected first,
                            then an upgrade to websocket is attempted.
-        :param namespaces: The list of custom namespaces to connect, in
-                           addition to the default namespace. If not given,
-                           the namespace list is obtained from the registered
-                           event handlers.
+        :param namespaces: The namespaces to connect as a string or list of
+                           strings. If not given, the namespaces that have
+                           registered event handlers are connected.
         :param socketio_path: The endpoint where the Socket.IO server is
                               installed. The default value is appropriate for
                               most cases.
 
         Note: this method is a coroutine.
+
+        Note: The connection mechannism occurs in the background and will
+        complete at some point after this function returns. The connection
+        will be established when the ``connect`` event is invoked.
 
         Example usage::
 
@@ -97,8 +100,7 @@ class AsyncClient(client.Client):
                 set(self.namespace_handlers.keys()))
         elif isinstance(namespaces, six.string_types):
             namespaces = [namespaces]
-            self.connection_namespaces = namespaces
-        self.namespaces = [n for n in namespaces if n != '/']
+        self.connection_namespaces = namespaces
         try:
             await self.eio.connect(url, headers=headers,
                                    transports=transports,
@@ -154,7 +156,7 @@ class AsyncClient(client.Client):
         Note 2: this method is a coroutine.
         """
         namespace = namespace or '/'
-        if namespace != '/' and namespace not in self.namespaces:
+        if namespace not in self.namespaces:
             raise exceptions.BadNamespaceError(
                 namespace + ' is not a connected namespace.')
         self.logger.info('Emitting event "%s" [%s]', event, namespace)
@@ -248,8 +250,6 @@ class AsyncClient(client.Client):
         for n in self.namespaces:
             await self._send_packet(packet.Packet(packet.DISCONNECT,
                                     namespace=n))
-        await self._send_packet(packet.Packet(
-            packet.DISCONNECT, namespace='/'))
         self.connected = False
         await self.eio.disconnect(abort=True)
 
@@ -291,30 +291,22 @@ class AsyncClient(client.Client):
         else:
             await self.eio.send(encoded_packet)
 
-    async def _handle_connect(self, namespace):
+    async def _handle_connect(self, namespace, data):
         namespace = namespace or '/'
         self.logger.info('Namespace {} is connected'.format(namespace))
+        if namespace not in self.namespaces:
+            self.namespaces[namespace] = (data or {}).get('sid', self.sid)
         await self._trigger_event('connect', namespace=namespace)
-        if namespace == '/':
-            for n in self.namespaces:
-                await self._send_packet(packet.Packet(packet.CONNECT,
-                                        namespace=n))
-        elif namespace not in self.namespaces:
-            self.namespaces.append(namespace)
 
     async def _handle_disconnect(self, namespace):
         if not self.connected:
             return
         namespace = namespace or '/'
-        if namespace == '/':
-            for n in self.namespaces:
-                await self._trigger_event('disconnect', namespace=n)
-            self.namespaces = []
         await self._trigger_event('disconnect', namespace=namespace)
         if namespace in self.namespaces:
-            self.namespaces.remove(namespace)
-        if namespace == '/':
-            self.connected = False
+            del self.namespaces[namespace]
+        if not self.namespaces:
+            await self.eio.disconnect(abort=True)
 
     async def _handle_event(self, namespace, id, data):
         namespace = namespace or '/'
@@ -422,10 +414,12 @@ class AsyncClient(client.Client):
                 break
         client.reconnecting_clients.remove(self)
 
-    def _handle_eio_connect(self):
+    async def _handle_eio_connect(self):
         """Handle the Engine.IO connection event."""
         self.logger.info('Engine.IO connection established')
         self.sid = self.eio.sid
+        for n in self.connection_namespaces:
+            await self._send_packet(packet.Packet(packet.CONNECT, namespace=n))
 
     async def _handle_eio_message(self, data):
         """Dispatch Engine.IO messages."""
@@ -440,7 +434,7 @@ class AsyncClient(client.Client):
         else:
             pkt = packet.Packet(encoded_packet=data)
             if pkt.packet_type == packet.CONNECT:
-                await self._handle_connect(pkt.namespace)
+                await self._handle_connect(pkt.namespace, pkt.data)
             elif pkt.packet_type == packet.DISCONNECT:
                 await self._handle_disconnect(pkt.namespace)
             elif pkt.packet_type == packet.EVENT:
@@ -462,7 +456,6 @@ class AsyncClient(client.Client):
         if self.connected:
             for n in self.namespaces:
                 await self._trigger_event('disconnect', namespace=n)
-            await self._trigger_event('disconnect', namespace='/')
             self.namespaces = []
             self.connected = False
         self.callbacks = {}

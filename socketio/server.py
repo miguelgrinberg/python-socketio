@@ -705,7 +705,6 @@ class Server(object):
             self.manager_initialized = True
             self.manager.initialize()
         self.environ[sid] = environ
-        return self._handle_connect(sid, '/')
 
     def _handle_eio_message(self, sid, data):
         """Dispatch Engine.IO messages."""
