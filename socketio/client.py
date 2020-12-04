@@ -533,7 +533,7 @@ class Client(object):
         if namespace in self.namespaces:
             del self.namespaces[namespace]
         if namespace == '/':
-            self.namespaces = []
+            self.namespaces = {}
             self.connected = False
 
     def _trigger_event(self, event, namespace, *args):
@@ -625,7 +625,7 @@ class Client(object):
         if self.connected:
             for n in self.namespaces:
                 self._trigger_event('disconnect', namespace=n)
-            self.namespaces = []
+            self.namespaces = {}
             self.connected = False
         self.callbacks = {}
         self._binary_packet = None

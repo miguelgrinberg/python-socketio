@@ -20,13 +20,13 @@ class AsyncManager(BaseManager):
         tasks = []
         if not isinstance(skip_sid, list):
             skip_sid = [skip_sid]
-        for sid in self.get_participants(namespace, room):
+        for sid, eio_sid in self.get_participants(namespace, room):
             if sid not in skip_sid:
                 if callback is not None:
                     id = self._generate_ack_id(sid, namespace, callback)
                 else:
                     id = None
-                tasks.append(self.server._emit_internal(sid, event, data,
+                tasks.append(self.server._emit_internal(eio_sid, event, data,
                                                         namespace, id))
         if tasks == []:  # pragma: no cover
             return

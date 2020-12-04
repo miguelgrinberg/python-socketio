@@ -12,21 +12,28 @@ from socketio import base_manager
 
 class TestBaseManager(unittest.TestCase):
     def setUp(self):
+        id = 0
+
+        def generate_id():
+            nonlocal id
+            id += 1
+            return str(id)
+
         mock_server = mock.MagicMock()
+        mock_server.eio.generate_id = generate_id
         self.bm = base_manager.BaseManager()
         self.bm.set_server(mock_server)
         self.bm.initialize()
 
     def test_connect(self):
-        self.bm.connect('123', '/foo')
+        sid = self.bm.connect('123', '/foo')
         assert None in self.bm.rooms['/foo']
-        assert '123' in self.bm.rooms['/foo']
-        assert '123' in self.bm.rooms['/foo'][None]
-        assert '123' in self.bm.rooms['/foo']['123']
-        assert self.bm.rooms['/foo'] == {
-            None: {'123': True},
-            '123': {'123': True},
-        }
+        assert sid in self.bm.rooms['/foo']
+        assert sid in self.bm.rooms['/foo'][None]
+        assert sid in self.bm.rooms['/foo'][sid]
+        assert dict(self.bm.rooms['/foo'][None]) == {sid: '123'}
+        assert dict(self.bm.rooms['/foo'][sid]) == {sid: '123'}
+        assert self.bm.sid_from_eio_sid('123', '/foo') == sid
 
     def test_pre_disconnect(self):
         self.bm.connect('123', '/foo')
@@ -43,63 +50,53 @@ class TestBaseManager(unittest.TestCase):
         assert self.bm.pending_disconnect == {}
 
     def test_disconnect(self):
-        self.bm.connect('123', '/foo')
-        self.bm.connect('456', '/foo')
-        self.bm.enter_room('123', '/foo', 'bar')
-        self.bm.enter_room('456', '/foo', 'baz')
-        self.bm.disconnect('123', '/foo')
-        assert self.bm.rooms['/foo'] == {
-            None: {'456': True},
-            '456': {'456': True},
-            'baz': {'456': True},
-        }
+        sid1 = self.bm.connect('123', '/foo')
+        sid2 = self.bm.connect('456', '/foo')
+        self.bm.enter_room(sid1, '/foo', 'bar')
+        self.bm.enter_room(sid2, '/foo', 'baz')
+        self.bm.disconnect(sid1, '/foo')
+        assert dict(self.bm.rooms['/foo'][None]) == {sid2: '456'}
+        assert dict(self.bm.rooms['/foo'][sid2]) == {sid2: '456'}
+        assert dict(self.bm.rooms['/foo']['baz']) == {sid2: '456'}
 
     def test_disconnect_default_namespace(self):
-        self.bm.connect('123', '/')
-        self.bm.connect('123', '/foo')
-        self.bm.connect('456', '/')
-        self.bm.connect('456', '/foo')
-        assert self.bm.is_connected('123', '/')
-        assert self.bm.is_connected('123', '/foo')
-        self.bm.disconnect('123', '/')
-        assert not self.bm.is_connected('123', '/')
-        assert self.bm.is_connected('123', '/foo')
-        self.bm.disconnect('123', '/foo')
-        assert not self.bm.is_connected('123', '/foo')
-        assert self.bm.rooms['/'] == {
-            None: {'456': True},
-            '456': {'456': True},
-        }
-        assert self.bm.rooms['/foo'] == {
-            None: {'456': True},
-            '456': {'456': True},
-        }
+        sid1 = self.bm.connect('123', '/')
+        sid2 = self.bm.connect('123', '/foo')
+        sid3 = self.bm.connect('456', '/')
+        sid4 = self.bm.connect('456', '/foo')
+        assert self.bm.is_connected(sid1, '/')
+        assert self.bm.is_connected(sid2, '/foo')
+        self.bm.disconnect(sid1, '/')
+        assert not self.bm.is_connected(sid1, '/')
+        assert self.bm.is_connected(sid2, '/foo')
+        self.bm.disconnect(sid2, '/foo')
+        assert not self.bm.is_connected(sid2, '/foo')
+        assert dict(self.bm.rooms['/'][None]) == {sid3: '456'}
+        assert dict(self.bm.rooms['/'][sid3]) == {sid3: '456'}
+        assert dict(self.bm.rooms['/foo'][None]) == {sid4: '456'}
+        assert dict(self.bm.rooms['/foo'][sid4]) == {sid4: '456'}
 
     def test_disconnect_twice(self):
-        self.bm.connect('123', '/')
-        self.bm.connect('123', '/foo')
-        self.bm.connect('456', '/')
-        self.bm.connect('456', '/foo')
-        self.bm.disconnect('123', '/')
-        self.bm.disconnect('123', '/foo')
-        self.bm.disconnect('123', '/')
-        self.bm.disconnect('123', '/foo')
-        assert self.bm.rooms['/'] == {
-            None: {'456': True},
-            '456': {'456': True},
-        }
-        assert self.bm.rooms['/foo'] == {
-            None: {'456': True},
-            '456': {'456': True},
-        }
+        sid1 = self.bm.connect('123', '/')
+        sid2 = self.bm.connect('123', '/foo')
+        sid3 = self.bm.connect('456', '/')
+        sid4 = self.bm.connect('456', '/foo')
+        self.bm.disconnect(sid1, '/')
+        self.bm.disconnect(sid2, '/foo')
+        self.bm.disconnect(sid1, '/')
+        self.bm.disconnect(sid2, '/foo')
+        assert dict(self.bm.rooms['/'][None]) == {sid3: '456'}
+        assert dict(self.bm.rooms['/'][sid3]) == {sid3: '456'}
+        assert dict(self.bm.rooms['/foo'][None]) == {sid4: '456'}
+        assert dict(self.bm.rooms['/foo'][sid4]) == {sid4: '456'}
 
     def test_disconnect_all(self):
-        self.bm.connect('123', '/foo')
-        self.bm.connect('456', '/foo')
-        self.bm.enter_room('123', '/foo', 'bar')
-        self.bm.enter_room('456', '/foo', 'baz')
-        self.bm.disconnect('123', '/foo')
-        self.bm.disconnect('456', '/foo')
+        sid1 = self.bm.connect('123', '/foo')
+        sid2 = self.bm.connect('456', '/foo')
+        self.bm.enter_room(sid1, '/foo', 'bar')
+        self.bm.enter_room(sid2, '/foo', 'baz')
+        self.bm.disconnect(sid1, '/foo')
+        self.bm.disconnect(sid2, '/foo')
         assert self.bm.rooms == {}
 
     def test_disconnect_with_callbacks(self):
@@ -152,12 +149,12 @@ class TestBaseManager(unittest.TestCase):
     def test_get_participants(self):
         self.bm.connect('123', '/')
         self.bm.connect('456', '/')
-        self.bm.connect('789', '/')
-        self.bm.disconnect('789', '/')
-        assert '789' not in self.bm.rooms['/'][None]
+        sid = self.bm.connect('789', '/')
+        self.bm.disconnect(sid, '/')
+        assert sid not in self.bm.rooms['/'][None]
         participants = list(self.bm.get_participants('/', None))
         assert len(participants) == 2
-        assert '789' not in participants
+        assert sid not in participants
 
     def test_leave_invalid_room(self):
         self.bm.connect('123', '/foo')
@@ -169,11 +166,11 @@ class TestBaseManager(unittest.TestCase):
         assert [] == rooms
 
     def test_close_room(self):
-        self.bm.connect('123', '/foo')
+        sid1 = self.bm.connect('123', '/foo')
         self.bm.connect('456', '/foo')
         self.bm.connect('789', '/foo')
-        self.bm.enter_room('123', '/foo', 'bar')
-        self.bm.enter_room('123', '/foo', 'bar')
+        self.bm.enter_room(sid1, '/foo', 'bar')
+        self.bm.enter_room(sid1, '/foo', 'bar')
         self.bm.close_room('bar', '/foo')
         assert 'bar' not in self.bm.rooms['/foo']
 
@@ -181,26 +178,26 @@ class TestBaseManager(unittest.TestCase):
         self.bm.close_room('bar', '/foo')
 
     def test_rooms(self):
-        self.bm.connect('123', '/foo')
-        self.bm.enter_room('123', '/foo', 'bar')
-        r = self.bm.get_rooms('123', '/foo')
+        sid = self.bm.connect('123', '/foo')
+        self.bm.enter_room(sid, '/foo', 'bar')
+        r = self.bm.get_rooms(sid, '/foo')
         assert len(r) == 2
-        assert '123' in r
+        assert sid in r
         assert 'bar' in r
 
     def test_emit_to_sid(self):
-        self.bm.connect('123', '/foo')
+        sid = self.bm.connect('123', '/foo')
         self.bm.connect('456', '/foo')
-        self.bm.emit('my event', {'foo': 'bar'}, namespace='/foo', room='123')
+        self.bm.emit('my event', {'foo': 'bar'}, namespace='/foo', room=sid)
         self.bm.server._emit_internal.assert_called_once_with(
             '123', 'my event', {'foo': 'bar'}, '/foo', None
         )
 
     def test_emit_to_room(self):
-        self.bm.connect('123', '/foo')
-        self.bm.enter_room('123', '/foo', 'bar')
-        self.bm.connect('456', '/foo')
-        self.bm.enter_room('456', '/foo', 'bar')
+        sid1 = self.bm.connect('123', '/foo')
+        self.bm.enter_room(sid1, '/foo', 'bar')
+        sid2 = self.bm.connect('456', '/foo')
+        self.bm.enter_room(sid2, '/foo', 'bar')
         self.bm.connect('789', '/foo')
         self.bm.emit('my event', {'foo': 'bar'}, namespace='/foo', room='bar')
         assert self.bm.server._emit_internal.call_count == 2
@@ -212,10 +209,10 @@ class TestBaseManager(unittest.TestCase):
         )
 
     def test_emit_to_all(self):
-        self.bm.connect('123', '/foo')
-        self.bm.enter_room('123', '/foo', 'bar')
-        self.bm.connect('456', '/foo')
-        self.bm.enter_room('456', '/foo', 'bar')
+        sid1 = self.bm.connect('123', '/foo')
+        self.bm.enter_room(sid1, '/foo', 'bar')
+        sid2 = self.bm.connect('456', '/foo')
+        self.bm.enter_room(sid2, '/foo', 'bar')
         self.bm.connect('789', '/foo')
         self.bm.connect('abc', '/bar')
         self.bm.emit('my event', {'foo': 'bar'}, namespace='/foo')
@@ -231,14 +228,14 @@ class TestBaseManager(unittest.TestCase):
         )
 
     def test_emit_to_all_skip_one(self):
-        self.bm.connect('123', '/foo')
-        self.bm.enter_room('123', '/foo', 'bar')
-        self.bm.connect('456', '/foo')
-        self.bm.enter_room('456', '/foo', 'bar')
+        sid1 = self.bm.connect('123', '/foo')
+        self.bm.enter_room(sid1, '/foo', 'bar')
+        sid2 = self.bm.connect('456', '/foo')
+        self.bm.enter_room(sid2, '/foo', 'bar')
         self.bm.connect('789', '/foo')
         self.bm.connect('abc', '/bar')
         self.bm.emit(
-            'my event', {'foo': 'bar'}, namespace='/foo', skip_sid='456'
+            'my event', {'foo': 'bar'}, namespace='/foo', skip_sid=sid2
         )
         assert self.bm.server._emit_internal.call_count == 2
         self.bm.server._emit_internal.assert_any_call(
@@ -249,17 +246,17 @@ class TestBaseManager(unittest.TestCase):
         )
 
     def test_emit_to_all_skip_two(self):
-        self.bm.connect('123', '/foo')
-        self.bm.enter_room('123', '/foo', 'bar')
-        self.bm.connect('456', '/foo')
-        self.bm.enter_room('456', '/foo', 'bar')
-        self.bm.connect('789', '/foo')
+        sid1 = self.bm.connect('123', '/foo')
+        self.bm.enter_room(sid1, '/foo', 'bar')
+        sid2 = self.bm.connect('456', '/foo')
+        self.bm.enter_room(sid2, '/foo', 'bar')
+        sid3 = self.bm.connect('789', '/foo')
         self.bm.connect('abc', '/bar')
         self.bm.emit(
             'my event',
             {'foo': 'bar'},
             namespace='/foo',
-            skip_sid=['123', '789'],
+            skip_sid=[sid1, sid3],
         )
         assert self.bm.server._emit_internal.call_count == 1
         self.bm.server._emit_internal.assert_any_call(
@@ -267,13 +264,13 @@ class TestBaseManager(unittest.TestCase):
         )
 
     def test_emit_with_callback(self):
-        self.bm.connect('123', '/foo')
+        sid = self.bm.connect('123', '/foo')
         self.bm._generate_ack_id = mock.MagicMock()
         self.bm._generate_ack_id.return_value = 11
         self.bm.emit(
             'my event', {'foo': 'bar'}, namespace='/foo', callback='cb'
         )
-        self.bm._generate_ack_id.assert_called_once_with('123', '/foo', 'cb')
+        self.bm._generate_ack_id.assert_called_once_with(sid, '/foo', 'cb')
         self.bm.server._emit_internal.assert_called_once_with(
             '123', 'my event', {'foo': 'bar'}, '/foo', 11
         )

@@ -353,7 +353,7 @@ class AsyncClient(client.Client):
         if namespace in self.namespaces:
             self.namespaces.remove(namespace)
         if namespace == '/':
-            self.namespaces = []
+            self.namespaces = {}
             self.connected = False
 
     async def _trigger_event(self, event, namespace, *args):
@@ -456,7 +456,7 @@ class AsyncClient(client.Client):
         if self.connected:
             for n in self.namespaces:
                 await self._trigger_event('disconnect', namespace=n)
-            self.namespaces = []
+            self.namespaces = {}
             self.connected = False
         self.callbacks = {}
         self._binary_packet = None
