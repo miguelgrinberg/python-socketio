@@ -96,8 +96,10 @@ class AsyncClient(client.Client):
         self.socketio_path = socketio_path
 
         if namespaces is None:
-            namespaces = set(self.handlers.keys()).union(
-                set(self.namespace_handlers.keys()))
+            namespaces = list(set(self.handlers.keys()).union(
+                set(self.namespace_handlers.keys())))
+            if len(namespaces) == 0:
+                namespaces = ['/']
         elif isinstance(namespaces, six.string_types):
             namespaces = [namespaces]
         self.connection_namespaces = namespaces
@@ -293,10 +295,10 @@ class AsyncClient(client.Client):
 
     async def _handle_connect(self, namespace, data):
         namespace = namespace or '/'
-        self.logger.info('Namespace {} is connected'.format(namespace))
         if namespace not in self.namespaces:
+            self.logger.info('Namespace {} is connected'.format(namespace))
             self.namespaces[namespace] = (data or {}).get('sid', self.sid)
-        await self._trigger_event('connect', namespace=namespace)
+            await self._trigger_event('connect', namespace=namespace)
 
     async def _handle_disconnect(self, namespace):
         if not self.connected:
@@ -306,6 +308,7 @@ class AsyncClient(client.Client):
         if namespace in self.namespaces:
             del self.namespaces[namespace]
         if not self.namespaces:
+            self.connected = False
             await self.eio.disconnect(abort=True)
 
     async def _handle_event(self, namespace, id, data):
@@ -351,7 +354,7 @@ class AsyncClient(client.Client):
             data = (data,)
         await self._trigger_event('connect_error', namespace, *data)
         if namespace in self.namespaces:
-            self.namespaces.remove(namespace)
+            del self.namespaces[namespace]
         if namespace == '/':
             self.namespaces = {}
             self.connected = False

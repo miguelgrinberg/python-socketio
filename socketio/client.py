@@ -108,8 +108,7 @@ class Client(object):
             self.logger = logger
         else:
             self.logger = default_logger
-            if not logging.root.handlers and \
-                    self.logger.level == logging.NOTSET:
+            if self.logger.level == logging.NOTSET:
                 if logger:
                     self.logger.setLevel(logging.INFO)
                 else:
@@ -119,7 +118,7 @@ class Client(object):
         self.connection_url = None
         self.connection_headers = None
         self.connection_transports = None
-        self.connection_namespaces = None
+        self.connection_namespaces = []
         self.socketio_path = None
         self.sid = None
 
@@ -265,8 +264,10 @@ class Client(object):
         self.socketio_path = socketio_path
 
         if namespaces is None:
-            namespaces = set(self.handlers.keys()).union(
-                set(self.namespace_handlers.keys()))
+            namespaces = list(set(self.handlers.keys()).union(
+                set(self.namespace_handlers.keys())))
+            if len(namespaces) == 0:
+                namespaces = ['/']
         elif isinstance(namespaces, six.string_types):
             namespaces = [namespaces]
         self.connection_namespaces = namespaces
@@ -476,10 +477,10 @@ class Client(object):
 
     def _handle_connect(self, namespace, data):
         namespace = namespace or '/'
-        self.logger.info('Namespace {} is connected'.format(namespace))
         if namespace not in self.namespaces:
+            self.logger.info('Namespace {} is connected'.format(namespace))
             self.namespaces[namespace] = (data or {}).get('sid', self.sid)
-        self._trigger_event('connect', namespace=namespace)
+            self._trigger_event('connect', namespace=namespace)
 
     def _handle_disconnect(self, namespace):
         if not self.connected:
@@ -489,6 +490,7 @@ class Client(object):
         if namespace in self.namespaces:
             del self.namespaces[namespace]
         if not self.namespaces:
+            self.connected = False
             self.eio.disconnect(abort=True)
 
     def _handle_event(self, namespace, id, data):

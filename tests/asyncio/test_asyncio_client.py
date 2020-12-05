@@ -70,7 +70,6 @@ class TestAsyncClient(unittest.TestCase):
         assert c.connection_transports == 'transports'
         assert c.connection_namespaces == ['/foo', '/', '/bar']
         assert c.socketio_path == 'path'
-        assert c.namespaces == ['/foo', '/bar']
         c.eio.connect.mock.assert_called_once_with(
             'url',
             headers='headers',
@@ -95,7 +94,6 @@ class TestAsyncClient(unittest.TestCase):
         assert c.connection_transports == 'transports'
         assert c.connection_namespaces == ['/foo']
         assert c.socketio_path == 'path'
-        assert c.namespaces == ['/foo']
         c.eio.connect.mock.assert_called_once_with(
             'url',
             headers='headers',
@@ -119,9 +117,32 @@ class TestAsyncClient(unittest.TestCase):
         assert c.connection_url == 'url'
         assert c.connection_headers == 'headers'
         assert c.connection_transports == 'transports'
-        assert c.connection_namespaces is None
+        assert c.connection_namespaces == ['/', '/foo'] or \
+            c.connection_namespaces == ['/foo', '/']
         assert c.socketio_path == 'path'
-        assert c.namespaces == ['/foo']
+        c.eio.connect.mock.assert_called_once_with(
+            'url',
+            headers='headers',
+            transports='transports',
+            engineio_path='path',
+        )
+
+    def test_connect_no_namespaces(self):
+        c = asyncio_client.AsyncClient()
+        c.eio.connect = AsyncMock()
+        _run(
+            c.connect(
+                'url',
+                headers='headers',
+                transports='transports',
+                socketio_path='path',
+            )
+        )
+        assert c.connection_url == 'url'
+        assert c.connection_headers == 'headers'
+        assert c.connection_transports == 'transports'
+        assert c.connection_namespaces == ['/']
+        assert c.socketio_path == 'path'
         c.eio.connect.mock.assert_called_once_with(
             'url',
             headers='headers',
@@ -186,11 +207,11 @@ class TestAsyncClient(unittest.TestCase):
 
     def test_emit_no_arguments(self):
         c = asyncio_client.AsyncClient()
+        c.namespaces = {'/': '1'}
         c._send_packet = AsyncMock()
         _run(c.emit('foo'))
         expected_packet = packet.Packet(
-            packet.EVENT, namespace='/', data=['foo'], id=None, binary=False
-        )
+            packet.EVENT, namespace='/', data=['foo'], id=None)
         assert c._send_packet.mock.call_count == 1
         assert (
             c._send_packet.mock.call_args_list[0][0][0].encode()
@@ -199,6 +220,7 @@ class TestAsyncClient(unittest.TestCase):
 
     def test_emit_one_argument(self):
         c = asyncio_client.AsyncClient()
+        c.namespaces = {'/': '1'}
         c._send_packet = AsyncMock()
         _run(c.emit('foo', 'bar'))
         expected_packet = packet.Packet(
@@ -206,7 +228,6 @@ class TestAsyncClient(unittest.TestCase):
             namespace='/',
             data=['foo', 'bar'],
             id=None,
-            binary=False,
         )
         assert c._send_packet.mock.call_count == 1
         assert (
@@ -216,6 +237,7 @@ class TestAsyncClient(unittest.TestCase):
 
     def test_emit_one_argument_list(self):
         c = asyncio_client.AsyncClient()
+        c.namespaces = {'/': '1'}
         c._send_packet = AsyncMock()
         _run(c.emit('foo', ['bar', 'baz']))
         expected_packet = packet.Packet(
@@ -223,7 +245,6 @@ class TestAsyncClient(unittest.TestCase):
             namespace='/',
             data=['foo', ['bar', 'baz']],
             id=None,
-            binary=False,
         )
         assert c._send_packet.mock.call_count == 1
         assert (
@@ -233,6 +254,7 @@ class TestAsyncClient(unittest.TestCase):
 
     def test_emit_two_arguments(self):
         c = asyncio_client.AsyncClient()
+        c.namespaces = {'/': '1'}
         c._send_packet = AsyncMock()
         _run(c.emit('foo', ('bar', 'baz')))
         expected_packet = packet.Packet(
@@ -240,7 +262,6 @@ class TestAsyncClient(unittest.TestCase):
             namespace='/',
             data=['foo', 'bar', 'baz'],
             id=None,
-            binary=False,
         )
         assert c._send_packet.mock.call_count == 1
         assert (
@@ -250,12 +271,11 @@ class TestAsyncClient(unittest.TestCase):
 
     def test_emit_namespace(self):
         c = asyncio_client.AsyncClient()
-        c.namespaces = ['/foo']
+        c.namespaces = {'/foo': '1'}
         c._send_packet = AsyncMock()
         _run(c.emit('foo', namespace='/foo'))
         expected_packet = packet.Packet(
-            packet.EVENT, namespace='/foo', data=['foo'], id=None, binary=False
-        )
+            packet.EVENT, namespace='/foo', data=['foo'], id=None)
         assert c._send_packet.mock.call_count == 1
         assert (
             c._send_packet.mock.call_args_list[0][0][0].encode()
@@ -264,7 +284,7 @@ class TestAsyncClient(unittest.TestCase):
 
     def test_emit_unknown_namespace(self):
         c = asyncio_client.AsyncClient()
-        c.namespaces = ['/foo']
+        c.namespaces = {'/foo': '1'}
         with pytest.raises(exceptions.BadNamespaceError):
             _run(c.emit('foo', namespace='/bar'))
 
@@ -272,10 +292,10 @@ class TestAsyncClient(unittest.TestCase):
         c = asyncio_client.AsyncClient()
         c._send_packet = AsyncMock()
         c._generate_ack_id = mock.MagicMock(return_value=123)
+        c.namespaces = {'/': '1'}
         _run(c.emit('foo', callback='cb'))
         expected_packet = packet.Packet(
-            packet.EVENT, namespace='/', data=['foo'], id=123, binary=False
-        )
+            packet.EVENT, namespace='/', data=['foo'], id=123)
         assert c._send_packet.mock.call_count == 1
         assert (
             c._send_packet.mock.call_args_list[0][0][0].encode()
@@ -285,13 +305,12 @@ class TestAsyncClient(unittest.TestCase):
 
     def test_emit_namespace_with_callback(self):
         c = asyncio_client.AsyncClient()
-        c.namespaces = ['/foo']
+        c.namespaces = {'/foo': '1'}
         c._send_packet = AsyncMock()
         c._generate_ack_id = mock.MagicMock(return_value=123)
         _run(c.emit('foo', namespace='/foo', callback='cb'))
         expected_packet = packet.Packet(
-            packet.EVENT, namespace='/foo', data=['foo'], id=123, binary=False
-        )
+            packet.EVENT, namespace='/foo', data=['foo'], id=123)
         assert c._send_packet.mock.call_count == 1
         assert (
             c._send_packet.mock.call_args_list[0][0][0].encode()
@@ -300,7 +319,8 @@ class TestAsyncClient(unittest.TestCase):
         c._generate_ack_id.assert_called_once_with('/foo', 'cb')
 
     def test_emit_binary(self):
-        c = asyncio_client.AsyncClient(binary=True)
+        c = asyncio_client.AsyncClient()
+        c.namespaces = {'/': '1'}
         c._send_packet = AsyncMock()
         _run(c.emit('foo', b'bar'))
         expected_packet = packet.Packet(
@@ -308,7 +328,6 @@ class TestAsyncClient(unittest.TestCase):
             namespace='/',
             data=['foo', b'bar'],
             id=None,
-            binary=True,
         )
         assert c._send_packet.mock.call_count == 1
         assert (
@@ -317,7 +336,8 @@ class TestAsyncClient(unittest.TestCase):
         )
 
     def test_emit_not_binary(self):
-        c = asyncio_client.AsyncClient(binary=False)
+        c = asyncio_client.AsyncClient()
+        c.namespaces = {'/': '1'}
         c._send_packet = AsyncMock()
         _run(c.emit('foo', 'bar'))
         expected_packet = packet.Packet(
@@ -325,7 +345,6 @@ class TestAsyncClient(unittest.TestCase):
             namespace='/',
             data=['foo', 'bar'],
             id=None,
-            binary=False,
         )
         assert c._send_packet.mock.call_count == 1
         assert (
@@ -351,7 +370,7 @@ class TestAsyncClient(unittest.TestCase):
 
     def test_call(self):
         c = asyncio_client.AsyncClient()
-
+        c.namespaces = {'/': '1'}
         async def fake_event_wait():
             c._generate_ack_id.call_args_list[0][0][1]('foo', 321)
 
@@ -361,8 +380,7 @@ class TestAsyncClient(unittest.TestCase):
         c.eio.create_event.return_value.wait = fake_event_wait
         assert _run(c.call('foo')) == ('foo', 321)
         expected_packet = packet.Packet(
-            packet.EVENT, namespace='/', data=['foo'], id=123, binary=False
-        )
+            packet.EVENT, namespace='/', data=['foo'], id=123)
         assert c._send_packet.mock.call_count == 1
         assert (
             c._send_packet.mock.call_args_list[0][0][0].encode()
@@ -371,6 +389,7 @@ class TestAsyncClient(unittest.TestCase):
 
     def test_call_with_timeout(self):
         c = asyncio_client.AsyncClient()
+        c.namespaces = {'/': '1'}
 
         async def fake_event_wait():
             await asyncio.sleep(1)
@@ -382,8 +401,7 @@ class TestAsyncClient(unittest.TestCase):
         with pytest.raises(exceptions.TimeoutError):
             _run(c.call('foo', timeout=0.01))
         expected_packet = packet.Packet(
-            packet.EVENT, namespace='/', data=['foo'], id=123, binary=False
-        )
+            packet.EVENT, namespace='/', data=['foo'], id=123)
         assert c._send_packet.mock.call_count == 1
         assert (
             c._send_packet.mock.call_args_list[0][0][0].encode()
@@ -392,6 +410,7 @@ class TestAsyncClient(unittest.TestCase):
 
     def test_disconnect(self):
         c = asyncio_client.AsyncClient()
+        c.namespaces = {'/': '1'}
         c._trigger_event = AsyncMock()
         c._send_packet = AsyncMock()
         c.eio = mock.MagicMock()
@@ -409,7 +428,7 @@ class TestAsyncClient(unittest.TestCase):
 
     def test_disconnect_namespaces(self):
         c = asyncio_client.AsyncClient()
-        c.namespaces = ['/foo', '/bar']
+        c.namespaces = {'/foo': '1', '/bar': '2'}
         c._trigger_event = AsyncMock()
         c._send_packet = AsyncMock()
         c.eio = mock.MagicMock()
@@ -417,7 +436,7 @@ class TestAsyncClient(unittest.TestCase):
         c.eio.state = 'connected'
         _run(c.disconnect())
         assert c._trigger_event.mock.call_count == 0
-        assert c._send_packet.mock.call_count == 3
+        assert c._send_packet.mock.call_count == 2
         expected_packet = packet.Packet(packet.DISCONNECT, namespace='/foo')
         assert (
             c._send_packet.mock.call_args_list[0][0][0].encode()
@@ -426,11 +445,6 @@ class TestAsyncClient(unittest.TestCase):
         expected_packet = packet.Packet(packet.DISCONNECT, namespace='/bar')
         assert (
             c._send_packet.mock.call_args_list[1][0][0].encode()
-            == expected_packet.encode()
-        )
-        expected_packet = packet.Packet(packet.DISCONNECT, namespace='/')
-        assert (
-            c._send_packet.mock.call_args_list[2][0][0].encode()
             == expected_packet.encode()
         )
 
@@ -451,67 +465,55 @@ class TestAsyncClient(unittest.TestCase):
     def test_send_packet(self):
         c = asyncio_client.AsyncClient()
         c.eio.send = AsyncMock()
-        _run(c._send_packet(packet.Packet(packet.EVENT, 'foo', binary=False)))
-        c.eio.send.mock.assert_called_once_with('2"foo"', binary=False)
+        _run(c._send_packet(packet.Packet(packet.EVENT, 'foo')))
+        c.eio.send.mock.assert_called_once_with('2"foo"')
 
     def test_send_packet_binary(self):
         c = asyncio_client.AsyncClient()
         c.eio.send = AsyncMock()
-        _run(c._send_packet(packet.Packet(packet.EVENT, b'foo', binary=True)))
+        _run(c._send_packet(packet.Packet(packet.EVENT, b'foo')))
         assert c.eio.send.mock.call_args_list == [
-            mock.call('51-{"_placeholder":true,"num":0}', binary=False),
-            mock.call(b'foo', binary=True),
+            mock.call('51-{"_placeholder":true,"num":0}'),
+            mock.call(b'foo'),
         ] or c.eio.send.mock.call_args_list == [
-            mock.call('51-{"num":0,"_placeholder":true}', binary=False),
-            mock.call(b'foo', binary=True),
+            mock.call('51-{"num":0,"_placeholder":true}'),
+            mock.call(b'foo'),
         ]
 
-    def test_send_packet_default_binary_py3(self):
+    def test_send_packet_default_binary(self):
         c = asyncio_client.AsyncClient()
         c.eio.send = AsyncMock()
         _run(c._send_packet(packet.Packet(packet.EVENT, 'foo')))
-        c.eio.send.mock.assert_called_once_with('2"foo"', binary=False)
+        c.eio.send.mock.assert_called_once_with('2"foo"')
 
     def test_handle_connect(self):
         c = asyncio_client.AsyncClient()
         c._trigger_event = AsyncMock()
         c._send_packet = AsyncMock()
-        _run(c._handle_connect('/'))
+        _run(c._handle_connect('/', {'sid': '123'}))
         c._trigger_event.mock.assert_called_once_with('connect', namespace='/')
         c._send_packet.mock.assert_not_called()
 
     def test_handle_connect_with_namespaces(self):
         c = asyncio_client.AsyncClient()
-        c.namespaces = ['/foo', '/bar']
+        c.namespaces = {'/foo': '1', '/bar': '2'}
         c._trigger_event = AsyncMock()
         c._send_packet = AsyncMock()
-        _run(c._handle_connect('/'))
+        _run(c._handle_connect('/', {'sid': '3'}))
         c._trigger_event.mock.assert_called_once_with('connect', namespace='/')
-        assert c._send_packet.mock.call_count == 2
-        expected_packet = packet.Packet(packet.CONNECT, namespace='/foo')
-        assert (
-            c._send_packet.mock.call_args_list[0][0][0].encode()
-            == expected_packet.encode()
-        )
-        expected_packet = packet.Packet(packet.CONNECT, namespace='/bar')
-        assert (
-            c._send_packet.mock.call_args_list[1][0][0].encode()
-            == expected_packet.encode()
-        )
+        assert c.namespaces == {'/': '3', '/foo': '1', '/bar': '2'}
 
     def test_handle_connect_namespace(self):
         c = asyncio_client.AsyncClient()
-        c.namespaces = ['/foo']
+        c.namespaces = {'/foo': '1'}
         c._trigger_event = AsyncMock()
         c._send_packet = AsyncMock()
-        _run(c._handle_connect('/foo'))
-        _run(c._handle_connect('/bar'))
-        assert c._trigger_event.mock.call_args_list == [
-            mock.call('connect', namespace='/foo'),
-            mock.call('connect', namespace='/bar'),
-        ]
-        c._send_packet.mock.assert_not_called()
-        assert c.namespaces == ['/foo', '/bar']
+        _run(c._handle_connect('/foo', {'sid': '123'}))
+        _run(c._handle_connect('/bar', {'sid': '2'}))
+        assert c._trigger_event.mock.call_count == 1
+        c._trigger_event.mock.assert_called_once_with(
+            'connect', namespace='/bar')
+        assert c.namespaces == {'/foo': '1', '/bar': '2'}
 
     def test_handle_disconnect(self):
         c = asyncio_client.AsyncClient()
@@ -528,38 +530,36 @@ class TestAsyncClient(unittest.TestCase):
     def test_handle_disconnect_namespace(self):
         c = asyncio_client.AsyncClient()
         c.connected = True
-        c.namespaces = ['/foo', '/bar']
+        c.namespaces = {'/foo': '1', '/bar': '2'}
         c._trigger_event = AsyncMock()
         _run(c._handle_disconnect('/foo'))
         c._trigger_event.mock.assert_called_once_with(
             'disconnect', namespace='/foo'
         )
-        assert c.namespaces == ['/bar']
+        assert c.namespaces == {'/bar': '2'}
         assert c.connected
 
     def test_handle_disconnect_unknown_namespace(self):
         c = asyncio_client.AsyncClient()
         c.connected = True
-        c.namespaces = ['/foo', '/bar']
+        c.namespaces = {'/foo': '1', '/bar': '2'}
         c._trigger_event = AsyncMock()
         _run(c._handle_disconnect('/baz'))
         c._trigger_event.mock.assert_called_once_with(
             'disconnect', namespace='/baz'
         )
-        assert c.namespaces == ['/foo', '/bar']
+        assert c.namespaces == {'/foo': '1', '/bar': '2'}
         assert c.connected
 
-    def test_handle_disconnect_all_namespaces(self):
+    def test_handle_disconnect_default_namespaces(self):
         c = asyncio_client.AsyncClient()
         c.connected = True
-        c.namespaces = ['/foo', '/bar']
+        c.namespaces = {'/foo': '1', '/bar': '2'}
         c._trigger_event = AsyncMock()
         _run(c._handle_disconnect('/'))
-        c._trigger_event.mock.assert_any_call('disconnect', namespace='/')
-        c._trigger_event.mock.assert_any_call('disconnect', namespace='/foo')
-        c._trigger_event.mock.assert_any_call('disconnect', namespace='/bar')
-        assert c.namespaces == []
-        assert not c.connected
+        c._trigger_event.mock.assert_called_with('disconnect', namespace='/')
+        assert c.namespaces == {'/foo': '1', '/bar': '2'}
+        assert c.connected
 
     def test_handle_event(self):
         c = asyncio_client.AsyncClient()
@@ -570,7 +570,7 @@ class TestAsyncClient(unittest.TestCase):
         )
 
     def test_handle_event_with_id_no_arguments(self):
-        c = asyncio_client.AsyncClient(binary=True)
+        c = asyncio_client.AsyncClient()
         c._trigger_event = AsyncMock(return_value=None)
         c._send_packet = AsyncMock()
         _run(c._handle_event('/', 123, ['foo', ('bar', 'baz')]))
@@ -579,15 +579,14 @@ class TestAsyncClient(unittest.TestCase):
         )
         assert c._send_packet.mock.call_count == 1
         expected_packet = packet.Packet(
-            packet.ACK, namespace='/', id=123, data=[], binary=None
-        )
+            packet.ACK, namespace='/', id=123, data=[])
         assert (
             c._send_packet.mock.call_args_list[0][0][0].encode()
             == expected_packet.encode()
         )
 
     def test_handle_event_with_id_one_argument(self):
-        c = asyncio_client.AsyncClient(binary=True)
+        c = asyncio_client.AsyncClient()
         c._trigger_event = AsyncMock(return_value='ret')
         c._send_packet = AsyncMock()
         _run(c._handle_event('/', 123, ['foo', ('bar', 'baz')]))
@@ -596,15 +595,14 @@ class TestAsyncClient(unittest.TestCase):
         )
         assert c._send_packet.mock.call_count == 1
         expected_packet = packet.Packet(
-            packet.ACK, namespace='/', id=123, data=['ret'], binary=None
-        )
+            packet.ACK, namespace='/', id=123, data=['ret'])
         assert (
             c._send_packet.mock.call_args_list[0][0][0].encode()
             == expected_packet.encode()
         )
 
     def test_handle_event_with_id_one_list_argument(self):
-        c = asyncio_client.AsyncClient(binary=True)
+        c = asyncio_client.AsyncClient()
         c._trigger_event = AsyncMock(return_value=['a', 'b'])
         c._send_packet = AsyncMock()
         _run(c._handle_event('/', 123, ['foo', ('bar', 'baz')]))
@@ -613,15 +611,14 @@ class TestAsyncClient(unittest.TestCase):
         )
         assert c._send_packet.mock.call_count == 1
         expected_packet = packet.Packet(
-            packet.ACK, namespace='/', id=123, data=[['a', 'b']], binary=None
-        )
+            packet.ACK, namespace='/', id=123, data=[['a', 'b']])
         assert (
             c._send_packet.mock.call_args_list[0][0][0].encode()
             == expected_packet.encode()
         )
 
     def test_handle_event_with_id_two_arguments(self):
-        c = asyncio_client.AsyncClient(binary=True)
+        c = asyncio_client.AsyncClient()
         c._trigger_event = AsyncMock(return_value=('a', 'b'))
         c._send_packet = AsyncMock()
         _run(c._handle_event('/', 123, ['foo', ('bar', 'baz')]))
@@ -630,8 +627,7 @@ class TestAsyncClient(unittest.TestCase):
         )
         assert c._send_packet.mock.call_count == 1
         expected_packet = packet.Packet(
-            packet.ACK, namespace='/', id=123, data=['a', 'b'], binary=None
-        )
+            packet.ACK, namespace='/', id=123, data=['a', 'b'])
         assert (
             c._send_packet.mock.call_args_list[0][0][0].encode()
             == expected_packet.encode()
@@ -665,9 +661,9 @@ class TestAsyncClient(unittest.TestCase):
         c = asyncio_client.AsyncClient()
         c.connected = True
         c._trigger_event = AsyncMock()
-        c.namespaces = ['/foo', '/bar']
+        c.namespaces = {'/foo': '1', '/bar': '2'}
         _run(c._handle_error('/', 'error'))
-        assert c.namespaces == []
+        assert c.namespaces == {}
         assert not c.connected
         c._trigger_event.mock.assert_called_once_with(
             'connect_error', '/', 'error'
@@ -677,19 +673,19 @@ class TestAsyncClient(unittest.TestCase):
         c = asyncio_client.AsyncClient()
         c.connected = True
         c._trigger_event = AsyncMock()
-        c.namespaces = ['/foo', '/bar']
+        c.namespaces = {'/foo': '1', '/bar': '2'}
         _run(c._handle_error('/', None))
-        assert c.namespaces == []
+        assert c.namespaces == {}
         assert not c.connected
         c._trigger_event.mock.assert_called_once_with('connect_error', '/')
 
     def test_handle_error_namespace(self):
         c = asyncio_client.AsyncClient()
         c.connected = True
-        c.namespaces = ['/foo', '/bar']
+        c.namespaces = {'/foo': '1', '/bar': '2'}
         c._trigger_event = AsyncMock()
         _run(c._handle_error('/bar', ['error', 'message']))
-        assert c.namespaces == ['/foo']
+        assert c.namespaces == {'/foo': '1'}
         assert c.connected
         c._trigger_event.mock.assert_called_once_with(
             'connect_error', '/bar', 'error', 'message'
@@ -698,19 +694,19 @@ class TestAsyncClient(unittest.TestCase):
     def test_handle_error_namespace_with_no_arguments(self):
         c = asyncio_client.AsyncClient()
         c.connected = True
-        c.namespaces = ['/foo', '/bar']
+        c.namespaces = {'/foo': '1', '/bar': '2'}
         c._trigger_event = AsyncMock()
         _run(c._handle_error('/bar', None))
-        assert c.namespaces == ['/foo']
+        assert c.namespaces == {'/foo': '1'}
         assert c.connected
         c._trigger_event.mock.assert_called_once_with('connect_error', '/bar')
 
     def test_handle_error_unknown_namespace(self):
         c = asyncio_client.AsyncClient()
         c.connected = True
-        c.namespaces = ['/foo', '/bar']
+        c.namespaces = {'/foo': '1', '/bar': '2'}
         _run(c._handle_error('/baz', 'error'))
-        assert c.namespaces == ['/foo', '/bar']
+        assert c.namespaces == {'/foo': '1', '/bar': '2'}
         assert c.connected
 
     def test_trigger_event(self):
@@ -839,10 +835,23 @@ class TestAsyncClient(unittest.TestCase):
 
     def test_eio_connect(self):
         c = asyncio_client.AsyncClient()
+        c.connection_namespaces = ['/', '/foo']
+        c._send_packet = AsyncMock()
         c.eio.sid = 'foo'
         assert c.sid is None
-        c._handle_eio_connect()
+        _run(c._handle_eio_connect())
         assert c.sid == 'foo'
+        assert c._send_packet.mock.call_count == 2
+        expected_packet = packet.Packet(packet.CONNECT, namespace='/')
+        assert (
+            c._send_packet.mock.call_args_list[0][0][0].encode()
+            == expected_packet.encode()
+        )
+        expected_packet = packet.Packet(packet.CONNECT, namespace='/foo')
+        assert (
+            c._send_packet.mock.call_args_list[1][0][0].encode()
+            == expected_packet.encode()
+        )
 
     def test_handle_eio_message(self):
         c = asyncio_client.AsyncClient()
@@ -852,10 +861,10 @@ class TestAsyncClient(unittest.TestCase):
         c._handle_ack = AsyncMock()
         c._handle_error = AsyncMock()
 
-        _run(c._handle_eio_message('0'))
-        c._handle_connect.mock.assert_called_with(None)
-        _run(c._handle_eio_message('0/foo'))
-        c._handle_connect.mock.assert_called_with('/foo')
+        _run(c._handle_eio_message('0{"sid":"123"}'))
+        c._handle_connect.mock.assert_called_with(None, {'sid': '123'})
+        _run(c._handle_eio_message('0/foo,{"sid":"123"}'))
+        c._handle_connect.mock.assert_called_with('/foo', {'sid': '123'})
         _run(c._handle_eio_message('1'))
         c._handle_disconnect.mock.assert_called_with(None)
         _run(c._handle_eio_message('1/foo'))
@@ -895,6 +904,7 @@ class TestAsyncClient(unittest.TestCase):
 
     def test_eio_disconnect(self):
         c = asyncio_client.AsyncClient()
+        c.namespaces = {'/': '1'}
         c.connected = True
         c._trigger_event = AsyncMock()
         c.sid = 'foo'
@@ -908,15 +918,14 @@ class TestAsyncClient(unittest.TestCase):
 
     def test_eio_disconnect_namespaces(self):
         c = asyncio_client.AsyncClient()
+        c.namespaces = {'/foo': '1', '/bar': '2'}
         c.connected = True
-        c.namespaces = ['/foo', '/bar']
         c._trigger_event = AsyncMock()
         c.sid = 'foo'
         c.eio.state = 'connected'
         _run(c._handle_eio_disconnect())
         c._trigger_event.mock.assert_any_call('disconnect', namespace='/foo')
         c._trigger_event.mock.assert_any_call('disconnect', namespace='/bar')
-        c._trigger_event.mock.assert_any_call('disconnect', namespace='/')
         assert c.sid is None
         assert not c.connected
 
