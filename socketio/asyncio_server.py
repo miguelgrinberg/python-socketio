@@ -482,7 +482,7 @@ class AsyncServer(server.Server):
         namespace = namespace or '/'
         sid = self.manager.sid_from_eio_sid(eio_sid, namespace)
         self.logger.info('received ack from %s [%s]', sid, namespace)
-        await self.manager.trigger_callback(sid, namespace, id, data)
+        await self.manager.trigger_callback(sid, id, data)
 
     async def _trigger_event(self, event, namespace, *args):
         """Invoke an application event handler."""

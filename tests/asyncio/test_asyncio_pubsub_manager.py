@@ -154,10 +154,10 @@ class TestAsyncPubSubManager(unittest.TestCase):
                 _run(self.pm.emit('foo', 'bar', callback='cb'))
 
     def test_emit_with_ignore_queue(self):
-        self.pm.connect('123', '/')
+        sid = self.pm.connect('123', '/')
         _run(
             self.pm.emit(
-                'foo', 'bar', room='123', namespace='/', ignore_queue=True
+                'foo', 'bar', room=sid, namespace='/', ignore_queue=True
             )
         )
         self.pm._publish.mock.assert_not_called()
@@ -166,11 +166,11 @@ class TestAsyncPubSubManager(unittest.TestCase):
         )
 
     def test_can_disconnect(self):
-        self.pm.connect('123', '/')
-        assert _run(self.pm.can_disconnect('123', '/')) is True
-        _run(self.pm.can_disconnect('123', '/foo'))
+        sid = self.pm.connect('123', '/')
+        assert _run(self.pm.can_disconnect(sid, '/')) is True
+        _run(self.pm.can_disconnect(sid, '/foo'))
         self.pm._publish.mock.assert_called_once_with(
-            {'method': 'disconnect', 'sid': '123', 'namespace': '/foo'}
+            {'method': 'disconnect', 'sid': sid, 'namespace': '/foo'}
         )
 
     def test_close_room(self):
@@ -310,7 +310,7 @@ class TestAsyncPubSubManager(unittest.TestCase):
                     }
                 )
             )
-            trigger.mock.assert_called_once_with('sid', '/', 123, ('one', 2))
+            trigger.mock.assert_called_once_with('sid', 123, ('one', 2))
 
     def test_handle_callback_bad_host_id(self):
         with mock.patch.object(

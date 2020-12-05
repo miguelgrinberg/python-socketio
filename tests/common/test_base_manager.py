@@ -36,17 +36,18 @@ class TestBaseManager(unittest.TestCase):
         assert self.bm.sid_from_eio_sid('123', '/foo') == sid
 
     def test_pre_disconnect(self):
-        self.bm.connect('123', '/foo')
-        self.bm.connect('456', '/foo')
-        self.bm.pre_disconnect('123', '/foo')
-        assert self.bm.pending_disconnect == {'/foo': ['123']}
-        assert not self.bm.is_connected('123', '/foo')
-        self.bm.pre_disconnect('456', '/foo')
-        assert self.bm.pending_disconnect == {'/foo': ['123', '456']}
-        assert not self.bm.is_connected('456', '/foo')
-        self.bm.disconnect('123', '/foo')
-        assert self.bm.pending_disconnect == {'/foo': ['456']}
-        self.bm.disconnect('456', '/foo')
+        sid1 = self.bm.connect('123', '/foo')
+        sid2 = self.bm.connect('456', '/foo')
+        assert self.bm.is_connected(sid1, '/foo')
+        assert self.bm.pre_disconnect(sid1, '/foo') == '123'
+        assert self.bm.pending_disconnect == {'/foo': [sid1]}
+        assert not self.bm.is_connected(sid1, '/foo')
+        assert self.bm.pre_disconnect(sid2, '/foo') == '456'
+        assert self.bm.pending_disconnect == {'/foo': [sid1, sid2]}
+        assert not self.bm.is_connected(sid2, '/foo')
+        self.bm.disconnect(sid1, '/foo')
+        assert self.bm.pending_disconnect == {'/foo': [sid2]}
+        self.bm.disconnect(sid2, '/foo')
         assert self.bm.pending_disconnect == {}
 
     def test_disconnect(self):
@@ -66,6 +67,8 @@ class TestBaseManager(unittest.TestCase):
         sid4 = self.bm.connect('456', '/foo')
         assert self.bm.is_connected(sid1, '/')
         assert self.bm.is_connected(sid2, '/foo')
+        assert not self.bm.is_connected(sid2, '/')
+        assert not self.bm.is_connected(sid1, '/foo')
         self.bm.disconnect(sid1, '/')
         assert not self.bm.is_connected(sid1, '/')
         assert self.bm.is_connected(sid2, '/foo')
@@ -100,14 +103,17 @@ class TestBaseManager(unittest.TestCase):
         assert self.bm.rooms == {}
 
     def test_disconnect_with_callbacks(self):
-        self.bm.connect('123', '/')
-        self.bm.connect('123', '/foo')
-        self.bm._generate_ack_id('123', '/', 'f')
-        self.bm._generate_ack_id('123', '/foo', 'g')
-        self.bm.disconnect('123', '/foo')
-        assert '/foo' not in self.bm.callbacks['123']
-        self.bm.disconnect('123', '/')
-        assert '123' not in self.bm.callbacks
+        sid1 = self.bm.connect('123', '/')
+        sid2 = self.bm.connect('123', '/foo')
+        sid3 = self.bm.connect('456', '/foo')
+        self.bm._generate_ack_id(sid1, 'f')
+        self.bm._generate_ack_id(sid2, 'g')
+        self.bm._generate_ack_id(sid3, 'h')
+        self.bm.disconnect(sid2, '/foo')
+        assert sid2 not in self.bm.callbacks
+        self.bm.disconnect(sid1, '/')
+        assert sid1 not in self.bm.callbacks
+        assert sid3 in self.bm.callbacks
 
     def test_disconnect_bad_namespace(self):
         self.bm.connect('123', '/')
@@ -115,26 +121,28 @@ class TestBaseManager(unittest.TestCase):
         self.bm.disconnect('123', '/bar')  # should not assert
 
     def test_trigger_callback(self):
-        self.bm.connect('123', '/')
-        self.bm.connect('123', '/foo')
+        sid1 = self.bm.connect('123', '/')
+        sid2 = self.bm.connect('123', '/foo')
         cb = mock.MagicMock()
-        id1 = self.bm._generate_ack_id('123', '/', cb)
-        id2 = self.bm._generate_ack_id('123', '/foo', cb)
-        self.bm.trigger_callback('123', '/', id1, ['foo'])
-        self.bm.trigger_callback('123', '/foo', id2, ['bar', 'baz'])
-        assert cb.call_count == 2
+        id1 = self.bm._generate_ack_id(sid1, cb)
+        id2 = self.bm._generate_ack_id(sid2, cb)
+        id3 = self.bm._generate_ack_id(sid1, cb)
+        self.bm.trigger_callback(sid1, id1, ['foo'])
+        self.bm.trigger_callback(sid1, id3, ['bar'])
+        self.bm.trigger_callback(sid2, id2, ['bar', 'baz'])
+        assert cb.call_count == 3
         cb.assert_any_call('foo')
+        cb.assert_any_call('bar')
         cb.assert_any_call('bar', 'baz')
 
     def test_invalid_callback(self):
-        self.bm.connect('123', '/')
+        sid = self.bm.connect('123', '/')
         cb = mock.MagicMock()
-        id = self.bm._generate_ack_id('123', '/', cb)
+        id = self.bm._generate_ack_id(sid, cb)
 
         # these should not raise an exception
-        self.bm.trigger_callback('124', '/', id, ['foo'])
-        self.bm.trigger_callback('123', '/foo', id, ['foo'])
-        self.bm.trigger_callback('123', '/', id + 1, ['foo'])
+        self.bm.trigger_callback('xxx', id, ['foo'])
+        self.bm.trigger_callback(sid, id + 1, ['foo'])
         assert cb.call_count == 0
 
     def test_get_namespaces(self):
@@ -147,19 +155,21 @@ class TestBaseManager(unittest.TestCase):
         assert '/foo' in namespaces
 
     def test_get_participants(self):
-        self.bm.connect('123', '/')
-        self.bm.connect('456', '/')
-        sid = self.bm.connect('789', '/')
-        self.bm.disconnect(sid, '/')
-        assert sid not in self.bm.rooms['/'][None]
+        sid1 = self.bm.connect('123', '/')
+        sid2 = self.bm.connect('456', '/')
+        sid3 = self.bm.connect('789', '/')
+        self.bm.disconnect(sid3, '/')
+        assert sid3 not in self.bm.rooms['/'][None]
         participants = list(self.bm.get_participants('/', None))
         assert len(participants) == 2
-        assert sid not in participants
+        assert (sid1, '123') in participants
+        assert (sid2, '456') in participants
+        assert (sid3, '789') not in participants
 
     def test_leave_invalid_room(self):
-        self.bm.connect('123', '/foo')
-        self.bm.leave_room('123', '/foo', 'baz')
-        self.bm.leave_room('123', '/bar', 'baz')
+        sid = self.bm.connect('123', '/foo')
+        self.bm.leave_room(sid, '/foo', 'baz')
+        self.bm.leave_room(sid, '/bar', 'baz')
 
     def test_no_room(self):
         rooms = self.bm.get_rooms('123', '/foo')
@@ -270,7 +280,7 @@ class TestBaseManager(unittest.TestCase):
         self.bm.emit(
             'my event', {'foo': 'bar'}, namespace='/foo', callback='cb'
         )
-        self.bm._generate_ack_id.assert_called_once_with(sid, '/foo', 'cb')
+        self.bm._generate_ack_id.assert_called_once_with(sid, 'cb')
         self.bm.server._emit_internal.assert_called_once_with(
             '123', 'my event', {'foo': 'bar'}, '/foo', 11
         )

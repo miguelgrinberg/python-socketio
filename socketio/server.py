@@ -579,7 +579,7 @@ class Server(object):
         """
         return self.eio.sleep(seconds)
 
-    def _emit_internal(self, sid, event, data, namespace=None, id=None):
+    def _emit_internal(self, eio_sid, event, data, namespace=None, id=None):
         """Send a message to a client."""
         # tuples are expanded to multiple arguments, everything else is sent
         # as a single argument
@@ -589,8 +589,8 @@ class Server(object):
             data = [data]
         else:
             data = []
-        self._send_packet(sid, packet.Packet(packet.EVENT, namespace=namespace,
-                                             data=[event] + data, id=id))
+        self._send_packet(eio_sid, packet.Packet(
+            packet.EVENT, namespace=namespace, data=[event] + data, id=id))
 
     def _send_packet(self, eio_sid, pkt):
         """Send a Socket.IO packet to a client."""
@@ -680,7 +680,7 @@ class Server(object):
         namespace = namespace or '/'
         sid = self.manager.sid_from_eio_sid(eio_sid, namespace)
         self.logger.info('received ack from %s [%s]', sid, namespace)
-        self.manager.trigger_callback(sid, namespace, id, data)
+        self.manager.trigger_callback(sid, id, data)
 
     def _trigger_event(self, event, namespace, *args):
         """Invoke an application event handler."""

@@ -55,7 +55,7 @@ class BaseManager(object):
             # the client is in the process of being disconnected
             return False
         try:
-            return self.rooms[namespace][None][sid]
+            return self.rooms[namespace][None][sid] is not None
         except KeyError:
             pass
 
@@ -87,10 +87,8 @@ class BaseManager(object):
                 rooms.append(room_name)
         for room in rooms:
             self.leave_room(sid, namespace, room)
-        if sid in self.callbacks and namespace in self.callbacks[sid]:
-            del self.callbacks[sid][namespace]
-            if len(self.callbacks[sid]) == 0:
-                del self.callbacks[sid]
+        if sid in self.callbacks:
+            del self.callbacks[sid]
         if namespace in self.pending_disconnect and \
                 sid in self.pending_disconnect[namespace]:
             self.pending_disconnect[namespace].remove(sid)
@@ -148,33 +146,30 @@ class BaseManager(object):
         for sid, eio_sid in self.get_participants(namespace, room):
             if sid not in skip_sid:
                 if callback is not None:
-                    id = self._generate_ack_id(sid, namespace, callback)
+                    id = self._generate_ack_id(sid, callback)
                 else:
                     id = None
                 self.server._emit_internal(eio_sid, event, data, namespace, id)
 
-    def trigger_callback(self, sid, namespace, id, data):
+    def trigger_callback(self, sid, id, data):
         """Invoke an application callback."""
         callback = None
         try:
-            callback = self.callbacks[sid][namespace][id]
+            callback = self.callbacks[sid][id]
         except KeyError:
             # if we get an unknown callback we just ignore it
             self._get_logger().warning('Unknown callback received, ignoring.')
         else:
-            del self.callbacks[sid][namespace][id]
+            del self.callbacks[sid][id]
         if callback is not None:
             callback(*data)
 
-    def _generate_ack_id(self, sid, namespace, callback):
+    def _generate_ack_id(self, sid, callback):
         """Generate a unique identifier for an ACK packet."""
-        namespace = namespace or '/'
         if sid not in self.callbacks:
-            self.callbacks[sid] = {}
-        if namespace not in self.callbacks[sid]:
-            self.callbacks[sid][namespace] = {0: itertools.count(1)}
-        id = six.next(self.callbacks[sid][namespace][0])
-        self.callbacks[sid][namespace][id] = callback
+            self.callbacks[sid] = {0: itertools.count(1)}
+        id = six.next(self.callbacks[sid][0])
+        self.callbacks[sid][id] = callback
         return id
 
     def _get_logger(self):

@@ -23,7 +23,7 @@ class AsyncManager(BaseManager):
         for sid, eio_sid in self.get_participants(namespace, room):
             if sid not in skip_sid:
                 if callback is not None:
-                    id = self._generate_ack_id(sid, namespace, callback)
+                    id = self._generate_ack_id(sid, callback)
                 else:
                     id = None
                 tasks.append(self.server._emit_internal(eio_sid, event, data,
@@ -39,19 +39,19 @@ class AsyncManager(BaseManager):
         """
         return super().close_room(room, namespace)
 
-    async def trigger_callback(self, sid, namespace, id, data):
+    async def trigger_callback(self, sid, id, data):
         """Invoke an application callback.
 
         Note: this method is a coroutine.
         """
         callback = None
         try:
-            callback = self.callbacks[sid][namespace][id]
+            callback = self.callbacks[sid][id]
         except KeyError:
             # if we get an unknown callback we just ignore it
             self._get_logger().warning('Unknown callback received, ignoring.')
         else:
-            del self.callbacks[sid][namespace][id]
+            del self.callbacks[sid][id]
         if callback is not None:
             ret = callback(*data)
             if asyncio.iscoroutine(ret):

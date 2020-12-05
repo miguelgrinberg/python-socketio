@@ -60,7 +60,7 @@ class AsyncPubSubManager(AsyncManager):
                                    'context of a server.')
             if room is None:
                 raise ValueError('Cannot use callback without a room set.')
-            id = self._generate_ack_id(room, namespace, callback)
+            id = self._generate_ack_id(room, callback)
             callback = (room, namespace, id)
         else:
             callback = None
@@ -122,12 +122,11 @@ class AsyncPubSubManager(AsyncManager):
         if self.host_id == message.get('host_id'):
             try:
                 sid = message['sid']
-                namespace = message['namespace']
                 id = message['id']
                 args = message['args']
             except KeyError:
                 return
-            await self.trigger_callback(sid, namespace, id, args)
+            await self.trigger_callback(sid, id, args)
 
     async def _return_callback(self, host_id, sid, namespace, callback_id,
                                *args):

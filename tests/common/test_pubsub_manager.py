@@ -149,9 +149,9 @@ class TestBaseManager(unittest.TestCase):
                 self.pm.emit('foo', 'bar', callback='cb')
 
     def test_emit_with_ignore_queue(self):
-        self.pm.connect('123', '/')
+        sid = self.pm.connect('123', '/')
         self.pm.emit(
-            'foo', 'bar', room='123', namespace='/', ignore_queue=True
+            'foo', 'bar', room=sid, namespace='/', ignore_queue=True
         )
         self.pm._publish.assert_not_called()
         self.pm.server._emit_internal.assert_called_once_with(
@@ -159,11 +159,11 @@ class TestBaseManager(unittest.TestCase):
         )
 
     def test_can_disconnect(self):
-        self.pm.connect('123', '/')
-        assert self.pm.can_disconnect('123', '/')
-        self.pm.can_disconnect('123', '/foo')
+        sid = self.pm.connect('123', '/')
+        assert self.pm.can_disconnect(sid, '/')
+        self.pm.can_disconnect(sid, '/foo')
         self.pm._publish.assert_called_once_with(
-            {'method': 'disconnect', 'sid': '123', 'namespace': '/foo'}
+            {'method': 'disconnect', 'sid': sid, 'namespace': '/foo'}
         )
 
     def test_close_room(self):
@@ -277,7 +277,7 @@ class TestBaseManager(unittest.TestCase):
                     'args': ('one', 2),
                 }
             )
-            trigger.assert_called_once_with('sid', '/', 123, ('one', 2))
+            trigger.assert_called_once_with('sid', 123, ('one', 2))
 
     def test_handle_callback_bad_host_id(self):
         with mock.patch.object(self.pm, 'trigger_callback') as trigger:

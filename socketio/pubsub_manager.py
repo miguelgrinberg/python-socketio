@@ -58,7 +58,7 @@ class PubSubManager(BaseManager):
                                    'context of a server.')
             if room is None:
                 raise ValueError('Cannot use callback without a room set.')
-            id = self._generate_ack_id(room, namespace, callback)
+            id = self._generate_ack_id(room, callback)
             callback = (room, namespace, id)
         else:
             callback = None
@@ -120,16 +120,15 @@ class PubSubManager(BaseManager):
         if self.host_id == message.get('host_id'):
             try:
                 sid = message['sid']
-                namespace = message['namespace']
                 id = message['id']
                 args = message['args']
             except KeyError:
                 return
-            self.trigger_callback(sid, namespace, id, args)
+            self.trigger_callback(sid, id, args)
 
     def _return_callback(self, host_id, sid, namespace, callback_id, *args):
         # When an event callback is received, the callback is returned back
-        # the sender, which is identified by the host_id
+        # to the sender, which is identified by the host_id
         self._publish({'method': 'callback', 'host_id': host_id,
                        'sid': sid, 'namespace': namespace, 'id': callback_id,
                        'args': args})
