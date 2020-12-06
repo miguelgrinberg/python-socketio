@@ -60,7 +60,8 @@ class BaseManager(object):
             pass
 
     def sid_from_eio_sid(self, eio_sid, namespace):
-        return self.rooms[namespace][None].inverse.get(eio_sid)
+        if namespace in self.rooms:
+            return self.rooms[namespace][None].inverse.get(eio_sid)
 
     def can_disconnect(self, sid, namespace):
         return self.is_connected(sid, namespace)

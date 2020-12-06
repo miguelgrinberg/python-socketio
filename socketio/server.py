@@ -116,8 +116,7 @@ class Server(object):
             self.logger = logger
         else:
             self.logger = default_logger
-            if not logging.root.handlers and \
-                    self.logger.level == logging.NOTSET:
+            if self.logger.level == logging.NOTSET:
                 if logger:
                     self.logger.setLevel(logging.INFO)
                 else:
@@ -621,15 +620,11 @@ class Server(object):
                 self.manager.pre_disconnect(sid, namespace)
                 self._send_packet(eio_sid, packet.Packet(
                     packet.DISCONNECT, data=fail_reason, namespace=namespace))
-            elif namespace != '/':
+            else:
                 self._send_packet(eio_sid, packet.Packet(
                     packet.CONNECT_ERROR, data=fail_reason,
                     namespace=namespace))
             self.manager.disconnect(sid, namespace)
-            if namespace == '/' and \
-                    eio_sid in self.environ:  # pragma: no cover
-                del self.environ[eio_sid]
-            return fail_reason or False
         elif not self.always_connect:
             self._send_packet(eio_sid, packet.Packet(
                 packet.CONNECT, {'sid': sid}, namespace=namespace))
@@ -638,10 +633,11 @@ class Server(object):
         """Handle a client disconnect."""
         namespace = namespace or '/'
         sid = self.manager.sid_from_eio_sid(eio_sid, namespace)
-        if self.manager.is_connected(sid, namespace):
-            self.manager.pre_disconnect(sid, namespace=namespace)
-            self._trigger_event('disconnect', namespace, sid)
-            self.manager.disconnect(sid, namespace)
+        if not self.manager.is_connected(sid, namespace):  # pragma: no cover
+            return
+        self.manager.pre_disconnect(sid, namespace=namespace)
+        self._trigger_event('disconnect', namespace, sid)
+        self.manager.disconnect(sid, namespace)
 
     def _handle_event(self, eio_sid, namespace, id, data):
         """Handle an incoming client event."""
@@ -731,7 +727,8 @@ class Server(object):
 
     def _handle_eio_disconnect(self, eio_sid):
         """Handle Engine.IO disconnect event."""
-        self._handle_disconnect(eio_sid, '/')
+        for n in list(self.manager.get_namespaces()).copy():
+            self._handle_disconnect(eio_sid, n)
         if eio_sid in self.environ:
             del self.environ[eio_sid]
 
