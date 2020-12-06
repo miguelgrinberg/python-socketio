@@ -14,12 +14,18 @@ sio = socketio.AsyncServer(async_mode='tornado')
 
 class MainHandler(tornado.web.RequestHandler):
     def get(self):
-        self.render("latency.html")
+        self.render("fiddle.html")
 
 
 @sio.event
-async def ping_from_client(sid):
-    await sio.emit('pong_from_server', room=sid)
+async def connect(sid, environ):
+    print('connected', sid)
+    await sio.emit('hello', (1, 2, {'hello': 'you'}), to=sid)
+
+
+@sio.event
+def disconnect(sid):
+    print('disconnected', sid)
 
 
 def main():

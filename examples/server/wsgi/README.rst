@@ -30,32 +30,42 @@ django_example
 This is a version of the "app.py" application described above, that is based
 on the Django web framework.
 
+fiddle.py
+---------
+
+This is a very simple application based on a JavaScript example of the same
+name.
+
 Running the Examples
 --------------------
 
 To run these examples, create a virtual environment, install the requirements
-and then run::
+and then run one of the following::
 
     $ python app.py
 
-or::
+::
 
     $ python latency.py
 
-or::
+::
 
     $ cd django_example
     $ ./manage.py runserver
 
+::
+
+    $ python fiddle
+
 You can then access the application from your web browser at
-``http://localhost:5000`` (``app.py`` and ``latency.py``) or
+``http://localhost:5000`` (``app.py``, ``latency.py`` and ``fiddle.py``) or
 ``http://localhost:8000`` (``django_example``).
 
-Near the top of the ``app.py`` and ``latency.py`` source files there is a
-``async_mode`` variable that can be edited to swich to the other asynchornous
-modes. Accepted values for ``async_mode`` are ``'threading'``, ``'eventlet'``
-and ``'gevent'``. For ``django_example``, the async mode can be set in the
-``django_example/socketio_app/views.py`` module.
+Near the top of the ``app.py``, ``latency.py`` and ``fiddle.py`` source files
+there is a ``async_mode`` variable that can be edited to swich to the other
+asynchornous modes. Accepted values for ``async_mode`` are ``'threading'``,
+``'eventlet'`` and ``'gevent'``. For ``django_example``, the async mode can be
+set in the ``django_example/socketio_app/views.py`` module.
 
 Note 1: when using the ``'eventlet'`` mode, the eventlet package must be
 installed in the virtual environment::

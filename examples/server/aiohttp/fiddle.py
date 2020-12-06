@@ -8,13 +8,19 @@ sio.attach(app)
 
 
 async def index(request):
-    with open('latency.html') as f:
+    with open('fiddle.html') as f:
         return web.Response(text=f.read(), content_type='text/html')
 
 
 @sio.event
-async def ping_from_client(sid):
-    await sio.emit('pong_from_server', room=sid)
+async def connect(sid, environ):
+    print('connected', sid)
+    await sio.emit('hello', (1, 2, {'hello': 'you'}), to=sid)
+
+
+@sio.event
+def disconnect(sid):
+    print('disconnected', sid)
 
 
 app.router.add_static('/static', 'static')

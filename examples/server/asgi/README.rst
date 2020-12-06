@@ -22,6 +22,12 @@ time to the page.
 This is an ideal application to measure the performance of the different
 asynchronous modes supported by the Socket.IO server.
 
+fiddle.py
+---------
+
+This is a very simple application based on a JavaScript example of the same
+name.
+
 Running the Examples
 --------------------
 

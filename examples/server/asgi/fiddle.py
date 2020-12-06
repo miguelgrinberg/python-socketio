@@ -5,14 +5,20 @@ import socketio
 
 sio = socketio.AsyncServer(async_mode='asgi')
 app = socketio.ASGIApp(sio, static_files={
-    '/': 'latency.html',
+    '/': 'fiddle.html',
     '/static': 'static',
 })
 
 
 @sio.event
-async def ping_from_client(sid):
-    await sio.emit('pong_from_server', room=sid)
+async def connect(sid, environ):
+    print('connected', sid)
+    await sio.emit('hello', (1, 2, {'hello': 'you'}), to=sid)
+
+
+@sio.event
+def disconnect(sid):
+    print('disconnected', sid)
 
 
 if __name__ == '__main__':

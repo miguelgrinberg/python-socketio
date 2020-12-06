@@ -23,17 +23,27 @@ time to the page.
 This is an ideal application to measure the performance of the different
 asynchronous modes supported by the Socket.IO server.
 
+fiddle.py
+---------
+
+This is a very simple application based on a JavaScript example of the same
+name.
+
 Running the Examples
 --------------------
 
 To run these examples, create a virtual environment, install the requirements
-and then run::
+and then run one of the following::
 
     $ python app.py
 
-or::
+::
 
     $ python latency.py
+
+::
+
+    $ python fiddle.py
 
 You can then access the application from your web browser at
 ``http://localhost:8080``.
