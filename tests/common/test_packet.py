@@ -1,9 +1,8 @@
 import unittest
 
-import six
+import pytest
 
 from socketio import packet
-import pytest
 
 
 class TestPacket(unittest.TestCase):
@@ -22,7 +21,7 @@ class TestPacket(unittest.TestCase):
 
     def test_encode_text_event_packet(self):
         pkt = packet.Packet(
-            packet_type=packet.EVENT, data=[six.text_type('foo')]
+            packet_type=packet.EVENT, data=['foo']
         )
         assert pkt.packet_type == packet.EVENT
         assert pkt.data == ['foo']
@@ -58,7 +57,7 @@ class TestPacket(unittest.TestCase):
 
     def test_encode_text_ack_packet(self):
         pkt = packet.Packet(
-            packet_type=packet.ACK, data=[six.text_type('foo')]
+            packet_type=packet.ACK, data=['foo']
         )
         assert pkt.packet_type == packet.ACK
         assert pkt.data == ['foo']
@@ -92,7 +91,7 @@ class TestPacket(unittest.TestCase):
     def test_encode_namespace(self):
         pkt = packet.Packet(
             packet_type=packet.EVENT,
-            data=[six.text_type('foo')],
+            data=['foo'],
             namespace='/bar',
         )
         assert pkt.namespace == '/bar'
@@ -122,7 +121,7 @@ class TestPacket(unittest.TestCase):
     def test_encode_namespace_with_hyphens(self):
         pkt = packet.Packet(
             packet_type=packet.EVENT,
-            data=[six.text_type('foo')],
+            data=['foo'],
             namespace='/b-a-r',
         )
         assert pkt.namespace == '/b-a-r'
@@ -135,7 +134,7 @@ class TestPacket(unittest.TestCase):
 
     def test_encode_event_with_hyphens(self):
         pkt = packet.Packet(
-            packet_type=packet.EVENT, data=[six.text_type('f-o-o')]
+            packet_type=packet.EVENT, data=['f-o-o']
         )
         assert pkt.namespace is None
         assert pkt.encode() == '2["f-o-o"]'
@@ -147,7 +146,7 @@ class TestPacket(unittest.TestCase):
 
     def test_encode_id(self):
         pkt = packet.Packet(
-            packet_type=packet.EVENT, data=[six.text_type('foo')], id=123
+            packet_type=packet.EVENT, data=['foo'], id=123
         )
         assert pkt.id == 123
         assert pkt.encode() == '2123["foo"]'
@@ -172,7 +171,7 @@ class TestPacket(unittest.TestCase):
     def test_encode_namespace_and_id(self):
         pkt = packet.Packet(
             packet_type=packet.EVENT,
-            data=[six.text_type('foo')],
+            data=['foo'],
             namespace='/bar',
             id=123,
         )
@@ -189,7 +188,7 @@ class TestPacket(unittest.TestCase):
     def test_encode_many_binary(self):
         pkt = packet.Packet(
             packet_type=packet.EVENT,
-            data={'a': six.text_type('123'), 'b': b'456', 'c': [b'789', 123]},
+            data={'a': '123', 'b': b'456', 'c': [b'789', 123]},
         )
         assert pkt.packet_type == packet.BINARY_EVENT
         ep = pkt.encode()
@@ -200,7 +199,7 @@ class TestPacket(unittest.TestCase):
     def test_encode_many_binary_ack(self):
         pkt = packet.Packet(
             packet_type=packet.ACK,
-            data={'a': six.text_type('123'), 'b': b'456', 'c': [b'789', 123]},
+            data={'a': '123', 'b': b'456', 'c': [b'789', 123]},
         )
         assert pkt.packet_type == packet.BINARY_ACK
         ep = pkt.encode()
@@ -250,14 +249,14 @@ class TestPacket(unittest.TestCase):
 
     def test_data_is_binary_list(self):
         pkt = packet.Packet()
-        assert not pkt._data_is_binary([six.text_type('foo')])
+        assert not pkt._data_is_binary(['foo'])
         assert not pkt._data_is_binary([])
         assert pkt._data_is_binary([b'foo'])
-        assert pkt._data_is_binary([six.text_type('foo'), b'bar'])
+        assert pkt._data_is_binary(['foo', b'bar'])
 
     def test_data_is_binary_dict(self):
         pkt = packet.Packet()
-        assert not pkt._data_is_binary({'a': six.text_type('foo')})
+        assert not pkt._data_is_binary({'a': 'foo'})
         assert not pkt._data_is_binary({})
         assert pkt._data_is_binary({'a': b'foo'})
-        assert pkt._data_is_binary({'a': six.text_type('foo'), 'b': b'bar'})
+        assert pkt._data_is_binary({'a': 'foo', 'b': b'bar'})

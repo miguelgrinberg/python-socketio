@@ -1,17 +1,12 @@
 import functools
-import unittest
 import logging
+import unittest
+from unittest import mock
 
-import six
-
-if six.PY3:
-    from unittest import mock
-else:
-    import mock
+import pytest
 
 from socketio import base_manager
 from socketio import pubsub_manager
-import pytest
 
 
 class TestBaseManager(unittest.TestCase):

@@ -3,7 +3,6 @@ import logging
 import random
 
 import engineio
-import six
 
 from . import client
 from . import exceptions
@@ -100,7 +99,7 @@ class AsyncClient(client.Client):
                 set(self.namespace_handlers.keys())))
             if len(namespaces) == 0:
                 namespaces = ['/']
-        elif isinstance(namespaces, six.string_types):
+        elif isinstance(namespaces, str):
             namespaces = [namespaces]
         self.connection_namespaces = namespaces
         try:
@@ -111,7 +110,7 @@ class AsyncClient(client.Client):
             await self._trigger_event(
                 'connect_error', '/',
                 exc.args[1] if len(exc.args) > 1 else exc.args[0])
-            six.raise_from(exceptions.ConnectionError(exc.args[0]), None)
+            raise exceptions.ConnectionError(exc.args[0]) from None
         self.connected = True
 
     async def wait(self):
@@ -237,7 +236,7 @@ class AsyncClient(client.Client):
         try:
             await asyncio.wait_for(callback_event.wait(), timeout)
         except asyncio.TimeoutError:
-            six.raise_from(exceptions.TimeoutError(), None)
+            raise exceptions.TimeoutError() from None
         return callback_args[0] if len(callback_args[0]) > 1 \
             else callback_args[0][0] if len(callback_args[0]) == 1 \
             else None

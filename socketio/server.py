@@ -1,7 +1,6 @@
 import logging
 
 import engineio
-import six
 
 from . import base_manager
 from . import exceptions

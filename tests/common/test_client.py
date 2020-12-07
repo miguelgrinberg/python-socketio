@@ -2,26 +2,17 @@ import json
 import logging
 import sys
 import unittest
-
-import six
-
-if six.PY3:
-    from unittest import mock
-else:
-    import mock
+from unittest import mock
 
 from engineio import exceptions as engineio_exceptions
 from engineio import packet as engineio_packet
+import pytest
 
-if six.PY3:
-    from socketio import asyncio_namespace
-else:
-    asyncio_namespace = None
+from socketio import asyncio_namespace
 from socketio import client
 from socketio import exceptions
 from socketio import namespace
 from socketio import packet
-import pytest
 
 
 class TestClient(unittest.TestCase):
@@ -474,6 +465,7 @@ class TestClient(unittest.TestCase):
     def test_call(self):
         c = client.Client()
         c.namespaces = {'/': '1'}
+
         def fake_event_wait(timeout=None):
             assert timeout == 60
             c._generate_ack_id.call_args_list[0][0][1]('foo', 321)
@@ -495,6 +487,7 @@ class TestClient(unittest.TestCase):
     def test_call_with_timeout(self):
         c = client.Client()
         c.namespaces = {'/': '1'}
+
         def fake_event_wait(timeout=None):
             assert timeout == 12
             return False

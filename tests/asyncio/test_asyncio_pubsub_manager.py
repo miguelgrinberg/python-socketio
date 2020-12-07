@@ -2,17 +2,12 @@ import asyncio
 import functools
 import sys
 import unittest
+from unittest import mock
 
-import six
-
-if six.PY3:
-    from unittest import mock
-else:
-    import mock
+import pytest
 
 from socketio import asyncio_manager
 from socketio import asyncio_pubsub_manager
-import pytest
 
 
 def AsyncMock(*args, **kwargs):

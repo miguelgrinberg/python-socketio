@@ -5,7 +5,6 @@ import signal
 import threading
 
 import engineio
-import six
 
 from . import exceptions
 from . import namespace
@@ -268,7 +267,7 @@ class Client(object):
                 set(self.namespace_handlers.keys())))
             if len(namespaces) == 0:
                 namespaces = ['/']
-        elif isinstance(namespaces, six.string_types):
+        elif isinstance(namespaces, str):
             namespaces = [namespaces]
         self.connection_namespaces = namespaces
         try:
@@ -278,7 +277,7 @@ class Client(object):
             self._trigger_event(
                 'connect_error', '/',
                 exc.args[1] if len(exc.args) > 1 else exc.args[0])
-            six.raise_from(exceptions.ConnectionError(exc.args[0]), None)
+            raise exceptions.ConnectionError(exc.args[0]) from None
         self.connected = True
 
     def wait(self):
@@ -471,7 +470,7 @@ class Client(object):
         namespace = namespace or '/'
         if namespace not in self.callbacks:
             self.callbacks[namespace] = {0: itertools.count(1)}
-        id = six.next(self.callbacks[namespace][0])
+        id = next(self.callbacks[namespace][0])
         self.callbacks[namespace][id] = callback
         return id
 

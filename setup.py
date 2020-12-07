@@ -29,7 +29,6 @@ setup(
     include_package_data=True,
     platforms='any',
     install_requires=[
-        'six>=1.9.0',
         'bidict>=0.21.0',
         'python-engineio>=3.13.0,<4'
     ],

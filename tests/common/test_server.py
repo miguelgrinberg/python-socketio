@@ -1,19 +1,14 @@
 import json
 import logging
 import unittest
+from unittest import mock
 
-import six
-
-if six.PY3:
-    from unittest import mock
-else:
-    import mock
+import pytest
 
 from socketio import exceptions
 from socketio import namespace
 from socketio import packet
 from socketio import server
-import pytest
 
 
 @mock.patch('socketio.server.engineio.Server', **{
@@ -790,7 +785,7 @@ class TestServer(unittest.TestCase):
 
         pkt = packet.Packet(
             packet_type=packet.EVENT,
-            data={six.text_type('foo'): six.text_type('bar')},
+            data={'foo': 'bar'},
         )
         assert pkt.encode() == '2*** encoded ***'
         pkt2 = packet.Packet(encoded_packet=pkt.encode())

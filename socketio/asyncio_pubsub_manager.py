@@ -3,7 +3,6 @@ import uuid
 
 import json
 import pickle
-import six
 
 from .asyncio_manager import AsyncManager
 
@@ -157,7 +156,7 @@ class AsyncPubSubManager(AsyncManager):
             if isinstance(message, dict):
                 data = message
             else:
-                if isinstance(message, six.binary_type):  # pragma: no cover
+                if isinstance(message, bytes):  # pragma: no cover
                     try:
                         data = pickle.loads(message)
                     except:

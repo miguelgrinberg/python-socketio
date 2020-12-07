@@ -1,7 +1,6 @@
 import asyncio
 
 import engineio
-import six
 
 from . import asyncio_manager
 from . import exceptions
@@ -228,7 +227,7 @@ class AsyncServer(server.Server):
         try:
             await asyncio.wait_for(callback_event.wait(), timeout)
         except asyncio.TimeoutError:
-            six.raise_from(exceptions.TimeoutError(), None)
+            raise exceptions.TimeoutError() from None
         return callback_args[0] if len(callback_args[0]) > 1 \
             else callback_args[0][0] if len(callback_args[0]) == 1 \
             else None

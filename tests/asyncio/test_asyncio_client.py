@@ -2,20 +2,15 @@ import asyncio
 from contextlib import contextmanager
 import sys
 import unittest
+from unittest import mock
 
-import six
-
-if six.PY3:
-    from unittest import mock
-else:
-    import mock
+import pytest
 
 from socketio import asyncio_client
 from socketio import asyncio_namespace
 from engineio import exceptions as engineio_exceptions
 from socketio import exceptions
 from socketio import packet
-import pytest
 
 
 def AsyncMock(*args, **kwargs):
@@ -371,6 +366,7 @@ class TestAsyncClient(unittest.TestCase):
     def test_call(self):
         c = asyncio_client.AsyncClient()
         c.namespaces = {'/': '1'}
+
         async def fake_event_wait():
             c._generate_ack_id.call_args_list[0][0][1]('foo', 321)
 

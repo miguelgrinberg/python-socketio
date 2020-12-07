@@ -2,7 +2,6 @@ import itertools
 import logging
 
 from bidict import bidict
-import six
 
 default_logger = logging.getLogger('socketio')
 
@@ -35,7 +34,7 @@ class BaseManager(object):
 
     def get_namespaces(self):
         """Return an iterable with the active namespace names."""
-        return six.iterkeys(self.rooms)
+        return self.rooms.keys()
 
     def get_participants(self, namespace, room):
         """Return an iterable with the active participants in a room."""
@@ -83,7 +82,7 @@ class BaseManager(object):
         if namespace not in self.rooms:
             return
         rooms = []
-        for room_name, room in six.iteritems(self.rooms[namespace].copy()):
+        for room_name, room in self.rooms[namespace].copy().items():
             if sid in room:
                 rooms.append(room_name)
         for room in rooms:
@@ -129,7 +128,7 @@ class BaseManager(object):
         """Return the rooms a client is in."""
         r = []
         try:
-            for room_name, room in six.iteritems(self.rooms[namespace]):
+            for room_name, room in self.rooms[namespace].items():
                 if room_name is not None and sid in room:
                     r.append(room_name)
         except KeyError:
@@ -169,7 +168,7 @@ class BaseManager(object):
         """Generate a unique identifier for an ACK packet."""
         if sid not in self.callbacks:
             self.callbacks[sid] = {0: itertools.count(1)}
-        id = six.next(self.callbacks[sid][0])
+        id = next(self.callbacks[sid][0])
         self.callbacks[sid][id] = callback
         return id
 

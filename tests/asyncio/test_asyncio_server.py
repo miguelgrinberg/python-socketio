@@ -3,20 +3,15 @@ import json
 import logging
 import sys
 import unittest
+from unittest import mock
 
-import six
-
-if six.PY3:
-    from unittest import mock
-else:
-    import mock
+import pytest
 
 from socketio import asyncio_server
 from socketio import asyncio_namespace
 from socketio import exceptions
 from socketio import namespace
 from socketio import packet
-import pytest
 
 
 def AsyncMock(*args, **kwargs):
@@ -912,7 +907,7 @@ class TestAsyncServer(unittest.TestCase):
 
         pkt = packet.Packet(
             packet_type=packet.EVENT,
-            data={six.text_type('foo'): six.text_type('bar')},
+            data={'foo': 'bar'},
         )
         assert pkt.encode() == '2*** encoded ***'
         pkt2 = packet.Packet(encoded_packet=pkt.encode())
