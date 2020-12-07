@@ -1,5 +1,16 @@
 # python-socketio change log
 
+**Release 5.0.0** - 2020-12-07
+
+- Update to match the JavaScript Socket.IO 3.x releases (Socket.IO v5 protocol revision)
+    - v5 protocol: do not connect the default namespace unless requested explicitly ([commit](https://github.com/miguelgrinberg/python-socketio/commit/49822e6919d3de9d52f6dde32c7f04ad62d73990))
+    - v5 protocol: handle per-namespace sids in base manager ([commit](https://github.com/miguelgrinberg/python-socketio/commit/308b0c8eeb71e1fead35d19088a3291a15ccd50a))
+    - v5 protocol: rename ERROR packet to CONNECT_ERROR ([commit](https://github.com/miguelgrinberg/python-socketio/commit/4940fc1e1e2ddc86c28cd3b626dad75d6845243f))
+    - v5 protocol: use Engine.IO 4.x
+- Remove unnecessary binary argument ([commit](https://github.com/miguelgrinberg/python-socketio/commit/9270a5bcf85785935520ef816d314a5e197ed227))
+- Remove dependency on the six package ([commit](https://github.com/miguelgrinberg/python-socketio/commit/f6eeedb767614fb68b41927c8fd620c95cafcc6c))
+- Added version compatibility chart to README ([commit](https://github.com/miguelgrinberg/python-socketio/commit/342ca0bb9da8b9ea6c63aa3bd05a37903416d301))
+
 **Release 4.6.1** - 2020-11-28
 
 - Added troubleshooting section to the documentation ([commit](https://github.com/miguelgrinberg/python-socketio/commit/48906071307d79df356379fe6e05a73b0c65d9d4))
