@@ -21,7 +21,7 @@ is to use the same version of this package for the client and the server. If you
 using this package with a different client or server, then you must ensure the
 versions are compatible.
 
-The version compatiblity chart below maps versions of this package to versions
+The version compatibility chart below maps versions of this package to versions
 of the JavaScript reference implementation and the versions of the Socket.IO and
 Engine.IO protocols.
 

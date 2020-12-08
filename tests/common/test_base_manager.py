@@ -28,6 +28,11 @@ class TestBaseManager(unittest.TestCase):
         assert dict(self.bm.rooms['/foo'][None]) == {sid: '123'}
         assert dict(self.bm.rooms['/foo'][sid]) == {sid: '123'}
         assert self.bm.sid_from_eio_sid('123', '/foo') == sid
+        assert self.bm.sid_from_eio_sid('1234', '/foo') is None
+        assert self.bm.sid_from_eio_sid('123', '/bar') is None
+        assert self.bm.eio_sid_from_sid(sid, '/foo') == '123'
+        assert self.bm.eio_sid_from_sid('x', '/foo') is None
+        assert self.bm.eio_sid_from_sid(sid, '/bar') is None
 
     def test_pre_disconnect(self):
         sid1 = self.bm.connect('123', '/foo')
