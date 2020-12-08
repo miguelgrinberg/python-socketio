@@ -1,5 +1,10 @@
 # python-socketio change log
 
+**Release 5.0.1** - 2020-12-08
+
+- Fix Engine.IO dependency version ([commit](https://github.com/miguelgrinberg/python-socketio/commit/d2bb2b12e536036e34d94a1ad87e0d48a1a504a8))
+- Conversion from Socket.IO sid to Engine.IO sid ([commit](https://github.com/miguelgrinberg/python-socketio/commit/805b33fa7d2e38be4ada60e382c989433fd5af03))
+
 **Release 5.0.0** - 2020-12-07
 
 - Update to match the JavaScript Socket.IO 3.x releases (Socket.IO v5 protocol revision)
