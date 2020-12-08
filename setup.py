@@ -30,7 +30,7 @@ setup(
     platforms='any',
     install_requires=[
         'bidict>=0.21.0',
-        'python-engineio>=3.13.0,<4'
+        'python-engineio>=4',
     ],
     extras_require={
         'client': [
