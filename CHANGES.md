@@ -1,5 +1,9 @@
 # python-socketio change log
 
+**Release 5.0.2** - 2020-12-12
+
+- Return `environ`` dictionary for a client ([commit](https://github.com/miguelgrinberg/python-socketio/commit/2e71c22c6db41b82d863b3189c122ea9f7916bf0))
+
 **Release 5.0.1** - 2020-12-08
 
 - Fix Engine.IO dependency version ([commit](https://github.com/miguelgrinberg/python-socketio/commit/d2bb2b12e536036e34d94a1ad87e0d48a1a504a8))
