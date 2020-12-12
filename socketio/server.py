@@ -534,6 +534,16 @@ class Server(object):
         """
         return self.eio.transport(sid)
 
+    def get_environ(self, sid, namespace=None):
+        """Return the WSGI environ dictionary for a client.
+
+        :param sid: The session of the client.
+        :param namespace: The Socket.IO namespace. If this argument is omitted
+                          the default namespace is used.
+        """
+        eio_sid = self.manager.eio_sid_from_sid(sid, namespace or '/')
+        return self.environ.get(eio_sid)
+
     def handle_request(self, environ, start_response):
         """Handle an HTTP request from the client.
 

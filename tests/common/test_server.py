@@ -746,6 +746,14 @@ class TestServer(unittest.TestCase):
         with pytest.raises(ValueError):
             s.register_namespace(AsyncNS())
 
+    def test_get_environ(self, eio):
+        s = server.Server()
+        s._handle_eio_connect('123', 'environ')
+        s._handle_eio_message('123', '0')
+        sid = s.manager.sid_from_eio_sid('123', '/')
+        assert s.get_environ(sid) == 'environ'
+        assert s.get_environ('foo') is None
+
     def test_logger(self, eio):
         s = server.Server(logger=False)
         assert s.logger.getEffectiveLevel() == logging.ERROR
