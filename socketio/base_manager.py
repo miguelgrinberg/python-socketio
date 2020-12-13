@@ -38,7 +38,7 @@ class BaseManager(object):
 
     def get_participants(self, namespace, room):
         """Return an iterable with the active participants in a room."""
-        for sid, eio_sid in self.rooms[namespace][room].copy().items():
+        for sid, eio_sid in self.rooms[namespace][room]._fwdm.copy().items():
             yield sid, eio_sid
 
     def connect(self, eio_sid, namespace):
@@ -59,8 +59,10 @@ class BaseManager(object):
             pass
 
     def sid_from_eio_sid(self, eio_sid, namespace):
-        if namespace in self.rooms:
-            return self.rooms[namespace][None].inverse.get(eio_sid)
+        try:
+            return self.rooms[namespace][None]._invm[eio_sid]
+        except KeyError:
+            pass
 
     def eio_sid_from_sid(self, sid, namespace):
         if namespace in self.rooms:
