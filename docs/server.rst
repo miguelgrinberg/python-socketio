@@ -447,7 +447,7 @@ When working with distributed applications, it is often necessary to access
 the functionality of the Socket.IO from multiple processes. There are two
 specific use cases:
 
-- Applications that use a work queues such as
+- Applications that use work queues such as
   `Celery <http://www.celeryproject.org/>`_ may need to emit an event to a
   client once a background job completes. The most convenient place to carry
   out this task is the worker process that handled this job.
