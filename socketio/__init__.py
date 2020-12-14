@@ -27,7 +27,7 @@ else:  # pragma: no cover
     AsyncRedisManager = None
     AsyncAioPikaManager = None
 
-__version__ = '5.0.3'
+__version__ = '5.0.4dev'
 
 __all__ = ['__version__', 'Client', 'Server', 'BaseManager', 'PubSubManager',
            'KombuManager', 'RedisManager', 'ZmqManager', 'KafkaManager',
