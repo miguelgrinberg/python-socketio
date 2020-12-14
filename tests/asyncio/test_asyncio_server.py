@@ -730,11 +730,13 @@ class TestAsyncServer(unittest.TestCase):
     def test_session(self, eio):
         fake_session = {}
 
-        async def fake_get_session(sid):
+        async def fake_get_session(eio_sid):
+            assert eio_sid == '123'
             return fake_session
 
-        async def fake_save_session(sid, session):
+        async def fake_save_session(eio_sid, session):
             global fake_session
+            assert eio_sid == '123'
             fake_session = session
 
         eio.return_value.send = AsyncMock()
@@ -744,17 +746,21 @@ class TestAsyncServer(unittest.TestCase):
 
         async def _test():
             await s._handle_eio_connect('123', 'environ')
-            await s.save_session('123', {'foo': 'bar'})
-            async with s.session('123') as session:
+            await s._handle_eio_message('123', '0')
+            await s._handle_eio_message('123', '0/ns')
+            sid = s.manager.sid_from_eio_sid('123', '/')
+            sid2 = s.manager.sid_from_eio_sid('123', '/ns')
+            await s.save_session(sid, {'foo': 'bar'})
+            async with s.session(sid) as session:
                 assert session == {'foo': 'bar'}
                 session['foo'] = 'baz'
                 session['bar'] = 'foo'
-            assert await s.get_session('123') == {'foo': 'baz', 'bar': 'foo'}
+            assert await s.get_session(sid) == {'foo': 'baz', 'bar': 'foo'}
             assert fake_session == {'/': {'foo': 'baz', 'bar': 'foo'}}
-            async with s.session('123', namespace='/ns') as session:
+            async with s.session(sid2, namespace='/ns') as session:
                 assert session == {}
                 session['a'] = 'b'
-            assert await s.get_session('123', namespace='/ns') == {'a': 'b'}
+            assert await s.get_session(sid2, namespace='/ns') == {'a': 'b'}
             assert fake_session == {
                 '/': {'foo': 'baz', 'bar': 'foo'},
                 '/ns': {'a': 'b'},

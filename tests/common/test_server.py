@@ -627,28 +627,34 @@ class TestServer(unittest.TestCase):
     def test_session(self, eio):
         fake_session = {}
 
-        def fake_get_session(sid):
+        def fake_get_session(eio_sid):
+            assert eio_sid == '123'
             return fake_session
 
-        def fake_save_session(sid, session):
+        def fake_save_session(eio_sid, session):
             global fake_session
+            assert eio_sid == '123'
             fake_session = session
 
         s = server.Server()
         s.eio.get_session = fake_get_session
         s.eio.save_session = fake_save_session
         s._handle_eio_connect('123', 'environ')
-        s.save_session('123', {'foo': 'bar'})
-        with s.session('123') as session:
+        s._handle_eio_message('123', '0')
+        s._handle_eio_message('123', '0/ns')
+        sid = s.manager.sid_from_eio_sid('123', '/')
+        sid2 = s.manager.sid_from_eio_sid('123', '/ns')
+        s.save_session(sid, {'foo': 'bar'})
+        with s.session(sid) as session:
             assert session == {'foo': 'bar'}
             session['foo'] = 'baz'
             session['bar'] = 'foo'
-        assert s.get_session('123') == {'foo': 'baz', 'bar': 'foo'}
+        assert s.get_session(sid) == {'foo': 'baz', 'bar': 'foo'}
         assert fake_session == {'/': {'foo': 'baz', 'bar': 'foo'}}
-        with s.session('123', namespace='/ns') as session:
+        with s.session(sid2, namespace='/ns') as session:
             assert session == {}
             session['a'] = 'b'
-        assert s.get_session('123', namespace='/ns') == {'a': 'b'}
+        assert s.get_session(sid2, namespace='/ns') == {'a': 'b'}
         assert fake_session == {
             '/': {'foo': 'baz', 'bar': 'foo'},
             '/ns': {'a': 'b'},

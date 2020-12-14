@@ -444,7 +444,8 @@ class Server(object):
         is used.
         """
         namespace = namespace or '/'
-        eio_session = self.eio.get_session(sid)
+        eio_sid = self.manager.eio_sid_from_sid(sid, namespace)
+        eio_session = self.eio.get_session(eio_sid)
         return eio_session.setdefault(namespace, {})
 
     def save_session(self, sid, session, namespace=None):
@@ -456,7 +457,8 @@ class Server(object):
                           the default namespace is used.
         """
         namespace = namespace or '/'
-        eio_session = self.eio.get_session(sid)
+        eio_sid = self.manager.eio_sid_from_sid(sid, namespace)
+        eio_session = self.eio.get_session(eio_sid)
         eio_session[namespace] = session
 
     def session(self, sid, namespace=None):
