@@ -4,6 +4,6 @@ httptools==0.0.13
 python-engineio
 python_socketio
 six==1.11.0
-uvicorn==0.7.0
+uvicorn==0.11.7
 uvloop==0.12.2
 websockets==7.0
