@@ -1,5 +1,12 @@
 # python-socketio change log
 
+**Release 5.0.3** - 2020-12-14
+
+- Correct handling of user session [#585](https://github.com/miguelgrinberg/python-socketio/issues/585) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/a61d59c02aa08483f86bf45accf6620b69b06a41))
+- Performace tuning ([commit](https://github.com/miguelgrinberg/python-socketio/commit/bcdf9bb009ef32dac156ea518c1b113c0773877c))
+- Updated ASGI examples to latest release ([commit](https://github.com/miguelgrinberg/python-socketio/commit/8c5b762d724c0cfc45f982ffc3303202985ab812))
+- Updated Django example to latest release ([commit](https://github.com/miguelgrinberg/python-socketio/commit/94afcf643a66d85b64d76f4c219afe8881e8dbe6))
+
 **Release 5.0.2** - 2020-12-12
 
 - Return `environ`` dictionary for a client ([commit](https://github.com/miguelgrinberg/python-socketio/commit/2e71c22c6db41b82d863b3189c122ea9f7916bf0))
