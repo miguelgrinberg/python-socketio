@@ -618,7 +618,7 @@ class Server(object):
         if self.always_connect:
             self._send_packet(eio_sid, packet.Packet(
                 packet.CONNECT, {'sid': sid}, namespace=namespace))
-        fail_reason = None
+        fail_reason = exceptions.ConnectionRefusedError().error_args
         try:
             success = self._trigger_event('connect', namespace, sid,
                                           self.environ[eio_sid])

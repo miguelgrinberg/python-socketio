@@ -359,7 +359,8 @@ class TestServer(unittest.TestCase):
         assert not s.manager.is_connected('1', '/')
         handler.assert_called_once_with('1', 'environ')
         assert not s.manager.is_connected('1', '/')
-        s.eio.send.assert_called_once_with('123', '4')
+        s.eio.send.assert_called_once_with(
+            '123', '4{"message":"Connection rejected by server"}')
         assert s.environ == {'123': 'environ'}
 
     def test_handle_connect_namespace_rejected(self, eio):
@@ -371,7 +372,8 @@ class TestServer(unittest.TestCase):
         assert not s.manager.is_connected('1', '/foo')
         handler.assert_called_once_with('1', 'environ')
         assert not s.manager.is_connected('1', '/foo')
-        s.eio.send.assert_called_once_with('123', '4/foo')
+        s.eio.send.assert_called_once_with(
+            '123', '4/foo,{"message":"Connection rejected by server"}')
         assert s.environ == {'123': 'environ'}
 
     def test_handle_connect_rejected_always_connect(self, eio):
@@ -383,7 +385,8 @@ class TestServer(unittest.TestCase):
         assert not s.manager.is_connected('1', '/')
         handler.assert_called_once_with('1', 'environ')
         s.eio.send.assert_any_call('123', '0{"sid":"1"}')
-        s.eio.send.assert_any_call('123', '1')
+        s.eio.send.assert_any_call(
+            '123', '1{"message":"Connection rejected by server"}')
         assert s.environ == {'123': 'environ'}
 
     def test_handle_connect_namespace_rejected_always_connect(self, eio):
@@ -395,7 +398,8 @@ class TestServer(unittest.TestCase):
         assert not s.manager.is_connected('1', '/foo')
         handler.assert_called_once_with('1', 'environ')
         s.eio.send.assert_any_call('123', '0/foo,{"sid":"1"}')
-        s.eio.send.assert_any_call('123', '1/foo')
+        s.eio.send.assert_any_call(
+            '123', '1/foo,{"message":"Connection rejected by server"}')
         assert s.environ == {'123': 'environ'}
 
     def test_handle_connect_rejected_with_exception(self, eio):
@@ -408,7 +412,7 @@ class TestServer(unittest.TestCase):
         s._handle_eio_message('123', '0')
         assert not s.manager.is_connected('1', '/')
         handler.assert_called_once_with('1', 'environ')
-        s.eio.send.assert_called_once_with('123', '4"fail_reason"')
+        s.eio.send.assert_called_once_with('123', '4{"message":"fail_reason"}')
         assert s.environ == {'123': 'environ'}
 
     def test_handle_connect_rejected_with_empty_exception(self, eio):
@@ -421,20 +425,21 @@ class TestServer(unittest.TestCase):
         s._handle_eio_message('123', '0')
         assert not s.manager.is_connected('1', '/')
         handler.assert_called_once_with('1', 'environ')
-        s.eio.send.assert_called_once_with('123', '4')
+        s.eio.send.assert_called_once_with(
+            '123', '4{"message":"Connection rejected by server"}')
         assert s.environ == {'123': 'environ'}
 
     def test_handle_connect_namespace_rejected_with_exception(self, eio):
         s = server.Server()
         handler = mock.MagicMock(
-            side_effect=exceptions.ConnectionRefusedError(u'fail_reason', 1)
+            side_effect=exceptions.ConnectionRefusedError('fail_reason', 1)
         )
         s.on('connect', handler, namespace='/foo')
         s._handle_eio_connect('123', 'environ')
         s._handle_eio_message('123', '0/foo')
         assert not s.manager.is_connected('1', '/foo')
         s.eio.send.assert_called_once_with(
-            '123', '4/foo,["fail_reason",1]'
+            '123', '4/foo,{"message":"fail_reason","data":1}'
         )
         assert s.environ == {'123': 'environ'}
 
@@ -447,7 +452,8 @@ class TestServer(unittest.TestCase):
         s._handle_eio_connect('123', 'environ')
         s._handle_eio_message('123', '0/foo')
         assert not s.manager.is_connected('1', '/foo')
-        s.eio.send.assert_called_once_with('123', '4/foo')
+        s.eio.send.assert_called_once_with(
+            '123', '4/foo,{"message":"Connection rejected by server"}')
         assert s.environ == {'123': 'environ'}
 
     def test_handle_disconnect(self, eio):
