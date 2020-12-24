@@ -13,7 +13,7 @@ class AsyncServer(server.Server):
 
     This class implements a fully compliant Socket.IO web server with support
     for websocket and long-polling transports, compatible with the asyncio
-    framework on Python 3.5 or newer.
+    framework.
 
     :param client_manager: The client manager instance that will manage the
                            client list. When this is omitted, the client list
@@ -26,46 +26,75 @@ class AsyncServer(server.Server):
                  packets. Custom json modules must have ``dumps`` and ``loads``
                  functions that are compatible with the standard library
                  versions.
-    :param async_handlers: If set to ``True``, event handlers are executed in
-                           separate threads. To run handlers synchronously,
-                           set to ``False``. The default is ``True``.
+    :param async_handlers: If set to ``True``, event handlers for a client are
+                           executed in separate threads. To run handlers for a
+                           client synchronously, set to ``False``. The default
+                           is ``True``.
+    :param always_connect: When set to ``False``, new connections are
+                           provisory until the connect handler returns
+                           something other than ``False``, at which point they
+                           are accepted. When set to ``True``, connections are
+                           immediately accepted, and then if the connect
+                           handler returns ``False`` a disconnect is issued.
+                           Set to ``True`` if you need to emit events from the
+                           connect handler and your client is confused when it
+                           receives events before the connection acceptance.
+                           In any other case use the default of ``False``.
     :param kwargs: Connection parameters for the underlying Engine.IO server.
 
     The Engine.IO configuration supports the following settings:
 
     :param async_mode: The asynchronous model to use. See the Deployment
                        section in the documentation for a description of the
-                       available options. Valid async modes are "aiohttp". If
-                       this argument is not given, an async mode is chosen
-                       based on the installed packages.
+                       available options. Valid async modes are "threading",
+                       "eventlet", "gevent" and "gevent_uwsgi". If this
+                       argument is not given, "eventlet" is tried first, then
+                       "gevent_uwsgi", then "gevent", and finally "threading".
+                       The first async mode that has all its dependencies
+                       installed is then one that is chosen.
+    :param ping_interval: The interval in seconds at which the server pings
+                          the client. The default is 25 seconds. For advanced
+                          control, a two element tuple can be given, where
+                          the first number is the ping interval and the second
+                          is a grace period added by the server.
     :param ping_timeout: The time in seconds that the client waits for the
-                         server to respond before disconnecting.
-    :param ping_interval: The interval in seconds at which the client pings
-                          the server.
+                         server to respond before disconnecting. The default
+                         is 5 seconds.
     :param max_http_buffer_size: The maximum size of a message when using the
-                                 polling transport.
-    :param allow_upgrades: Whether to allow transport upgrades or not.
+                                 polling transport. The default is 1,000,000
+                                 bytes.
+    :param allow_upgrades: Whether to allow transport upgrades or not. The
+                           default is ``True``.
     :param http_compression: Whether to compress packages when using the
-                             polling transport.
+                             polling transport. The default is ``True``.
     :param compression_threshold: Only compress messages when their byte size
-                                  is greater than this value.
-    :param cookie: Name of the HTTP cookie that contains the client session
-                   id. If set to ``None``, a cookie is not sent to the client.
+                                  is greater than this value. The default is
+                                  1024 bytes.
+    :param cookie: If set to a string, it is the name of the HTTP cookie the
+                   server sends back tot he client containing the client
+                   session id. If set to a dictionary, the ``'name'`` key
+                   contains the cookie name and other keys define cookie
+                   attributes, where the value of each attribute can be a
+                   string, a callable with no arguments, or a boolean. If set
+                   to ``None`` (the default), a cookie is not sent to the
+                   client.
     :param cors_allowed_origins: Origin or list of origins that are allowed to
                                  connect to this server. Only the same origin
                                  is allowed by default. Set this argument to
                                  ``'*'`` to allow all origins, or to ``[]`` to
                                  disable CORS handling.
     :param cors_credentials: Whether credentials (cookies, authentication) are
-                             allowed in requests to this server.
+                             allowed in requests to this server. The default is
+                             ``True``.
     :param monitor_clients: If set to ``True``, a background task will ensure
                             inactive clients are closed. Set to ``False`` to
                             disable the monitoring task (not recommended). The
                             default is ``True``.
     :param engineio_logger: To enable Engine.IO logging set to ``True`` or pass
                             a logger object to use. To disable logging set to
-                            ``False``. Note that fatal errors are logged even
-                            when ``engineio_logger`` is ``False``.
+                            ``False``. The default is ``False``. Note that
+                            fatal errors are logged even when
+                            ``engineio_logger`` is ``False``.
     """
     def __init__(self, client_manager=None, logger=False, json=None,
                  async_handlers=True, **kwargs):
