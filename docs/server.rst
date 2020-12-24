@@ -683,7 +683,7 @@ The Sanic application is then executed in the usual manner::
         app.run()
 
 It has been reported that the CORS support provided by the Sanic extension
-`sanic-cors <https://github.com/ashleysommer/sanic-cors>`_ is incomaptible with
+`sanic-cors <https://github.com/ashleysommer/sanic-cors>`_ is incompatible with
 this package's own support for this protocol. To disable CORS support in this
 package and let Sanic take full control, initialize the server as follows::
 
