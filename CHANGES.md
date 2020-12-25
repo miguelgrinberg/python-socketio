@@ -1,5 +1,11 @@
 # python-socketio change log
 
+**Release 5.0.4** - 2020-12-25
+
+- Include error message and arguments in CONNECT_ERROR packet [#590](https://github.com/miguelgrinberg/python-socketio/issues/590) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/314971c8a0ba327acd12b0ecfef84f0a5dd63bed))
+- Fix typos in the documentation [#599](https://github.com/miguelgrinberg/python-socketio/issues/599) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/c809774c3ec0921306e7274987076b3ce51a4e95)) (thanks **Arpit Jain**!)
+- Updated connection options in the documentation [#597](https://github.com/miguelgrinberg/python-socketio/issues/597) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/251fee1763df168fd070b89d83f24698ba0b3bb8))
+
 **Release 5.0.3** - 2020-12-14
 
 - Correct handling of user session [#585](https://github.com/miguelgrinberg/python-socketio/issues/585) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/a61d59c02aa08483f86bf45accf6620b69b06a41))
