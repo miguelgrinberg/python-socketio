@@ -406,6 +406,7 @@ class TestAsyncClient(unittest.TestCase):
 
     def test_disconnect(self):
         c = asyncio_client.AsyncClient()
+        c.connected = True
         c.namespaces = {'/': '1'}
         c._trigger_event = AsyncMock()
         c._send_packet = AsyncMock()
@@ -413,6 +414,7 @@ class TestAsyncClient(unittest.TestCase):
         c.eio.disconnect = AsyncMock()
         c.eio.state = 'connected'
         _run(c.disconnect())
+        assert c.connected
         assert c._trigger_event.mock.call_count == 0
         assert c._send_packet.mock.call_count == 1
         expected_packet = packet.Packet(packet.DISCONNECT, namespace='/')

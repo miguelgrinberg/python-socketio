@@ -408,7 +408,6 @@ class Client(object):
         # later in _handle_eio_disconnect we invoke the disconnect handler
         for n in self.namespaces:
             self._send_packet(packet.Packet(packet.DISCONNECT, namespace=n))
-        self.connected = False
         self.eio.disconnect(abort=True)
 
     def get_sid(self, namespace=None):
