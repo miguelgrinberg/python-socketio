@@ -182,7 +182,7 @@ The ``connect`` and ``disconnect`` events are special; they are invoked
 automatically when a client connects or disconnects from the server::
 
     @sio.event
-    def connect(sid, environ):
+    def connect(sid, environ, auth):
         print('connect ', sid)
 
     @sio.event
@@ -193,8 +193,10 @@ The ``connect`` event is an ideal place to perform user authentication, and
 any necessary mapping between user entities in the application and the ``sid``
 that was assigned to the client. The ``environ`` argument is a dictionary in
 standard WSGI format containing the request information, including HTTP
-headers. After inspecting the request, the connect event handler can return
-``False`` to reject the connection with the client.
+headers. The ``auth`` argument contains any authentication details passed by
+the client, or ``None`` if the client did not pass anything. After inspecting
+the request, the connect event handler can return ``False`` to reject the
+connection with the client.
 
 Sometimes it is useful to pass data back to the client being rejected. In that
 case instead of returning ``False``

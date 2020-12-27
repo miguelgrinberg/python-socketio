@@ -619,7 +619,7 @@ class Server(object):
         else:
             self.eio.send(eio_sid, encoded_packet)
 
-    def _handle_connect(self, eio_sid, namespace):
+    def _handle_connect(self, eio_sid, namespace, data):
         """Handle a client connection request."""
         namespace = namespace or '/'
         sid = self.manager.connect(eio_sid, namespace)
@@ -628,8 +628,16 @@ class Server(object):
                 packet.CONNECT, {'sid': sid}, namespace=namespace))
         fail_reason = exceptions.ConnectionRefusedError().error_args
         try:
-            success = self._trigger_event('connect', namespace, sid,
-                                          self.environ[eio_sid])
+            if data:
+                success = self._trigger_event(
+                    'connect', namespace, sid, self.environ[eio_sid], data)
+            else:
+                try:
+                    success = self._trigger_event(
+                        'connect', namespace, sid, self.environ[eio_sid])
+                except TypeError:
+                    success = self._trigger_event(
+                        'connect', namespace, sid, self.environ[eio_sid], None)
         except exceptions.ConnectionRefusedError as exc:
             fail_reason = exc.error_args
             success = False
@@ -729,7 +737,7 @@ class Server(object):
         else:
             pkt = packet.Packet(encoded_packet=data)
             if pkt.packet_type == packet.CONNECT:
-                self._handle_connect(eio_sid, pkt.namespace)
+                self._handle_connect(eio_sid, pkt.namespace, pkt.data)
             elif pkt.packet_type == packet.DISCONNECT:
                 self._handle_disconnect(eio_sid, pkt.namespace)
             elif pkt.packet_type == packet.EVENT:

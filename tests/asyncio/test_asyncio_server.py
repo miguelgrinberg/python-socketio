@@ -377,6 +377,38 @@ class TestAsyncServer(unittest.TestCase):
         _run(s._handle_eio_message('456', '0'))
         assert s.manager.initialize.call_count == 1
 
+    def test_handle_connect_with_auth(self, eio):
+        eio.return_value.send = AsyncMock()
+        s = asyncio_server.AsyncServer()
+        s.manager.initialize = mock.MagicMock()
+        handler = mock.MagicMock()
+        s.on('connect', handler)
+        _run(s._handle_eio_connect('123', 'environ'))
+        _run(s._handle_eio_message('123', '0{"token":"abc"}'))
+        assert s.manager.is_connected('1', '/')
+        handler.assert_called_once_with('1', 'environ', {'token': 'abc'})
+        s.eio.send.mock.assert_called_once_with('123', '0{"sid":"1"}')
+        assert s.manager.initialize.call_count == 1
+        _run(s._handle_eio_connect('456', 'environ'))
+        _run(s._handle_eio_message('456', '0'))
+        assert s.manager.initialize.call_count == 1
+
+    def test_handle_connect_with_auth_none(self, eio):
+        eio.return_value.send = AsyncMock()
+        s = asyncio_server.AsyncServer()
+        s.manager.initialize = mock.MagicMock()
+        handler = mock.MagicMock(side_effect=[TypeError, None, None])
+        s.on('connect', handler)
+        _run(s._handle_eio_connect('123', 'environ'))
+        _run(s._handle_eio_message('123', '0'))
+        assert s.manager.is_connected('1', '/')
+        handler.assert_called_with('1', 'environ', None)
+        s.eio.send.mock.assert_called_once_with('123', '0{"sid":"1"}')
+        assert s.manager.initialize.call_count == 1
+        _run(s._handle_eio_connect('456', 'environ'))
+        _run(s._handle_eio_message('456', '0'))
+        assert s.manager.initialize.call_count == 1
+
     def test_handle_connect_async(self, eio):
         eio.return_value.send = AsyncMock()
         s = asyncio_server.AsyncServer()

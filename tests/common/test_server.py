@@ -326,6 +326,34 @@ class TestServer(unittest.TestCase):
         s._handle_eio_connect('456', 'environ')
         assert s.manager.initialize.call_count == 1
 
+    def test_handle_connect_with_auth(self, eio):
+        s = server.Server()
+        s.manager.initialize = mock.MagicMock()
+        handler = mock.MagicMock()
+        s.on('connect', handler)
+        s._handle_eio_connect('123', 'environ')
+        s._handle_eio_message('123', '0{"token":"abc"}')
+        assert s.manager.is_connected('1', '/')
+        handler.assert_called_with('1', 'environ', {'token': 'abc'})
+        s.eio.send.assert_called_once_with('123', '0{"sid":"1"}')
+        assert s.manager.initialize.call_count == 1
+        s._handle_eio_connect('456', 'environ')
+        assert s.manager.initialize.call_count == 1
+
+    def test_handle_connect_with_auth_none(self, eio):
+        s = server.Server()
+        s.manager.initialize = mock.MagicMock()
+        handler = mock.MagicMock(side_effect=[TypeError, None])
+        s.on('connect', handler)
+        s._handle_eio_connect('123', 'environ')
+        s._handle_eio_message('123', '0')
+        assert s.manager.is_connected('1', '/')
+        handler.assert_called_with('1', 'environ', None)
+        s.eio.send.assert_called_once_with('123', '0{"sid":"1"}')
+        assert s.manager.initialize.call_count == 1
+        s._handle_eio_connect('456', 'environ')
+        assert s.manager.initialize.call_count == 1
+
     def test_handle_connect_namespace(self, eio):
         s = server.Server()
         handler = mock.MagicMock()
