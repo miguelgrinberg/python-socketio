@@ -68,6 +68,35 @@ The example that follows shows a simple Python client:
     sio.connect('http://localhost:5000')
     sio.wait()
 
+Below is a similar client, coded for ``asyncio`` (Python 3.5+ only):
+
+.. code:: python
+
+    import asyncio
+    import socketio
+
+    sio = socketio.AsyncClient()
+
+    @sio.event
+    async def connect():
+        print('connection established')
+
+    @sio.event
+    async def my_message(data):
+        print('message received with ', data)
+        await sio.emit('my response', {'response': 'my response'})
+
+    @sio.event
+    async def disconnect():
+        print('disconnected from server')
+
+    async def main():
+        await sio.connect('http://localhost:5000')
+        await sio.wait()
+
+    if __name__ == '__main__':
+        asyncio.run(main())
+
 Client Features
 ---------------
 
@@ -137,7 +166,6 @@ Uvicorn web server:
     @sio.event
     async def chat_message(sid, data):
         print("message ", data)
-        await sio.emit('reply', room=sid)
 
     @sio.event
     def disconnect(sid):
