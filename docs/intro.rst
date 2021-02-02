@@ -68,6 +68,47 @@ The example that follows shows a simple Python client:
     sio.connect('http://localhost:5000')
     sio.wait()
 
+Below is a similar client, coded for ``asyncio`` (Python 3.5+ only):
+
+.. code:: python
+
+   import asyncio
+
+   import socketio
+
+
+   sio = socketio.AsyncClient()
+
+   @sio.event
+   async def send_message(data):
+       print('Sending a message:', data)
+       await sio.emit('chat_message', data)
+
+   @sio.on("reply")
+   async def received_message(data):
+       print('Received a message:', data)
+
+   @sio.event
+   async def connect():
+       print("I'm connected! My sid is:", sio.sid)
+       await send_message({"message": "hello!"})
+
+   @sio.event
+   def connect_error():
+       print("The connection failed!")
+
+   @sio.event
+   async def disconnect():
+       print("I'm disconnected!")
+       await sio.disconnect()
+
+
+   if __name__ == '__main__':
+       loop = asyncio.get_event_loop()
+
+       loop.run_until_complete(sio.connect('http://localhost:8080'))
+       loop.run_until_complete(sio.wait())
+
 Client Features
 ---------------
 
