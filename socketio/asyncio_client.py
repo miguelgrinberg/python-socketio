@@ -380,6 +380,8 @@ class AsyncClient(client.Client):
                 event, *args)
 
     async def _handle_reconnect(self):
+        if self._reconnect_abort is None:  # pragma: no cover
+            self._reconnect_abort = self.eio.create_event()
         self._reconnect_abort.clear()
         client.reconnecting_clients.append(self)
         attempt_count = 0
@@ -457,7 +459,6 @@ class AsyncClient(client.Client):
     async def _handle_eio_disconnect(self):
         """Handle the Engine.IO disconnection event."""
         self.logger.info('Engine.IO connection dropped')
-        self._reconnect_abort.set()
         if self.connected:
             for n in self.namespaces:
                 await self._trigger_event('disconnect', namespace=n)

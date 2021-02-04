@@ -852,6 +852,7 @@ class TestClient(unittest.TestCase):
     def test_handle_reconnect(self, random):
         c = client.Client()
         c._reconnect_task = 'foo'
+        c._reconnect_abort = c.eio.create_event()
         c._reconnect_abort.wait = mock.MagicMock(return_value=False)
         c.connect = mock.MagicMock(
             side_effect=[ValueError, exceptions.ConnectionError, None]
@@ -869,6 +870,7 @@ class TestClient(unittest.TestCase):
     def test_handle_reconnect_max_delay(self, random):
         c = client.Client(reconnection_delay_max=3)
         c._reconnect_task = 'foo'
+        c._reconnect_abort = c.eio.create_event()
         c._reconnect_abort.wait = mock.MagicMock(return_value=False)
         c.connect = mock.MagicMock(
             side_effect=[ValueError, exceptions.ConnectionError, None]
@@ -886,6 +888,7 @@ class TestClient(unittest.TestCase):
     def test_handle_reconnect_max_attempts(self, random):
         c = client.Client(reconnection_attempts=2)
         c._reconnect_task = 'foo'
+        c._reconnect_abort = c.eio.create_event()
         c._reconnect_abort.wait = mock.MagicMock(return_value=False)
         c.connect = mock.MagicMock(
             side_effect=[ValueError, exceptions.ConnectionError, None]
@@ -902,6 +905,7 @@ class TestClient(unittest.TestCase):
     def test_handle_reconnect_aborted(self, random):
         c = client.Client()
         c._reconnect_task = 'foo'
+        c._reconnect_abort = c.eio.create_event()
         c._reconnect_abort.wait = mock.MagicMock(side_effect=[False, True])
         c.connect = mock.MagicMock(side_effect=exceptions.ConnectionError)
         c._handle_reconnect()

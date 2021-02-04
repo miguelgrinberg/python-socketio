@@ -132,7 +132,7 @@ class Client(object):
         self.callbacks = {}
         self._binary_packet = None
         self._reconnect_task = None
-        self._reconnect_abort = self.eio.create_event()
+        self._reconnect_abort = None
 
     def is_asyncio_based(self):
         return False
@@ -552,6 +552,8 @@ class Client(object):
                 event, *args)
 
     def _handle_reconnect(self):
+        if self._reconnect_abort is None:  # pragma: no cover
+            self._reconnect_abort = self.eio.create_event()
         self._reconnect_abort.clear()
         reconnecting_clients.append(self)
         attempt_count = 0
