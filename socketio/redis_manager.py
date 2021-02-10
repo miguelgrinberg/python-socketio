@@ -78,7 +78,7 @@ class RedisManager(PubSubManager):  # pragma: no cover
                 if not retry:
                     self._redis_connect()
                 return self.redis.publish(self.channel, pickle.dumps(data))
-            except redis.exceptions.ConnectionError:
+            except (redis.exceptions.ConnectionError, redis.exceptions.TimeoutError) as e:
                 if retry:
                     logger.error('Cannot publish to redis... retrying')
                     retry = False
@@ -96,9 +96,9 @@ class RedisManager(PubSubManager):  # pragma: no cover
                     self.pubsub.subscribe(self.channel)
                 for message in self.pubsub.listen():
                     yield message
-            except redis.exceptions.ConnectionError:
-                logger.error('Cannot receive from redis... '
-                             'retrying in {} secs'.format(retry_sleep))
+            except (redis.exceptions.ConnectionError, redis.exceptions.TimeoutError) as e:
+                logger.error('Cannot receive from redis ({})... '
+                             'retrying in {} secs'.format(e, retry_sleep))
                 connect = True
                 time.sleep(retry_sleep)
                 retry_sleep *= 2
