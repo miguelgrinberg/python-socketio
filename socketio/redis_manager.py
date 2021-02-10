@@ -92,6 +92,7 @@ class RedisManager(PubSubManager):  # pragma: no cover
         while True:
             try:
                 if connect:
+                    retry_sleep = 1
                     self._redis_connect()
                     self.pubsub.subscribe(self.channel)
                 for message in self.pubsub.listen():
