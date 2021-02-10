@@ -95,6 +95,7 @@ class AsyncRedisManager(AsyncPubSubManager):  # pragma: no cover
                         password=self.password, ssl=self.ssl
                     )
                 self.ch = (await self.sub.subscribe(self.channel))[0]
+                retry_sleep = 1
                 return await self.ch.get()
             except (aioredis.RedisError, OSError):
                 self._get_logger().error('Cannot receive from redis... '

@@ -89,6 +89,7 @@ class AsyncAioPikaManager(AsyncPubSubManager):  # pragma: no cover
                     self.listener_queue = await self._queue(
                         self.listener_channel, exchange
                     )
+                    retry_sleep = 1
 
                 async with self.listener_queue.iterator() as queue_iter:
                     async for message in queue_iter:

@@ -94,6 +94,7 @@ class RedisManager(PubSubManager):  # pragma: no cover
                 if connect:
                     self._redis_connect()
                     self.pubsub.subscribe(self.channel)
+                    retry_sleep = 1
                 for message in self.pubsub.listen():
                     yield message
             except redis.exceptions.ConnectionError:
