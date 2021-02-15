@@ -63,7 +63,8 @@ class AsyncClient(client.Client):
         return True
 
     async def connect(self, url, headers={}, transports=None,
-                      namespaces=None, socketio_path='socket.io'):
+                      namespaces=None, socketio_path='socket.io', wait=True,
+                      wait_timeout=1):
         """Connect to a Socket.IO server.
 
         :param url: The URL of the Socket.IO server. It can include custom
@@ -80,18 +81,26 @@ class AsyncClient(client.Client):
         :param socketio_path: The endpoint where the Socket.IO server is
                               installed. The default value is appropriate for
                               most cases.
+        :param wait: if set to ``True`` (the default) the call only returns
+                     when all the namespaces are connected. If set to
+                     ``False``, the call returns as soon as the Engine.IO
+                     transport is connected, and the namespaces will connect
+                     in the background.
+        :param wait_timeout: How long the client should wait for the
+                             connection. The default is 1 second. This
+                             argument is only considered when ``wait`` is set
+                             to ``True``.
 
         Note: this method is a coroutine.
-
-        Note: The connection mechannism occurs in the background and will
-        complete at some point after this function returns. The connection
-        will be established when the ``connect`` event is invoked.
 
         Example usage::
 
             sio = socketio.AsyncClient()
             sio.connect('http://localhost:5000')
         """
+        if self.connected:
+            raise exceptions.ConnectionError('Already connected')
+
         self.connection_url = url
         self.connection_headers = headers
         self.connection_transports = transports
@@ -106,6 +115,11 @@ class AsyncClient(client.Client):
         elif isinstance(namespaces, str):
             namespaces = [namespaces]
         self.connection_namespaces = namespaces
+        self.namespaces = {}
+        if self._connect_event is None:
+            self._connect_event = self.eio.create_event()
+        else:
+            self._connect_event.clear()
         try:
             await self.eio.connect(url, headers=headers,
                                    transports=transports,
@@ -115,6 +129,22 @@ class AsyncClient(client.Client):
                 'connect_error', '/',
                 exc.args[1] if len(exc.args) > 1 else exc.args[0])
             raise exceptions.ConnectionError(exc.args[0]) from None
+
+        if wait:
+            try:
+                while True:
+                    await asyncio.wait_for(self._connect_event.wait(),
+                                           wait_timeout)
+                    self._connect_event.clear()
+                    if set(self.namespaces) == set(self.connection_namespaces):
+                        break
+            except asyncio.TimeoutError:
+                pass
+            if set(self.namespaces) != set(self.connection_namespaces):
+                await self.disconnect()
+                raise exceptions.ConnectionError(
+                    'One or more namespaces failed to connect')
+
         self.connected = True
 
     async def wait(self):
@@ -301,6 +331,7 @@ class AsyncClient(client.Client):
             self.logger.info('Namespace {} is connected'.format(namespace))
             self.namespaces[namespace] = (data or {}).get('sid', self.sid)
             await self._trigger_event('connect', namespace=namespace)
+            self._connect_event.set()
 
     async def _handle_disconnect(self, namespace):
         if not self.connected:
@@ -355,6 +386,7 @@ class AsyncClient(client.Client):
         elif not isinstance(data, (tuple, list)):
             data = (data,)
         await self._trigger_event('connect_error', namespace, *data)
+        self._connect_event.set()
         if namespace in self.namespaces:
             del self.namespaces[namespace]
         if namespace == '/':

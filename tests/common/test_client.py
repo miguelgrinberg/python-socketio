@@ -157,6 +157,7 @@ class TestClient(unittest.TestCase):
             transports='transports',
             namespaces=['/foo', '/', '/bar'],
             socketio_path='path',
+            wait=False,
         )
         assert c.connection_url == 'url'
         assert c.connection_headers == 'headers'
@@ -179,6 +180,7 @@ class TestClient(unittest.TestCase):
             transports='transports',
             namespaces='/foo',
             socketio_path='path',
+            wait=False,
         )
         assert c.connection_url == 'url'
         assert c.connection_headers == 'headers'
@@ -202,6 +204,7 @@ class TestClient(unittest.TestCase):
             headers='headers',
             transports='transports',
             socketio_path='path',
+            wait=False,
         )
         assert c.connection_url == 'url'
         assert c.connection_headers == 'headers'
@@ -224,6 +227,7 @@ class TestClient(unittest.TestCase):
             headers='headers',
             transports='transports',
             socketio_path='path',
+            wait=False,
         )
         assert c.connection_url == 'url'
         assert c.connection_headers == 'headers'
@@ -250,7 +254,76 @@ class TestClient(unittest.TestCase):
                 headers='headers',
                 transports='transports',
                 socketio_path='path',
+                wait=False,
             )
+
+    def test_connect_twice(self):
+        c = client.Client()
+        c.eio.connect = mock.MagicMock()
+        c.connect(
+            'url',
+            wait=False,
+        )
+        with pytest.raises(exceptions.ConnectionError):
+            c.connect(
+                'url',
+                wait=False,
+            )
+
+    def test_connect_wait_single_namespace(self):
+        c = client.Client()
+        c.eio.connect = mock.MagicMock()
+        c._connect_event = mock.MagicMock()
+
+        def mock_connect(timeout):
+            assert timeout == 0.01
+            c.namespaces = {'/': '123'}
+            return True
+
+        c._connect_event.wait = mock_connect
+        c.connect(
+            'url',
+            wait=True,
+            wait_timeout=0.01,
+        )
+        assert c.connected is True
+
+    def test_connect_wait_two_namespaces(self):
+        c = client.Client()
+        c.eio.connect = mock.MagicMock()
+        c._connect_event = mock.MagicMock()
+
+        def mock_connect(timeout):
+            assert timeout == 0.01
+            if c.namespaces == {}:
+                c.namespaces = {'/bar': '123'}
+                return True
+            elif c.namespaces == {'/bar': '123'}:
+                c.namespaces = {'/bar': '123', '/foo': '456'}
+                return True
+            return False
+
+        c._connect_event.wait = mock_connect
+        c.connect(
+            'url',
+            namespaces=['/foo', '/bar'],
+            wait=True,
+            wait_timeout=0.01,
+        )
+        assert c.connected is True
+        assert c.namespaces == {'/bar': '123', '/foo': '456'}
+
+    def test_connect_timeout(self):
+        c = client.Client()
+        c.eio.connect = mock.MagicMock()
+        c.disconnect = mock.MagicMock()
+        with pytest.raises(exceptions.ConnectionError):
+            c.connect(
+                'url',
+                wait=True,
+                wait_timeout=0.01,
+            )
+        c.disconnect.assert_called_once_with()
 
     def test_wait_no_reconnect(self):
         c = client.Client()
@@ -602,30 +675,36 @@ class TestClient(unittest.TestCase):
 
     def test_handle_connect(self):
         c = client.Client()
+        c._connect_event = mock.MagicMock()
         c._trigger_event = mock.MagicMock()
         c._send_packet = mock.MagicMock()
         c._handle_connect('/', {'sid': '123'})
         assert c.namespaces == {'/': '123'}
+        c._connect_event.set.assert_called_once_with()
         c._trigger_event.assert_called_once_with('connect', namespace='/')
         c._send_packet.assert_not_called()
 
     def test_handle_connect_with_namespaces(self):
         c = client.Client()
         c.namespaces = {'/foo': '1', '/bar': '2'}
+        c._connect_event = mock.MagicMock()
         c._trigger_event = mock.MagicMock()
         c._send_packet = mock.MagicMock()
         c._handle_connect('/', {'sid': '3'})
+        c._connect_event.set.assert_called_once_with()
         c._trigger_event.assert_called_once_with('connect', namespace='/')
         assert c.namespaces == {'/': '3', '/foo': '1', '/bar': '2'}
 
     def test_handle_connect_namespace(self):
         c = client.Client()
         c.namespaces = {'/foo': '1'}
+        c._connect_event = mock.MagicMock()
         c._trigger_event = mock.MagicMock()
         c._send_packet = mock.MagicMock()
         c._handle_connect('/foo', {'sid': '123'})
         c._handle_connect('/bar', {'sid': '2'})
         assert c._trigger_event.call_count == 1
+        c._connect_event.set.assert_called_once_with()
         c._trigger_event.assert_called_once_with('connect', namespace='/bar')
         assert c.namespaces == {'/foo': '1', '/bar': '2'}
 
@@ -762,30 +841,36 @@ class TestClient(unittest.TestCase):
         c = client.Client()
         c.connected = True
         c.namespaces = {'/foo': '1', '/bar': '2'}
+        c._connect_event = mock.MagicMock()
         c._trigger_event = mock.MagicMock()
         c._handle_error('/', 'error')
         assert c.namespaces == {}
         assert not c.connected
+        c._connect_event.set.assert_called_once_with()
         c._trigger_event.assert_called_once_with('connect_error', '/', 'error')
 
     def test_handle_error_with_no_arguments(self):
         c = client.Client()
         c.connected = True
         c.namespaces = {'/foo': '1', '/bar': '2'}
+        c._connect_event = mock.MagicMock()
         c._trigger_event = mock.MagicMock()
         c._handle_error('/', None)
         assert c.namespaces == {}
         assert not c.connected
+        c._connect_event.set.assert_called_once_with()
         c._trigger_event.assert_called_once_with('connect_error', '/')
 
     def test_handle_error_namespace(self):
         c = client.Client()
         c.connected = True
         c.namespaces = {'/foo': '1', '/bar': '2'}
+        c._connect_event = mock.MagicMock()
         c._trigger_event = mock.MagicMock()
         c._handle_error('/bar', ['error', 'message'])
         assert c.namespaces == {'/foo': '1'}
         assert c.connected
+        c._connect_event.set.assert_called_once_with()
         c._trigger_event.assert_called_once_with(
             'connect_error', '/bar', 'error', 'message'
         )
@@ -794,19 +879,23 @@ class TestClient(unittest.TestCase):
         c = client.Client()
         c.connected = True
         c.namespaces = {'/foo': '1', '/bar': '2'}
+        c._connect_event = mock.MagicMock()
         c._trigger_event = mock.MagicMock()
         c._handle_error('/bar', None)
         assert c.namespaces == {'/foo': '1'}
         assert c.connected
+        c._connect_event.set.assert_called_once_with()
         c._trigger_event.assert_called_once_with('connect_error', '/bar')
 
     def test_handle_error_unknown_namespace(self):
         c = client.Client()
         c.connected = True
         c.namespaces = {'/foo': '1', '/bar': '2'}
+        c._connect_event = mock.MagicMock()
         c._handle_error('/baz', 'error')
         assert c.namespaces == {'/foo': '1', '/bar': '2'}
         assert c.connected
+        c._connect_event.set.assert_called_once_with()
 
     def test_trigger_event(self):
         c = client.Client()

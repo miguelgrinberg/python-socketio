@@ -131,6 +131,7 @@ class Client(object):
         self.namespace_handlers = {}
         self.callbacks = {}
         self._binary_packet = None
+        self._connect_event = None
         self._reconnect_task = None
         self._reconnect_abort = None
 
@@ -233,7 +234,8 @@ class Client(object):
             namespace_handler
 
     def connect(self, url, headers={}, transports=None,
-                namespaces=None, socketio_path='socket.io'):
+                namespaces=None, socketio_path='socket.io', wait=True,
+                wait_timeout=1):
         """Connect to a Socket.IO server.
 
         :param url: The URL of the Socket.IO server. It can include custom
@@ -250,16 +252,24 @@ class Client(object):
         :param socketio_path: The endpoint where the Socket.IO server is
                               installed. The default value is appropriate for
                               most cases.
-
-        Note: The connection mechannism occurs in the background and will
-        complete at some point after this function returns. The connection
-        will be established when the ``connect`` event is invoked.
+        :param wait: if set to ``True`` (the default) the call only returns
+                     when all the namespaces are connected. If set to
+                     ``False``, the call returns as soon as the Engine.IO
+                     transport is connected, and the namespaces will connect
+                     in the background.
+        :param wait_timeout: How long the client should wait for the
+                             connection. The default is 1 second. This
+                             argument is only considered when ``wait`` is set
+                             to ``True``.
 
         Example usage::
 
             sio = socketio.Client()
             sio.connect('http://localhost:5000')
         """
+        if self.connected:
+            raise exceptions.ConnectionError('Already connected')
+
         self.connection_url = url
         self.connection_headers = headers
         self.connection_transports = transports
@@ -274,6 +284,11 @@ class Client(object):
         elif isinstance(namespaces, str):
             namespaces = [namespaces]
         self.connection_namespaces = namespaces
+        self.namespaces = {}
+        if self._connect_event is None:
+            self._connect_event = self.eio.create_event()
+        else:
+            self._connect_event.clear()
         try:
             self.eio.connect(url, headers=headers, transports=transports,
                              engineio_path=socketio_path)
@@ -282,6 +297,17 @@ class Client(object):
                 'connect_error', '/',
                 exc.args[1] if len(exc.args) > 1 else exc.args[0])
             raise exceptions.ConnectionError(exc.args[0]) from None
+
+        if wait:
+            while self._connect_event.wait(timeout=wait_timeout):
+                self._connect_event.clear()
+                if set(self.namespaces) == set(self.connection_namespaces):
+                    break
+            if set(self.namespaces) != set(self.connection_namespaces):
+                self.disconnect()
+                raise exceptions.ConnectionError(
+                    'One or more namespaces failed to connect')
+
         self.connected = True
 
     def wait(self):
@@ -483,6 +509,7 @@ class Client(object):
             self.logger.info('Namespace {} is connected'.format(namespace))
             self.namespaces[namespace] = (data or {}).get('sid', self.sid)
             self._trigger_event('connect', namespace=namespace)
+            self._connect_event.set()
 
     def _handle_disconnect(self, namespace):
         if not self.connected:
@@ -534,6 +561,7 @@ class Client(object):
         elif not isinstance(data, (tuple, list)):
             data = (data,)
         self._trigger_event('connect_error', namespace, *data)
+        self._connect_event.set()
         if namespace in self.namespaces:
             del self.namespaces[namespace]
         if namespace == '/':
