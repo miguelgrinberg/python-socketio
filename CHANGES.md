@@ -1,5 +1,17 @@
 # python-socketio change log
 
+**Release 5.1.0** - 2021-03-10
+
+- Added `wait` argument to client's connect method [#634](https://github.com/miguelgrinberg/python-socketio/issues/634) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/4da6d74f56a58e68b0aef08212347097dd73cda9))
+- Invoke the disconnect handler when the client initiates a disconnection [#594](https://github.com/miguelgrinberg/python-socketio/issues/594) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/3349b024d59a78a6a7282257941b4623af72d7c9))
+- Pass auth information sent by client to the connect handler ([commit](https://github.com/miguelgrinberg/python-socketio/commit/11b6f1a08d4840cc2f20a644bd9db7d5d95496bf))
+- Catch all possible Redis errors [#635](https://github.com/miguelgrinberg/python-socketio/issues/635) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/6f812ef8e4b86db8d15fcc9a4d79b721fe7ca068))
+- Reset message queue sleep timer upon reconnect ([commit](https://github.com/miguelgrinberg/python-socketio/commit/54180987cd429c6d48c6fdad5c97b1ca894d2b09)) (thanks **Ed Serzo**!)
+- Fixed bad event object used by asyncio client reconnect logic [#622](https://github.com/miguelgrinberg/python-socketio/issues/622) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/bff76c432c12e678cc1043d8b046bd4a2fe22c28))
+- Adding missing example of async client implementation to documentation ([commit](https://github.com/miguelgrinberg/python-socketio/commit/f341abe88ec19b20cd115dd246dd4bc2b3ad61fe)) (thanks **manuel**!)
+- Add scrolling to documentation sidebar [#610](https://github.com/miguelgrinberg/python-socketio/issues/610) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/eabcc4679bc283acdb9f87022ef1e0e82c48497e)) (thanks **Mohammed Abdul Raheem**!)
+- Typo fix in documentation [#602](https://github.com/miguelgrinberg/python-socketio/issues/602) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/b418af4c53619305c0b91a040e40fc7f3b907a74)) (thanks **Tim Gates**!)
+
 **Release 5.0.4** - 2020-12-25
 
 - Include error message and arguments in CONNECT_ERROR packet [#590](https://github.com/miguelgrinberg/python-socketio/issues/590) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/314971c8a0ba327acd12b0ecfef84f0a5dd63bed))
