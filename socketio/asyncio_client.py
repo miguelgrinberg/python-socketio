@@ -62,7 +62,7 @@ class AsyncClient(client.Client):
     def is_asyncio_based(self):
         return True
 
-    async def connect(self, url, headers={}, transports=None,
+    async def connect(self, url, headers={}, auth=None, transports=None,
                       namespaces=None, socketio_path='socket.io', wait=True,
                       wait_timeout=1):
         """Connect to a Socket.IO server.
@@ -71,6 +71,9 @@ class AsyncClient(client.Client):
                     query string parameters if required by the server.
         :param headers: A dictionary with custom headers to send with the
                         connection request.
+        :param auth: Authentication data passed to the server with the
+                     connection request, normally a dictionary with one or
+                     more string key/value pairs.
         :param transports: The list of allowed transports. Valid transports
                            are ``'polling'`` and ``'websocket'``. If not
                            given, the polling transport is connected first,
@@ -103,6 +106,7 @@ class AsyncClient(client.Client):
 
         self.connection_url = url
         self.connection_headers = headers
+        self.connection_auth = auth
         self.connection_transports = transports
         self.connection_namespaces = namespaces
         self.socketio_path = socketio_path
@@ -437,6 +441,7 @@ class AsyncClient(client.Client):
             try:
                 await self.connect(self.connection_url,
                                    headers=self.connection_headers,
+                                   auth=self.connection_auth,
                                    transports=self.connection_transports,
                                    namespaces=self.connection_namespaces,
                                    socketio_path=self.socketio_path)
@@ -458,7 +463,8 @@ class AsyncClient(client.Client):
         self.logger.info('Engine.IO connection established')
         self.sid = self.eio.sid
         for n in self.connection_namespaces:
-            await self._send_packet(packet.Packet(packet.CONNECT, namespace=n))
+            await self._send_packet(packet.Packet(
+                packet.CONNECT, data=self.connection_auth, namespace=n))
 
     async def _handle_eio_message(self, data):
         """Dispatch Engine.IO messages."""

@@ -17,8 +17,8 @@ def index():
 
 
 @sio.event
-def connect(sid, environ):
-    print('connected', sid)
+def connect(sid, environ, auth):
+    print(f'connected auth={auth} sid={sid}')
     sio.emit('hello', (1, 2, {'hello': 'you'}), to=sid)
 
 

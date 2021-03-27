@@ -120,6 +120,7 @@ class Client(object):
 
         self.connection_url = None
         self.connection_headers = None
+        self.connection_auth = None
         self.connection_transports = None
         self.connection_namespaces = []
         self.socketio_path = None
@@ -233,7 +234,7 @@ class Client(object):
         self.namespace_handlers[namespace_handler.namespace] = \
             namespace_handler
 
-    def connect(self, url, headers={}, transports=None,
+    def connect(self, url, headers={}, auth=None, transports=None,
                 namespaces=None, socketio_path='socket.io', wait=True,
                 wait_timeout=1):
         """Connect to a Socket.IO server.
@@ -242,6 +243,9 @@ class Client(object):
                     query string parameters if required by the server.
         :param headers: A dictionary with custom headers to send with the
                         connection request.
+        :param auth: Authentication data passed to the server with the
+                     connection request, normally a dictionary with one or
+                     more string key/value pairs.
         :param transports: The list of allowed transports. Valid transports
                            are ``'polling'`` and ``'websocket'``. If not
                            given, the polling transport is connected first,
@@ -272,6 +276,7 @@ class Client(object):
 
         self.connection_url = url
         self.connection_headers = headers
+        self.connection_auth = auth
         self.connection_transports = transports
         self.connection_namespaces = namespaces
         self.socketio_path = socketio_path
@@ -602,6 +607,7 @@ class Client(object):
             try:
                 self.connect(self.connection_url,
                              headers=self.connection_headers,
+                             auth=self.connection_auth,
                              transports=self.connection_transports,
                              namespaces=self.connection_namespaces,
                              socketio_path=self.socketio_path)
@@ -623,7 +629,8 @@ class Client(object):
         self.logger.info('Engine.IO connection established')
         self.sid = self.eio.sid
         for n in self.connection_namespaces:
-            self._send_packet(packet.Packet(packet.CONNECT, namespace=n))
+            self._send_packet(packet.Packet(
+                packet.CONNECT, data=self.connection_auth, namespace=n))
 
     def _handle_eio_message(self, data):
         """Dispatch Engine.IO messages."""

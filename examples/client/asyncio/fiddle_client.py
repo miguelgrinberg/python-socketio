@@ -20,7 +20,7 @@ def hello(a, b, c):
 
 
 async def start_server():
-    await sio.connect('http://localhost:5000')
+    await sio.connect('http://localhost:5000', auth={'token': 'my-token'})
     await sio.wait()
 
 

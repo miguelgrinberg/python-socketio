@@ -154,6 +154,7 @@ class TestClient(unittest.TestCase):
         c.connect(
             'url',
             headers='headers',
+            auth='auth',
             transports='transports',
             namespaces=['/foo', '/', '/bar'],
             socketio_path='path',
@@ -161,6 +162,7 @@ class TestClient(unittest.TestCase):
         )
         assert c.connection_url == 'url'
         assert c.connection_headers == 'headers'
+        assert c.connection_auth == 'auth'
         assert c.connection_transports == 'transports'
         assert c.connection_namespaces == ['/foo', '/', '/bar']
         assert c.socketio_path == 'path'
@@ -1008,18 +1010,21 @@ class TestClient(unittest.TestCase):
     def test_handle_eio_connect(self):
         c = client.Client()
         c.connection_namespaces = ['/', '/foo']
+        c.connection_auth = 'auth'
         c._send_packet = mock.MagicMock()
         c.eio.sid = 'foo'
         assert c.sid is None
         c._handle_eio_connect()
         assert c.sid == 'foo'
         assert c._send_packet.call_count == 2
-        expected_packet = packet.Packet(packet.CONNECT, namespace='/')
+        expected_packet = packet.Packet(
+            packet.CONNECT, data='auth', namespace='/')
         assert (
             c._send_packet.call_args_list[0][0][0].encode()
             == expected_packet.encode()
         )
-        expected_packet = packet.Packet(packet.CONNECT, namespace='/foo')
+        expected_packet = packet.Packet(
+            packet.CONNECT, data='auth', namespace='/foo')
         assert (
             c._send_packet.call_args_list[1][0][0].encode()
             == expected_packet.encode()

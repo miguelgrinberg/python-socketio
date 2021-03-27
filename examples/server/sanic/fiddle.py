@@ -15,8 +15,8 @@ def index(request):
 
 
 @sio.event
-async def connect(sid, environ):
-    print('connected', sid)
+async def connect(sid, environ, auth):
+    print(f'connected auth={auth} sid={sid}')
     await sio.emit('hello', (1, 2, {'hello': 'you'}), to=sid)
 
 

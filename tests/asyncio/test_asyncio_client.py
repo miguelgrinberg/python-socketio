@@ -55,6 +55,7 @@ class TestAsyncClient(unittest.TestCase):
             c.connect(
                 'url',
                 headers='headers',
+                auth='auth',
                 transports='transports',
                 namespaces=['/foo', '/', '/bar'],
                 socketio_path='path',
@@ -63,6 +64,7 @@ class TestAsyncClient(unittest.TestCase):
         )
         assert c.connection_url == 'url'
         assert c.connection_headers == 'headers'
+        assert c.connection_auth == 'auth'
         assert c.connection_transports == 'transports'
         assert c.connection_namespaces == ['/foo', '/', '/bar']
         assert c.socketio_path == 'path'
@@ -934,21 +936,24 @@ class TestAsyncClient(unittest.TestCase):
         ]
         assert c._reconnect_task == 'foo'
 
-    def test_eio_connect(self):
+    def test_handle_eio_connect(self):
         c = asyncio_client.AsyncClient()
         c.connection_namespaces = ['/', '/foo']
+        c.connection_auth = 'auth'
         c._send_packet = AsyncMock()
         c.eio.sid = 'foo'
         assert c.sid is None
         _run(c._handle_eio_connect())
         assert c.sid == 'foo'
         assert c._send_packet.mock.call_count == 2
-        expected_packet = packet.Packet(packet.CONNECT, namespace='/')
+        expected_packet = packet.Packet(
+            packet.CONNECT, data='auth', namespace='/')
         assert (
             c._send_packet.mock.call_args_list[0][0][0].encode()
             == expected_packet.encode()
         )
-        expected_packet = packet.Packet(packet.CONNECT, namespace='/foo')
+        expected_packet = packet.Packet(
+            packet.CONNECT, data='auth', namespace='/foo')
         assert (
             c._send_packet.mock.call_args_list[1][0][0].encode()
             == expected_packet.encode()

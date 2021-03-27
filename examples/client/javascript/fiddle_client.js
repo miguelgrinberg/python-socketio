@@ -1,7 +1,7 @@
 const io = require('socket.io-client')
 const port = process.env.PORT || 5000;
 
-const socket = io('http://localhost:' + port);
+const socket = io('http://localhost:' + port, {auth: {token: 'my-token'}});
 
 socket.on('connect', () => {
   console.log(`connect ${socket.id}`);

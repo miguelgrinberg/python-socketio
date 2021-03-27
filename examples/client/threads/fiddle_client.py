@@ -19,5 +19,5 @@ def hello(a, b, c):
 
 
 if __name__ == '__main__':
-    sio.connect('http://localhost:5000')
+    sio.connect('http://localhost:5000', auth={'token': 'my-token'})
     sio.wait()
