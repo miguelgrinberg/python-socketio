@@ -15,8 +15,7 @@ class Packet(object):
     # packet type: 1 byte, values 0-6
     # num_attachments: ASCII encoded, only if num_attachments != 0
     # '-': only if num_attachments != 0
-    # namespace: only if namespace != '/'
-    # ',': only if namespace and one of id and data are defined in this packet
+    # namespace, followed by a ',': only if namespace != '/'
     # id: ASCII encoded, only if id is not None
     # data: JSON dump of data payload
 
@@ -54,18 +53,11 @@ class Packet(object):
         else:
             data = self.data
             attachments = None
-        needs_comma = False
         if self.namespace is not None and self.namespace != '/':
-            encoded_packet += self.namespace
-            needs_comma = True
+            encoded_packet += self.namespace + ','
         if self.id is not None:
-            if needs_comma:
-                encoded_packet += ','
-                needs_comma = False
             encoded_packet += str(self.id)
         if data is not None:
-            if needs_comma:
-                encoded_packet += ','
             encoded_packet += self.json.dumps(data, separators=(',', ':'))
         if attachments is not None:
             encoded_packet = [encoded_packet] + attachments

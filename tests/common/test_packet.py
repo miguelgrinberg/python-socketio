@@ -111,12 +111,13 @@ class TestPacket(unittest.TestCase):
 
     def test_encode_namespace_no_data(self):
         pkt = packet.Packet(packet_type=packet.EVENT, namespace='/bar')
-        assert pkt.encode() == '2/bar'
+        assert pkt.encode() == '2/bar,'
 
     def test_decode_namespace_no_data(self):
-        pkt = packet.Packet(encoded_packet='2/bar')
+        pkt = packet.Packet(encoded_packet='2/bar,')
         assert pkt.namespace == '/bar'
-        assert pkt.encode() == '2/bar'
+        assert pkt.data is None
+        assert pkt.encode() == '2/bar,'
 
     def test_encode_namespace_with_hyphens(self):
         pkt = packet.Packet(
