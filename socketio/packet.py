@@ -95,10 +95,16 @@ class Packet(object):
             if q != -1:
                 self.namespace = self.namespace[0:q]
         if ep and ep[0].isdigit():
-            self.id = 0
-            while ep and ep[0].isdigit():
-                self.id = self.id * 10 + int(ep[0])
-                ep = ep[1:]
+            i = 1
+            end = len(ep)
+            while i < end:
+                if not ep[i].isdigit() or i >= 100:
+                    break
+                i += 1
+            self.id = int(ep[:i])
+            ep = ep[i:]
+            if len(ep) > 0 and ep[0].isdigit():
+                raise ValueError('id field is too long')
         if ep:
             self.data = self.json.loads(ep)
         return attachment_count

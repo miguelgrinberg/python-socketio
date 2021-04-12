@@ -157,6 +157,16 @@ class TestPacket(unittest.TestCase):
         assert pkt.id == 123
         assert pkt.encode() == '2123["foo"]'
 
+    def test_decode_id_long(self):
+        pkt = packet.Packet(encoded_packet='2' + '1' * 100 + '["foo"]')
+        assert pkt.id == int('1' * 100)
+        assert pkt.data == ['foo']
+
+    def test_decode_id_too_long(self):
+        with pytest.raises(ValueError):
+            packet.Packet(encoded_packet='2' + '1' * 101)
+            packet.Packet(encoded_packet='2' + '1' * 101 + '["foo"]')
+
     def test_encode_id_no_data(self):
         pkt = packet.Packet(packet_type=packet.EVENT, id=123)
         assert pkt.id == 123
