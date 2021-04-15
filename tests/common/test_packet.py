@@ -165,6 +165,7 @@ class TestPacket(unittest.TestCase):
     def test_decode_id_too_long(self):
         with pytest.raises(ValueError):
             packet.Packet(encoded_packet='2' + '1' * 101)
+        with pytest.raises(ValueError):
             packet.Packet(encoded_packet='2' + '1' * 101 + '["foo"]')
 
     def test_encode_id_no_data(self):
@@ -257,6 +258,10 @@ class TestPacket(unittest.TestCase):
         assert pkt.add_attachment(b'789')
         with pytest.raises(ValueError):
             pkt.add_attachment(b'123')
+
+    def test_decode_attachment_count_too_long(self):
+        with pytest.raises(ValueError):
+            packet.Packet(encoded_packet='6' + ('1' * 11) + '-{"a":"123}')
 
     def test_data_is_binary_list(self):
         pkt = packet.Packet()

@@ -1,5 +1,5 @@
 import functools
-import json as _json
+from engineio import json as _json
 
 (CONNECT, DISCONNECT, EVENT, ACK, CONNECT_ERROR, BINARY_EVENT, BINARY_ACK) = \
     (0, 1, 2, 3, 4, 5, 6)
@@ -79,6 +79,8 @@ class Packet(object):
         self.data = None
         ep = ep[1:]
         dash = ep.find('-')
+        if dash > 10:
+            raise ValueError('too many attachments')
         attachment_count = 0
         if dash > 0 and ep[0:dash].isdigit():
             attachment_count = int(ep[0:dash])

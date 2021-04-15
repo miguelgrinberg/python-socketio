@@ -1,10 +1,10 @@
-import json
 import logging
 import sys
 import unittest
 from unittest import mock
 
 from engineio import exceptions as engineio_exceptions
+from engineio import json
 from engineio import packet as engineio_packet
 import pytest
 

@@ -1,10 +1,10 @@
 import asyncio
-import json
 import logging
 import sys
 import unittest
 from unittest import mock
 
+from engineio import json
 import pytest
 
 from socketio import asyncio_server

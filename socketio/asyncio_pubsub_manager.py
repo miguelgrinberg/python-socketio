@@ -1,7 +1,7 @@
 from functools import partial
 import uuid
 
-import json
+from engineio import json
 import pickle
 
 from .asyncio_manager import AsyncManager
