@@ -905,6 +905,7 @@ class TestAsyncClient(unittest.TestCase):
             side_effect=[ValueError, exceptions.ConnectionError, None]
         )
         _run(c._handle_reconnect())
+        print(c.reconnection_attempts)
         print(wait_for.mock.call_count)  # logging to debug #572
         print(wait_for.mock.call_args_list)
         assert wait_for.mock.call_count == 2

@@ -21,7 +21,7 @@ class AsyncClient(client.Client):
                          reconnect to the server after an interruption, or
                          ``False`` to not reconnect. The default is ``True``.
     :param reconnection_attempts: How many reconnection attempts to issue
-                                  before giving up, or 0 for infinity attempts.
+                                  before giving up, or 0 for infinite attempts.
                                   The default is 0.
     :param reconnection_delay: How long to wait in seconds before the first
                                reconnection attempt. Each successive attempt
