@@ -1,5 +1,13 @@
 # python-socketio change log
 
+**Release 5.2.0** - 2021-04-17
+
+- Pass custom authentication data with client connection [#661](https://github.com/miguelgrinberg/python-socketio/issues/661) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/a07eedf54e535843401cd8b280c1bb24de3dfd27))
+- Configure the JSON decoder for safer parsing ([commit](https://github.com/miguelgrinberg/python-socketio/commit/81b0b849bd7329c7fef2f6a9491aeae279d7b6e5)) (thanks **Onno Kortmann**!)
+- Made parsing of id field of Socket.IO packet faster and more robust ([commit](https://github.com/miguelgrinberg/python-socketio/commit/09cb411776b9035343d7349650bc4b84715f00fd)) (thanks **Onno Kortmann**!)
+- Correct use of a trailing comma in Socket.IO packets with no id or data [#671](https://github.com/miguelgrinberg/python-socketio/issues/671) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/8d1aeb2e401713758a0a2576d0d1ea8eaf14896e))
+- Updated Socket.IO JavaScript client versions in documentation example ([commit](https://github.com/miguelgrinberg/python-socketio/commit/9ff8bf354110e860c73f3298278c8be6ba44cb64))
+
 **Release 5.1.0** - 2021-03-10
 
 - Added `wait` argument to client's connect method [#634](https://github.com/miguelgrinberg/python-socketio/issues/634) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/4da6d74f56a58e68b0aef08212347097dd73cda9))
