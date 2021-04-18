@@ -261,7 +261,12 @@ class TestPacket(unittest.TestCase):
 
     def test_decode_attachment_count_too_long(self):
         with pytest.raises(ValueError):
-            packet.Packet(encoded_packet='6' + ('1' * 11) + '-{"a":"123}')
+            packet.Packet(encoded_packet='6' + ('1' * 11) + '-{"a":"123"}')
+
+    def test_decode_dash_in_payload(self):
+        pkt = packet.Packet(encoded_packet='6{"a":"0123456789-"}')
+        assert pkt.data["a"] == "0123456789-"
+        assert pkt.attachment_count == 0
 
     def test_data_is_binary_list(self):
         pkt = packet.Packet()

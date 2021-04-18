@@ -79,10 +79,10 @@ class Packet(object):
         self.data = None
         ep = ep[1:]
         dash = ep.find('-')
-        if dash > 10:
-            raise ValueError('too many attachments')
         attachment_count = 0
         if dash > 0 and ep[0:dash].isdigit():
+            if dash > 10:
+                raise ValueError('too many attachments')
             attachment_count = int(ep[0:dash])
             ep = ep[dash + 1:]
         if ep and ep[0:1] == '/':
