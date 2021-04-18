@@ -1,5 +1,9 @@
 # python-socketio change log
 
+**Release 5.2.1** - 2021-04-18
+
+- Fixed incorrect handling of dashes inside the JSON payload of a packet [#675](https://github.com/miguelgrinberg/python-socketio/issues/675) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/f4e101079fdc49c673ab9433aca8346480cc9e4f))
+
 **Release 5.2.0** - 2021-04-17
 
 - Pass custom authentication data with client connection [#661](https://github.com/miguelgrinberg/python-socketio/issues/661) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/a07eedf54e535843401cd8b280c1bb24de3dfd27))
