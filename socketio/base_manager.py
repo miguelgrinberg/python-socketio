@@ -103,6 +103,8 @@ class BaseManager(object):
 
     def enter_room(self, sid, namespace, room, eio_sid=None):
         """Add a client to a room."""
+        if eio_sid is None and namespace not in self.rooms:
+            raise ValueError('sid is not connected to requested namespace')
         if namespace not in self.rooms:
             self.rooms[namespace] = {}
         if room not in self.rooms[namespace]:

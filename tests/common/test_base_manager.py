@@ -1,6 +1,8 @@
 import unittest
 from unittest import mock
 
+import pytest
+
 from socketio import base_manager
 
 
@@ -118,6 +120,11 @@ class TestBaseManager(unittest.TestCase):
         self.bm.connect('123', '/')
         self.bm.connect('123', '/foo')
         self.bm.disconnect('123', '/bar')  # should not assert
+
+    def test_enter_room_bad_namespace(self):
+        sid = self.bm.connect('123', '/')
+        with pytest.raises(ValueError):
+            self.bm.enter_room(sid, '/foo', 'bar')
 
     def test_trigger_callback(self):
         sid1 = self.bm.connect('123', '/')
