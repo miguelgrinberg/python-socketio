@@ -75,6 +75,30 @@ class TestAsyncClient(unittest.TestCase):
             engineio_path='path',
         )
 
+    def test_connect_functions(self):
+        async def headers():
+            return 'headers'
+
+        c = asyncio_client.AsyncClient()
+        c.eio.connect = AsyncMock()
+        _run(
+            c.connect(
+                lambda: 'url',
+                headers=headers,
+                auth='auth',
+                transports='transports',
+                namespaces=['/foo', '/', '/bar'],
+                socketio_path='path',
+                wait=False,
+            )
+        )
+        c.eio.connect.mock.assert_called_once_with(
+            'url',
+            headers='headers',
+            transports='transports',
+            engineio_path='path',
+        )
+
     def test_connect_one_namespace(self):
         c = asyncio_client.AsyncClient()
         c.eio.connect = AsyncMock()
@@ -941,6 +965,29 @@ class TestAsyncClient(unittest.TestCase):
         c = asyncio_client.AsyncClient()
         c.connection_namespaces = ['/', '/foo']
         c.connection_auth = 'auth'
+        c._send_packet = AsyncMock()
+        c.eio.sid = 'foo'
+        assert c.sid is None
+        _run(c._handle_eio_connect())
+        assert c.sid == 'foo'
+        assert c._send_packet.mock.call_count == 2
+        expected_packet = packet.Packet(
+            packet.CONNECT, data='auth', namespace='/')
+        assert (
+            c._send_packet.mock.call_args_list[0][0][0].encode()
+            == expected_packet.encode()
+        )
+        expected_packet = packet.Packet(
+            packet.CONNECT, data='auth', namespace='/foo')
+        assert (
+            c._send_packet.mock.call_args_list[1][0][0].encode()
+            == expected_packet.encode()
+        )
+
+    def test_handle_eio_connect_function(self):
+        c = asyncio_client.AsyncClient()
+        c.connection_namespaces = ['/', '/foo']
+        c.connection_auth = lambda: 'auth'
         c._send_packet = AsyncMock()
         c.eio.sid = 'foo'
         assert c.sid is None

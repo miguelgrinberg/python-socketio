@@ -68,12 +68,19 @@ class AsyncClient(client.Client):
         """Connect to a Socket.IO server.
 
         :param url: The URL of the Socket.IO server. It can include custom
-                    query string parameters if required by the server.
+                    query string parameters if required by the server. If a
+                    function is provided, the client will invoke it to obtain
+                    the URL each time a connection or reconnection is
+                    attempted.
         :param headers: A dictionary with custom headers to send with the
-                        connection request.
+                        connection request. If a function is provided, the
+                        client will invoke it to obtain the headers dictionary
+                        each time a connection or reconnection is attempted.
         :param auth: Authentication data passed to the server with the
                      connection request, normally a dictionary with one or
-                     more string key/value pairs.
+                     more string key/value pairs. If a function is provided,
+                     the client will invoke it to obtain the authentication
+                     data each time a connection or reconnection is attempted.
         :param transports: The list of allowed transports. Valid transports
                            are ``'polling'`` and ``'websocket'``. If not
                            given, the polling transport is connected first,
@@ -124,8 +131,10 @@ class AsyncClient(client.Client):
             self._connect_event = self.eio.create_event()
         else:
             self._connect_event.clear()
+        real_url = await self._get_real_value(self.connection_url)
+        real_headers = await self._get_real_value(self.connection_headers)
         try:
-            await self.eio.connect(url, headers=headers,
+            await self.eio.connect(real_url, headers=real_headers,
                                    transports=transports,
                                    engineio_path=socketio_path)
         except engineio.exceptions.ConnectionError as exc:
@@ -320,6 +329,15 @@ class AsyncClient(client.Client):
         """
         return await self.eio.sleep(seconds)
 
+    async def _get_real_value(self, value):
+        """Return the actual value, for parameters that can also be given as
+        callables."""
+        if not callable(value):
+            return value
+        if asyncio.iscoroutinefunction(value):
+            return await value()
+        return value()
+
     async def _send_packet(self, pkt):
         """Send a Socket.IO packet to the server."""
         encoded_packet = pkt.encode()
@@ -462,9 +480,10 @@ class AsyncClient(client.Client):
         """Handle the Engine.IO connection event."""
         self.logger.info('Engine.IO connection established')
         self.sid = self.eio.sid
+        real_auth = await self._get_real_value(self.connection_auth)
         for n in self.connection_namespaces:
             await self._send_packet(packet.Packet(
-                packet.CONNECT, data=self.connection_auth, namespace=n))
+                packet.CONNECT, data=real_auth, namespace=n))
 
     async def _handle_eio_message(self, data):
         """Dispatch Engine.IO messages."""
