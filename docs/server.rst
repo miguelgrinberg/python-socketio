@@ -567,6 +567,11 @@ example::
     # emit an event
     external_sio.emit('my event', data={'foo': 'bar'}, room='my room')
 
+A limitation of the write-only client manager object is that it cannot receive
+callbacks when emitting. When the external process needs to receive callbacks,
+using a client to connect to the server with read and write support is a better
+option than a write-only client manager.
+
 Debugging and Troubleshooting
 -----------------------------
 
