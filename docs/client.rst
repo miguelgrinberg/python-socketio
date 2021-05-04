@@ -277,7 +277,7 @@ start a custom background task::
         # do some background work here!
         pass
 
-    sio.start_background_task(my_background_task, 123)
+    task = sio.start_background_task(my_background_task, 123)
 
 The arguments passed to this method are the background function and any
 positional or keyword arguments to invoke the function with. 
@@ -288,7 +288,7 @@ Here is the ``asyncio`` version::
         # do some background work here!
         pass
 
-    sio.start_background_task(my_background_task, 123)
+    task = sio.start_background_task(my_background_task, 123)
 
 Note that this function is not a coroutine, since it does not wait for the
 background function to end. The background function must be a coroutine.
