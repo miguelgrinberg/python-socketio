@@ -74,19 +74,24 @@ server::
         print("I'm connected!")
 
     @sio.event
-    def connect_error():
+    def connect_error(data):
         print("The connection failed!")
 
     @sio.event
     def disconnect():
         print("I'm disconnected!")
 
-Note that the ``disconnect`` handler is invoked for application initiated
-disconnects, server initiated disconnects, or accidental disconnects, for 
-example due to networking failures. In the case of an accidental
-disconnection, the client is going to attempt to reconnect immediately after
-invoking the disconnect handler. As soon as the connection is re-established
-the connect handler will be invoked once again.
+The ``connect_error`` handler is invoked when a connection attempt fails. If
+the server provides arguments, these are passed on to the handler. The server
+can use an argument to provide information to the client regarding the
+connection failure.
+
+The ``disconnect`` handler is invoked for application initiated disconnects,
+server initiated disconnects, or accidental disconnects, for example due to
+networking failures. In the case of an accidental disconnection, the client is
+going to attempt to reconnect immediately after invoking the disconnect
+handler. As soon as the connection is re-established the connect handler will
+be invoked once again.
 
 If the server includes arguments with an event, those are passed to the
 handler function as arguments.
