@@ -9,9 +9,17 @@ from socketio import base_manager
 from socketio import pubsub_manager
 
 
-class TestBaseManager(unittest.TestCase):
+class TestPubSubManager(unittest.TestCase):
     def setUp(self):
+        id = 0
+
+        def generate_id():
+            nonlocal id
+            id += 1
+            return str(id)
+
         mock_server = mock.MagicMock()
+        mock_server.eio.generate_id = generate_id
         self.pm = pubsub_manager.PubSubManager()
         self.pm._publish = mock.MagicMock()
         self.pm.set_server(mock_server)

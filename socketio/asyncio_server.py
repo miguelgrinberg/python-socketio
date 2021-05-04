@@ -122,10 +122,11 @@ class AsyncServer(server.Server):
                      multiple arguments, use a tuple where each element is of
                      one of the types indicated above.
         :param to: The recipient of the message. This can be set to the
-                   session ID of a client to address only that client, or to
-                   to any custom room created by the application to address all
-                   the clients in that room, If this argument is omitted the
-                   event is broadcasted to all connected clients.
+                   session ID of a client to address only that client, to any
+                   any custom room created by the application to address all
+                   the clients in that room, or to a list of custom room
+                   names. If this argument is omitted the event is broadcasted
+                   to all connected clients.
         :param room: Alias for the ``to`` parameter.
         :param skip_sid: The session ID of a client to skip when broadcasting
                          to a room or to all clients. This can be used to
@@ -174,10 +175,11 @@ class AsyncServer(server.Server):
                      multiple arguments, use a tuple where each element is of
                      one of the types indicated above.
         :param to: The recipient of the message. This can be set to the
-                   session ID of a client to address only that client, or to
-                   to any custom room created by the application to address all
-                   the clients in that room, If this argument is omitted the
-                   event is broadcasted to all connected clients.
+                   session ID of a client to address only that client, to any
+                   any custom room created by the application to address all
+                   the clients in that room, or to a list of custom room
+                   names. If this argument is omitted the event is broadcasted
+                   to all connected clients.
         :param room: Alias for the ``to`` parameter.
         :param skip_sid: The session ID of a client to skip when broadcasting
                          to a room or to all clients. This can be used to

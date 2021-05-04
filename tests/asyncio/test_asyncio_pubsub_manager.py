@@ -29,7 +29,15 @@ def _run(coro):
 @unittest.skipIf(sys.version_info < (3, 5), 'only for Python 3.5+')
 class TestAsyncPubSubManager(unittest.TestCase):
     def setUp(self):
+        id = 0
+
+        def generate_id():
+            nonlocal id
+            id += 1
+            return str(id)
+
         mock_server = mock.MagicMock()
+        mock_server.eio.generate_id = generate_id
         mock_server._emit_internal = AsyncMock()
         mock_server.disconnect = AsyncMock()
         self.pm = asyncio_pubsub_manager.AsyncPubSubManager()

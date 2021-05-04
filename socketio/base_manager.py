@@ -38,7 +38,14 @@ class BaseManager(object):
 
     def get_participants(self, namespace, room):
         """Return an iterable with the active participants in a room."""
-        for sid, eio_sid in self.rooms[namespace][room]._fwdm.copy().items():
+        ns = self.rooms[namespace]
+        if room is None or isinstance(room, str):
+            participants = ns[room]._fwdm.copy() if room in ns else {}
+        else:
+            participants = ns[room[0]]._fwdm.copy() if room[0] in ns else {}
+            for r in room[1:]:
+                participants.update(ns[r]._fwdm if r in ns else {})
+        for sid, eio_sid in participants.items():
             yield sid, eio_sid
 
     def connect(self, eio_sid, namespace):
@@ -147,7 +154,7 @@ class BaseManager(object):
              callback=None, **kwargs):
         """Emit a message to a single client, a room, or all the clients
         connected to the namespace."""
-        if namespace not in self.rooms or room not in self.rooms[namespace]:
+        if namespace not in self.rooms:
             return
         if not isinstance(skip_sid, list):
             skip_sid = [skip_sid]
