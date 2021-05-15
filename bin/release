@@ -36,7 +36,7 @@ python setup.py sdist bdist_wheel --universal
 git add $VERSION_FILE CHANGES.md
 git commit -m "Release $VERSION"
 git tag -f v$VERSION
-git push --tags origin master
+git push --tags origin main
 
 read -p "Press any key to submit to PyPI or Ctrl-C to abort..." -n1 -s
 twine upload dist/*
@@ -45,5 +45,5 @@ NEW_VERSION="${VERSION%.*}.$((${VERSION##*.}+1))dev"
 sed -i "" "s/^__version__ = '.*'$/__version__ = '$NEW_VERSION'/" $VERSION_FILE
 git add $VERSION_FILE
 git commit -m "Version $NEW_VERSION"
-git push origin master
+git push origin main
 echo "Development is now open on version $NEW_VERSION!"
