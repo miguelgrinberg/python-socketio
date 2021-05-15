@@ -1,5 +1,17 @@
 # python-socketio change log
 
+**Release 5.3.0** - 2021-05-15
+
+- Document WebSocket support for threading mode ([commit](https://github.com/miguelgrinberg/python-socketio/commit/2f085b3338acc56a5c4625783d50ad53f5ad0c1a))
+- Allow functions to be used for URL, headers and auth data in client connection [#588](https://github.com/miguelgrinberg/python-socketio/issues/588) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/7d2e7f7eb3eb34860c2b28df1807a932ed632b54))
+- Emit events to multiple rooms [#605](https://github.com/miguelgrinberg/python-socketio/issues/605) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/2538df8bcf0e44881a7653cc684f985252c7fce0))
+- More descriptive error when joining a room on a bad namespace [#650](https://github.com/miguelgrinberg/python-socketio/issues/650) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/66068d9e968942343c840609e6e062162256111b))
+- Document the use of arguments in the `connect_error` handler [#554](https://github.com/miguelgrinberg/python-socketio/issues/554) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/d5308504d304b1bd26398309d31d0ce5fbd76e74))
+- Document that callbacks cannot be used in external processes [#1533](https://github.com/miguelgrinberg/Flask-SocketIO/issues/1533) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/703843b42b8fb7fb6a9d0152610e714e9c6fb75e))
+- Improve `start_background_task()` example in the documentation [#647](https://github.com/miguelgrinberg/python-socketio/issues/647) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/ef4ae900c5245439921e706fa46008fe5ca102d6))
+- Added Open Collective funding option ([commit](https://github.com/miguelgrinberg/python-socketio/commit/6572ad683ac87981493f69307d5e01cb15a0dacb))
+- Remove Python 2 from PyPI classifiers ([commit](https://github.com/miguelgrinberg/python-socketio/commit/a37ab00b344e035adbdc532f2760c223db118c0f))
+
 **Release 5.2.1** - 2021-04-18
 
 - Fixed incorrect handling of dashes inside the JSON payload of a packet [#675](https://github.com/miguelgrinberg/python-socketio/issues/675) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/f4e101079fdc49c673ab9433aca8346480cc9e4f))
