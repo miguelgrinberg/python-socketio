@@ -39,12 +39,12 @@ class BaseManager(object):
     def get_participants(self, namespace, room):
         """Return an iterable with the active participants in a room."""
         ns = self.rooms[namespace]
-        if room is None or isinstance(room, str):
-            participants = ns[room]._fwdm.copy() if room in ns else {}
-        else:
+        if hasattr(room, '__len__') and not isinstance(room, str):
             participants = ns[room[0]]._fwdm.copy() if room[0] in ns else {}
             for r in room[1:]:
                 participants.update(ns[r]._fwdm if r in ns else {})
+        else:
+            participants = ns[room]._fwdm.copy() if room in ns else {}
         for sid, eio_sid in participants.items():
             yield sid, eio_sid
 
