@@ -1,6 +1,6 @@
 python-socketio
 ===============
-
+.. image:: https://cdn-1.chadfreeman.repl.co/static/python-socket.IO-no-background.png
 .. image:: https://github.com/miguelgrinberg/python-socketio/workflows/build/badge.svg
     :target: https://github.com/miguelgrinberg/python-socketio/actions
 
