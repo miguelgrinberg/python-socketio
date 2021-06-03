@@ -12,7 +12,7 @@ with open('socketio/__init__.py', 'r') as f:
     version = re.search(r'^__version__\s*=\s*[\'"]([^\'"]*)[\'"]',
                         f.read(), re.MULTILINE).group(1)
 
-with open('README.rst', 'r') as f:
+with open('README.md', 'r') as f:
     long_description = f.read()
 
 setup(
@@ -24,6 +24,7 @@ setup(
     author_email='miguelgrinberg50@gmail.com',
     description='Socket.IO server',
     long_description=long_description,
+    long_description_content_type='text/markdown',
     packages=['socketio'],
     zip_safe=False,
     include_package_data=True,
