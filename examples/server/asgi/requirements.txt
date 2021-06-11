@@ -5,4 +5,4 @@ python-engineio
 python_socketio
 uvicorn==0.13.1
 uvloop==0.14.0
-websockets==8.1
+websockets==9.1
