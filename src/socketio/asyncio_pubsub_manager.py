@@ -1,3 +1,4 @@
+import asyncio
 from functools import partial
 import uuid
 
@@ -148,6 +149,8 @@ class AsyncPubSubManager(AsyncManager):
         while True:
             try:
                 message = await self._listen()
+            except asyncio.CancelledError:  # pragma: no cover
+                break
             except:
                 import traceback
                 traceback.print_exc()
