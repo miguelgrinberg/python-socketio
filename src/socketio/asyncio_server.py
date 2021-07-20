@@ -369,7 +369,7 @@ class AsyncServer(server.Server):
         if delete_it:
             self.logger.info('Disconnecting %s [%s]', sid, namespace)
             eio_sid = self.manager.pre_disconnect(sid, namespace=namespace)
-            await self._send_packet(eio_sid, packet.Packet(
+            await self._send_packet(eio_sid, self.packet_class(
                 packet.DISCONNECT, namespace=namespace))
             await self._trigger_event('disconnect', namespace, sid)
             self.manager.disconnect(sid, namespace=namespace)
@@ -423,7 +423,7 @@ class AsyncServer(server.Server):
             data = [data]
         else:
             data = []
-        await self._send_packet(sid, packet.Packet(
+        await self._send_packet(sid, self.packet_class(
             packet.EVENT, namespace=namespace, data=[event] + data, id=id))
 
     async def _send_packet(self, eio_sid, pkt):
@@ -440,7 +440,7 @@ class AsyncServer(server.Server):
         namespace = namespace or '/'
         sid = self.manager.connect(eio_sid, namespace)
         if self.always_connect:
-            await self._send_packet(eio_sid, packet.Packet(
+            await self._send_packet(eio_sid, self.packet_class(
                 packet.CONNECT, {'sid': sid}, namespace=namespace))
         fail_reason = exceptions.ConnectionRefusedError().error_args
         try:
@@ -461,15 +461,15 @@ class AsyncServer(server.Server):
         if success is False:
             if self.always_connect:
                 self.manager.pre_disconnect(sid, namespace)
-                await self._send_packet(eio_sid, packet.Packet(
+                await self._send_packet(eio_sid, self.packet_class(
                     packet.DISCONNECT, data=fail_reason, namespace=namespace))
             else:
-                await self._send_packet(eio_sid, packet.Packet(
+                await self._send_packet(eio_sid, self.packet_class(
                     packet.CONNECT_ERROR, data=fail_reason,
                     namespace=namespace))
             self.manager.disconnect(sid, namespace)
         elif not self.always_connect:
-            await self._send_packet(eio_sid, packet.Packet(
+            await self._send_packet(eio_sid, self.packet_class(
                 packet.CONNECT, {'sid': sid}, namespace=namespace))
 
     async def _handle_disconnect(self, eio_sid, namespace):
@@ -511,7 +511,7 @@ class AsyncServer(server.Server):
                 data = list(r)
             else:
                 data = [r]
-            await server._send_packet(eio_sid, packet.Packet(
+            await server._send_packet(eio_sid, self.packet_class(
                 packet.ACK, namespace=namespace, id=id, data=data))
 
     async def _handle_ack(self, eio_sid, namespace, id, data):
@@ -560,7 +560,7 @@ class AsyncServer(server.Server):
                     await self._handle_ack(eio_sid, pkt.namespace, pkt.id,
                                            pkt.data)
         else:
-            pkt = packet.Packet(encoded_packet=data)
+            pkt = self.packet_class(encoded_packet=data)
             if pkt.packet_type == packet.CONNECT:
                 await self._handle_connect(eio_sid, pkt.namespace, pkt.data)
             elif pkt.packet_type == packet.DISCONNECT:

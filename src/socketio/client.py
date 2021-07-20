@@ -57,6 +57,13 @@ class Client(object):
                    use. To disable logging set to ``False``. The default is
                    ``False``. Note that fatal errors are logged even when
                    ``logger`` is ``False``.
+    :param serializer: The serialization method to use when transmitting
+                       packets. Valid values are ``'default'``, ``'pickle'``,
+                       ``'msgpack'`` and ``'cbor'``. Alternatively, a subclass
+                       of the :class:`Packet` class with custom implementations
+                       of the ``encode()`` and ``decode()`` methods can be
+                       provided. Client and server must use compatible
+                       serializers.
     :param json: An alternative json module to use for encoding and decoding
                  packets. Custom json modules must have ``dumps`` and ``loads``
                  functions that are compatible with the standard library
@@ -82,7 +89,8 @@ class Client(object):
     """
     def __init__(self, reconnection=True, reconnection_attempts=0,
                  reconnection_delay=1, reconnection_delay_max=5,
-                 randomization_factor=0.5, logger=False, json=None, **kwargs):
+                 randomization_factor=0.5, logger=False, serializer='default',
+                 json=None, **kwargs):
         global original_signal_handler
         if original_signal_handler is None and \
                 threading.current_thread() == threading.main_thread():
@@ -98,8 +106,15 @@ class Client(object):
         engineio_logger = engineio_options.pop('engineio_logger', None)
         if engineio_logger is not None:
             engineio_options['logger'] = engineio_logger
+        if serializer == 'default':
+            self.packet_class = packet.Packet
+        elif serializer == 'msgpack':
+            from . import msgpack_packet
+            self.packet_class = msgpack_packet.MsgPackPacket
+        else:
+            self.packet_class = serializer
         if json is not None:
-            packet.Packet.json = json
+            self.packet_class.json = json
             engineio_options['json'] = json
 
         self.eio = self._engineio_client_class()(**engineio_options)
@@ -381,8 +396,8 @@ class Client(object):
             data = [data]
         else:
             data = []
-        self._send_packet(packet.Packet(packet.EVENT, namespace=namespace,
-                                        data=[event] + data, id=id))
+        self._send_packet(self.packet_class(packet.EVENT, namespace=namespace,
+                                            data=[event] + data, id=id))
 
     def send(self, data, namespace=None, callback=None):
         """Send a message to one or more connected clients.
@@ -448,7 +463,8 @@ class Client(object):
         # here we just request the disconnection
         # later in _handle_eio_disconnect we invoke the disconnect handler
         for n in self.namespaces:
-            self._send_packet(packet.Packet(packet.DISCONNECT, namespace=n))
+            self._send_packet(self.packet_class(
+                packet.DISCONNECT, namespace=n))
         self.eio.disconnect(abort=True)
 
     def get_sid(self, namespace=None):
@@ -557,8 +573,8 @@ class Client(object):
                 data = list(r)
             else:
                 data = [r]
-            self._send_packet(packet.Packet(packet.ACK, namespace=namespace,
-                              id=id, data=data))
+            self._send_packet(self.packet_class(
+                packet.ACK, namespace=namespace, id=id, data=data))
 
     def _handle_ack(self, namespace, id, data):
         namespace = namespace or '/'
@@ -647,7 +663,7 @@ class Client(object):
         self.sid = self.eio.sid
         real_auth = self._get_real_value(self.connection_auth)
         for n in self.connection_namespaces:
-            self._send_packet(packet.Packet(
+            self._send_packet(self.packet_class(
                 packet.CONNECT, data=real_auth, namespace=n))
 
     def _handle_eio_message(self, data):
@@ -661,7 +677,7 @@ class Client(object):
                 else:
                     self._handle_ack(pkt.namespace, pkt.id, pkt.data)
         else:
-            pkt = packet.Packet(encoded_packet=data)
+            pkt = self.packet_class(encoded_packet=data)
             if pkt.packet_type == packet.CONNECT:
                 self._handle_connect(pkt.namespace, pkt.data)
             elif pkt.packet_type == packet.DISCONNECT:

@@ -24,6 +24,13 @@ class Server(object):
                    use. To disable logging set to ``False``. The default is
                    ``False``. Note that fatal errors are logged even when
                    ``logger`` is ``False``.
+    :param serializer: The serialization method to use when transmitting
+                       packets. Valid values are ``'default'``, ``'pickle'``,
+                       ``'msgpack'`` and ``'cbor'``. Alternatively, a subclass
+                       of the :class:`Packet` class with custom implementations
+                       of the ``encode()`` and ``decode()`` methods can be
+                       provided. Client and server must use compatible
+                       serializers.
     :param json: An alternative json module to use for encoding and decoding
                  packets. Custom json modules must have ``dumps`` and ``loads``
                  functions that are compatible with the standard library
@@ -48,10 +55,11 @@ class Server(object):
 
     :param async_mode: The asynchronous model to use. See the Deployment
                        section in the documentation for a description of the
-                       available options. Valid async modes are "threading",
-                       "eventlet", "gevent" and "gevent_uwsgi". If this
-                       argument is not given, "eventlet" is tried first, then
-                       "gevent_uwsgi", then "gevent", and finally "threading".
+                       available options. Valid async modes are
+                       ``'threading'``, ``'eventlet'``, ``'gevent'`` and
+                       ``'gevent_uwsgi'``. If this argument is not given,
+                       ``'eventlet'`` is tried first, then ``'gevent_uwsgi'``,
+                       then ``'gevent'``, and finally ``'threading'``.
                        The first async mode that has all its dependencies
                        installed is then one that is chosen.
     :param ping_interval: The interval in seconds at which the server pings
@@ -98,14 +106,22 @@ class Server(object):
                             fatal errors are logged even when
                             ``engineio_logger`` is ``False``.
     """
-    def __init__(self, client_manager=None, logger=False, json=None,
-                 async_handlers=True, always_connect=False, **kwargs):
+    def __init__(self, client_manager=None, logger=False, serializer='default',
+                 json=None, async_handlers=True, always_connect=False,
+                 **kwargs):
         engineio_options = kwargs
         engineio_logger = engineio_options.pop('engineio_logger', None)
         if engineio_logger is not None:
             engineio_options['logger'] = engineio_logger
+        if serializer == 'default':
+            self.packet_class = packet.Packet
+        elif serializer == 'msgpack':
+            from . import msgpack_packet
+            self.packet_class = msgpack_packet.MsgPackPacket
+        else:
+            self.packet_class = serializer
         if json is not None:
-            packet.Packet.json = json
+            self.packet_class.json = json
             engineio_options['json'] = json
         engineio_options['async_handlers'] = False
         self.eio = self._engineio_server_class()(**engineio_options)
@@ -531,7 +547,7 @@ class Server(object):
         if delete_it:
             self.logger.info('Disconnecting %s [%s]', sid, namespace)
             eio_sid = self.manager.pre_disconnect(sid, namespace=namespace)
-            self._send_packet(eio_sid, packet.Packet(
+            self._send_packet(eio_sid, self.packet_class(
                 packet.DISCONNECT, namespace=namespace))
             self._trigger_event('disconnect', namespace, sid)
             self.manager.disconnect(sid, namespace=namespace)
@@ -609,7 +625,7 @@ class Server(object):
             data = [data]
         else:
             data = []
-        self._send_packet(eio_sid, packet.Packet(
+        self._send_packet(eio_sid, self.packet_class(
             packet.EVENT, namespace=namespace, data=[event] + data, id=id))
 
     def _send_packet(self, eio_sid, pkt):
@@ -626,7 +642,7 @@ class Server(object):
         namespace = namespace or '/'
         sid = self.manager.connect(eio_sid, namespace)
         if self.always_connect:
-            self._send_packet(eio_sid, packet.Packet(
+            self._send_packet(eio_sid, self.packet_class(
                 packet.CONNECT, {'sid': sid}, namespace=namespace))
         fail_reason = exceptions.ConnectionRefusedError().error_args
         try:
@@ -647,15 +663,15 @@ class Server(object):
         if success is False:
             if self.always_connect:
                 self.manager.pre_disconnect(sid, namespace)
-                self._send_packet(eio_sid, packet.Packet(
+                self._send_packet(eio_sid, self.packet_class(
                     packet.DISCONNECT, data=fail_reason, namespace=namespace))
             else:
-                self._send_packet(eio_sid, packet.Packet(
+                self._send_packet(eio_sid, self.packet_class(
                     packet.CONNECT_ERROR, data=fail_reason,
                     namespace=namespace))
             self.manager.disconnect(sid, namespace)
         elif not self.always_connect:
-            self._send_packet(eio_sid, packet.Packet(
+            self._send_packet(eio_sid, self.packet_class(
                 packet.CONNECT, {'sid': sid}, namespace=namespace))
 
     def _handle_disconnect(self, eio_sid, namespace):
@@ -697,7 +713,7 @@ class Server(object):
                 data = list(r)
             else:
                 data = [r]
-            server._send_packet(eio_sid, packet.Packet(
+            server._send_packet(eio_sid, self.packet_class(
                 packet.ACK, namespace=namespace, id=id, data=data))
 
     def _handle_ack(self, eio_sid, namespace, id, data):
@@ -737,7 +753,7 @@ class Server(object):
                 else:
                     self._handle_ack(eio_sid, pkt.namespace, pkt.id, pkt.data)
         else:
-            pkt = packet.Packet(encoded_packet=data)
+            pkt = self.packet_class(encoded_packet=data)
             if pkt.packet_type == packet.CONNECT:
                 self._handle_connect(eio_sid, pkt.namespace, pkt.data)
             elif pkt.packet_type == packet.DISCONNECT:

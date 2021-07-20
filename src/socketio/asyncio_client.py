@@ -220,7 +220,7 @@ class AsyncClient(client.Client):
             data = [data]
         else:
             data = []
-        await self._send_packet(packet.Packet(
+        await self._send_packet(self.packet_class(
             packet.EVENT, namespace=namespace, data=[event] + data, id=id))
 
     async def send(self, data, namespace=None, callback=None):
@@ -296,7 +296,7 @@ class AsyncClient(client.Client):
         # here we just request the disconnection
         # later in _handle_eio_disconnect we invoke the disconnect handler
         for n in self.namespaces:
-            await self._send_packet(packet.Packet(packet.DISCONNECT,
+            await self._send_packet(self.packet_class(packet.DISCONNECT,
                                     namespace=n))
         await self.eio.disconnect(abort=True)
 
@@ -379,7 +379,7 @@ class AsyncClient(client.Client):
                 data = list(r)
             else:
                 data = [r]
-            await self._send_packet(packet.Packet(
+            await self._send_packet(self.packet_class(
                 packet.ACK, namespace=namespace, id=id, data=data))
 
     async def _handle_ack(self, namespace, id, data):
@@ -482,7 +482,7 @@ class AsyncClient(client.Client):
         self.sid = self.eio.sid
         real_auth = await self._get_real_value(self.connection_auth)
         for n in self.connection_namespaces:
-            await self._send_packet(packet.Packet(
+            await self._send_packet(self.packet_class(
                 packet.CONNECT, data=real_auth, namespace=n))
 
     async def _handle_eio_message(self, data):
@@ -496,7 +496,7 @@ class AsyncClient(client.Client):
                 else:
                     await self._handle_ack(pkt.namespace, pkt.id, pkt.data)
         else:
-            pkt = packet.Packet(encoded_packet=data)
+            pkt = self.packet_class(encoded_packet=data)
             if pkt.packet_type == packet.CONNECT:
                 await self._handle_connect(pkt.namespace, pkt.data)
             elif pkt.packet_type == packet.DISCONNECT:

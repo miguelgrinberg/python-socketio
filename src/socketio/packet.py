@@ -37,7 +37,7 @@ class Packet(object):
         self.attachment_count = 0
         self.attachments = []
         if encoded_packet:
-            self.attachment_count = self.decode(encoded_packet)
+            self.attachment_count = self.decode(encoded_packet) or 0
 
     def encode(self):
         """Encode the packet for transmission.
@@ -175,3 +175,13 @@ class Packet(object):
                 False)
         else:
             return False
+
+    def _to_dict(self):
+        d = {
+            'type': self.packet_type,
+            'data': self.data,
+            'nsp': self.namespace,
+        }
+        if self.id:
+            d['id'] = self.id
+        return d

@@ -11,6 +11,7 @@ import pytest
 from socketio import asyncio_namespace
 from socketio import client
 from socketio import exceptions
+from socketio import msgpack_packet
 from socketio import namespace
 from socketio import packet
 
@@ -49,8 +50,20 @@ class TestClient(unittest.TestCase):
         assert c.callbacks == {}
         assert c._binary_packet is None
         assert c._reconnect_task is None
+        assert c.packet_class == packet.Packet
 
-    def test_custon_json(self):
+    def test_msgpack(self):
+        c = client.Client(serializer='msgpack')
+        assert c.packet_class == msgpack_packet.MsgPackPacket
+
+    def test_custom_serializer(self):
+        class CustomPacket(packet.Packet):
+            pass
+
+        c = client.Client(serializer=CustomPacket)
+        assert c.packet_class == CustomPacket
+
+    def test_custom_json(self):
         client.Client()
         assert packet.Packet.json == json
         assert engineio_packet.Packet.json == json

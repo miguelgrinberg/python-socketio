@@ -6,6 +6,7 @@ from engineio import json
 import pytest
 
 from socketio import exceptions
+from socketio import msgpack_packet
 from socketio import namespace
 from socketio import packet
 from socketio import server
@@ -29,6 +30,7 @@ class TestServer(unittest.TestCase):
         assert s.manager == mgr
         assert s.eio.on.call_count == 3
         assert s.async_handlers
+        assert s.packet_class == packet.Packet
 
     def test_on_event(self, eio):
         s = server.Server()
@@ -812,6 +814,17 @@ class TestServer(unittest.TestCase):
         eio.assert_called_once_with(
             **{'logger': 'foo', 'async_handlers': False}
         )
+
+    def test_msgpack(self, eio):
+        s = server.Server(serializer='msgpack')
+        assert s.packet_class == msgpack_packet.MsgPackPacket
+
+    def test_custom_serializer(self, eio):
+        class CustomPacket(packet.Packet):
+            pass
+
+        s = server.Server(serializer=CustomPacket)
+        assert s.packet_class == CustomPacket
 
     def test_custom_json(self, eio):
         # Warning: this test cannot run in parallel with other tests, as it
