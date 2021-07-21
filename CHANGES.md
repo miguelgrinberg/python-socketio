@@ -107,6 +107,7 @@
 
 **Release 4.4.0** - 2019-11-24
 
+- Last version to support Python 2
 - Support the `connect_error` event in the client [#344](https://github.com/miguelgrinberg/python-socketio/issues/344) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/805d5f37413a1e3bbad22012237412803217b4b9))
 - Do not dispatch events for disconnected namespaces [#333](https://github.com/miguelgrinberg/python-socketio/issues/333) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/a839a36fa0fa7f0e5d8976ff47b217f6b1e8a44b))
 - Fix documentation typos [#374](https://github.com/miguelgrinberg/python-socketio/issues/374) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/b60bbc0307edd0bef2c8b11197ef5a04b2d11b71)) (thanks **Dmitry Volodin**!)
