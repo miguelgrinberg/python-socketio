@@ -366,6 +366,19 @@ class TestServer(unittest.TestCase):
         handler.assert_called_once_with('1', 'environ')
         s.eio.send.assert_called_once_with('123', '0/foo,{"sid":"1"}')
 
+    def test_handle_connect_namespace_twice(self, eio):
+        s = server.Server()
+        handler = mock.MagicMock()
+        s.on('connect', handler, namespace='/foo')
+        s._handle_eio_connect('123', 'environ')
+        s._handle_eio_message('123', '0/foo,')
+        s._handle_eio_message('123', '0/foo,')
+        assert s.manager.is_connected('1', '/foo')
+        handler.assert_called_once_with('1', 'environ')
+        s.eio.send.assert_any_call('123', '0/foo,{"sid":"1"}')
+        print(s.eio.send.call_args_list)
+        s.eio.send.assert_any_call('123', '4/foo,"Unable to connect"')
+
     def test_handle_connect_always_connect(self, eio):
         s = server.Server(always_connect=True)
         s.manager.initialize = mock.MagicMock()

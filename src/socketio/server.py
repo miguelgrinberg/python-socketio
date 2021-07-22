@@ -641,6 +641,12 @@ class Server(object):
         """Handle a client connection request."""
         namespace = namespace or '/'
         sid = self.manager.connect(eio_sid, namespace)
+        if sid is None:
+            self._send_packet(eio_sid, self.packet_class(
+                packet.CONNECT_ERROR, data='Unable to connect',
+                namespace=namespace))
+            return
+
         if self.always_connect:
             self._send_packet(eio_sid, self.packet_class(
                 packet.CONNECT, {'sid': sid}, namespace=namespace))

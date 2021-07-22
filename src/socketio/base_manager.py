@@ -1,7 +1,7 @@
 import itertools
 import logging
 
-from bidict import bidict
+from bidict import bidict, ValueDuplicationError
 
 default_logger = logging.getLogger('socketio')
 
@@ -51,7 +51,11 @@ class BaseManager(object):
     def connect(self, eio_sid, namespace):
         """Register a client connection to a namespace."""
         sid = self.server.eio.generate_id()
-        self.enter_room(sid, namespace, None, eio_sid=eio_sid)
+        try:
+            self.enter_room(sid, namespace, None, eio_sid=eio_sid)
+        except ValueDuplicationError:
+            # already connected
+            return None
         self.enter_room(sid, namespace, sid, eio_sid=eio_sid)
         return sid
 
