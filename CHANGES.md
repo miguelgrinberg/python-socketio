@@ -1,5 +1,14 @@
 # python-socketio change log
 
+**Release 5.4.0** - 2021-08-02
+
+- Support msgpack and custom packet serializers [#749](https://github.com/miguelgrinberg/python-socketio/issues/749) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/5159e84c49daaf2da0579bfc6ee954a9c738a076))
+- Return error packet if client connects to an already connected namespace ([commit](https://github.com/miguelgrinberg/python-socketio/commit/cb1b8ec74bee3b5247200a6fc6e3f6aab3a3f941))
+- Handle CancelledError in async pubsub managers [#750](https://github.com/miguelgrinberg/python-socketio/issues/750) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/a813bde0626c16fe693db74cbc2ea7c331a177d3))
+- More robust handling of emit's "to" argument [#689](https://github.com/miguelgrinberg/python-socketio/issues/689) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/2f0d8bbd8c4de43fe26e0f2edcd05aef3c8c71f9))
+- Remove executable permissions from setup.py, which has no shebang [#748](https://github.com/miguelgrinberg/python-socketio/issues/748) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/fb3ac958dfa2d3b04f8ec1b0221c3f4734c9f756)) (thanks **Ben Beasley**!)
+- Improved project structure ([commit](https://github.com/miguelgrinberg/python-socketio/commit/98c7ac23f231b64cc8b8c51104b792d0cd5cf361))
+
 **Release 5.3.0** - 2021-05-15
 
 - Document WebSocket support for threading mode ([commit](https://github.com/miguelgrinberg/python-socketio/commit/2f085b3338acc56a5c4625783d50ad53f5ad0c1a))
