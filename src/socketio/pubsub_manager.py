@@ -75,6 +75,10 @@ class PubSubManager(BaseManager):
             self._publish({'method': 'disconnect', 'sid': sid,
                            'namespace': namespace or '/'})
 
+    def disconnect(self, sid, namespace=None):
+        self._publish({'method': 'disconnect', 'sid': sid,
+                       'namespace': namespace or '/'})
+
     def close_room(self, room, namespace=None):
         self._publish({'method': 'close_room', 'room': room,
                        'namespace': namespace or '/'})

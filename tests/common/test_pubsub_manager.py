@@ -169,6 +169,12 @@ class TestPubSubManager(unittest.TestCase):
             {'method': 'disconnect', 'sid': sid, 'namespace': '/foo'}
         )
 
+    def test_disconnect(self):
+        self.pm.disconnect('foo')
+        self.pm._publish.assert_called_once_with(
+            {'method': 'disconnect', 'sid': 'foo', 'namespace': '/'}
+        )
+
     def test_close_room(self):
         self.pm.close_room('foo')
         self.pm._publish.assert_called_once_with(
