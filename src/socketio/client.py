@@ -609,8 +609,11 @@ class Client(object):
     def _trigger_event(self, event, namespace, *args):
         """Invoke an application event handler."""
         # first see if we have an explicit handler for the event
-        if namespace in self.handlers and event in self.handlers[namespace]:
-            return self.handlers[namespace][event](*args)
+        if namespace in self.handlers:
+            if event in self.handlers[namespace]:
+                return self.handlers[namespace][event](*args)
+            elif '*' in self.handlers[namespace]:
+                return self.handlers[namespace]['*'](event, *args)
 
         # or else, forward the event to a namespace handler if one exists
         elif namespace in self.namespace_handlers:

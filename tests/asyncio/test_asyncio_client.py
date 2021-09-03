@@ -833,16 +833,24 @@ class TestAsyncClient(unittest.TestCase):
     def test_trigger_event(self):
         c = asyncio_client.AsyncClient()
         handler = mock.MagicMock()
+        catchall_handler = mock.MagicMock()
         c.on('foo', handler)
+        c.on('*', catchall_handler)
         _run(c._trigger_event('foo', '/', 1, '2'))
+        _run(c._trigger_event('bar', '/', 1, '2', 3))
         handler.assert_called_once_with(1, '2')
+        catchall_handler.assert_called_once_with('bar', 1, '2', 3)
 
     def test_trigger_event_namespace(self):
         c = asyncio_client.AsyncClient()
         handler = AsyncMock()
+        catchall_handler = AsyncMock()
         c.on('foo', handler, namespace='/bar')
+        c.on('*', catchall_handler, namespace='/bar')
         _run(c._trigger_event('foo', '/bar', 1, '2'))
+        _run(c._trigger_event('bar', '/bar', 1, '2', 3))
         handler.mock.assert_called_once_with(1, '2')
+        catchall_handler.mock.assert_called_once_with('bar', 1, '2', 3)
 
     def test_trigger_event_class_namespace(self):
         c = asyncio_client.AsyncClient()

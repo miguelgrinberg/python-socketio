@@ -178,6 +178,28 @@ The ``sid`` argument is the Socket.IO session id, a unique identifier of each
 client connection. All the events sent by a given client will have the same
 ``sid`` value.
 
+Catch-All Event Handlers
+------------------------
+
+A "catch-all" event handler is invoked for any events that do not have an
+event handler. You can define a catch-all handler using ``'*'`` as event name::
+
+   @sio.on('*')
+   def catch_all(event, sid, data):
+       pass
+
+Asyncio servers can also use a coroutine::
+
+   @sio.on('*')
+   async def catch_all(event, sid, data):
+      pass
+
+A catch-all event handler receives the event name as a first argument. The
+remaining arguments are the same as for a regular event handler.
+
+Connect and Disconnect Event Handlers
+-------------------------------------
+
 The ``connect`` and ``disconnect`` events are special; they are invoked
 automatically when a client connects or disconnects from the server::
 

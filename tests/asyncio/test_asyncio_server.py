@@ -618,18 +618,28 @@ class TestAsyncServer(unittest.TestCase):
         s = asyncio_server.AsyncServer(async_handlers=False)
         sid = s.manager.connect('123', '/')
         handler = AsyncMock()
-        s.on('my message', handler)
+        catchall_handler = AsyncMock()
+        s.on('msg', handler)
+        s.on('*', catchall_handler)
+        _run(s._handle_eio_message('123', '2["msg","a","b"]'))
         _run(s._handle_eio_message('123', '2["my message","a","b","c"]'))
-        handler.mock.assert_called_once_with(sid, 'a', 'b', 'c')
+        handler.mock.assert_called_once_with(sid, 'a', 'b')
+        catchall_handler.mock.assert_called_once_with(
+            'my message', sid, 'a', 'b', 'c')
 
     def test_handle_event_with_namespace(self, eio):
         eio.return_value.send = AsyncMock()
         s = asyncio_server.AsyncServer(async_handlers=False)
         sid = s.manager.connect('123', '/foo')
         handler = mock.MagicMock()
-        s.on('my message', handler, namespace='/foo')
+        catchall_handler = mock.MagicMock()
+        s.on('msg', handler, namespace='/foo')
+        s.on('*', catchall_handler, namespace='/foo')
+        _run(s._handle_eio_message('123', '2/foo,["msg","a","b"]'))
         _run(s._handle_eio_message('123', '2/foo,["my message","a","b","c"]'))
-        handler.assert_called_once_with(sid, 'a', 'b', 'c')
+        handler.assert_called_once_with(sid, 'a', 'b')
+        catchall_handler.assert_called_once_with(
+            'my message', sid, 'a', 'b', 'c')
 
     def test_handle_event_with_disconnected_namespace(self, eio):
         eio.return_value.send = AsyncMock()
