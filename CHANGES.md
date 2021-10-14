@@ -1,5 +1,10 @@
 # python-socketio change log
 
+**Release 5.4.1** - 2021-10-14
+
+- Catch-all event handlers ([commit](https://github.com/miguelgrinberg/python-socketio/commit/28569d48ad74d5414a0d2a8f69d7540dbdddf066))
+- Implement disconnect method for external processes [#684](https://github.com/miguelgrinberg/python-socketio/issues/684) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/a830c9f7887df715227f4284f30e8d62680e58ce))
+
 **Release 5.4.0** - 2021-08-02
 
 - Support msgpack and custom packet serializers [#749](https://github.com/miguelgrinberg/python-socketio/issues/749) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/5159e84c49daaf2da0579bfc6ee954a9c738a076))
