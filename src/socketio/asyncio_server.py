@@ -396,8 +396,6 @@ class AsyncServer(server.Server):
         :param kwargs: keyword arguments to pass to the function.
 
         The return value is a ``asyncio.Task`` object.
-
-        Note: this method is a coroutine.
         """
         return self.eio.start_background_task(target, *args, **kwargs)
 
