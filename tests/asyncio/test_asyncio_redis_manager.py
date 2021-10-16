@@ -7,6 +7,7 @@ from socketio import asyncio_redis_manager
 
 
 @unittest.skipIf(sys.version_info < (3, 5), 'only for Python 3.5+')
+@unittest.skip("Deprecated")
 class TestAsyncRedisManager(unittest.TestCase):
     def test_default_url(self):
         assert asyncio_redis_manager._parse_redis_url('redis://') == (

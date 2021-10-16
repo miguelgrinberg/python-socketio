@@ -429,7 +429,9 @@ class TestAsyncPubSubManager(unittest.TestCase):
             yield 'bad json'
             yield b'bad pickled'
 
-        self.pm._listen = AsyncMock(side_effect=list(messages()))
+        m = mock.MagicMock()
+        m.__aiter__.return_value = messages()
+        self.pm._listen = mock.MagicMock(side_effect=[m])
         try:
             _run(self.pm._thread())
         except StopIteration:
