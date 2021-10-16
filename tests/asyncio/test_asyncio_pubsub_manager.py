@@ -417,7 +417,7 @@ class TestAsyncPubSubManager(unittest.TestCase):
         self.pm._handle_disconnect = AsyncMock()
         self.pm._handle_close_room = AsyncMock()
 
-        def messages():
+        async def messages():
             import pickle
 
             yield {'method': 'emit', 'value': 'foo'}
@@ -428,12 +428,10 @@ class TestAsyncPubSubManager(unittest.TestCase):
             yield pickle.dumps({'method': 'close_room', 'value': 'baz'})
             yield 'bad json'
             yield b'bad pickled'
+            raise asyncio.CancelledError()  # force the thread to exit
 
-        self.pm._listen = AsyncMock(side_effect=list(messages()))
-        try:
-            _run(self.pm._thread())
-        except StopIteration:
-            pass
+        self.pm._listen = messages
+        _run(self.pm._thread())
 
         self.pm._handle_emit.mock.assert_called_once_with(
             {'method': 'emit', 'value': 'foo'}
