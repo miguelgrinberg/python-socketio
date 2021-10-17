@@ -931,12 +931,14 @@ class TestAsyncClient(unittest.TestCase):
     )
     @mock.patch('socketio.client.random.random', side_effect=[1, 0, 0.5])
     def test_handle_reconnect_max_attempts(self, random, wait_for):
-        c = asyncio_client.AsyncClient(reconnection_attempts=2)
+        c = asyncio_client.AsyncClient(reconnection_attempts=2, logger=True)
         c._reconnect_task = 'foo'
         c.connect = AsyncMock(
             side_effect=[ValueError, exceptions.ConnectionError, None]
         )
+        c.logger.setLevel('INFO')
         _run(c._handle_reconnect())
+        c.logger.setLevel('ERROR')
         print(c.reconnection_attempts)
         print(wait_for.mock.call_count)  # logging to debug #572
         print(wait_for.mock.call_args_list)
@@ -954,12 +956,14 @@ class TestAsyncClient(unittest.TestCase):
     )
     @mock.patch('socketio.client.random.random', side_effect=[1, 0, 0.5])
     def test_handle_reconnect_aborted(self, random, wait_for):
-        c = asyncio_client.AsyncClient()
+        c = asyncio_client.AsyncClient(logger=True)
+        c.logger.setLevel('INFO')
         c._reconnect_task = 'foo'
         c.connect = AsyncMock(
             side_effect=[ValueError, exceptions.ConnectionError, None]
         )
         _run(c._handle_reconnect())
+        c.logger.setLevel('ERROR')
         print(wait_for.mock.call_count)  # logging to debug #572
         print(wait_for.mock.call_args_list)
         assert wait_for.mock.call_count == 2
