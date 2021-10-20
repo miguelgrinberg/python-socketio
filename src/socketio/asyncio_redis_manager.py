@@ -59,10 +59,11 @@ class AsyncRedisManager(AsyncPubSubManager):  # pragma: no cover
                 async for message in self.pubsub.listen():
                     yield message['data']
             except aioredis.exceptions.RedisError:
-                self._get_logger().error('Cannot receive from redis... '
-                             'retrying in {} secs'.format(retry_sleep))
+                self._get_logger().error(
+                    "Cannot receive from redis... "
+                    "retrying in {} secs".format(retry_sleep)
+                )
                 await asyncio.sleep(retry_sleep)
                 retry_sleep *= 2
                 if retry_sleep > 60:
                     retry_sleep = 60
-
