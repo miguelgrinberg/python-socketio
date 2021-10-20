@@ -9,8 +9,6 @@ except ImportError:
 
 from .pubsub_manager import PubSubManager
 
-logger = logging.getLogger('socketio')
-
 
 class RedisManager(PubSubManager):  # pragma: no cover
     """Redis based client manager.
@@ -40,14 +38,13 @@ class RedisManager(PubSubManager):  # pragma: no cover
     name = 'redis'
 
     def __init__(self, url='redis://localhost:6379/0', channel='socketio',
-                 write_only=False, logger=None, redis_options=None):
+                 write_only=False, logger=None, redis_options={}):
         if redis is None:
             raise RuntimeError('Redis package is not installed '
                                '(Run "pip install redis" in your '
                                'virtualenv).')
-        self.redis_url = url
-        self.redis_options = redis_options or {}
-        self._redis_connect()
+        self.redis = redis.Redis.from_url(url, **redis_options)
+        self.pubsub = self.redis.pubsub(ignore_subscribe_messages=True)
         super(RedisManager, self).__init__(channel=channel,
                                            write_only=write_only,
                                            logger=logger)
@@ -67,51 +64,21 @@ class RedisManager(PubSubManager):  # pragma: no cover
                 'Redis requires a monkey patched socket library to work '
                 'with ' + self.server.async_mode)
 
-    def _redis_connect(self):
-        self.redis = redis.Redis.from_url(self.redis_url,
-                                          **self.redis_options)
-        self.pubsub = self.redis.pubsub()
-
     def _publish(self, data):
-        retry = True
-        while True:
-            try:
-                if not retry:
-                    self._redis_connect()
-                return self.redis.publish(self.channel, pickle.dumps(data))
-            except redis.exceptions.RedisError:
-                if retry:
-                    logger.error('Cannot publish to redis... retrying')
-                    retry = False
-                else:
-                    logger.error('Cannot publish to redis... giving up')
-                    break
+        return self.redis.publish(self.channel, pickle.dumps(data))
 
-    def _redis_listen_with_retries(self):
+    def _listen(self):
         retry_sleep = 1
-        connect = False
         while True:
             try:
-                if connect:
-                    self._redis_connect()
-                    self.pubsub.subscribe(self.channel)
-                    retry_sleep = 1
+                self.pubsub.subscribe(self.channel)
+                retry_sleep = 1
                 for message in self.pubsub.listen():
-                    yield message
+                    yield message['data']
             except redis.exceptions.RedisError:
-                logger.error('Cannot receive from redis... '
+                self._get_logger().error('Cannot receive from redis... '
                              'retrying in {} secs'.format(retry_sleep))
-                connect = True
                 time.sleep(retry_sleep)
                 retry_sleep *= 2
                 if retry_sleep > 60:
                     retry_sleep = 60
-
-    def _listen(self):
-        channel = self.channel.encode('utf-8')
-        self.pubsub.subscribe(self.channel)
-        for message in self._redis_listen_with_retries():
-            if message['channel'] == channel and \
-                    message['type'] == 'message' and 'data' in message:
-                yield message['data']
-        self.pubsub.unsubscribe(self.channel)
