@@ -36,14 +36,14 @@ class AsyncRedisManager(AsyncPubSubManager):  # pragma: no cover
     name = 'aioredis'
 
     def __init__(self, url='redis://localhost:6379/0', channel='socketio',
-                 write_only=False, logger=None, redis_options={}):
+                 write_only=False, logger=None, redis_options=None):
         if aioredis is None:
             raise RuntimeError('Redis package is not installed '
                                '(Run "pip install aioredis" in your '
                                'virtualenv).')
         if not hasattr(aioredis.Redis, 'from_url'):
             raise RuntimeError('Version 2 of aioredis package is required.')
-        self.redis = aioredis.Redis.from_url(url, **redis_options)
+        self.redis = aioredis.Redis.from_url(url, **(redis_options or {}))
         self.pubsub = self.redis.pubsub(ignore_subscribe_messages=True)
         super().__init__(channel=channel, write_only=write_only, logger=logger)
 
