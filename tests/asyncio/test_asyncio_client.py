@@ -891,8 +891,6 @@ class TestAsyncClient(unittest.TestCase):
             side_effect=[ValueError, exceptions.ConnectionError, None]
         )
         _run(c._handle_reconnect())
-        print(wait_for.mock.call_count)  # logging to debug #572
-        print(wait_for.mock.call_args_list)
         assert wait_for.mock.call_count == 3
         assert [x[0][1] for x in asyncio.wait_for.mock.call_args_list] == [
             1.5,
@@ -914,8 +912,6 @@ class TestAsyncClient(unittest.TestCase):
             side_effect=[ValueError, exceptions.ConnectionError, None]
         )
         _run(c._handle_reconnect())
-        print(wait_for.mock.call_count)  # logging to debug #572
-        print(wait_for.mock.call_args_list)
         assert wait_for.mock.call_count == 3
         assert [x[0][1] for x in asyncio.wait_for.mock.call_args_list] == [
             1.5,
@@ -936,12 +932,7 @@ class TestAsyncClient(unittest.TestCase):
         c.connect = AsyncMock(
             side_effect=[ValueError, exceptions.ConnectionError, None]
         )
-        c.logger.setLevel('INFO')
         _run(c._handle_reconnect())
-        c.logger.setLevel('ERROR')
-        print(c.reconnection_attempts)
-        print(wait_for.mock.call_count)  # logging to debug #572
-        print(wait_for.mock.call_args_list)
         assert wait_for.mock.call_count == 2
         assert [x[0][1] for x in asyncio.wait_for.mock.call_args_list] == [
             1.5,
@@ -957,15 +948,11 @@ class TestAsyncClient(unittest.TestCase):
     @mock.patch('socketio.client.random.random', side_effect=[1, 0, 0.5])
     def test_handle_reconnect_aborted(self, random, wait_for):
         c = asyncio_client.AsyncClient(logger=True)
-        c.logger.setLevel('INFO')
         c._reconnect_task = 'foo'
         c.connect = AsyncMock(
             side_effect=[ValueError, exceptions.ConnectionError, None]
         )
         _run(c._handle_reconnect())
-        c.logger.setLevel('ERROR')
-        print(wait_for.mock.call_count)  # logging to debug #572
-        print(wait_for.mock.call_args_list)
         assert wait_for.mock.call_count == 2
         assert [x[0][1] for x in asyncio.wait_for.mock.call_args_list] == [
             1.5,
@@ -1069,7 +1056,7 @@ class TestAsyncClient(unittest.TestCase):
             _run(c._handle_eio_message('9'))
 
     def test_eio_disconnect(self):
-        c = asyncio_client.AsyncClient()
+        c = asyncio_client.AsyncClient(reconnection=False)
         c.namespaces = {'/': '1'}
         c.connected = True
         c._trigger_event = AsyncMock()
@@ -1083,7 +1070,7 @@ class TestAsyncClient(unittest.TestCase):
         assert not c.connected
 
     def test_eio_disconnect_namespaces(self):
-        c = asyncio_client.AsyncClient()
+        c = asyncio_client.AsyncClient(reconnection=False)
         c.namespaces = {'/foo': '1', '/bar': '2'}
         c.connected = True
         c._trigger_event = AsyncMock()
