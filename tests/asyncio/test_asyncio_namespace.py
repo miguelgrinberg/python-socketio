@@ -93,13 +93,14 @@ class TestAsyncNamespace(unittest.TestCase):
         ns._set_server(mock_server)
         _run(
             ns.emit(
-                'ev', data='data', room='room', skip_sid='skip', callback='cb'
+                'ev', data='data', to='room', skip_sid='skip', callback='cb'
             )
         )
         ns.server.emit.mock.assert_called_with(
             'ev',
             data='data',
-            room='room',
+            to='room',
+            room=None,
             skip_sid='skip',
             namespace='/foo',
             callback='cb',
@@ -117,6 +118,7 @@ class TestAsyncNamespace(unittest.TestCase):
         ns.server.emit.mock.assert_called_with(
             'ev',
             data='data',
+            to=None,
             room='room',
             skip_sid='skip',
             namespace='/bar',
@@ -128,10 +130,11 @@ class TestAsyncNamespace(unittest.TestCase):
         mock_server = mock.MagicMock()
         mock_server.send = AsyncMock()
         ns._set_server(mock_server)
-        _run(ns.send(data='data', room='room', skip_sid='skip', callback='cb'))
+        _run(ns.send(data='data', to='room', skip_sid='skip', callback='cb'))
         ns.server.send.mock.assert_called_with(
             'data',
-            room='room',
+            to='room',
+            room=None,
             skip_sid='skip',
             namespace='/foo',
             callback='cb',
@@ -147,6 +150,7 @@ class TestAsyncNamespace(unittest.TestCase):
         )
         ns.server.send.mock.assert_called_with(
             'data',
+            to=None,
             room='room',
             skip_sid='skip',
             namespace='/bar',
