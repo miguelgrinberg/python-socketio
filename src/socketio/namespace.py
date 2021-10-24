@@ -62,6 +62,18 @@ class Namespace(BaseNamespace):
                                 namespace=namespace or self.namespace,
                                 callback=callback)
 
+    def call(self, event, data=None, to=None, sid=None, namespace=None,
+             timeout=None):
+        """Emit a custom event to a client and wait for the response.
+
+        The only difference with the :func:`socketio.Server.call` method is
+        that when the ``namespace`` argument is not given the namespace
+        associated with the class is used.
+        """
+        return self.server.call(event, data=data, to=to, sid=sid,
+                                namespace=namespace or self.namespace,
+                                timeout=timeout)
+
     def enter_room(self, sid, room, namespace=None):
         """Enter a room.
 
@@ -171,8 +183,7 @@ class ClientNamespace(BaseNamespace):
                                 namespace=namespace or self.namespace,
                                 callback=callback)
 
-    def send(self, data, room=None, skip_sid=None, namespace=None,
-             callback=None):
+    def send(self, data, room=None, namespace=None, callback=None):
         """Send a message to the server.
 
         The only difference with the :func:`socketio.Client.send` method is
@@ -181,6 +192,17 @@ class ClientNamespace(BaseNamespace):
         """
         return self.client.send(data, namespace=namespace or self.namespace,
                                 callback=callback)
+
+    def call(self, event, data=None, namespace=None, timeout=None):
+        """Emit a custom event to the server and wait for the response.
+
+        The only difference with the :func:`socketio.Client.call` method is
+        that when the ``namespace`` argument is not given the namespace
+        associated with the class is used.
+        """
+        return self.client.call(event, data=data,
+                                namespace=namespace or self.namespace,
+                                timeout=timeout)
 
     def disconnect(self):
         """Disconnect from the server.
