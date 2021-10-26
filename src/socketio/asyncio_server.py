@@ -210,6 +210,12 @@ class AsyncServer(server.Server):
                    timeout=60, **kwargs):
         """Emit a custom event to a client and wait for the response.
 
+        This method issues an emit with a callback and waits for the callback
+        to be invoked before returning. If the callback isn't invoked before
+        the timeout, then a ``TimeoutError`` exception is raised. If the
+        Socket.IO connection drops during the wait, this method still waits
+        until the specified timeout.
+
         :param event: The event name. It can be any string. The event names
                       ``'connect'``, ``'message'`` and ``'disconnect'`` are
                       reserved and should not be used.
