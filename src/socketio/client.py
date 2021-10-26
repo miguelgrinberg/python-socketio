@@ -148,8 +148,8 @@ class Client(object):
         self.socketio_path = None
         self.sid = None
 
-        self.connected = False
-        self.namespaces = {}
+        self.connected = False  #: Indicates if the client is connected or not.
+        self.namespaces = {}  #: set of connected namespaces.
         self.handlers = {}
         self.namespace_handlers = {}
         self.callbacks = {}

@@ -35,7 +35,7 @@ API Reference
 ``ConnectionRefusedError`` class
 --------------------------------
 
-.. autoclass:: ConnectionRefusedError
+.. autoclass:: socketio.exceptions.ConnectionRefusedError
    :members:
 
 ``WSGIApp`` class
@@ -128,7 +128,7 @@ API Reference
    :members:
 
 ``AsyncAioPikaManager`` class
----------------------------
+-----------------------------
 
 .. autoclass:: AsyncAioPikaManager
    :members:
