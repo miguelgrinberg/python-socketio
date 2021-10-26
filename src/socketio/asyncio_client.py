@@ -40,6 +40,11 @@ class AsyncClient(client.Client):
                  packets. Custom json modules must have ``dumps`` and ``loads``
                  functions that are compatible with the standard library
                  versions.
+    :param handle_sigint: Set to ``True`` to automatically handle disconnection
+                          when the process is interrupted, or to ``False`` to
+                          leave interrupt handling to the calling application.
+                          Interrupt handling can only be enabled when the
+                          client instance is created in the main thread.
 
     The Engine.IO configuration supports the following settings:
 

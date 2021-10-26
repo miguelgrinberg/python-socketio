@@ -68,6 +68,11 @@ class Client(object):
                  packets. Custom json modules must have ``dumps`` and ``loads``
                  functions that are compatible with the standard library
                  versions.
+    :param handle_sigint: Set to ``True`` to automatically handle disconnection
+                          when the process is interrupted, or to ``False`` to
+                          leave interrupt handling to the calling application.
+                          Interrupt handling can only be enabled when the
+                          client instance is created in the main thread.
 
     The Engine.IO configuration supports the following settings:
 
@@ -90,9 +95,9 @@ class Client(object):
     def __init__(self, reconnection=True, reconnection_attempts=0,
                  reconnection_delay=1, reconnection_delay_max=5,
                  randomization_factor=0.5, logger=False, serializer='default',
-                 json=None, **kwargs):
+                 json=None, handle_sigint=True, **kwargs):
         global original_signal_handler
-        if original_signal_handler is None and \
+        if handle_sigint and original_signal_handler is None and \
                 threading.current_thread() == threading.main_thread():
             original_signal_handler = signal.signal(signal.SIGINT,
                                                     signal_handler)
@@ -101,8 +106,10 @@ class Client(object):
         self.reconnection_delay = reconnection_delay
         self.reconnection_delay_max = reconnection_delay_max
         self.randomization_factor = randomization_factor
+        self.handle_sigint = handle_sigint
 
         engineio_options = kwargs
+        engineio_options['handle_sigint'] = handle_sigint
         engineio_logger = engineio_options.pop('engineio_logger', None)
         if engineio_logger is not None:
             engineio_options['logger'] = engineio_logger

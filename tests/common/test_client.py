@@ -29,6 +29,7 @@ class TestClient(unittest.TestCase):
             reconnection_delay=5,
             reconnection_delay_max=10,
             randomization_factor=0.2,
+            handle_sigint=False,
             foo='bar',
         )
         assert not c.reconnection
@@ -36,7 +37,9 @@ class TestClient(unittest.TestCase):
         assert c.reconnection_delay == 5
         assert c.reconnection_delay_max == 10
         assert c.randomization_factor == 0.2
-        engineio_client_class().assert_called_once_with(foo='bar')
+        assert not c.handle_sigint
+        engineio_client_class().assert_called_once_with(
+            foo='bar', handle_sigint=False)
         assert c.connection_url is None
         assert c.connection_headers is None
         assert c.connection_transports is None
@@ -89,7 +92,8 @@ class TestClient(unittest.TestCase):
     @mock.patch('socketio.client.Client._engineio_client_class')
     def test_engineio_logger(self, engineio_client_class):
         client.Client(engineio_logger='foo')
-        engineio_client_class().assert_called_once_with(logger='foo')
+        engineio_client_class().assert_called_once_with(
+            handle_sigint=True, logger='foo')
 
     def test_on_event(self):
         c = client.Client()
