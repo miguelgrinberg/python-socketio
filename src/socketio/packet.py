@@ -19,6 +19,7 @@ class Packet(object):
     # id: ASCII encoded, only if id is not None
     # data: JSON dump of data payload
 
+    uses_binary_events = True
     json = _json
 
     def __init__(self, packet_type=EVENT, data=None, namespace=None, id=None,
@@ -27,7 +28,9 @@ class Packet(object):
         self.data = data
         self.namespace = namespace
         self.id = id
-        if binary or (binary is None and self._data_is_binary(self.data)):
+        if self.uses_binary_events and \
+                (binary or (binary is None and self._data_is_binary(
+                    self.data))):
             if self.packet_type == EVENT:
                 self.packet_type = BINARY_EVENT
             elif self.packet_type == ACK:
