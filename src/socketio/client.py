@@ -92,6 +92,8 @@ class Client(object):
                             fatal errors are logged even when
                             ``engineio_logger`` is ``False``.
     """
+    reserved_events = ['connect', 'connect_error', 'disconnect']
+
     def __init__(self, reconnection=True, reconnection_attempts=0,
                  reconnection_delay=1, reconnection_delay_max=5,
                  randomization_factor=0.5, logger=False, serializer='default',
@@ -625,7 +627,8 @@ class Client(object):
         if namespace in self.handlers:
             if event in self.handlers[namespace]:
                 return self.handlers[namespace][event](*args)
-            elif '*' in self.handlers[namespace]:
+            elif event not in self.reserved_events and \
+                    '*' in self.handlers[namespace]:
                 return self.handlers[namespace]['*'](event, *args)
 
         # or else, forward the event to a namespace handler if one exists

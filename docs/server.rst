@@ -197,6 +197,9 @@ Asyncio servers can also use a coroutine::
 A catch-all event handler receives the event name as a first argument. The
 remaining arguments are the same as for a regular event handler.
 
+The ``connect`` and ``disconnect`` events have to be defined explicitly and are
+not invoked on a catch-all event handler.
+
 Connect and Disconnect Event Handlers
 -------------------------------------
 

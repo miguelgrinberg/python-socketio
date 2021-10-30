@@ -838,6 +838,7 @@ class TestAsyncClient(unittest.TestCase):
         c.on('*', catchall_handler)
         _run(c._trigger_event('foo', '/', 1, '2'))
         _run(c._trigger_event('bar', '/', 1, '2', 3))
+        _run(c._trigger_event('connect', '/'))  # should not trigger
         handler.assert_called_once_with(1, '2')
         catchall_handler.assert_called_once_with('bar', 1, '2', 3)
 

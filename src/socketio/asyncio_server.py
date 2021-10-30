@@ -532,7 +532,8 @@ class AsyncServer(server.Server):
             handler = None
             if event in self.handlers[namespace]:
                 handler = self.handlers[namespace][event]
-            elif '*' in self.handlers[namespace]:
+            elif event not in self.reserved_events and \
+                    '*' in self.handlers[namespace]:
                 handler = self.handlers[namespace]['*']
                 args = (event, *args)
             if handler:

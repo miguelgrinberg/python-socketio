@@ -65,6 +65,9 @@ or can also be coroutines::
     async def message(data):
         print('I received a message!')
 
+If the server includes arguments with an event, those are passed to the
+handler function as arguments.
+
 Catch-All Event Handlers
 ------------------------
 
@@ -72,13 +75,13 @@ A "catch-all" event handler is invoked for any events that do not have an
 event handler. You can define a catch-all handler using ``'*'`` as event name::
 
    @sio.on('*')
-   def catch_all(event, sid, data):
+   def catch_all(event, data):
        pass
 
 Asyncio clients can also use a coroutine::
 
    @sio.on('*')
-   async def catch_all(event, sid, data):
+   async def catch_all(event, data):
       pass
 
 A catch-all event handler receives the event name as a first argument. The
@@ -115,8 +118,8 @@ going to attempt to reconnect immediately after invoking the disconnect
 handler. As soon as the connection is re-established the connect handler will
 be invoked once again.
 
-If the server includes arguments with an event, those are passed to the
-handler function as arguments.
+The ``connect``, ``connect_error`` and ``disconnect`` events have to be
+defined explicitly and are not invoked on a catch-all event handler.
 
 Connecting to a Server
 ----------------------

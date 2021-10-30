@@ -943,6 +943,7 @@ class TestClient(unittest.TestCase):
         c.on('*', catchall_handler)
         c._trigger_event('foo', '/', 1, '2')
         c._trigger_event('bar', '/', 1, '2', 3)
+        c._trigger_event('connect', '/')  # should not trigger
         handler.assert_called_once_with(1, '2')
         catchall_handler.assert_called_once_with('bar', 1, '2', 3)
 
