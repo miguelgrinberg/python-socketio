@@ -103,7 +103,7 @@ Client Features
 - Can connect to other Socket.IO servers that are compatible with the
   JavaScript Socket.IO 1.x and 2.x releases. Work to support release 3.x is in
   progress.
-- Compatible with Python 3.5+.
+- Compatible with Python 3.6+.
 - Two versions of the client, one for standard Python and another for
   asyncio.
 - Uses an event-based architecture implemented with decorators that
@@ -183,7 +183,7 @@ Server Features
 - Can connect to servers running other Socket.IO clients that are compatible
   with the JavaScript client versions 1.x and 2.x. Work to support the 3.x
   release is in progress.
-- Compatible with Python 3.5+.
+- Compatible with Python 3.6+.
 - Two versions of the server, one for standard Python and another for
   asyncio.
 - Supports large number of clients even on modest hardware due to being
