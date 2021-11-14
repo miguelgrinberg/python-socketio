@@ -70,7 +70,7 @@ class RedisManager(PubSubManager):  # pragma: no cover
     def _redis_connect(self):
         self.redis = redis.Redis.from_url(self.redis_url,
                                           **self.redis_options)
-        self.pubsub = self.redis.pubsub()
+        self.pubsub = self.redis.pubsub(ignore_subscribe_messages=True)
 
     def _publish(self, data):
         retry = True
