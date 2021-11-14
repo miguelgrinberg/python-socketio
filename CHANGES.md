@@ -1,5 +1,20 @@
 # python-socketio change log
 
+**Release 5.5.0** - 2021-11-14
+
+- Option to disable the SIGINT handler in the client [#792](https://github.com/miguelgrinberg/python-socketio/issues/792) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/ea84b9b1c714b02eaf1081f4e37fd130a3159d8c))
+- Do not invoke reserved events on a catch-all handler [#814](https://github.com/miguelgrinberg/python-socketio/issues/814) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/34f34e53d650dde605f5f4a98d7a70936524a1b8))
+- Use correct binary packet types in the msgpack packet encoder [#811](https://github.com/miguelgrinberg/python-socketio/issues/811) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/60735dd4c2fc87ed863d7dbf7de361500d963dd3))
+- Add missing `call()` method to namespace classes [#800](https://github.com/miguelgrinberg/python-socketio/issues/800) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/32db48d12ceb44d7a02fd9f05047b47c7ed3f4a5))
+- Add missing `to` argument to namespace `emit()` and `send()` methods [#810](https://github.com/miguelgrinberg/python-socketio/issues/810) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/ed08a01e65635160923f3d6d5755df74d53274e1))
+- Configure Redis pubsub to skip subscription messages ([commit](https://github.com/miguelgrinberg/python-socketio/commit/e8fff07b367929794e5e30cecbf252b72d307c16))
+- Migrate async Redis client manager to aioredis 2 [#771](https://github.com/miguelgrinberg/python-socketio/issues/771) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/f245191d86722244a2d3d0529d9f5ff15dfd817a)) (thanks **Sam Mosleh**!)
+- Update Python supported versions in docs ([commit](https://github.com/miguelgrinberg/python-socketio/commit/a54152f2466bad4869d9cfdad6be3a5547e0b6bc))
+- Document how to get the connection state in the client [#799](https://github.com/miguelgrinberg/python-socketio/issues/799) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/47c5f45c765ae207f58ba2675f91eaf8c79f8500))
+- Improved documentation of `start_background_task()` function ([commit](https://github.com/miguelgrinberg/python-socketio/commit/4f5bf1e9898154aa1a9896a7016ba22bfb73cdf2))
+- Improved documentation of `call()` method [#813](https://github.com/miguelgrinberg/python-socketio/issues/813) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/8c2a6ac86972bf94acafe687d2e86bdf65119960))
+- Fixed intermittent test failures [#572](https://github.com/miguelgrinberg/python-socketio/issues/572) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/db0565ada6c8891be3230bcc415e5465bd409c09))
+
 **Release 5.4.1** - 2021-10-14
 
 - Catch-all event handlers ([commit](https://github.com/miguelgrinberg/python-socketio/commit/28569d48ad74d5414a0d2a8f69d7540dbdddf066))
