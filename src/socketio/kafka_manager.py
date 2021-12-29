@@ -35,7 +35,7 @@ class KafkaManager(PubSubManager):  # pragma: no cover
     """
     name = 'kafka'
 
-    def __init__(self, url='kafka://localhost:9092', url_list=[], channel='socketio',
+    def __init__(self, url='kafka://localhost:9092',channel='socketio',
                  write_only=False):
         if kafka is None:
             raise RuntimeError('kafka-python package is not installed '
@@ -44,17 +44,12 @@ class KafkaManager(PubSubManager):  # pragma: no cover
 
         super(KafkaManager, self).__init__(channel=channel,
                                            write_only=write_only)
-
-        self.kafka_url = url[8:] if url != 'kafka://' else 'localhost:9092'
-        if url_list != []:
-            self.kafka_url_list = url_list[0]
-            self.producer = kafka.KafkaProducer(bootstrap_servers=self.kafka_url_list)
-            self.consumer = kafka.KafkaConsumer(self.channel,
-                                            bootstrap_servers=self.kafka_url_list)
-        else:
-            self.producer = kafka.KafkaProducer(bootstrap_servers=self.kafka_url)
-            self.consumer = kafka.KafkaConsumer(self.channel,
-                                                bootstrap_servers=self.kafka_url)
+        
+        urls = [url] if isinstance(url, str) else url
+        self.kafka_urls =  [url[8:] if url != 'kafka://' else 'localhost:9092' for url in urls]
+        self.producer = kafka.KafkaProducer(bootstrap_servers=self.kafka_urls)
+        self.consumer = kafka.KafkaConsumer(self.channel,
+                                            bootstrap_servers=self.kafka_urls)
 
     def _publish(self, data):
         self.producer.send(self.channel, value=pickle.dumps(data))
