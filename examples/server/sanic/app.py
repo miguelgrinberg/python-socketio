@@ -1,5 +1,3 @@
-import asyncio
-
 from sanic import Sanic
 from sanic.response import html
 

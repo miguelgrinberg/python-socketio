@@ -1,6 +1,4 @@
 #!/usr/bin/env python
-import asyncio
-
 import uvicorn
 
 import socketio

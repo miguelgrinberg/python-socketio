@@ -80,4 +80,3 @@ def connect(sid, environ):
 @sio.event
 def disconnect(sid):
     print('Client disconnected')
-

@@ -3,7 +3,6 @@
 # installed
 async_mode = None
 
-import time
 from flask import Flask, render_template
 import socketio
 

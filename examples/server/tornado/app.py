@@ -42,6 +42,7 @@ async def join(sid, message):
     await sio.emit('my_response', {'data': 'Entered room: ' + message['room']},
                    room=sid)
 
+
 @sio.event
 async def leave(sid, message):
     sio.leave_room(sid, message['room'])
