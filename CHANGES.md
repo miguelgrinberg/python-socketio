@@ -1,5 +1,10 @@
 # python-socketio change log
 
+**Release 5.5.1** - 2022-01-11
+
+- Support multiple Kafka servers ([commit](https://github.com/miguelgrinberg/python-socketio/commit/4ee3649514b98c50cc0bf70d3f269389da52772d)) (thanks **sparkingdark**!)
+- Include example code in flake8 pass ([commit](https://github.com/miguelgrinberg/python-socketio/commit/273a4b0439c84560d403662d8eba4122c28ba0d8))
+
 **Release 5.5.0** - 2021-11-14
 
 - Option to disable the SIGINT handler in the client [#792](https://github.com/miguelgrinberg/python-socketio/issues/792) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/ea84b9b1c714b02eaf1081f4e37fd130a3159d8c))
