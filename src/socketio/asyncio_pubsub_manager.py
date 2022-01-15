@@ -24,12 +24,14 @@ class AsyncPubSubManager(AsyncManager):
     """
     name = 'asyncpubsub'
 
-    def __init__(self, channel='socketio', write_only=False, logger=None):
+    def __init__(self, channel='socketio', write_only=False, logger=None,
+                 encoder=pickle):
         super().__init__()
         self.channel = channel
         self.write_only = write_only
         self.host_id = uuid.uuid4().hex
         self.logger = logger
+        self.encoder = encoder
 
     def initialize(self):
         super().initialize()
@@ -153,7 +155,13 @@ class AsyncPubSubManager(AsyncManager):
                     if isinstance(message, dict):
                         data = message
                     else:
-                        if isinstance(message, bytes):  # pragma: no cover
+                        if self.encoder:
+                            try:
+                                data = self.encoder.loads(message)
+                            except:
+                                pass
+                        if data is None and \
+                                isinstance(message, bytes):  # pragma: no cover
                             try:
                                 data = pickle.loads(message)
                             except:

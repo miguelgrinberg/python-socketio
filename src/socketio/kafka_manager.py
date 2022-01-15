@@ -33,18 +33,21 @@ class KafkaManager(PubSubManager):  # pragma: no cover
     :param write_only: If set to ``True``, only initialize to emit events. The
                        default of ``False`` initializes the class for emitting
                        and receiving.
+    :param encoder: The encoder to use for publishing and decoding data,
+                    defaults to pickle.
     """
     name = 'kafka'
 
     def __init__(self, url='kafka://localhost:9092', channel='socketio',
-                 write_only=False):
+                 write_only=False, encoder=pickle):
         if kafka is None:
             raise RuntimeError('kafka-python package is not installed '
                                '(Run "pip install kafka-python" in your '
                                'virtualenv).')
 
         super(KafkaManager, self).__init__(channel=channel,
-                                           write_only=write_only)
+                                           write_only=write_only,
+                                           encoder=encoder)
 
         urls = [url] if isinstance(url, str) else url
         self.kafka_urls = [url[8:] if url != 'kafka://' else 'localhost:9092'
@@ -54,7 +57,7 @@ class KafkaManager(PubSubManager):  # pragma: no cover
                                             bootstrap_servers=self.kafka_urls)
 
     def _publish(self, data):
-        self.producer.send(self.channel, value=pickle.dumps(data))
+        self.producer.send(self.channel, value=self.encoder.dumps(data))
         self.producer.flush()
 
     def _kafka_listen(self):
@@ -64,4 +67,4 @@ class KafkaManager(PubSubManager):  # pragma: no cover
     def _listen(self):
         for message in self._kafka_listen():
             if message.topic == self.channel:
-                yield pickle.loads(message.value)
+                yield message.value

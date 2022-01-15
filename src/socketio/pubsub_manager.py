@@ -23,12 +23,14 @@ class PubSubManager(BaseManager):
     """
     name = 'pubsub'
 
-    def __init__(self, channel='socketio', write_only=False, logger=None):
+    def __init__(self, channel='socketio', write_only=False, logger=None,
+                 encoder=None):
         super(PubSubManager, self).__init__()
         self.channel = channel
         self.write_only = write_only
         self.host_id = uuid.uuid4().hex
         self.logger = logger
+        self.encoder = encoder
 
     def initialize(self):
         super(PubSubManager, self).initialize()
@@ -151,7 +153,13 @@ class PubSubManager(BaseManager):
             if isinstance(message, dict):
                 data = message
             else:
-                if isinstance(message, bytes):  # pragma: no cover
+                if self.encoder:
+                    try:
+                        data = self.encoder.loads(message)
+                    except:
+                        pass
+                if data is None and \
+                        isinstance(message, bytes):  # pragma: no cover
                     try:
                         data = pickle.loads(message)
                     except:

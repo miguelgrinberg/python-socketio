@@ -38,7 +38,8 @@ class AsyncAioPikaManager(AsyncPubSubManager):  # pragma: no cover
     name = 'asyncaiopika'
 
     def __init__(self, url='amqp://guest:guest@localhost:5672//',
-                 channel='socketio', write_only=False, logger=None):
+                 channel='socketio', write_only=False, logger=None,
+                 encoder=pickle):
         if aio_pika is None:
             raise RuntimeError('aio_pika package is not installed '
                                '(Run "pip install aio_pika" in your '
@@ -70,7 +71,7 @@ class AsyncAioPikaManager(AsyncPubSubManager):  # pragma: no cover
         channel = await self._channel(connection)
         exchange = await self._exchange(channel)
         await exchange.publish(
-            aio_pika.Message(body=pickle.dumps(data),
+            aio_pika.Message(body=self.encoder.dumps(data),
                              delivery_mode=aio_pika.DeliveryMode.PERSISTENT),
             routing_key='*'
         )
@@ -94,7 +95,7 @@ class AsyncAioPikaManager(AsyncPubSubManager):  # pragma: no cover
                 async with self.listener_queue.iterator() as queue_iter:
                     async for message in queue_iter:
                         with message.process():
-                            yield pickle.loads(message.body)
+                            yield message.body
             except Exception:
                 self._get_logger().error('Cannot receive from rabbitmq... '
                                          'retrying in '
