@@ -557,7 +557,7 @@ class Server(object):
             eio_sid = self.manager.pre_disconnect(sid, namespace=namespace)
             self._send_packet(eio_sid, self.packet_class(
                 packet.DISCONNECT, namespace=namespace))
-            self._trigger_event('disconnect', namespace, sid)
+            self._trigger_event('disconnect', namespace, sid, safe=True)
             self.manager.disconnect(sid, namespace=namespace)
 
     def transport(self, sid):
@@ -662,16 +662,19 @@ class Server(object):
         try:
             if data:
                 success = self._trigger_event(
-                    'connect', namespace, sid, self.environ[eio_sid], data)
+                    'connect', namespace, sid, self.environ[eio_sid], data, safe=False)
             else:
                 try:
                     success = self._trigger_event(
-                        'connect', namespace, sid, self.environ[eio_sid])
+                        'connect', namespace, sid, self.environ[eio_sid], safe=False)
                 except TypeError:
                     success = self._trigger_event(
-                        'connect', namespace, sid, self.environ[eio_sid], None)
+                        'connect', namespace, sid, self.environ[eio_sid], None, safe=False)
         except exceptions.ConnectionRefusedError as exc:
             fail_reason = exc.error_args
+            success = False
+        except exceptions.NamespaceNotFoundError:
+            fail_reason = "Namespace not found"
             success = False
 
         if success is False:
@@ -695,7 +698,7 @@ class Server(object):
         if not self.manager.is_connected(sid, namespace):  # pragma: no cover
             return
         self.manager.pre_disconnect(sid, namespace=namespace)
-        self._trigger_event('disconnect', namespace, sid)
+        self._trigger_event('disconnect', namespace, sid, safe=True)
         self.manager.disconnect(sid, namespace)
 
     def _handle_event(self, eio_sid, namespace, id, data):
@@ -717,7 +720,7 @@ class Server(object):
 
     def _handle_event_internal(self, server, sid, eio_sid, data, namespace,
                                id):
-        r = server._trigger_event(data[0], namespace, sid, *data[1:])
+        r = server._trigger_event(data[0], namespace, sid, *data[1:], safe=True)
         if id is not None:
             # send ACK packet with the response returned by the handler
             # tuples are expanded as multiple arguments
@@ -737,7 +740,7 @@ class Server(object):
         self.logger.info('received ack from %s [%s]', sid, namespace)
         self.manager.trigger_callback(sid, id, data)
 
-    def _trigger_event(self, event, namespace, *args):
+    def _trigger_event(self, event, namespace, *args, safe):
         """Invoke an application event handler."""
         # first see if we have an explicit handler for the event
         if namespace in self.handlers:
@@ -751,6 +754,8 @@ class Server(object):
         elif namespace in self.namespace_handlers:
             return self.namespace_handlers[namespace].trigger_event(
                 event, *args)
+        elif not safe:
+            raise exceptions.NamespaceNotFoundError(namespace, event)
 
     def _handle_eio_connect(self, eio_sid, environ):
         """Handle the Engine.IO connection event."""
