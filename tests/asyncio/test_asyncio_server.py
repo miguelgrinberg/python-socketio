@@ -765,6 +765,11 @@ class TestAsyncServer(unittest.TestCase):
     def test_send_with_ack_namespace(self, eio):
         eio.return_value.send = AsyncMock()
         s = asyncio_server.AsyncServer()
+
+        class FooNamespace(asyncio_namespace.AsyncNamespace):
+            pass
+
+        s.register_namespace(FooNamespace("/foo"))
         _run(s._handle_eio_connect('123', 'environ'))
         _run(s._handle_eio_message('123', '0/foo,'))
         cb = mock.MagicMock()
@@ -791,6 +796,11 @@ class TestAsyncServer(unittest.TestCase):
 
         eio.return_value.send = AsyncMock()
         s = asyncio_server.AsyncServer()
+
+        class MyNamespace(asyncio_namespace.AsyncNamespace):
+            pass
+
+        s.register_namespace(MyNamespace("/ns"))
         s.eio.get_session = fake_get_session
         s.eio.save_session = fake_save_session
 
@@ -842,6 +852,11 @@ class TestAsyncServer(unittest.TestCase):
         eio.return_value.send = AsyncMock()
         eio.return_value.disconnect = AsyncMock()
         s = asyncio_server.AsyncServer()
+
+        class FooNamespace(asyncio_namespace.AsyncNamespace):
+            pass
+
+        s.register_namespace(FooNamespace("/foo"))
         _run(s._handle_eio_connect('123', 'environ'))
         _run(s._handle_eio_message('123', '0/foo,'))
         _run(s.disconnect('1', namespace='/foo'))

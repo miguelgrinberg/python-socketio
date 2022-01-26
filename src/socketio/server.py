@@ -158,6 +158,7 @@ class Server(object):
         self.always_connect = always_connect
 
         self.async_mode = self.eio.async_mode
+        self.on('connect', namespace='/', handler=lambda sid, environ: True)
 
     def is_asyncio_based(self):
         return False
@@ -662,14 +663,17 @@ class Server(object):
         try:
             if data:
                 success = self._trigger_event(
-                    'connect', namespace, sid, self.environ[eio_sid], data, safe=False)
+                    'connect', namespace, sid,
+                    self.environ[eio_sid], data, safe=False)
             else:
                 try:
                     success = self._trigger_event(
-                        'connect', namespace, sid, self.environ[eio_sid], safe=False)
+                        'connect', namespace, sid,
+                        self.environ[eio_sid], safe=False)
                 except TypeError:
                     success = self._trigger_event(
-                        'connect', namespace, sid, self.environ[eio_sid], None, safe=False)
+                        'connect', namespace, sid,
+                        self.environ[eio_sid], None, safe=False)
         except exceptions.ConnectionRefusedError as exc:
             fail_reason = exc.error_args
             success = False
@@ -720,7 +724,8 @@ class Server(object):
 
     def _handle_event_internal(self, server, sid, eio_sid, data, namespace,
                                id):
-        r = server._trigger_event(data[0], namespace, sid, *data[1:], safe=True)
+        r = server._trigger_event(data[0], namespace, sid, *data[1:],
+                                  safe=True)
         if id is not None:
             # send ACK packet with the response returned by the handler
             # tuples are expanded as multiple arguments

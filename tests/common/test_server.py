@@ -675,6 +675,11 @@ class TestServer(unittest.TestCase):
 
     def test_send_with_ack_namespace(self, eio):
         s = server.Server()
+
+        class FooNamespace(namespace.Namespace):
+            pass
+
+        s.register_namespace(FooNamespace("/foo"))
         s._handle_eio_connect('123', 'environ')
         s._handle_eio_message('123', '0/foo,')
         cb = mock.MagicMock()
@@ -696,6 +701,11 @@ class TestServer(unittest.TestCase):
             fake_session = session
 
         s = server.Server()
+
+        class MyNamespace(namespace.Namespace):
+            pass
+
+        s.register_namespace(MyNamespace("/ns"))
         s.eio.get_session = fake_get_session
         s.eio.save_session = fake_save_session
         s._handle_eio_connect('123', 'environ')
@@ -735,6 +745,11 @@ class TestServer(unittest.TestCase):
 
     def test_disconnect_namespace(self, eio):
         s = server.Server()
+
+        class FooNamespace(namespace.Namespace):
+            pass
+
+        s.register_namespace(FooNamespace("/foo"))
         s._handle_eio_connect('123', 'environ')
         s._handle_eio_message('123', '0/foo,')
         s.disconnect('1', namespace='/foo')
