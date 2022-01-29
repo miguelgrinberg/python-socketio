@@ -497,7 +497,7 @@ class AsyncClient(client.Client):
         """Handle the Engine.IO connection event."""
         self.logger.info('Engine.IO connection established')
         self.sid = self.eio.sid
-        real_auth = await self._get_real_value(self.connection_auth)
+        real_auth = await self._get_real_value(self.connection_auth) or {}
         for n in self.connection_namespaces:
             await self._send_packet(self.packet_class(
                 packet.CONNECT, data=real_auth, namespace=n))
