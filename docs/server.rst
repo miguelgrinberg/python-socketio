@@ -380,9 +380,9 @@ rooms as needed and can be moved between rooms as often as necessary.
 
 ::
 
-   @sio.event
-   def begin_chat(sid):
-      sio.enter_room(sid, 'chat_users')
+    @sio.event
+    def begin_chat(sid):
+        sio.enter_room(sid, 'chat_users')
 
     @sio.event
     def exit_chat(sid):
