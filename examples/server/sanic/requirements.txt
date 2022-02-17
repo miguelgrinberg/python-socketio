@@ -2,7 +2,7 @@ aiofiles==0.3.0
 httptools==0.0.9
 python_engineio
 python_socketio
-sanic==0.8
+sanic==20.12.6
 six==1.10.0
 ujson==1.35
 uvloop==0.8.0
