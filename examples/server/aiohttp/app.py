@@ -78,6 +78,10 @@ app.router.add_static('/static', 'static')
 app.router.add_get('/', index)
 
 
-if __name__ == '__main__':
+async def init_app():
     sio.start_background_task(background_task)
-    web.run_app(app)
+    return app
+
+
+if __name__ == '__main__':
+    web.run_app(init_app())
