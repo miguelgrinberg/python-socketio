@@ -42,20 +42,24 @@ class KombuManager(PubSubManager):  # pragma: no cover
                           ``kombu.Queue()``.
     :param producer_options: additional keyword arguments to be passed to
                              ``kombu.Producer()``.
+    :param encoder: The encoder to use for publishing and decoding data,
+                    defaults to pickle.
     """
     name = 'kombu'
 
     def __init__(self, url='amqp://guest:guest@localhost:5672//',
                  channel='socketio', write_only=False, logger=None,
                  connection_options=None, exchange_options=None,
-                 queue_options=None, producer_options=None):
+                 queue_options=None, producer_options=None,
+                 encoder=pickle):
         if kombu is None:
             raise RuntimeError('Kombu package is not installed '
                                '(Run "pip install kombu" in your '
                                'virtualenv).')
         super(KombuManager, self).__init__(channel=channel,
                                            write_only=write_only,
-                                           logger=logger)
+                                           logger=logger,
+                                           encoder=encoder)
         self.url = url
         self.connection_options = connection_options or {}
         self.exchange_options = exchange_options or {}
@@ -103,7 +107,7 @@ class KombuManager(PubSubManager):  # pragma: no cover
         connection = self._connection()
         publish = connection.ensure(self.producer, self.producer.publish,
                                     errback=self.__error_callback)
-        publish(pickle.dumps(data))
+        publish(self.encoder.dumps(data))
 
     def _listen(self):
         reader_queue = self._queue()

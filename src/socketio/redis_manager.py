@@ -36,11 +36,14 @@ class RedisManager(PubSubManager):  # pragma: no cover
                        and receiving.
     :param redis_options: additional keyword arguments to be passed to
                           ``Redis.from_url()``.
+    :param encoder: The encoder to use for publishing and decoding data,
+                    defaults to pickle.
     """
     name = 'redis'
 
     def __init__(self, url='redis://localhost:6379/0', channel='socketio',
-                 write_only=False, logger=None, redis_options=None):
+                 write_only=False, logger=None, redis_options=None,
+                 encoder=pickle):
         if redis is None:
             raise RuntimeError('Redis package is not installed '
                                '(Run "pip install redis" in your '
@@ -50,7 +53,8 @@ class RedisManager(PubSubManager):  # pragma: no cover
         self._redis_connect()
         super(RedisManager, self).__init__(channel=channel,
                                            write_only=write_only,
-                                           logger=logger)
+                                           logger=logger,
+                                           encoder=encoder)
 
     def initialize(self):
         super(RedisManager, self).initialize()
@@ -78,7 +82,8 @@ class RedisManager(PubSubManager):  # pragma: no cover
             try:
                 if not retry:
                     self._redis_connect()
-                return self.redis.publish(self.channel, pickle.dumps(data))
+                return self.redis.publish(self.channel,
+                                          self.encoder.dumps(data))
             except redis.exceptions.RedisError:
                 if retry:
                     logger.error('Cannot publish to redis... retrying')

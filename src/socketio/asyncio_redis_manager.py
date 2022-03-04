@@ -32,11 +32,14 @@ class AsyncRedisManager(AsyncPubSubManager):  # pragma: no cover
                        and receiving.
     :param redis_options: additional keyword arguments to be passed to
                           ``aioredis.from_url()``.
+    :param encoder: The encoder to use for publishing and decoding data,
+                    defaults to pickle.
     """
     name = 'aioredis'
 
     def __init__(self, url='redis://localhost:6379/0', channel='socketio',
-                 write_only=False, logger=None, redis_options=None):
+                 write_only=False, logger=None, redis_options=None,
+                 encoder=pickle):
         if aioredis is None:
             raise RuntimeError('Redis package is not installed '
                                '(Run "pip install aioredis" in your '
@@ -46,7 +49,8 @@ class AsyncRedisManager(AsyncPubSubManager):  # pragma: no cover
         self.redis_url = url
         self.redis_options = redis_options or {}
         self._redis_connect()
-        super().__init__(channel=channel, write_only=write_only, logger=logger)
+        super().__init__(channel=channel, write_only=write_only, logger=logger,
+                         encoder=encoder)
 
     def _redis_connect(self):
         self.redis = aioredis.Redis.from_url(self.redis_url,
@@ -60,7 +64,7 @@ class AsyncRedisManager(AsyncPubSubManager):  # pragma: no cover
                 if not retry:
                     self._redis_connect()
                 return await self.redis.publish(
-                    self.channel, pickle.dumps(data))
+                    self.channel, self.encoder.dumps(data))
             except aioredis.exceptions.RedisError:
                 if retry:
                     self._get_logger().error('Cannot publish to redis... '

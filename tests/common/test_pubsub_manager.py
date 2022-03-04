@@ -1,5 +1,8 @@
 import functools
 import logging
+import pickle
+import json
+import marshal
 import unittest
 from unittest import mock
 
@@ -365,8 +368,6 @@ class TestPubSubManager(unittest.TestCase):
         self.pm._handle_close_room = mock.MagicMock()
 
         def messages():
-            import pickle
-
             yield {'method': 'emit', 'value': 'foo'}
             yield {'missing': 'method'}
             yield '{"method": "callback", "value": "bar"}'
@@ -392,5 +393,48 @@ class TestPubSubManager(unittest.TestCase):
             {'method': 'disconnect', 'sid': '123', 'namespace': '/foo'}
         )
         self.pm._handle_close_room.assert_called_once_with(
+            {'method': 'close_room', 'value': 'baz'}
+        )
+
+    def test_background_thread_with_encoder(self):
+        mock_server = mock.MagicMock()
+        pm = pubsub_manager.PubSubManager(encoder=marshal)
+        pm.set_server(mock_server)
+        pm._publish = mock.MagicMock()
+        pm._handle_emit = mock.MagicMock()
+        pm._handle_callback = mock.MagicMock()
+        pm._handle_disconnect = mock.MagicMock()
+        pm._handle_close_room = mock.MagicMock()
+
+        pm.initialize()
+
+        def messages():
+            yield {'method': 'emit', 'value': 'foo'}
+            yield marshal.dumps({'method': 'callback', 'value': 'bar'})
+            yield json.dumps(
+                    {'method': 'disconnect', 'sid': '123', 'namespace': '/foo'}
+            )
+            yield pickle.dumps({'method': 'close_room', 'value': 'baz'})
+            yield {'method': 'bogus'}
+            yield 'bad json'
+            yield b'bad encoding'
+
+        pm._listen = mock.MagicMock(side_effect=messages)
+
+        try:
+            pm._thread()
+        except StopIteration:
+            pass
+
+        pm._handle_emit.assert_called_once_with(
+            {'method': 'emit', 'value': 'foo'}
+        )
+        pm._handle_callback.assert_called_once_with(
+            {'method': 'callback', 'value': 'bar'}
+        )
+        pm._handle_disconnect.assert_called_once_with(
+            {'method': 'disconnect', 'sid': '123', 'namespace': '/foo'}
+        )
+        pm._handle_close_room.assert_called_once_with(
             {'method': 'close_room', 'value': 'baz'}
         )

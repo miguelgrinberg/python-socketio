@@ -29,6 +29,8 @@ class ZmqManager(PubSubManager):  # pragma: no cover
     :param write_only: If set to ``True``, only initialize to emit events. The
                        default of ``False`` initializes the class for emitting
                        and receiving.
+    :param encoder: The encoder to use for publishing and decoding data,
+                    defaults to pickle.
 
     A zmq message broker must be running for the zmq_manager to work.
     you can write your own or adapt one from the following simple broker
@@ -50,7 +52,8 @@ class ZmqManager(PubSubManager):  # pragma: no cover
     def __init__(self, url='zmq+tcp://localhost:5555+5556',
                  channel='socketio',
                  write_only=False,
-                 logger=None):
+                 logger=None,
+                 encoder=pickle):
         if zmq is None:
             raise RuntimeError('zmq package is not installed '
                                '(Run "pip install pyzmq" in your '
@@ -77,17 +80,18 @@ class ZmqManager(PubSubManager):  # pragma: no cover
         self.channel = channel
         super(ZmqManager, self).__init__(channel=channel,
                                          write_only=write_only,
-                                         logger=logger)
+                                         logger=logger,
+                                         encoder=encoder)
 
     def _publish(self, data):
-        pickled_data = pickle.dumps(
+        encoded_data = self.encoder.dumps(
             {
                 'type': 'message',
                 'channel': self.channel,
                 'data': data
             }
         )
-        return self.sink.send(pickled_data)
+        return self.sink.send(encoded_data)
 
     def zmq_listen(self):
         while True:
@@ -98,10 +102,7 @@ class ZmqManager(PubSubManager):  # pragma: no cover
     def _listen(self):
         for message in self.zmq_listen():
             if isinstance(message, bytes):
-                try:
-                    message = pickle.loads(message)
-                except Exception:
-                    pass
+                yield message
             if isinstance(message, dict) and \
                     message['type'] == 'message' and \
                     message['channel'] == self.channel and \
