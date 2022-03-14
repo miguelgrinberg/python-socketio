@@ -394,3 +394,23 @@ class TestPubSubManager(unittest.TestCase):
         self.pm._handle_close_room.assert_called_once_with(
             {'method': 'close_room', 'value': 'baz'}
         )
+
+    def test_background_thread_exception(self):
+        self.pm._handle_emit = mock.MagicMock(side_effect=[ValueError(), None])
+
+        def messages():
+            yield {'method': 'emit', 'value': 'foo'}
+            yield {'method': 'emit', 'value': 'bar'}
+
+        self.pm._listen = mock.MagicMock(side_effect=messages)
+        try:
+            self.pm._thread()
+        except StopIteration:
+            pass
+
+        self.pm._handle_emit.assert_any_call(
+            {'method': 'emit', 'value': 'foo'}
+        )
+        self.pm._handle_emit.assert_called_with(
+            {'method': 'emit', 'value': 'bar'}
+        )

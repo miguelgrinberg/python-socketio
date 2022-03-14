@@ -166,14 +166,20 @@ class AsyncPubSubManager(AsyncManager):
                     if data and 'method' in data:
                         self._get_logger().info('pubsub message: {}'.format(
                             data['method']))
-                        if data['method'] == 'emit':
-                            await self._handle_emit(data)
-                        elif data['method'] == 'callback':
-                            await self._handle_callback(data)
-                        elif data['method'] == 'disconnect':
-                            await self._handle_disconnect(data)
-                        elif data['method'] == 'close_room':
-                            await self._handle_close_room(data)
+                        try:
+                            if data['method'] == 'emit':
+                                await self._handle_emit(data)
+                            elif data['method'] == 'callback':
+                                await self._handle_callback(data)
+                            elif data['method'] == 'disconnect':
+                                await self._handle_disconnect(data)
+                            elif data['method'] == 'close_room':
+                                await self._handle_close_room(data)
+                        except asyncio.CancelledError:
+                            raise  # let the outer try/except handle it
+                        except:
+                            self.server.logger.exception(
+                                'Unknown error in pubsub listening task')
             except asyncio.CancelledError:  # pragma: no cover
                 break
             except:  # pragma: no cover

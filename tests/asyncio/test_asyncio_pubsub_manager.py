@@ -445,3 +445,21 @@ class TestAsyncPubSubManager(unittest.TestCase):
         self.pm._handle_close_room.mock.assert_called_once_with(
             {'method': 'close_room', 'value': 'baz'}
         )
+
+    def test_background_thread_exception(self):
+        self.pm._handle_emit = AsyncMock(side_effect=[ValueError(),
+                                                      asyncio.CancelledError])
+
+        async def messages():
+            yield {'method': 'emit', 'value': 'foo'}
+            yield {'method': 'emit', 'value': 'bar'}
+
+        self.pm._listen = messages
+        _run(self.pm._thread())
+
+        self.pm._handle_emit.mock.assert_any_call(
+            {'method': 'emit', 'value': 'foo'}
+        )
+        self.pm._handle_emit.mock.assert_called_with(
+            {'method': 'emit', 'value': 'bar'}
+        )
