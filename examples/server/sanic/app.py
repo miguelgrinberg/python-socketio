@@ -4,7 +4,7 @@ from sanic.response import html
 import socketio
 
 sio = socketio.AsyncServer(async_mode='sanic')
-app = Sanic()
+app = Sanic(name='sanic_application')
 sio.attach(app)
 
 
