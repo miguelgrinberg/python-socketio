@@ -865,7 +865,7 @@ servers that use standard Python threads. This is an ideal setup to use with
 development servers such as `Werkzeug <http://werkzeug.pocoo.org>`_.
 
 Instances of class ``socketio.Server`` will automatically use the threading
-mode if neither eventlet nor gevent are not installed. To request the
+mode if neither eventlet nor gevent are installed. To request the
 threading mode explicitly, the ``async_mode`` option can be given in the
 constructor::
 
