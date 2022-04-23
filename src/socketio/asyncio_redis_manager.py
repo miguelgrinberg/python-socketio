@@ -2,9 +2,12 @@ import asyncio
 import pickle
 
 try:
-    import aioredis
+    from redis import asyncio as aioredis
 except ImportError:
-    aioredis = None
+    try:
+        import aioredis
+    except ImportError:
+        aioredis = None
 
 from .asyncio_pubsub_manager import AsyncPubSubManager
 
@@ -39,8 +42,7 @@ class AsyncRedisManager(AsyncPubSubManager):  # pragma: no cover
                  write_only=False, logger=None, redis_options=None):
         if aioredis is None:
             raise RuntimeError('Redis package is not installed '
-                               '(Run "pip install aioredis" in your '
-                               'virtualenv).')
+                               '(Run "pip install redis" in your virtualenv).')
         if not hasattr(aioredis.Redis, 'from_url'):
             raise RuntimeError('Version 2 of aioredis package is required.')
         self.redis_url = url
