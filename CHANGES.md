@@ -1,5 +1,15 @@
 # python-socketio change log
 
+**Release 5.6.0** - 2022-04-24
+
+- Catch and log errors in pubsub listening thread [#889](https://github.com/miguelgrinberg/python-socketio/issues/889) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/f2ae136dcd724d56353b783092c448d6e638635f))
+- Use new asyncio support in redis package [#911](https://github.com/miguelgrinberg/python-socketio/issues/911) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/0e7691b77605de00dedcbf87e415bb79fcd7f2aa))
+- Add support for aiopiko version 7 and higher [#897](https://github.com/miguelgrinberg/python-socketio/issues/897) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/b4b55e1fb5e9d837b3301b5b873d9a7fe2a12023)) (thanks **Dmitriy**!)
+- Fixed documentation typo [#910](https://github.com/miguelgrinberg/python-socketio/issues/910) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/16243e7c5f95f73f1f17b6febbf23c6483c17c62)) (thanks **Omar Costa Hamido**!)
+- Fix aiohttp example's background task [#881](https://github.com/miguelgrinberg/python-socketio/issues/881) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/fb9648575ef5bd529579f854f141df52d9e000ed))
+- Bump sanic from 0.8 to 20.12.6 in /examples/server/sanic [#875](https://github.com/miguelgrinberg/python-socketio/issues/875) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/342f2e3fe9a3f973a491326b19fa4f96705b9b7e)) (thanks **dependabot[bot]**!)
+- Add application name to Sanic example [#892](https://github.com/miguelgrinberg/python-socketio/issues/892) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/4d5e36d36f865bf0527cfeb486a4e7f917b28717)) (thanks **Florian Metzger-Noel**!)
+
 **Release 5.5.2** - 2022-02-15
 
 - Connect with an empty auth object instead of `None` [#861](https://github.com/miguelgrinberg/python-socketio/issues/861) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/1fb7a76575426dd58a5e9c0e01646302ccc96188))
