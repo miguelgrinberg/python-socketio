@@ -134,6 +134,7 @@ class Server(object):
         self.environ = {}
         self.handlers = {}
         self.namespace_handlers = {}
+        self.not_handled = object()
 
         self._binary_packet = {}
 
@@ -720,7 +721,7 @@ class Server(object):
     def _handle_event_internal(self, server, sid, eio_sid, data, namespace,
                                id):
         r = server._trigger_event(data[0], namespace, sid, *data[1:])
-        if id is not None:
+        if r != self.not_handled and id is not None:
             # send ACK packet with the response returned by the handler
             # tuples are expanded as multiple arguments
             if r is None:
@@ -748,6 +749,8 @@ class Server(object):
             elif event not in self.reserved_events and \
                     '*' in self.handlers[namespace]:
                 return self.handlers[namespace]['*'](event, *args)
+            else:
+                return self.not_handled
 
         # or else, forward the event to a namespace handler if one exists
         elif namespace in self.namespace_handlers:  # pragma: no branch

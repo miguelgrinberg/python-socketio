@@ -703,6 +703,15 @@ class TestAsyncServer(unittest.TestCase):
             '123', '31000["foo"]'
         )
 
+    def test_handle_unknown_event_with_ack(self, eio):
+        eio.return_value.send = AsyncMock()
+        s = asyncio_server.AsyncServer(async_handlers=False)
+        s.manager.connect('123', '/')
+        handler = mock.MagicMock(return_value='foo')
+        s.on('my message', handler)
+        _run(s._handle_eio_message('123', '21000["another message","foo"]'))
+        s.eio.send.mock.assert_not_called()
+
     def test_handle_event_with_ack_none(self, eio):
         eio.return_value.send = AsyncMock()
         s = asyncio_server.AsyncServer(async_handlers=False)

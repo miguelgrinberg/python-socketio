@@ -618,6 +618,14 @@ class TestServer(unittest.TestCase):
         handler.assert_called_once_with(sid, 'foo')
         s.eio.send.assert_called_once_with('123', '31000["foo"]')
 
+    def test_handle_unknown_event_with_ack(self, eio):
+        s = server.Server(async_handlers=False)
+        s.manager.connect('123', '/')
+        handler = mock.MagicMock(return_value='foo')
+        s.on('my message', handler)
+        s._handle_eio_message('123', '21000["another message","foo"]')
+        s.eio.send.assert_not_called()
+
     def test_handle_event_with_ack_none(self, eio):
         s = server.Server(async_handlers=False)
         sid = s.manager.connect('123', '/')

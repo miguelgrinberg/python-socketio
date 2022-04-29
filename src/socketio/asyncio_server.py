@@ -514,7 +514,7 @@ class AsyncServer(server.Server):
     async def _handle_event_internal(self, server, sid, eio_sid, data,
                                      namespace, id):
         r = await server._trigger_event(data[0], namespace, sid, *data[1:])
-        if id is not None:
+        if r != self.not_handled and id is not None:
             # send ACK packet with the response returned by the handler
             # tuples are expanded as multiple arguments
             if r is None:
@@ -553,6 +553,8 @@ class AsyncServer(server.Server):
                 else:
                     ret = handler(*args)
                 return ret
+            else:
+                return self.not_handled
 
         # or else, forward the event to a namepsace handler if one exists
         elif namespace in self.namespace_handlers:  # pragma: no branch
