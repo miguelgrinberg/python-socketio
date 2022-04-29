@@ -648,7 +648,9 @@ class Server(object):
     def _handle_connect(self, eio_sid, namespace, data):
         """Handle a client connection request."""
         namespace = namespace or '/'
-        sid = self.manager.connect(eio_sid, namespace)
+        sid = None
+        if namespace in self.handlers or namespace in self.namespace_handlers:
+            sid = self.manager.connect(eio_sid, namespace)
         if sid is None:
             self._send_packet(eio_sid, self.packet_class(
                 packet.CONNECT_ERROR, data='Unable to connect',
@@ -748,7 +750,7 @@ class Server(object):
                 return self.handlers[namespace]['*'](event, *args)
 
         # or else, forward the event to a namespace handler if one exists
-        elif namespace in self.namespace_handlers:
+        elif namespace in self.namespace_handlers:  # pragma: no branch
             return self.namespace_handlers[namespace].trigger_event(
                 event, *args)
 

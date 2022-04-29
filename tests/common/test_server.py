@@ -356,6 +356,12 @@ class TestServer(unittest.TestCase):
         s._handle_eio_connect('456', 'environ')
         assert s.manager.initialize.call_count == 1
 
+    def test_handle_connect_with_bad_namespace(self, eio):
+        s = server.Server()
+        s._handle_eio_connect('123', 'environ')
+        s._handle_eio_message('123', '0')
+        assert not s.manager.is_connected('1', '/')
+
     def test_handle_connect_namespace(self, eio):
         s = server.Server()
         handler = mock.MagicMock()
@@ -663,6 +669,7 @@ class TestServer(unittest.TestCase):
 
     def test_send_with_ack(self, eio):
         s = server.Server()
+        s.handlers['/'] = {}
         s._handle_eio_connect('123', 'environ')
         s._handle_eio_message('123', '0')
         cb = mock.MagicMock()
@@ -675,6 +682,7 @@ class TestServer(unittest.TestCase):
 
     def test_send_with_ack_namespace(self, eio):
         s = server.Server()
+        s.handlers['/foo'] = {}
         s._handle_eio_connect('123', 'environ')
         s._handle_eio_message('123', '0/foo,')
         cb = mock.MagicMock()
@@ -696,6 +704,8 @@ class TestServer(unittest.TestCase):
             fake_session = session
 
         s = server.Server()
+        s.handlers['/'] = {}
+        s.handlers['/ns'] = {}
         s.eio.get_session = fake_get_session
         s.eio.save_session = fake_save_session
         s._handle_eio_connect('123', 'environ')
@@ -721,6 +731,7 @@ class TestServer(unittest.TestCase):
 
     def test_disconnect(self, eio):
         s = server.Server()
+        s.handlers['/'] = {}
         s._handle_eio_connect('123', 'environ')
         s._handle_eio_message('123', '0')
         s.disconnect('1')
@@ -728,6 +739,7 @@ class TestServer(unittest.TestCase):
 
     def test_disconnect_ignore_queue(self, eio):
         s = server.Server()
+        s.handlers['/'] = {}
         s._handle_eio_connect('123', 'environ')
         s._handle_eio_message('123', '0')
         s.disconnect('1', ignore_queue=True)
@@ -735,6 +747,7 @@ class TestServer(unittest.TestCase):
 
     def test_disconnect_namespace(self, eio):
         s = server.Server()
+        s.handlers['/foo'] = {}
         s._handle_eio_connect('123', 'environ')
         s._handle_eio_message('123', '0/foo,')
         s.disconnect('1', namespace='/foo')
@@ -813,6 +826,7 @@ class TestServer(unittest.TestCase):
 
     def test_get_environ(self, eio):
         s = server.Server()
+        s.handlers['/'] = {}
         s._handle_eio_connect('123', 'environ')
         s._handle_eio_message('123', '0')
         sid = s.manager.sid_from_eio_sid('123', '/')

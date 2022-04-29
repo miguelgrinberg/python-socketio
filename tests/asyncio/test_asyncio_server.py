@@ -425,6 +425,13 @@ class TestAsyncServer(unittest.TestCase):
         _run(s._handle_eio_message('456', '0'))
         assert s.manager.initialize.call_count == 1
 
+    def test_handle_connect_with_bad_namespace(self, eio):
+        eio.return_value.send = AsyncMock()
+        s = asyncio_server.AsyncServer()
+        _run(s._handle_eio_connect('123', 'environ'))
+        _run(s._handle_eio_message('123', '0'))
+        assert not s.manager.is_connected('1', '/')
+
     def test_handle_connect_namespace(self, eio):
         eio.return_value.send = AsyncMock()
         s = asyncio_server.AsyncServer()
@@ -752,6 +759,7 @@ class TestAsyncServer(unittest.TestCase):
     def test_send_with_ack(self, eio):
         eio.return_value.send = AsyncMock()
         s = asyncio_server.AsyncServer()
+        s.handlers['/'] = {}
         _run(s._handle_eio_connect('123', 'environ'))
         _run(s._handle_eio_message('123', '0'))
         cb = mock.MagicMock()
@@ -765,6 +773,7 @@ class TestAsyncServer(unittest.TestCase):
     def test_send_with_ack_namespace(self, eio):
         eio.return_value.send = AsyncMock()
         s = asyncio_server.AsyncServer()
+        s.handlers['/foo'] = {}
         _run(s._handle_eio_connect('123', 'environ'))
         _run(s._handle_eio_message('123', '0/foo,'))
         cb = mock.MagicMock()
@@ -791,6 +800,8 @@ class TestAsyncServer(unittest.TestCase):
 
         eio.return_value.send = AsyncMock()
         s = asyncio_server.AsyncServer()
+        s.handlers['/'] = {}
+        s.handlers['/ns'] = {}
         s.eio.get_session = fake_get_session
         s.eio.save_session = fake_save_session
 
@@ -822,6 +833,7 @@ class TestAsyncServer(unittest.TestCase):
         eio.return_value.send = AsyncMock()
         eio.return_value.disconnect = AsyncMock()
         s = asyncio_server.AsyncServer()
+        s.handlers['/'] = {}
         _run(s._handle_eio_connect('123', 'environ'))
         _run(s._handle_eio_message('123', '0'))
         _run(s.disconnect('1'))
@@ -832,6 +844,7 @@ class TestAsyncServer(unittest.TestCase):
         eio.return_value.send = AsyncMock()
         eio.return_value.disconnect = AsyncMock()
         s = asyncio_server.AsyncServer()
+        s.handlers['/'] = {}
         _run(s._handle_eio_connect('123', 'environ'))
         _run(s._handle_eio_message('123', '0'))
         _run(s.disconnect('1', ignore_queue=True))
@@ -842,6 +855,7 @@ class TestAsyncServer(unittest.TestCase):
         eio.return_value.send = AsyncMock()
         eio.return_value.disconnect = AsyncMock()
         s = asyncio_server.AsyncServer()
+        s.handlers['/foo'] = {}
         _run(s._handle_eio_connect('123', 'environ'))
         _run(s._handle_eio_message('123', '0/foo,'))
         _run(s.disconnect('1', namespace='/foo'))

@@ -442,7 +442,15 @@ class AsyncServer(server.Server):
     async def _handle_connect(self, eio_sid, namespace, data):
         """Handle a client connection request."""
         namespace = namespace or '/'
-        sid = self.manager.connect(eio_sid, namespace)
+        sid = None
+        if namespace in self.handlers or namespace in self.namespace_handlers:
+            sid = self.manager.connect(eio_sid, namespace)
+        if sid is None:
+            self._send_packet(eio_sid, self.packet_class(
+                packet.CONNECT_ERROR, data='Unable to connect',
+                namespace=namespace))
+            return
+
         if self.always_connect:
             await self._send_packet(eio_sid, self.packet_class(
                 packet.CONNECT, {'sid': sid}, namespace=namespace))
@@ -547,7 +555,7 @@ class AsyncServer(server.Server):
                 return ret
 
         # or else, forward the event to a namepsace handler if one exists
-        elif namespace in self.namespace_handlers:
+        elif namespace in self.namespace_handlers:  # pragma: no branch
             return await self.namespace_handlers[namespace].trigger_event(
                 event, *args)
 
