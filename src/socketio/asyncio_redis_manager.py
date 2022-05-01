@@ -1,13 +1,16 @@
 import asyncio
 import pickle
 
-try:
+try:  # pragma: no cover
     from redis import asyncio as aioredis
-except ImportError:
+    from redis.exceptions import RedisError
+except ImportError:  # pragma: no cover
     try:
         import aioredis
+        from aioredis.exceptions import RedisError
     except ImportError:
         aioredis = None
+        RedisError = None
 
 from .asyncio_pubsub_manager import AsyncPubSubManager
 
@@ -63,7 +66,7 @@ class AsyncRedisManager(AsyncPubSubManager):  # pragma: no cover
                     self._redis_connect()
                 return await self.redis.publish(
                     self.channel, pickle.dumps(data))
-            except aioredis.exceptions.RedisError:
+            except RedisError:
                 if retry:
                     self._get_logger().error('Cannot publish to redis... '
                                              'retrying')
@@ -84,7 +87,7 @@ class AsyncRedisManager(AsyncPubSubManager):  # pragma: no cover
                     retry_sleep = 1
                 async for message in self.pubsub.listen():
                     yield message
-            except aioredis.exceptions.RedisError:
+            except RedisError:
                 self._get_logger().error('Cannot receive from redis... '
                                          'retrying in '
                                          '{} secs'.format(retry_sleep))
