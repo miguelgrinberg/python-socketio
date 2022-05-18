@@ -46,12 +46,12 @@ class AsyncServer(server.Server):
 
     :param async_mode: The asynchronous model to use. See the Deployment
                        section in the documentation for a description of the
-                       available options. Valid async modes are "threading",
-                       "eventlet", "gevent" and "gevent_uwsgi". If this
-                       argument is not given, "eventlet" is tried first, then
-                       "gevent_uwsgi", then "gevent", and finally "threading".
-                       The first async mode that has all its dependencies
-                       installed is then one that is chosen.
+                       available options. Valid async modes are "aiohttp",
+                       "sanic", "tornado" and "asgi". If this argument is not
+                       given, "aiohttp" is tried first, followed by "sanic",
+                       "tornado", and finally "asgi". The first async mode that
+                       has all its dependencies installed is the one that is
+                       chosen.
     :param ping_interval: The interval in seconds at which the server pings
                           the client. The default is 25 seconds. For advanced
                           control, a two element tuple can be given, where
