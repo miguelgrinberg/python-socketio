@@ -55,7 +55,7 @@ class AsyncAioPikaManager(AsyncPubSubManager):  # pragma: no cover
         super().__init__(channel=channel, write_only=write_only, logger=logger)
 
     async def _connection(self):
-        if (self.aiopika_connection is None or self.aiopika_connection.is_closed is False):
+        if (self.aiopika_connection is None or self.aiopika_connection.is_closed is True):
             return await aio_pika.connect_robust(self.url)
         return self.aiopika_connection
 
