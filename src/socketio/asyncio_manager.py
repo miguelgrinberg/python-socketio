@@ -26,8 +26,9 @@ class AsyncManager(BaseManager):
                     id = self._generate_ack_id(sid, callback)
                 else:
                     id = None
-                tasks.append(self.server._emit_internal(eio_sid, event, data,
-                                                        namespace, id))
+                tasks.append(asyncio.create_task(
+                    self.server._emit_internal(eio_sid, event, data,
+                                               namespace, id)))
         if tasks == []:  # pragma: no cover
             return
         await asyncio.wait(tasks)
