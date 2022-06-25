@@ -24,8 +24,8 @@ time to the page.
 This is an ideal application to measure the performance of the different
 asynchronous modes supported by the Socket.IO server.
 
-django_example
---------------
+django_socketio
+---------------
 
 This is a version of the "app.py" application described above, that is based
 on the Django web framework.

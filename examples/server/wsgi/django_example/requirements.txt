@@ -1,8 +1,0 @@
-django==2.2.13
-enum-compat==0.0.3
-eventlet==0.30.0
-greenlet==0.4.17
-python-engineio
-python-socketio
-pytz==2018.7
-six==1.10.0
