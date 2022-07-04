@@ -1,5 +1,16 @@
 # python-socketio change log
 
+**Release 5.7.0** - 2022-07-04
+
+- Server refuses connections on unknown namespaces [#822](https://github.com/miguelgrinberg/python-socketio/issues/822) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/44715012dc0d578b067a9a389c8aef2ce39f65c1))
+- Do not send ACK packet for unknown events [#824](https://github.com/miguelgrinberg/python-socketio/issues/824) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/268fe12ffa68f7af8881c75695c287c09490cef9))
+- Fix Python 3.11 deprecation warning [#941](https://github.com/miguelgrinberg/python-socketio/issues/941) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/4b697815c3da4574fca8b759d21a4e0800dafc50)) (thanks **Jérôme Boulmier**!)
+- Correct handling of RedisError exception [#919](https://github.com/miguelgrinberg/python-socketio/issues/919) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/98318fbdde2c4dcfba15d1b0aaf266b599e81e0c))
+- Update Django example ([commit](https://github.com/miguelgrinberg/python-socketio/commit/dc7ac74c1d2c97544056541736d644060837a080))
+- Documentation fix for async client ([commit](https://github.com/miguelgrinberg/python-socketio/commit/5b9134617759a1b64adb2f9aba0974c732576cc4))
+- Update documentation of asyncio server ([commit](https://github.com/miguelgrinberg/python-socketio/commit/98f3cb4664ff10c0bb17826b11564644bed99fd6))
+- Fix documentation typo [#948](https://github.com/miguelgrinberg/python-socketio/issues/948) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/f888446b330146484325b568cdc2303c9b35c095)) (thanks **mostlycryptic**!)
+
 **Release 5.6.0** - 2022-04-24
 
 - Catch and log errors in pubsub listening thread [#889](https://github.com/miguelgrinberg/python-socketio/issues/889) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/f2ae136dcd724d56353b783092c448d6e638635f))
