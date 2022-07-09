@@ -425,12 +425,32 @@ class TestAsyncServer(unittest.TestCase):
         _run(s._handle_eio_message('456', '0'))
         assert s.manager.initialize.call_count == 1
 
-    def test_handle_connect_with_bad_namespace(self, eio):
+    def test_handle_connect_with_default_implied_namespaces(self, eio):
         eio.return_value.send = AsyncMock()
         s = asyncio_server.AsyncServer()
         _run(s._handle_eio_connect('123', 'environ'))
         _run(s._handle_eio_message('123', '0'))
+        _run(s._handle_eio_message('123', '0/foo,'))
+        assert s.manager.is_connected('1', '/')
+        assert not s.manager.is_connected('2', '/foo')
+
+    def test_handle_connect_with_implied_namespaces(self, eio):
+        eio.return_value.send = AsyncMock()
+        s = asyncio_server.AsyncServer(namespaces=['/foo'])
+        _run(s._handle_eio_connect('123', 'environ'))
+        _run(s._handle_eio_message('123', '0'))
+        _run(s._handle_eio_message('123', '0/foo,'))
         assert not s.manager.is_connected('1', '/')
+        assert s.manager.is_connected('1', '/foo')
+
+    def test_handle_connect_with_all_implied_namespaces(self, eio):
+        eio.return_value.send = AsyncMock()
+        s = asyncio_server.AsyncServer(namespaces='*')
+        _run(s._handle_eio_connect('123', 'environ'))
+        _run(s._handle_eio_message('123', '0'))
+        _run(s._handle_eio_message('123', '0/foo,'))
+        assert s.manager.is_connected('1', '/')
+        assert s.manager.is_connected('2', '/foo')
 
     def test_handle_connect_namespace(self, eio):
         eio.return_value.send = AsyncMock()

@@ -356,11 +356,29 @@ class TestServer(unittest.TestCase):
         s._handle_eio_connect('456', 'environ')
         assert s.manager.initialize.call_count == 1
 
-    def test_handle_connect_with_bad_namespace(self, eio):
+    def test_handle_connect_with_default_implied_namespaces(self, eio):
         s = server.Server()
         s._handle_eio_connect('123', 'environ')
         s._handle_eio_message('123', '0')
+        s._handle_eio_message('123', '0/foo,')
+        assert s.manager.is_connected('1', '/')
+        assert not s.manager.is_connected('2', '/foo')
+
+    def test_handle_connect_with_implied_namespaces(self, eio):
+        s = server.Server(namespaces=['/foo'])
+        s._handle_eio_connect('123', 'environ')
+        s._handle_eio_message('123', '0')
+        s._handle_eio_message('123', '0/foo,')
         assert not s.manager.is_connected('1', '/')
+        assert s.manager.is_connected('1', '/foo')
+
+    def test_handle_connect_with_all_implied_namespaces(self, eio):
+        s = server.Server(namespaces='*')
+        s._handle_eio_connect('123', 'environ')
+        s._handle_eio_message('123', '0')
+        s._handle_eio_message('123', '0/foo,')
+        assert s.manager.is_connected('1', '/')
+        assert s.manager.is_connected('2', '/foo')
 
     def test_handle_connect_namespace(self, eio):
         s = server.Server()

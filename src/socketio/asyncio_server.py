@@ -40,6 +40,11 @@ class AsyncServer(server.Server):
                            connect handler and your client is confused when it
                            receives events before the connection acceptance.
                            In any other case use the default of ``False``.
+    :param namespaces: a list of namespaces that are accepted, in addition to
+                       any namespaces for which handlers have been defined. The
+                       default is `['/']`, which always accepts connections to
+                       the default namespace. Set to `'*'` to accept all
+                       namespaces.
     :param kwargs: Connection parameters for the underlying Engine.IO server.
 
     The Engine.IO configuration supports the following settings:
@@ -97,11 +102,12 @@ class AsyncServer(server.Server):
                             ``engineio_logger`` is ``False``.
     """
     def __init__(self, client_manager=None, logger=False, json=None,
-                 async_handlers=True, **kwargs):
+                 async_handlers=True, namespaces=None, **kwargs):
         if client_manager is None:
             client_manager = asyncio_manager.AsyncManager()
         super().__init__(client_manager=client_manager, logger=logger,
-                         json=json, async_handlers=async_handlers, **kwargs)
+                         json=json, async_handlers=async_handlers,
+                         namespaces=namespaces, **kwargs)
 
     def is_asyncio_based(self):
         return True
@@ -443,7 +449,8 @@ class AsyncServer(server.Server):
         """Handle a client connection request."""
         namespace = namespace or '/'
         sid = None
-        if namespace in self.handlers or namespace in self.namespace_handlers:
+        if namespace in self.handlers or namespace in self.namespace_handlers \
+                or self.namespaces == '*' or namespace in self.namespaces:
             sid = self.manager.connect(eio_sid, namespace)
         if sid is None:
             await self._send_packet(eio_sid, self.packet_class(

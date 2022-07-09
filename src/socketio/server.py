@@ -49,6 +49,11 @@ class Server(object):
                            connect handler and your client is confused when it
                            receives events before the connection acceptance.
                            In any other case use the default of ``False``.
+    :param namespaces: a list of namespaces that are accepted, in addition to
+                       any namespaces for which handlers have been defined. The
+                       default is `['/']`, which always accepts connections to
+                       the default namespace. Set to `'*'` to accept all
+                       namespaces.
     :param kwargs: Connection parameters for the underlying Engine.IO server.
 
     The Engine.IO configuration supports the following settings:
@@ -110,7 +115,7 @@ class Server(object):
 
     def __init__(self, client_manager=None, logger=False, serializer='default',
                  json=None, async_handlers=True, always_connect=False,
-                 **kwargs):
+                 namespaces=None, **kwargs):
         engineio_options = kwargs
         engineio_logger = engineio_options.pop('engineio_logger', None)
         if engineio_logger is not None:
@@ -157,6 +162,7 @@ class Server(object):
 
         self.async_handlers = async_handlers
         self.always_connect = always_connect
+        self.namespaces = namespaces or ['/']
 
         self.async_mode = self.eio.async_mode
 
@@ -650,7 +656,8 @@ class Server(object):
         """Handle a client connection request."""
         namespace = namespace or '/'
         sid = None
-        if namespace in self.handlers or namespace in self.namespace_handlers:
+        if namespace in self.handlers or namespace in self.namespace_handlers \
+                or self.namespaces == '*' or namespace in self.namespaces:
             sid = self.manager.connect(eio_sid, namespace)
         if sid is None:
             self._send_packet(eio_sid, self.packet_class(
