@@ -158,10 +158,13 @@ class AsyncClient(client.Client):
                         break
             except asyncio.TimeoutError:
                 pass
-            if set(self.namespaces) != set(self.connection_namespaces):
+            unconnected = set(self.connection_namespaces) - set(self.namespaces)
+            if unconnected:
                 await self.disconnect()
                 raise exceptions.ConnectionError(
-                    'One or more namespaces failed to connect')
+                    'One or more namespaces failed to connect: %r'
+                    % (list(unconnected),)
+                )
 
         self.connected = True
 
