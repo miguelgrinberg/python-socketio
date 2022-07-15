@@ -1,5 +1,10 @@
 # python-socketio change log
 
+**Release 5.7.1** - 2022-07-15
+
+- Add `namespaces` argument to `Server` and `AsyncServer` [#822](https://github.com/miguelgrinberg/python-socketio/issues/822) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/efe87d867a205493654107d381bdb8b619b8ab2d))
+- Add missing `await` in asyncio server [#952](https://github.com/miguelgrinberg/python-socketio/issues/952) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/d4e69fb7ceecdb98584f36e085a186eb4da23b07)) (thanks **sjrodahl**!)
+
 **Release 5.7.0** - 2022-07-04
 
 - Server refuses connections on unknown namespaces [#822](https://github.com/miguelgrinberg/python-socketio/issues/822) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/44715012dc0d578b067a9a389c8aef2ce39f65c1))
