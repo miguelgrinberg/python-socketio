@@ -45,7 +45,7 @@ class AsyncRedisManager(AsyncPubSubManager):  # pragma: no cover
                  write_only=False, logger=None, redis_options=None):
         if aioredis is None:
             raise RuntimeError('Redis package is not installed '
-                               '(Run "pip install redis" in your virtualenv).')
+                               '(Run "pip install aioredis" in your virtualenv).')
         if not hasattr(aioredis.Redis, 'from_url'):
             raise RuntimeError('Version 2 of aioredis package is required.')
         self.redis_url = url
