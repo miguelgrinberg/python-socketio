@@ -472,6 +472,16 @@ class Server(object):
         namespace = namespace or '/'
         return self.manager.get_rooms(sid, namespace)
 
+    def clients_room(self, room, namespace=None):
+        """Return the number of clients in a room.
+
+        :param room: room selected.
+        :param namespace: The Socket.IO namespace for the event. If this
+                          argument is omitted the default namespace is used.
+        """
+        namespace = namespace or '/'
+        return self.manager.client_in_room(room, namespace)
+
     def get_session(self, sid, namespace=None):
         """Return the user session for a client.
 

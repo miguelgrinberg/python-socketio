@@ -154,6 +154,13 @@ class BaseManager(object):
             pass
         return r
 
+    def client_in_room(self, room_in, namespace):
+        """Return the number of client in room"""
+        try:
+            return len(self.rooms[namespace][room_in])
+        except KeyError:
+            pass
+
     def emit(self, event, data, namespace, room=None, skip_sid=None,
              callback=None, **kwargs):
         """Emit a message to a single client, a room, or all the clients
