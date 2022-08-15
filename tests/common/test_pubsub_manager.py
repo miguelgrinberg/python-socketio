@@ -175,6 +175,13 @@ class TestPubSubManager(unittest.TestCase):
             {'method': 'disconnect', 'sid': 'foo', 'namespace': '/'}
         )
 
+    def test_disconnect_ignore_queue(self):
+        sid = self.pm.connect('123', '/')
+        self.pm.pre_disconnect(sid, '/')
+        self.pm.disconnect(sid, ignore_queue=True)
+        self.pm._publish.assert_not_called()
+        assert not self.pm.is_connected(sid, '/')
+
     def test_close_room(self):
         self.pm.close_room('foo')
         self.pm._publish.assert_called_once_with(

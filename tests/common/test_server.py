@@ -532,7 +532,8 @@ class TestServer(unittest.TestCase):
         s._handle_eio_message('123', '0')
         s._handle_eio_disconnect('123')
         handler.assert_called_once_with('1')
-        s.manager.disconnect.assert_called_once_with('1', '/')
+        s.manager.disconnect.assert_called_once_with('1', '/',
+                                                     ignore_queue=True)
         assert s.environ == {}
 
     def test_handle_disconnect_namespace(self, eio):

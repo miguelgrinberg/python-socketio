@@ -75,7 +75,10 @@ class PubSubManager(BaseManager):
             self._publish({'method': 'disconnect', 'sid': sid,
                            'namespace': namespace or '/'})
 
-    def disconnect(self, sid, namespace=None):
+    def disconnect(self, sid, namespace=None, **kwargs):
+        if kwargs.get('ignore_queue'):
+            return super(PubSubManager, self).disconnect(
+                sid, namespace=namespace)
         self._publish({'method': 'disconnect', 'sid': sid,
                        'namespace': namespace or '/'})
 
