@@ -176,6 +176,19 @@ class TestAsyncPubSubManager(unittest.TestCase):
             {'method': 'disconnect', 'sid': sid, 'namespace': '/foo'}
         )
 
+    def test_disconnect(self):
+        _run(self.pm.disconnect('foo', '/'))
+        self.pm._publish.mock.assert_called_once_with(
+            {'method': 'disconnect', 'sid': 'foo', 'namespace': '/'}
+        )
+
+    def test_disconnect_ignore_queue(self):
+        sid = self.pm.connect('123', '/')
+        self.pm.pre_disconnect(sid, '/')
+        _run(self.pm.disconnect(sid, '/', ignore_queue=True))
+        self.pm._publish.mock.assert_not_called()
+        assert self.pm.is_connected(sid, '/') is False
+
     def test_close_room(self):
         _run(self.pm.close_room('foo'))
         self.pm._publish.mock.assert_called_once_with(

@@ -59,9 +59,9 @@ class TestAsyncManager(unittest.TestCase):
         assert self.bm.pre_disconnect(sid2, '/foo') == '456'
         assert self.bm.pending_disconnect == {'/foo': [sid1, sid2]}
         assert not self.bm.is_connected(sid2, '/foo')
-        self.bm.disconnect(sid1, '/foo')
+        _run(self.bm.disconnect(sid1, '/foo'))
         assert self.bm.pending_disconnect == {'/foo': [sid2]}
-        self.bm.disconnect(sid2, '/foo')
+        _run(self.bm.disconnect(sid2, '/foo'))
         assert self.bm.pending_disconnect == {}
 
     def test_disconnect(self):
@@ -69,7 +69,7 @@ class TestAsyncManager(unittest.TestCase):
         sid2 = self.bm.connect('456', '/foo')
         self.bm.enter_room(sid1, '/foo', 'bar')
         self.bm.enter_room(sid2, '/foo', 'baz')
-        self.bm.disconnect(sid1, '/foo')
+        _run(self.bm.disconnect(sid1, '/foo'))
         assert dict(self.bm.rooms['/foo'][None]) == {sid2: '456'}
         assert dict(self.bm.rooms['/foo'][sid2]) == {sid2: '456'}
         assert dict(self.bm.rooms['/foo']['baz']) == {sid2: '456'}
@@ -83,10 +83,10 @@ class TestAsyncManager(unittest.TestCase):
         assert self.bm.is_connected(sid2, '/foo')
         assert not self.bm.is_connected(sid2, '/')
         assert not self.bm.is_connected(sid1, '/foo')
-        self.bm.disconnect(sid1, '/')
+        _run(self.bm.disconnect(sid1, '/'))
         assert not self.bm.is_connected(sid1, '/')
         assert self.bm.is_connected(sid2, '/foo')
-        self.bm.disconnect(sid2, '/foo')
+        _run(self.bm.disconnect(sid2, '/foo'))
         assert not self.bm.is_connected(sid2, '/foo')
         assert dict(self.bm.rooms['/'][None]) == {sid3: '456'}
         assert dict(self.bm.rooms['/'][sid3]) == {sid3: '456'}
@@ -98,10 +98,10 @@ class TestAsyncManager(unittest.TestCase):
         sid2 = self.bm.connect('123', '/foo')
         sid3 = self.bm.connect('456', '/')
         sid4 = self.bm.connect('456', '/foo')
-        self.bm.disconnect(sid1, '/')
-        self.bm.disconnect(sid2, '/foo')
-        self.bm.disconnect(sid1, '/')
-        self.bm.disconnect(sid2, '/foo')
+        _run(self.bm.disconnect(sid1, '/'))
+        _run(self.bm.disconnect(sid2, '/foo'))
+        _run(self.bm.disconnect(sid1, '/'))
+        _run(self.bm.disconnect(sid2, '/foo'))
         assert dict(self.bm.rooms['/'][None]) == {sid3: '456'}
         assert dict(self.bm.rooms['/'][sid3]) == {sid3: '456'}
         assert dict(self.bm.rooms['/foo'][None]) == {sid4: '456'}
@@ -112,8 +112,8 @@ class TestAsyncManager(unittest.TestCase):
         sid2 = self.bm.connect('456', '/foo')
         self.bm.enter_room(sid1, '/foo', 'bar')
         self.bm.enter_room(sid2, '/foo', 'baz')
-        self.bm.disconnect(sid1, '/foo')
-        self.bm.disconnect(sid2, '/foo')
+        _run(self.bm.disconnect(sid1, '/foo'))
+        _run(self.bm.disconnect(sid2, '/foo'))
         assert self.bm.rooms == {}
 
     def test_disconnect_with_callbacks(self):
@@ -123,9 +123,9 @@ class TestAsyncManager(unittest.TestCase):
         self.bm._generate_ack_id(sid1, 'f')
         self.bm._generate_ack_id(sid2, 'g')
         self.bm._generate_ack_id(sid3, 'h')
-        self.bm.disconnect(sid2, '/foo')
+        _run(self.bm.disconnect(sid2, '/foo'))
         assert sid2 not in self.bm.callbacks
-        self.bm.disconnect(sid1, '/')
+        _run(self.bm.disconnect(sid1, '/'))
         assert sid1 not in self.bm.callbacks
         assert sid3 in self.bm.callbacks
 
@@ -176,7 +176,7 @@ class TestAsyncManager(unittest.TestCase):
         sid1 = self.bm.connect('123', '/')
         sid2 = self.bm.connect('456', '/')
         sid3 = self.bm.connect('789', '/')
-        self.bm.disconnect(sid3, '/')
+        _run(self.bm.disconnect(sid3, '/'))
         assert sid3 not in self.bm.rooms['/'][None]
         participants = list(self.bm.get_participants('/', None))
         assert len(participants) == 2

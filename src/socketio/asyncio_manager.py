@@ -33,6 +33,13 @@ class AsyncManager(BaseManager):
             return
         await asyncio.wait(tasks)
 
+    async def disconnect(self, sid, namespace, **kwargs):
+        """Disconnect a client.
+
+        Note: this method is a coroutine.
+        """
+        return super().disconnect(sid, namespace, **kwargs)
+
     async def close_room(self, room, namespace):
         """Remove all participants from a room.
 

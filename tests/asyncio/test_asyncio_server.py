@@ -597,14 +597,15 @@ class TestAsyncServer(unittest.TestCase):
     def test_handle_disconnect(self, eio):
         eio.return_value.send = AsyncMock()
         s = asyncio_server.AsyncServer()
-        s.manager.disconnect = mock.MagicMock()
+        s.manager.disconnect = AsyncMock()
         handler = mock.MagicMock()
         s.on('disconnect', handler)
         _run(s._handle_eio_connect('123', 'environ'))
         _run(s._handle_eio_message('123', '0'))
         _run(s._handle_eio_disconnect('123'))
         handler.assert_called_once_with('1')
-        s.manager.disconnect.assert_called_once_with('1', '/')
+        s.manager.disconnect.mock.assert_called_once_with(
+            '1', '/', ignore_queue=True)
         assert s.environ == {}
 
     def test_handle_disconnect_namespace(self, eio):

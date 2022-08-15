@@ -68,6 +68,7 @@ class BaseManager(object):
             return self.rooms[namespace][None][sid] is not None
         except KeyError:
             pass
+        return False
 
     def sid_from_eio_sid(self, eio_sid, namespace):
         try:

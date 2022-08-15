@@ -76,7 +76,14 @@ class AsyncPubSubManager(AsyncManager):
         else:
             # client is in another server, so we post request to the queue
             await self._publish({'method': 'disconnect', 'sid': sid,
-                                'namespace': namespace or '/'})
+                                 'namespace': namespace or '/'})
+
+    async def disconnect(self, sid, namespace, **kwargs):
+        if kwargs.get('ignore_queue'):
+            return await super(AsyncPubSubManager, self).disconnect(
+                sid, namespace=namespace)
+        await self._publish({'method': 'disconnect', 'sid': sid,
+                             'namespace': namespace or '/'})
 
     async def close_room(self, room, namespace=None):
         await self._publish({'method': 'close_room', 'room': room,
