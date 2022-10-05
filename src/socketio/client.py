@@ -311,6 +311,8 @@ class Client(object):
         self.connection_transports = transports
         self.connection_namespaces = namespaces
         self.socketio_path = socketio_path
+        self.wait = wait
+        self.wait_timeout = wait_timeout
 
         if namespaces is None:
             namespaces = list(set(self.handlers.keys()).union(
@@ -662,7 +664,9 @@ class Client(object):
                              auth=self.connection_auth,
                              transports=self.connection_transports,
                              namespaces=self.connection_namespaces,
-                             socketio_path=self.socketio_path)
+                             socketio_path=self.socketio_path,
+                             wait=self.wait,
+                             wait_timeout=self.wait_timeout)
             except (exceptions.ConnectionError, ValueError):
                 pass
             else:
