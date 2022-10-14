@@ -628,6 +628,25 @@ Deployment Strategies
 The following sections describe a variety of deployment strategies for
 Socket.IO servers.
 
+Uvicorn, Daphne, and other ASGI servers
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The ``socketio.ASGIApp`` class is an ASGI compatible application that can
+forward Socket.IO traffic to an ``socketio.AsyncServer`` instance::
+
+   sio = socketio.AsyncServer(async_mode='asgi')
+   app = socketio.ASGIApp(sio)
+
+If desired, the ``socketio.ASGIApp`` class can forward any traffic that is not
+Socket.IO to another ASGI application, making it possible to deploy a standard
+ASGI web application and the Socket.IO server as a bundle::
+
+   sio = socketio.AsyncServer(async_mode='asgi')
+   app = socketio.ASGIApp(sio, other_app)
+
+The ``ASGIApp`` instance is a fully complaint ASGI instance that can be
+deployed with an ASGI compatible web server.
+
 Aiohttp
 ~~~~~~~
 
@@ -691,6 +710,10 @@ The tornado application is then executed in the usual manner::
 Sanic
 ~~~~~
 
+Note: Due to some backward incompatible changes introduced in recent versions
+of Sanic, it is currently recommended that a Sanic application is deployed with
+the ASGI integration instead.
+
 `Sanic <http://sanic.readthedocs.io/>`_ is a very efficient asynchronous web
 server for Python 3.5 and newer.
 
@@ -725,17 +748,6 @@ On the Sanic side you will need to enable the `CORS_SUPPORTS_CREDENTIALS`
 setting in addition to any other configuration that you use::
 
     app.config['CORS_SUPPORTS_CREDENTIALS'] = True
-
-Uvicorn, Daphne, and other ASGI servers
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-The ``socketio.ASGIApp`` class is an ASGI compatible application that can
-forward Socket.IO traffic to an ``socketio.AsyncServer`` instance::
-
-   sio = socketio.AsyncServer(async_mode='asgi')
-   app = socketio.ASGIApp(sio)
-
-The application can then be deployed with any ASGI compatible web server.
 
 Eventlet
 ~~~~~~~~
