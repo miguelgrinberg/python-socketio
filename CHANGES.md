@@ -1,5 +1,12 @@
 # python-socketio change log
 
+**Release 5.7.2** - 2022-10-17
+
+- Fixed disconnect implementation when using a message queue [#1002](https://github.com/miguelgrinberg/python-socketio/issues/1002) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/f56ef6f0401b273107fc483c4ae1b5512209ac48))
+- Fixed remote async disconnects via message queue [#1003](https://github.com/miguelgrinberg/python-socketio/issues/1003) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/104d6569a0480ed0adb04e7d41f156762f9ebe9b))
+- Support optional payloads in msgpack implementation [#981](https://github.com/miguelgrinberg/python-socketio/issues/981) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/ce1afd79e69e35b81a6f0d02fbd7ae04af59f9d6)) (thanks **Cromfel**!)
+- Recommend ASGI integration for Sanic in Documentation ([commit](https://github.com/miguelgrinberg/python-socketio/commit/2c3e360ae8b151bc0bfedbde50248cd0dc8d1ff9))
+
 **Release 5.7.1** - 2022-07-15
 
 - Add `namespaces` argument to `Server` and `AsyncServer` [#822](https://github.com/miguelgrinberg/python-socketio/issues/822) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/efe87d867a205493654107d381bdb8b619b8ab2d))
