@@ -244,6 +244,29 @@ class TestAsyncManager(unittest.TestCase):
             '456', 'my event', {'foo': 'bar'}, '/foo', None
         )
 
+    def test_emit_to_rooms(self):
+        sid1 = self.bm.connect('123', '/foo')
+        self.bm.enter_room(sid1, '/foo', 'bar')
+        sid2 = self.bm.connect('456', '/foo')
+        self.bm.enter_room(sid2, '/foo', 'bar')
+        self.bm.enter_room(sid2, '/foo', 'baz')
+        sid3 = self.bm.connect('789', '/foo')
+        self.bm.enter_room(sid3, '/foo', 'baz')
+        _run(
+            self.bm.emit('my event', {'foo': 'bar'}, namespace='/foo',
+                         room=['bar', 'baz'])
+        )
+        assert self.bm.server._emit_internal.mock.call_count == 3
+        self.bm.server._emit_internal.mock.assert_any_call(
+            '123', 'my event', {'foo': 'bar'}, '/foo', None
+        )
+        self.bm.server._emit_internal.mock.assert_any_call(
+            '456', 'my event', {'foo': 'bar'}, '/foo', None
+        )
+        self.bm.server._emit_internal.mock.assert_any_call(
+            '789', 'my event', {'foo': 'bar'}, '/foo', None
+        )
+
     def test_emit_to_all(self):
         sid1 = self.bm.connect('123', '/foo')
         self.bm.enter_room(sid1, '/foo', 'bar')

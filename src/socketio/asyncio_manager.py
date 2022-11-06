@@ -15,7 +15,7 @@ class AsyncManager(BaseManager):
 
         Note: this method is a coroutine.
         """
-        if namespace not in self.rooms or room not in self.rooms[namespace]:
+        if namespace not in self.rooms:
             return
         tasks = []
         if not isinstance(skip_sid, list):
