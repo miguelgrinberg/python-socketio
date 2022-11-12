@@ -138,6 +138,73 @@ The applicaction can find this identifier in the ``sid`` attribute::
 
     print('my sid is', sio.sid)
 
+TLS/SSL Support
+~~~~~~~~~~~~~~~
+
+The client supports TLS/SSL connections. To enable it, use a ``https://``
+connection URL::
+
+    sio.connect('https://example.com')
+
+Or when using ``asyncio``::
+
+    await sio.connect('https://example.com')
+
+The client will verify the server certificate by default. To disable
+certificate verification, or to use other less common options such as client
+certificates, the client must be initialized with a custom HTTP session object
+that is configured with the desired TLS/SSL options.
+
+The following example disables server certificate verification, which can be
+useful when connecting to a server that uses a self-signed certificate::
+
+    http_session = request.Session()
+    http_session.verify = False
+    sio = socketio.Client(http_session=http_session)
+    sio.connect('https://example.com')
+
+And when using ``asyncio``::
+
+    connector = aiohttp.TCPConnector(ssl=False)
+    http_session = aiohttp.ClientSession(connector=connector)
+    sio = socketio.AsyncClient(http_session=http_session)
+    await sio.connect('https://example.com')
+
+Instead of disabling certificate verification, you can provide a custom
+certificate authority bundle to verify the certificate against::
+
+    http_session = request.Session()
+    http_session.verify = '/path/to/ca.pem'
+    sio = socketio.Client(http_session=http_session)
+    sio.connect('https://example.com')
+
+And for ``asyncio``::
+
+    ssl_context = ssl.create_default_context()
+    ssl_context.load_verify_locations('/path/to/ca.pem')
+    connector = aiohttp.TCPConnector(ssl=ssl_context)
+    http_session = aiohttp.ClientSession(connector=connector)
+    sio = socketio.AsyncClient(http_session=http_session)
+    await sio.connect('https://example.com')
+
+Below you can see how to use a client certificate to authenticate against the
+server::
+
+    http_session = request.Session()
+    http_session.cert = ('/path/to/client/cert.pem', '/path/to/client/key.pem')
+    sio = socketio.Client(http_session=http_session)
+    sio.connect('https://example.com')
+
+And for ``asyncio``::
+
+    ssl_context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
+    ssl_context.load_cert_chain('/path/to/client/cert.pem',
+                                '/path/to/client/key.pem')
+    connector = aiohttp.TCPConnector(ssl=ssl_context)
+    http_session = aiohttp.ClientSession(connector=connector)
+    sio = socketio.AsyncClient(http_session=http_session)
+    await sio.connect('https://example.com')
+
 Emitting Events
 ---------------
 
