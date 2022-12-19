@@ -1,11 +1,6 @@
 import pickle
 import re
 
-try:
-    import eventlet.green.zmq as zmq
-except ImportError:
-    zmq = None
-
 from .pubsub_manager import PubSubManager
 
 
@@ -51,7 +46,9 @@ class ZmqManager(PubSubManager):  # pragma: no cover
                  channel='socketio',
                  write_only=False,
                  logger=None):
-        if zmq is None:
+        try:
+            from eventlet.green import zmq
+        except ImportError:
             raise RuntimeError('zmq package is not installed '
                                '(Run "pip install pyzmq" in your '
                                'virtualenv).')
