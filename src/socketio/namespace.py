@@ -38,7 +38,7 @@ class Namespace(BaseNamespace):
         self.server = server
 
     def emit(self, event, data=None, to=None, room=None, skip_sid=None,
-             namespace=None, callback=None,**kwargs):
+             namespace=None, callback=None, **kwargs):
         """Emit a custom event to one or more connected clients.
 
         The only difference with the :func:`socketio.Server.emit` method is
@@ -48,7 +48,7 @@ class Namespace(BaseNamespace):
         return self.server.emit(event, data=data, to=to, room=room,
                                 skip_sid=skip_sid,
                                 namespace=namespace or self.namespace,
-                                callback=callback,**kwargs)
+                                callback=callback, **kwargs)
 
     def send(self, data, to=None, room=None, skip_sid=None, namespace=None,
              callback=None):
