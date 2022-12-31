@@ -53,8 +53,8 @@ These two wrappers can also act as middlewares, forwarding any traffic that is
 not intended to the Socket.IO server to another application. This allows
 Socket.IO servers to integrate easily into existing WSGI or ASGI applications::
 
-   from wsgi import app  # a Flask, Django, etc. application
-   app = socketio.WSGIApp(sio, app)
+   from wsgi import wsgi_app  # a Flask, Django, etc. application
+   app = socketio.WSGIApp(sio, wsgi_app)
 
 Serving Static Files
 --------------------
