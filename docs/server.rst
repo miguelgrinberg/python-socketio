@@ -577,6 +577,16 @@ The RabbitMQ queue is configured through the
     mgr = socketio.AsyncAioPikaManager('amqp://')
     sio = socketio.AsyncServer(client_manager=mgr)
 
+Ignore the queue
+~~~~~~~~~~~~~~~~
+
+With the message queue config, by default when emiting a message, 
+all server instances are recieving it and redistribute it, if the specific client is connected. 
+To ignore this queue you can use ignore_queue parameter. ::
+
+    # ignore queue 
+    sio.emit("my event", data={'foo':'bar'}, room='my room', ignore_queue=True)
+
 Emitting from external processes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
