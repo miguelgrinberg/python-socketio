@@ -9,7 +9,7 @@ class AsyncManager(BaseManager):
         return self.is_connected(sid, namespace)
 
     async def emit(self, event, data, namespace, room=None, skip_sid=None,
-                   callback=None, **kwargs):
+                   callback=None):
         """Emit a message to a single client, a room, or all the clients
         connected to the namespace.
 

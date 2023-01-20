@@ -269,7 +269,7 @@ class Server(object):
             namespace_handler
 
     def emit(self, event, data=None, to=None, room=None, skip_sid=None,
-             namespace=None, callback=None, **kwargs):
+             namespace=None, callback=None, ignore_queue=False):
         """Emit a custom event to one or more connected clients.
 
         :param event: The event name. It can be any string. The event names
@@ -317,7 +317,7 @@ class Server(object):
         self.logger.info('emitting event "%s" to %s [%s]', event,
                          room or 'all', namespace)
         self.manager.emit(event, data, namespace, room=room,
-                          skip_sid=skip_sid, callback=callback, **kwargs)
+                          skip_sid=skip_sid, callback=callback, ignore_queue=ignore_queue)
 
     def send(self, data, to=None, room=None, skip_sid=None, namespace=None,
              callback=None, **kwargs):

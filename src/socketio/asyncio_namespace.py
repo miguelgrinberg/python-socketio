@@ -42,7 +42,7 @@ class AsyncNamespace(namespace.Namespace):
             return ret
 
     async def emit(self, event, data=None, to=None, room=None, skip_sid=None,
-                   namespace=None, callback=None, **kwargs):
+                   namespace=None, callback=None, ignore_queue=False):
         """Emit a custom event to one or more connected clients.
 
         The only difference with the :func:`socketio.Server.emit` method is
@@ -54,7 +54,8 @@ class AsyncNamespace(namespace.Namespace):
         return await self.server.emit(event, data=data, to=to, room=room,
                                       skip_sid=skip_sid,
                                       namespace=namespace or self.namespace,
-                                      callback=callback, **kwargs)
+                                      callback=callback, 
+                                      ignore_queue=ignore_queue)
 
     async def send(self, data, to=None, room=None, skip_sid=None,
                    namespace=None, callback=None):
