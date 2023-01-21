@@ -104,6 +104,7 @@ class TestAsyncNamespace(unittest.TestCase):
             skip_sid='skip',
             namespace='/foo',
             callback='cb',
+            ignore_queue=False,
         )
         _run(
             ns.emit(
@@ -113,6 +114,7 @@ class TestAsyncNamespace(unittest.TestCase):
                 skip_sid='skip',
                 namespace='/bar',
                 callback='cb',
+                ignore_queue=True,
             )
         )
         ns.server.emit.mock.assert_called_with(
@@ -123,6 +125,7 @@ class TestAsyncNamespace(unittest.TestCase):
             skip_sid='skip',
             namespace='/bar',
             callback='cb',
+            ignore_queue=True,
         )
 
     def test_send(self):
@@ -138,6 +141,7 @@ class TestAsyncNamespace(unittest.TestCase):
             skip_sid='skip',
             namespace='/foo',
             callback='cb',
+            ignore_queue=False,
         )
         _run(
             ns.send(
@@ -146,6 +150,7 @@ class TestAsyncNamespace(unittest.TestCase):
                 skip_sid='skip',
                 namespace='/bar',
                 callback='cb',
+                ignore_queue=True,
             )
         )
         ns.server.send.mock.assert_called_with(
@@ -155,6 +160,7 @@ class TestAsyncNamespace(unittest.TestCase):
             skip_sid='skip',
             namespace='/bar',
             callback='cb',
+            ignore_queue=True,
         )
 
     def test_call(self):
@@ -170,9 +176,10 @@ class TestAsyncNamespace(unittest.TestCase):
             sid=None,
             namespace='/foo',
             timeout=None,
+            ignore_queue=False,
         )
         _run(ns.call('ev', data='data', sid='sid', namespace='/bar',
-                     timeout=45))
+                     timeout=45, ignore_queue=True))
         ns.server.call.mock.assert_called_with(
             'ev',
             data='data',
@@ -180,6 +187,7 @@ class TestAsyncNamespace(unittest.TestCase):
             sid='sid',
             namespace='/bar',
             timeout=45,
+            ignore_queue=True,
         )
 
     def test_enter_room(self):

@@ -91,6 +91,7 @@ class TestServer(unittest.TestCase):
             room='room',
             skip_sid='123',
             callback='cb',
+            ignore_queue=False,
         )
         s.emit(
             'my event',
@@ -99,6 +100,7 @@ class TestServer(unittest.TestCase):
             skip_sid='123',
             namespace='/foo',
             callback='cb',
+            ignore_queue=True,
         )
         s.manager.emit.assert_called_with(
             'my event',
@@ -107,6 +109,7 @@ class TestServer(unittest.TestCase):
             room='room',
             skip_sid='123',
             callback='cb',
+            ignore_queue=True,
         )
 
     def test_emit_default_namespace(self, eio):
@@ -126,6 +129,7 @@ class TestServer(unittest.TestCase):
             room='room',
             skip_sid='123',
             callback='cb',
+            ignore_queue=False,
         )
         s.emit(
             'my event',
@@ -133,6 +137,7 @@ class TestServer(unittest.TestCase):
             room='room',
             skip_sid='123',
             callback='cb',
+            ignore_queue=True,
         )
         s.manager.emit.assert_called_with(
             'my event',
@@ -141,6 +146,7 @@ class TestServer(unittest.TestCase):
             room='room',
             skip_sid='123',
             callback='cb',
+            ignore_queue=True,
         )
 
     def test_send(self, eio):
@@ -156,9 +162,14 @@ class TestServer(unittest.TestCase):
             room='room',
             skip_sid='123',
             callback='cb',
+            ignore_queue=False,
         )
         s.send(
-            'foo', room='room', skip_sid='123', namespace='/foo', callback='cb'
+            'foo', room='room',
+            skip_sid='123',
+            namespace='/foo',
+            callback='cb',
+            ignore_queue=True,
         )
         s.manager.emit.assert_called_with(
             'message',
@@ -167,6 +178,7 @@ class TestServer(unittest.TestCase):
             room='room',
             skip_sid='123',
             callback='cb',
+            ignore_queue=True,
         )
 
     def test_call(self, eio):

@@ -65,6 +65,7 @@ class TestNamespace(unittest.TestCase):
             skip_sid='skip',
             namespace='/foo',
             callback='cb',
+            ignore_queue=False,
         )
         ns.emit(
             'ev',
@@ -73,6 +74,7 @@ class TestNamespace(unittest.TestCase):
             skip_sid='skip',
             namespace='/bar',
             callback='cb',
+            ignore_queue=True,
         )
         ns.server.emit.assert_called_with(
             'ev',
@@ -82,6 +84,7 @@ class TestNamespace(unittest.TestCase):
             skip_sid='skip',
             namespace='/bar',
             callback='cb',
+            ignore_queue=True,
         )
 
     def test_send(self):
@@ -95,6 +98,7 @@ class TestNamespace(unittest.TestCase):
             skip_sid='skip',
             namespace='/foo',
             callback='cb',
+            ignore_queue=False,
         )
         ns.send(
             data='data',
@@ -102,6 +106,7 @@ class TestNamespace(unittest.TestCase):
             skip_sid='skip',
             namespace='/bar',
             callback='cb',
+            ignore_queue=True,
         )
         ns.server.send.assert_called_with(
             'data',
@@ -110,6 +115,7 @@ class TestNamespace(unittest.TestCase):
             skip_sid='skip',
             namespace='/bar',
             callback='cb',
+            ignore_queue=True,
         )
 
     def test_call(self):
@@ -123,6 +129,7 @@ class TestNamespace(unittest.TestCase):
             sid=None,
             namespace='/foo',
             timeout=None,
+            ignore_queue=False,
         )
         ns.call(
             'ev',
@@ -130,6 +137,7 @@ class TestNamespace(unittest.TestCase):
             sid='sid',
             namespace='/bar',
             timeout=45,
+            ignore_queue=True,
         )
         ns.server.call.assert_called_with(
             'ev',
@@ -138,6 +146,7 @@ class TestNamespace(unittest.TestCase):
             sid='sid',
             namespace='/bar',
             timeout=45,
+            ignore_queue=True,
         )
 
     def test_enter_room(self):

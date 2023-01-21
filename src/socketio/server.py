@@ -269,7 +269,7 @@ class Server(object):
             namespace_handler
 
     def emit(self, event, data=None, to=None, room=None, skip_sid=None,
-             namespace=None, callback=None, **kwargs):
+             namespace=None, callback=None, ignore_queue=False):
         """Emit a custom event to one or more connected clients.
 
         :param event: The event name. It can be any string. The event names
@@ -317,10 +317,11 @@ class Server(object):
         self.logger.info('emitting event "%s" to %s [%s]', event,
                          room or 'all', namespace)
         self.manager.emit(event, data, namespace, room=room,
-                          skip_sid=skip_sid, callback=callback, **kwargs)
+                          skip_sid=skip_sid, callback=callback,
+                          ignore_queue=ignore_queue)
 
     def send(self, data, to=None, room=None, skip_sid=None, namespace=None,
-             callback=None, **kwargs):
+             callback=None, ignore_queue=False):
         """Send a message to one or more connected clients.
 
         This function emits an event with the name ``'message'``. Use
@@ -358,10 +359,11 @@ class Server(object):
                              value of ``False``.
         """
         self.emit('message', data=data, to=to, room=room, skip_sid=skip_sid,
-                  namespace=namespace, callback=callback, **kwargs)
+                  namespace=namespace, callback=callback,
+                  ignore_queue=ignore_queue)
 
     def call(self, event, data=None, to=None, sid=None, namespace=None,
-             timeout=60, **kwargs):
+             timeout=60, ignore_queue=False):
         """Emit a custom event to a client and wait for the response.
 
         This method issues an emit with a callback and waits for the callback
@@ -412,7 +414,7 @@ class Server(object):
             callback_event.set()
 
         self.emit(event, data=data, room=to or sid, namespace=namespace,
-                  callback=event_callback, **kwargs)
+                  callback=event_callback, ignore_queue=ignore_queue)
         if not callback_event.wait(timeout=timeout):
             raise exceptions.TimeoutError()
         return callback_args[0] if len(callback_args[0]) > 1 \

@@ -117,7 +117,7 @@ class AsyncServer(server.Server):
         self.eio.attach(app, socketio_path)
 
     async def emit(self, event, data=None, to=None, room=None, skip_sid=None,
-                   namespace=None, callback=None, **kwargs):
+                   namespace=None, callback=None, ignore_queue=False):
         """Emit a custom event to one or more connected clients.
 
         :param event: The event name. It can be any string. The event names
@@ -167,10 +167,10 @@ class AsyncServer(server.Server):
                          room or 'all', namespace)
         await self.manager.emit(event, data, namespace, room=room,
                                 skip_sid=skip_sid, callback=callback,
-                                **kwargs)
+                                ignore_queue=ignore_queue)
 
     async def send(self, data, to=None, room=None, skip_sid=None,
-                   namespace=None, callback=None, **kwargs):
+                   namespace=None, callback=None, ignore_queue=False):
         """Send a message to one or more connected clients.
 
         This function emits an event with the name ``'message'``. Use
@@ -210,10 +210,10 @@ class AsyncServer(server.Server):
         """
         await self.emit('message', data=data, to=to, room=room,
                         skip_sid=skip_sid, namespace=namespace,
-                        callback=callback, **kwargs)
+                        callback=callback, ignore_queue=ignore_queue)
 
     async def call(self, event, data=None, to=None, sid=None, namespace=None,
-                   timeout=60, **kwargs):
+                   timeout=60, ignore_queue=False):
         """Emit a custom event to a client and wait for the response.
 
         This method issues an emit with a callback and waits for the callback
@@ -266,7 +266,7 @@ class AsyncServer(server.Server):
             callback_event.set()
 
         await self.emit(event, data=data, room=to or sid, namespace=namespace,
-                        callback=event_callback, **kwargs)
+                        callback=event_callback, ignore_queue=ignore_queue)
         try:
             await asyncio.wait_for(callback_event.wait(), timeout)
         except asyncio.TimeoutError:

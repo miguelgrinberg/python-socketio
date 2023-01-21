@@ -38,7 +38,7 @@ class Namespace(BaseNamespace):
         self.server = server
 
     def emit(self, event, data=None, to=None, room=None, skip_sid=None,
-             namespace=None, callback=None):
+             namespace=None, callback=None, ignore_queue=False):
         """Emit a custom event to one or more connected clients.
 
         The only difference with the :func:`socketio.Server.emit` method is
@@ -48,10 +48,10 @@ class Namespace(BaseNamespace):
         return self.server.emit(event, data=data, to=to, room=room,
                                 skip_sid=skip_sid,
                                 namespace=namespace or self.namespace,
-                                callback=callback)
+                                callback=callback, ignore_queue=ignore_queue)
 
     def send(self, data, to=None, room=None, skip_sid=None, namespace=None,
-             callback=None):
+             callback=None, ignore_queue=False):
         """Send a message to one or more connected clients.
 
         The only difference with the :func:`socketio.Server.send` method is
@@ -60,10 +60,10 @@ class Namespace(BaseNamespace):
         """
         return self.server.send(data, to=to, room=room, skip_sid=skip_sid,
                                 namespace=namespace or self.namespace,
-                                callback=callback)
+                                callback=callback, ignore_queue=ignore_queue)
 
     def call(self, event, data=None, to=None, sid=None, namespace=None,
-             timeout=None):
+             timeout=None, ignore_queue=False):
         """Emit a custom event to a client and wait for the response.
 
         The only difference with the :func:`socketio.Server.call` method is
@@ -72,7 +72,7 @@ class Namespace(BaseNamespace):
         """
         return self.server.call(event, data=data, to=to, sid=sid,
                                 namespace=namespace or self.namespace,
-                                timeout=timeout)
+                                timeout=timeout, ignore_queue=ignore_queue)
 
     def enter_room(self, sid, room, namespace=None):
         """Enter a room.

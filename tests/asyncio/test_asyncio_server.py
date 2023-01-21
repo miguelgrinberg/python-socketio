@@ -101,6 +101,7 @@ class TestAsyncServer(unittest.TestCase):
             room='room',
             skip_sid='123',
             callback='cb',
+            ignore_queue=False,
         )
         _run(
             s.emit(
@@ -110,6 +111,7 @@ class TestAsyncServer(unittest.TestCase):
                 skip_sid='123',
                 namespace='/foo',
                 callback='cb',
+                ignore_queue=True,
             )
         )
         s.manager.emit.mock.assert_called_with(
@@ -119,6 +121,7 @@ class TestAsyncServer(unittest.TestCase):
             room='room',
             skip_sid='123',
             callback='cb',
+            ignore_queue=True,
         )
 
     def test_emit_default_namespace(self, eio):
@@ -140,6 +143,7 @@ class TestAsyncServer(unittest.TestCase):
             room='room',
             skip_sid='123',
             callback='cb',
+            ignore_queue=False,
         )
         _run(
             s.emit(
@@ -148,6 +152,7 @@ class TestAsyncServer(unittest.TestCase):
                 room='room',
                 skip_sid='123',
                 callback='cb',
+                ignore_queue=True,
             )
         )
         s.manager.emit.mock.assert_called_with(
@@ -157,6 +162,7 @@ class TestAsyncServer(unittest.TestCase):
             room='room',
             skip_sid='123',
             callback='cb',
+            ignore_queue=True,
         )
 
     def test_send(self, eio):
@@ -178,6 +184,7 @@ class TestAsyncServer(unittest.TestCase):
             room='room',
             skip_sid='123',
             callback='cb',
+            ignore_queue=False,
         )
         _run(
             s.send(
@@ -186,6 +193,7 @@ class TestAsyncServer(unittest.TestCase):
                 skip_sid='123',
                 namespace='/foo',
                 callback='cb',
+                ignore_queue=True,
             )
         )
         s.manager.emit.mock.assert_called_with(
@@ -195,6 +203,7 @@ class TestAsyncServer(unittest.TestCase):
             room='room',
             skip_sid='123',
             callback='cb',
+            ignore_queue=True,
         )
 
     def test_call(self, eio):
