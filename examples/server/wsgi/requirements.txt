@@ -12,4 +12,4 @@ pyparsing==2.1.10
 python-engineio
 python-socketio
 six==1.11.0
-Werkzeug==0.15.5
+Werkzeug==2.2.3
