@@ -76,7 +76,7 @@ class AsyncServer(server.Server):
                                   is greater than this value. The default is
                                   1024 bytes.
     :param cookie: If set to a string, it is the name of the HTTP cookie the
-                   server sends back tot he client containing the client
+                   server sends back to the client containing the client
                    session id. If set to a dictionary, the ``'name'`` key
                    contains the cookie name and other keys define cookie
                    attributes, where the value of each attribute can be a
