@@ -196,7 +196,7 @@ class AsyncClient(client.Client):
                           argument is omitted the event is emitted to the
                           default namespace.
         :param callback: If given, this function will be called to acknowledge
-                         the the server has received the message. The arguments
+                         the server has received the message. The arguments
                          that will be passed to the function are those provided
                          by the server.
 
@@ -242,7 +242,7 @@ class AsyncClient(client.Client):
                           argument is omitted the event is emitted to the
                           default namespace.
         :param callback: If given, this function will be called to acknowledge
-                         the the server has received the message. The arguments
+                         the server has received the message. The arguments
                          that will be passed to the function are those provided
                          by the server.
 

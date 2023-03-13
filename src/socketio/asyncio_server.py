@@ -141,7 +141,7 @@ class AsyncServer(server.Server):
                           argument is omitted the event is emitted to the
                           default namespace.
         :param callback: If given, this function will be called to acknowledge
-                         the the client has received the message. The arguments
+                         the client has received the message. The arguments
                          that will be passed to the function are those provided
                          by the client. Callback functions can only be used
                          when addressing an individual client.
@@ -194,7 +194,7 @@ class AsyncServer(server.Server):
                           argument is omitted the event is emitted to the
                           default namespace.
         :param callback: If given, this function will be called to acknowledge
-                         the the client has received the message. The arguments
+                         the client has received the message. The arguments
                          that will be passed to the function are those provided
                          by the client. Callback functions can only be used
                          when addressing an individual client.
