@@ -275,8 +275,7 @@ optional ``callback`` argument that can be set to a callable. If this
 argument is given, the callable will be invoked after the client has processed
 the event, and any values returned by the client will be passed as arguments
 to this function. Using callback functions when broadcasting to multiple
-clients is not recommended, as the callback function will be invoked once for
-each client that received the message.
+clients is currently not supported.
 
 Namespaces
 ----------
