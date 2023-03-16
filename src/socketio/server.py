@@ -281,7 +281,7 @@ class Server(object):
                      one of the types indicated above.
         :param to: The recipient of the message. This can be set to the
                    session ID of a client to address only that client, to any
-                   any custom room created by the application to address all
+                   custom room created by the application to address all
                    the clients in that room, or to a list of custom room
                    names. If this argument is omitted the event is broadcasted
                    to all connected clients.
