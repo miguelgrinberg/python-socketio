@@ -1,5 +1,20 @@
 # python-socketio change log
 
+**Release 5.8.0** - 2023-03-16
+
+- Made kombu client manager more robust and efficient ([commit](https://github.com/miguelgrinberg/python-socketio/commit/8293dc3f8fa90f3d92192a702b28c23d8c516110))
+- Made aio_pika client manager more robust and efficient [#1142](https://github.com/miguelgrinberg/python-socketio/issues/1142) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/cd7f781c022dd1d1ec3c6695a0fd6ab3ce864fd5))
+- Correctly handle emits to multiple rooms in the async server [#1081](https://github.com/miguelgrinberg/python-socketio/issues/1081) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/232cef1f86ff19878190c44caf991e017c8480a4))
+- Expose the `ignore_queue` option in namespaces [#1103](https://github.com/miguelgrinberg/python-socketio/issues/1103) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/1cadada02dd7dc1eb96f45e88cbec67e1a393db3))
+- Do not automatically import zmq ([commit](https://github.com/miguelgrinberg/python-socketio/commit/de4d5b51e5fc8ba0d0f904851f23f8cced16d7f6))
+- TLS/SSL client documentation [#1040](https://github.com/miguelgrinberg/python-socketio/issues/1040) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/54aecfda917ec100e0b5e2c0e955ef719e0eb645))
+- Removed incorrect reference to multiple callback invocations in documentation [#1152](https://github.com/miguelgrinberg/python-socketio/issues/1152) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/c4117fd6514374042127ab05f1f2d8d221fcf60d))
+- Fix documentation typo [#1155](https://github.com/miguelgrinberg/python-socketio/issues/1155) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/270eb372cc83778a897d32e95453eb385328d9de)) (thanks **Onwuka Gideon**!)
+- Fix documentation typos ([commit](https://github.com/miguelgrinberg/python-socketio/commit/8c747ab67b3e5c9f31db540a13c3da1b7784617c))
+- Fix documentation typo in asyncio_server.py [#1150](https://github.com/miguelgrinberg/python-socketio/issues/1150) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/b2cc86cfb2502691d70447b0002179602a798e77)) (thanks **riz-j**!)
+- Fix documentationi type [#1091](https://github.com/miguelgrinberg/python-socketio/issues/1091) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/55db7458900a179a9363294cc4fc91eb9c775f54)) (thanks **mostlycryptic**!)
+- Add Python 3.11 to builds ([commit](https://github.com/miguelgrinberg/python-socketio/commit/60fe63b098af8c035891ae62a4336538ea419184))
+
 **Release 5.7.2** - 2022-10-17
 
 - Fixed disconnect implementation when using a message queue [#1002](https://github.com/miguelgrinberg/python-socketio/issues/1002) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/f56ef6f0401b273107fc483c4ae1b5512209ac48))
