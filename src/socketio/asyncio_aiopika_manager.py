@@ -86,7 +86,7 @@ class AsyncAioPikaManager(AsyncPubSubManager):  # pragma: no cover
                         delivery_mode=aio_pika.DeliveryMode.PERSISTENT
                     ), routing_key='*',
                 )
-                return
+                break
             except aio_pika.AMQPException:
                 if retry:
                     self._get_logger().error('Cannot publish to rabbitmq... '
