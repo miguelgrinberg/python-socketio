@@ -576,6 +576,27 @@ The RabbitMQ queue is configured through the
     mgr = socketio.AsyncAioPikaManager('amqp://')
     sio = socketio.AsyncServer(client_manager=mgr)
 
+Horizontal Scaling
+~~~~~~~~~~~~~~~~~~
+
+Socket.IO is a stateful protocol, which makes horizontal scaling more
+difficult. When deploying a cluster of Socket.IO processes, all processes must
+connect to the message queue by passing the ``client_manager`` argument to the
+server instance. This enables the workers to communicate and coordinate complex
+operations such as broadcasts.
+
+If the long-polling transport is used, then there are two additional
+requirements that must be met:
+
+- Each Socket.IO process must be able to handle multiple requests
+  concurrently. This is needed because long-polling clients send two
+  requests in parallel. Worker processes that can only handle one request at a
+  time are not supported.
+- The load balancer must be configured to always forward requests from a
+  client to the same worker process, so that all requests coming from a client
+  are handled by the same node. Load balancers call this *sticky sessions*, or
+  *session affinity*.
+
 Emitting from external processes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -910,24 +931,6 @@ package, which must be installed separately. This package provides a
 multi-threaded WebSocket server that is compatible with Werkzeug and Gunicorn's
 threaded worker. Other multi-threaded web servers are not supported and will
 not enable the WebSocket transport.
-
-Scalability Notes
-~~~~~~~~~~~~~~~~~
-
-Socket.IO is a stateful protocol, which makes horizontal scaling more
-difficult. To deploy a cluster of Socket.IO processes hosted on one or
-multiple servers, the following conditions must be met:
-
-- Each Socket.IO process must be able to handle multiple requests
-  concurrently. This is required because long-polling clients send two
-  requests in parallel. Worker processes that can only handle one request at a
-  time are not supported.
-- The load balancer must be configured to always forward requests from a
-  client to the same worker process. Load balancers call this *sticky
-  sessions*, or *session affinity*.
-- The worker processes need to communicate with each other to coordinate
-  complex operations such as broadcasts. This is done through a configured
-  message queue. See the section on using message queues for details.
 
 Cross-Origin Controls
 ---------------------
