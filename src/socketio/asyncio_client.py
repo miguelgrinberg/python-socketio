@@ -229,7 +229,7 @@ class AsyncClient(client.Client):
             packet.EVENT, namespace=namespace, data=[event] + data, id=id))
 
     async def send(self, data, namespace=None, callback=None):
-        """Send a message to one or more connected clients.
+        """Send a message to the server.
 
         This function emits an event with the name ``'message'``. Use
         :func:`emit` to issue custom event names.
