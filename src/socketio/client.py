@@ -365,7 +365,7 @@ class Client(object):
                 break
 
     def emit(self, event, data=None, namespace=None, callback=None):
-        """Emit a custom event to one or more connected clients.
+        """Emit a custom event to the server.
 
         :param event: The event name. It can be any string. The event names
                       ``'connect'``, ``'message'`` and ``'disconnect'`` are
@@ -409,7 +409,7 @@ class Client(object):
                                             data=[event] + data, id=id))
 
     def send(self, data, namespace=None, callback=None):
-        """Send a message to one or more connected clients.
+        """Send a message to the server.
 
         This function emits an event with the name ``'message'``. Use
         :func:`emit` to issue custom event names.
@@ -430,7 +430,7 @@ class Client(object):
                   callback=callback)
 
     def call(self, event, data=None, namespace=None, timeout=60):
-        """Emit a custom event to a client and wait for the response.
+        """Emit a custom event to the server and wait for the response.
 
         This method issues an emit with a callback and waits for the callback
         to be invoked before returning. If the callback isn't invoked before
