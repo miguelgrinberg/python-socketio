@@ -1,7 +1,11 @@
 const express = require('express');
+const { createServer } = require("http");
+const { Server } = require("socket.io");
+
 const app = express();
-const server = require('http').createServer(app);
-const io = require('socket.io')(server);
+const httpServer = createServer(app);
+const io = new Server(httpServer);
+
 const port = process.env.PORT || 5000;
 
 app.use(express.static(__dirname + '/latency_public'));
@@ -18,4 +22,4 @@ io.on('connection', socket => {
   });
 });
 
-server.listen(port, () => console.log(`server listening on port ${port}`));
+httpServer.listen(port, () => console.log(`server listening on port ${port}`));
