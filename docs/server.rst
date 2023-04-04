@@ -448,13 +448,13 @@ The session can also be manipulated with the `session()` context manager::
 For the ``asyncio`` server, an asynchronous context manager is used::
 
     @sio.event
-    def connect(sid, environ):
+    async def connect(sid, environ):
         username = authenticate_user(environ)
         async with sio.session(sid) as session:
             session['username'] = username
 
     @sio.event
-    def message(sid, data):
+    async def message(sid, data):
         async with sio.session(sid) as session:
             print('message from ', session['username'])
 
