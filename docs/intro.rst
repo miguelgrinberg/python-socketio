@@ -188,8 +188,8 @@ Server Features
   asyncio.
 - Supports large number of clients even on modest hardware due to being
   asynchronous.
-- Can be hosted on any `WSGI <https://wsgi.readthedocs.io/en/latest/index.html>`_ and
-  `ASGI <https://asgi.readthedocs.io/en/latest/>`_ web servers including
+- Can be hosted on any `WSGI <https://wsgi.readthedocs.io/en/latest/index.html>`_ or
+  `ASGI <https://asgi.readthedocs.io/en/latest/>`_ web server including
   `Gunicorn <https://gunicorn.org/>`_, `Uvicorn <https://github.com/encode/uvicorn>`_,
   `eventlet <http://eventlet.net/>`_ and `gevent <http://gevent.org>`_.
 - Can be integrated with WSGI applications written in frameworks such as Flask, Django,
