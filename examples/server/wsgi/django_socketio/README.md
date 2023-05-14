@@ -9,8 +9,18 @@ You can run it with the Django development web server:
 python manage.py runserver
 ```
 
-When running in this mode, you will see a warning indicating that the WebSocket
-transport is not available, which is not supported by this web server.
+When running in this mode, you will get an error message:
 
-See the documentation for information on supported deployment methods that you
-can use to add support for WebSocket.
+    RuntimeError: Cannot obtain socket from WSGI environment.
+
+This is expected, and it happens because the Django web server does not support
+the WebSocket protocol. You can ignore the error, as the server will still work
+using long-polling.
+
+To run the application with WebSocket enabled, you can use the Gunicorn web
+server as follows:
+
+    gunicorn -b :8000 --threads 100 --access-logfile - django_socketio.wsgi:application
+
+See the documentation for information on other supported deployment methods
+that you can use to add support for WebSocket.
