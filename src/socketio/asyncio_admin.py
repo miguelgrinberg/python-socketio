@@ -89,12 +89,12 @@ class InstrumentedAsyncServer:
         self.sio.eio.__ok = self.sio.eio._ok
         self.sio.eio._ok = self._eio_http_response
         AsyncSocket.__handle_post_request = functools.partialmethod(
-            self._eio_handle_post_request)
+            self.__class__._eio_handle_post_request, self)
 
         # report websocket packets
         AsyncSocket.__websocket_handler = AsyncSocket._websocket_handler
         AsyncSocket._websocket_handler = functools.partialmethod(
-            self._eio_websocket_handler)
+            self.__class__._eio_websocket_handler, self)
 
     async def admin_connect(self, sid, environ, client_auth):
         authenticated = True
@@ -253,14 +253,14 @@ class InstrumentedAsyncServer:
         self.event_buffer.push('bytesOut', len(ret['response']))
         return ret
 
-    async def _eio_handle_post_request(self, socket, environ):
+    async def _eio_handle_post_request(socket, self, environ):
         ret = await socket.__handle_post_request(environ)
         self.event_buffer.push('packetsIn')
         self.event_buffer.push(
             'bytesIn', int(environ.get('CONTENT_LENGTH', 0)))
         return ret
 
-    async def _eio_websocket_handler(self, socket, ws):
+    async def _eio_websocket_handler(socket, self, ws):
         async def _send(ws, data):
             self.event_buffer.push('packetsOut')
             self.event_buffer.push('bytesOut', len(data))

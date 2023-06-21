@@ -109,12 +109,12 @@ class InstrumentedServer:
         self.sio.eio._ok = self._eio_http_response
         Socket.__handle_post_request = Socket.handle_post_request
         Socket.handle_post_request = functools.partialmethod(
-            self._eio_handle_post_request)
+            self.__class__._eio_handle_post_request, self)
 
         # report websocket packets
         Socket.__websocket_handler = Socket._websocket_handler
         Socket._websocket_handler = functools.partialmethod(
-            self._eio_websocket_handler)
+            self.__class__._eio_websocket_handler, self)
 
     def admin_connect(self, sid, environ, client_auth):
         if self.auth:
@@ -266,18 +266,18 @@ class InstrumentedServer:
         self.event_buffer.push('bytesOut', len(ret['response']))
         return ret
 
-    def _eio_handle_post_request(self, socket, environ):
+    def _eio_handle_post_request(socket, self, environ):
         ret = socket.__handle_post_request(environ)
         self.event_buffer.push('packetsIn')
         self.event_buffer.push(
             'bytesIn', int(environ.get('CONTENT_LENGTH', 0)))
         return ret
 
-    def _eio_websocket_handler(self, socket, ws):
-        def _send(ws, data, control_code=None):
+    def _eio_websocket_handler(socket, self, ws):
+        def _send(ws, data, *args, **kwargs):
             self.event_buffer.push('packetsOut')
             self.event_buffer.push('bytesOut', len(data))
-            return ws.__send(data, control_code=control_code)
+            return ws.__send(data, *args, **kwargs)
 
         def _wait(ws):
             ret = ws.__wait()
