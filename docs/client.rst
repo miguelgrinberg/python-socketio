@@ -158,7 +158,7 @@ that is configured with the desired TLS/SSL options.
 The following example disables server certificate verification, which can be
 useful when connecting to a server that uses a self-signed certificate::
 
-    http_session = request.Session()
+    http_session = requests.Session()
     http_session.verify = False
     sio = socketio.Client(http_session=http_session)
     sio.connect('https://example.com')
@@ -173,7 +173,7 @@ And when using ``asyncio``::
 Instead of disabling certificate verification, you can provide a custom
 certificate authority bundle to verify the certificate against::
 
-    http_session = request.Session()
+    http_session = requests.Session()
     http_session.verify = '/path/to/ca.pem'
     sio = socketio.Client(http_session=http_session)
     sio.connect('https://example.com')
@@ -190,7 +190,7 @@ And for ``asyncio``::
 Below you can see how to use a client certificate to authenticate against the
 server::
 
-    http_session = request.Session()
+    http_session = requests.Session()
     http_session.cert = ('/path/to/client/cert.pem', '/path/to/client/key.pem')
     sio = socketio.Client(http_session=http_session)
     sio.connect('https://example.com')
