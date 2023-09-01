@@ -7,6 +7,7 @@ import pytest
 
 from socketio import base_manager
 from socketio import pubsub_manager
+from socketio import packet
 
 
 class TestPubSubManager(unittest.TestCase):
@@ -20,6 +21,7 @@ class TestPubSubManager(unittest.TestCase):
 
         mock_server = mock.MagicMock()
         mock_server.eio.generate_id = generate_id
+        mock_server.packet_class = packet.Packet
         self.pm = pubsub_manager.PubSubManager()
         self.pm._publish = mock.MagicMock()
         self.pm.set_server(mock_server)
@@ -157,9 +159,10 @@ class TestPubSubManager(unittest.TestCase):
             'foo', 'bar', room=sid, namespace='/', ignore_queue=True
         )
         self.pm._publish.assert_not_called()
-        self.pm.server._emit_internal.assert_called_once_with(
-            '123', 'foo', 'bar', '/', None
-        )
+        assert self.pm.server._send_eio_packet.call_count == 1
+        assert self.pm.server._send_eio_packet.call_args_list[0][0][0] == '123'
+        pkt = self.pm.server._send_eio_packet.call_args_list[0][0][1]
+        assert pkt.encode() == '42["foo","bar"]'
 
     def test_can_disconnect(self):
         sid = self.pm.connect('123', '/')

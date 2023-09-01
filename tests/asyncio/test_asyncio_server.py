@@ -5,6 +5,7 @@ import unittest
 from unittest import mock
 
 from engineio import json
+from engineio import packet as eio_packet
 import pytest
 
 from socketio import asyncio_server
@@ -32,7 +33,8 @@ def _run(coro):
 
 @unittest.skipIf(sys.version_info < (3, 5), 'only for Python 3.5+')
 @mock.patch('socketio.server.engineio.AsyncServer', **{
-    'return_value.generate_id.side_effect': [str(i) for i in range(1, 10)]})
+    'return_value.generate_id.side_effect': [str(i) for i in range(1, 10)],
+    'return_value.send_packet': AsyncMock()})
 class TestAsyncServer(unittest.TestCase):
     def tearDown(self):
         # restore JSON encoder, in case a test changed it
@@ -295,72 +297,24 @@ class TestAsyncServer(unittest.TestCase):
         _run(s.handle_request('environ'))
         s.eio.handle_request.mock.assert_called_once_with('environ')
 
-    def test_emit_internal(self, eio):
+    def test_send_packet(self, eio):
         eio.return_value.send = AsyncMock()
         s = asyncio_server.AsyncServer()
-        _run(s._emit_internal('123', 'my event', 'my data', namespace='/foo'))
+        _run(s._send_packet('123', packet.Packet(
+            packet.EVENT, ['my event', 'my data'], namespace='/foo')))
         s.eio.send.mock.assert_called_once_with(
             '123', '2/foo,["my event","my data"]'
         )
 
-    def test_emit_internal_with_tuple(self, eio):
+    def test_send_eio_packet(self, eio):
         eio.return_value.send = AsyncMock()
         s = asyncio_server.AsyncServer()
-        _run(
-            s._emit_internal(
-                '123', 'my event', ('foo', 'bar'), namespace='/foo'
-            )
-        )
-        s.eio.send.mock.assert_called_once_with(
-            '123', '2/foo,["my event","foo","bar"]'
-        )
-
-    def test_emit_internal_with_list(self, eio):
-        eio.return_value.send = AsyncMock()
-        s = asyncio_server.AsyncServer()
-        _run(
-            s._emit_internal(
-                '123', 'my event', ['foo', 'bar'], namespace='/foo'
-            )
-        )
-        s.eio.send.mock.assert_called_once_with(
-            '123', '2/foo,["my event",["foo","bar"]]'
-        )
-
-    def test_emit_internal_with_none(self, eio):
-        eio.return_value.send = AsyncMock()
-        s = asyncio_server.AsyncServer()
-        _run(s._emit_internal('123', 'my event', None, namespace='/foo'))
-        s.eio.send.mock.assert_called_once_with(
-            '123', '2/foo,["my event"]'
-        )
-
-    def test_emit_internal_with_callback(self, eio):
-        eio.return_value.send = AsyncMock()
-        s = asyncio_server.AsyncServer()
-        id = s.manager._generate_ack_id('1', 'cb')
-        _run(
-            s._emit_internal(
-                '123', 'my event', 'my data', namespace='/foo', id=id
-            )
-        )
-        s.eio.send.mock.assert_called_once_with(
-            '123', '2/foo,1["my event","my data"]'
-        )
-
-    def test_emit_internal_default_namespace(self, eio):
-        eio.return_value.send = AsyncMock()
-        s = asyncio_server.AsyncServer()
-        _run(s._emit_internal('123', 'my event', 'my data'))
-        s.eio.send.mock.assert_called_once_with(
-            '123', '2["my event","my data"]'
-        )
-
-    def test_emit_internal_binary(self, eio):
-        eio.return_value.send = AsyncMock()
-        s = asyncio_server.AsyncServer()
-        _run(s._emit_internal('123', u'my event', b'my binary data'))
-        assert s.eio.send.mock.call_count == 2
+        _run(s._send_eio_packet('123', eio_packet.Packet(
+            eio_packet.MESSAGE, 'hello')))
+        assert s.eio.send_packet.mock.call_count == 1
+        assert s.eio.send_packet.mock.call_args_list[0][0][0] == '123'
+        pkt = s.eio.send_packet.mock.call_args_list[0][0][1]
+        assert pkt.encode() == '4hello'
 
     def test_transport(self, eio):
         eio.return_value.send = AsyncMock()
@@ -804,8 +758,10 @@ class TestAsyncServer(unittest.TestCase):
         cb = mock.MagicMock()
         id1 = s.manager._generate_ack_id('1', cb)
         id2 = s.manager._generate_ack_id('1', cb)
-        _run(s._emit_internal('123', 'my event', ['foo'], id=id1))
-        _run(s._emit_internal('123', 'my event', ['bar'], id=id2))
+        _run(s._send_packet('123', packet.Packet(
+            packet.EVENT, ['my event', 'foo'], id=id1)))
+        _run(s._send_packet('123', packet.Packet(
+            packet.EVENT, ['my event', 'bar'], id=id2)))
         _run(s._handle_eio_message('123', '31["foo",2]'))
         cb.assert_called_once_with('foo', 2)
 
@@ -818,8 +774,9 @@ class TestAsyncServer(unittest.TestCase):
         cb = mock.MagicMock()
         id = s.manager._generate_ack_id('1', cb)
         _run(
-            s._emit_internal(
-                '123', 'my event', ['foo'], namespace='/foo', id=id
+            s._send_packet(
+                '123', packet.Packet(packet.EVENT, ['my event', 'foo'],
+                                     namespace='/foo', id=id)
             )
         )
         _run(s._handle_eio_message('123', '3/foo,1["foo",2]'))

@@ -4,6 +4,7 @@ from unittest import mock
 import pytest
 
 from socketio import base_manager
+from socketio import packet
 
 
 class TestBaseManager(unittest.TestCase):
@@ -17,6 +18,7 @@ class TestBaseManager(unittest.TestCase):
 
         mock_server = mock.MagicMock()
         mock_server.eio.generate_id = generate_id
+        mock_server.packet_class = packet.Packet
         self.bm = base_manager.BaseManager()
         self.bm.set_server(mock_server)
         self.bm.initialize()
@@ -205,9 +207,10 @@ class TestBaseManager(unittest.TestCase):
         sid = self.bm.connect('123', '/foo')
         self.bm.connect('456', '/foo')
         self.bm.emit('my event', {'foo': 'bar'}, namespace='/foo', room=sid)
-        self.bm.server._emit_internal.assert_called_once_with(
-            '123', 'my event', {'foo': 'bar'}, '/foo', None
-        )
+        assert self.bm.server._send_eio_packet.call_count == 1
+        assert self.bm.server._send_eio_packet.call_args_list[0][0][0] == '123'
+        pkt = self.bm.server._send_eio_packet.call_args_list[0][0][1]
+        assert pkt.encode() == '42/foo,["my event",{"foo":"bar"}]'
 
     def test_emit_to_room(self):
         sid1 = self.bm.connect('123', '/foo')
@@ -216,13 +219,12 @@ class TestBaseManager(unittest.TestCase):
         self.bm.enter_room(sid2, '/foo', 'bar')
         self.bm.connect('789', '/foo')
         self.bm.emit('my event', {'foo': 'bar'}, namespace='/foo', room='bar')
-        assert self.bm.server._emit_internal.call_count == 2
-        self.bm.server._emit_internal.assert_any_call(
-            '123', 'my event', {'foo': 'bar'}, '/foo', None
-        )
-        self.bm.server._emit_internal.assert_any_call(
-            '456', 'my event', {'foo': 'bar'}, '/foo', None
-        )
+        assert self.bm.server._send_eio_packet.call_count == 2
+        assert self.bm.server._send_eio_packet.call_args_list[0][0][0] == '123'
+        assert self.bm.server._send_eio_packet.call_args_list[1][0][0] == '456'
+        pkt = self.bm.server._send_eio_packet.call_args_list[0][0][1]
+        assert pkt == self.bm.server._send_eio_packet.call_args_list[1][0][1]
+        assert pkt.encode() == '42/foo,["my event",{"foo":"bar"}]'
 
     def test_emit_to_rooms(self):
         sid1 = self.bm.connect('123', '/foo')
@@ -234,16 +236,14 @@ class TestBaseManager(unittest.TestCase):
         self.bm.enter_room(sid3, '/foo', 'baz')
         self.bm.emit('my event', {'foo': 'bar'}, namespace='/foo',
                      room=['bar', 'baz'])
-        assert self.bm.server._emit_internal.call_count == 3
-        self.bm.server._emit_internal.assert_any_call(
-            '123', 'my event', {'foo': 'bar'}, '/foo', None
-        )
-        self.bm.server._emit_internal.assert_any_call(
-            '456', 'my event', {'foo': 'bar'}, '/foo', None
-        )
-        self.bm.server._emit_internal.assert_any_call(
-            '789', 'my event', {'foo': 'bar'}, '/foo', None
-        )
+        assert self.bm.server._send_eio_packet.call_count == 3
+        assert self.bm.server._send_eio_packet.call_args_list[0][0][0] == '123'
+        assert self.bm.server._send_eio_packet.call_args_list[1][0][0] == '456'
+        assert self.bm.server._send_eio_packet.call_args_list[2][0][0] == '789'
+        pkt = self.bm.server._send_eio_packet.call_args_list[0][0][1]
+        assert pkt == self.bm.server._send_eio_packet.call_args_list[1][0][1]
+        assert pkt == self.bm.server._send_eio_packet.call_args_list[2][0][1]
+        assert pkt.encode() == '42/foo,["my event",{"foo":"bar"}]'
 
     def test_emit_to_all(self):
         sid1 = self.bm.connect('123', '/foo')
@@ -253,16 +253,14 @@ class TestBaseManager(unittest.TestCase):
         self.bm.connect('789', '/foo')
         self.bm.connect('abc', '/bar')
         self.bm.emit('my event', {'foo': 'bar'}, namespace='/foo')
-        assert self.bm.server._emit_internal.call_count == 3
-        self.bm.server._emit_internal.assert_any_call(
-            '123', 'my event', {'foo': 'bar'}, '/foo', None
-        )
-        self.bm.server._emit_internal.assert_any_call(
-            '456', 'my event', {'foo': 'bar'}, '/foo', None
-        )
-        self.bm.server._emit_internal.assert_any_call(
-            '789', 'my event', {'foo': 'bar'}, '/foo', None
-        )
+        assert self.bm.server._send_eio_packet.call_count == 3
+        assert self.bm.server._send_eio_packet.call_args_list[0][0][0] == '123'
+        assert self.bm.server._send_eio_packet.call_args_list[1][0][0] == '456'
+        assert self.bm.server._send_eio_packet.call_args_list[2][0][0] == '789'
+        pkt = self.bm.server._send_eio_packet.call_args_list[0][0][1]
+        assert pkt == self.bm.server._send_eio_packet.call_args_list[1][0][1]
+        assert pkt == self.bm.server._send_eio_packet.call_args_list[2][0][1]
+        assert pkt.encode() == '42/foo,["my event",{"foo":"bar"}]'
 
     def test_emit_to_all_skip_one(self):
         sid1 = self.bm.connect('123', '/foo')
@@ -274,13 +272,12 @@ class TestBaseManager(unittest.TestCase):
         self.bm.emit(
             'my event', {'foo': 'bar'}, namespace='/foo', skip_sid=sid2
         )
-        assert self.bm.server._emit_internal.call_count == 2
-        self.bm.server._emit_internal.assert_any_call(
-            '123', 'my event', {'foo': 'bar'}, '/foo', None
-        )
-        self.bm.server._emit_internal.assert_any_call(
-            '789', 'my event', {'foo': 'bar'}, '/foo', None
-        )
+        assert self.bm.server._send_eio_packet.call_count == 2
+        assert self.bm.server._send_eio_packet.call_args_list[0][0][0] == '123'
+        assert self.bm.server._send_eio_packet.call_args_list[1][0][0] == '789'
+        pkt = self.bm.server._send_eio_packet.call_args_list[0][0][1]
+        assert pkt == self.bm.server._send_eio_packet.call_args_list[1][0][1]
+        assert pkt.encode() == '42/foo,["my event",{"foo":"bar"}]'
 
     def test_emit_to_all_skip_two(self):
         sid1 = self.bm.connect('123', '/foo')
@@ -295,10 +292,10 @@ class TestBaseManager(unittest.TestCase):
             namespace='/foo',
             skip_sid=[sid1, sid3],
         )
-        assert self.bm.server._emit_internal.call_count == 1
-        self.bm.server._emit_internal.assert_any_call(
-            '456', 'my event', {'foo': 'bar'}, '/foo', None
-        )
+        assert self.bm.server._send_eio_packet.call_count == 1
+        assert self.bm.server._send_eio_packet.call_args_list[0][0][0] == '456'
+        pkt = self.bm.server._send_eio_packet.call_args_list[0][0][1]
+        assert pkt.encode() == '42/foo,["my event",{"foo":"bar"}]'
 
     def test_emit_with_callback(self):
         sid = self.bm.connect('123', '/foo')
@@ -308,12 +305,48 @@ class TestBaseManager(unittest.TestCase):
             'my event', {'foo': 'bar'}, namespace='/foo', callback='cb'
         )
         self.bm._generate_ack_id.assert_called_once_with(sid, 'cb')
-        self.bm.server._emit_internal.assert_called_once_with(
-            '123', 'my event', {'foo': 'bar'}, '/foo', 11
-        )
+        assert self.bm.server._send_packet.call_count == 1
+        assert self.bm.server._send_packet.call_args_list[0][0][0] == '123'
+        pkt = self.bm.server._send_packet.call_args_list[0][0][1]
+        assert pkt.encode() == '2/foo,11["my event",{"foo":"bar"}]'
 
     def test_emit_to_invalid_room(self):
         self.bm.emit('my event', {'foo': 'bar'}, namespace='/', room='123')
 
     def test_emit_to_invalid_namespace(self):
         self.bm.emit('my event', {'foo': 'bar'}, namespace='/foo')
+
+    def test_emit_with_tuple(self):
+        sid = self.bm.connect('123', '/foo')
+        self.bm.emit('my event', ('foo', 'bar'), namespace='/foo', room=sid)
+        assert self.bm.server._send_eio_packet.call_count == 1
+        assert self.bm.server._send_eio_packet.call_args_list[0][0][0] == '123'
+        pkt = self.bm.server._send_eio_packet.call_args_list[0][0][1]
+        assert pkt.encode() == '42/foo,["my event","foo","bar"]'
+
+    def test_emit_with_list(self):
+        sid = self.bm.connect('123', '/foo')
+        self.bm.emit('my event', ['foo', 'bar'], namespace='/foo', room=sid)
+        assert self.bm.server._send_eio_packet.call_count == 1
+        assert self.bm.server._send_eio_packet.call_args_list[0][0][0] == '123'
+        pkt = self.bm.server._send_eio_packet.call_args_list[0][0][1]
+        assert pkt.encode() == '42/foo,["my event",["foo","bar"]]'
+
+    def test_emit_with_none(self):
+        sid = self.bm.connect('123', '/foo')
+        self.bm.emit('my event', None, namespace='/foo', room=sid)
+        assert self.bm.server._send_eio_packet.call_count == 1
+        assert self.bm.server._send_eio_packet.call_args_list[0][0][0] == '123'
+        pkt = self.bm.server._send_eio_packet.call_args_list[0][0][1]
+        assert pkt.encode() == '42/foo,["my event"]'
+
+    def test_emit_binary(self):
+        sid = self.bm.connect('123', '/')
+        self.bm.emit(u'my event', b'my binary data', namespace='/', room=sid)
+        assert self.bm.server._send_eio_packet.call_count == 2
+        assert self.bm.server._send_eio_packet.call_args_list[0][0][0] == '123'
+        pkt = self.bm.server._send_eio_packet.call_args_list[0][0][1]
+        assert pkt.encode() == '451-["my event",{"_placeholder":true,"num":0}]'
+        assert self.bm.server._send_eio_packet.call_args_list[1][0][0] == '123'
+        pkt = self.bm.server._send_eio_packet.call_args_list[1][0][1]
+        assert pkt.encode() == b'my binary data'

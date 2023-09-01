@@ -14,8 +14,9 @@ def test():
     s = Server()
     start = time.time()
     count = 0
-    s._handle_eio_connect('123', 'environ')
-    s._handle_eio_message('123', '0')
+    for i in range(100):
+        s._handle_eio_connect(str(i), 'environ')
+        s._handle_eio_message(str(i), '0')
     while True:
         s.emit('test', 'hello')
         count += 1

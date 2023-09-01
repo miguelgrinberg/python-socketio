@@ -424,19 +424,6 @@ class AsyncServer(server.Server):
         """
         return await self.eio.sleep(seconds)
 
-    async def _emit_internal(self, sid, event, data, namespace=None, id=None):
-        """Send a message to a client."""
-        # tuples are expanded to multiple arguments, everything else is sent
-        # as a single argument
-        if isinstance(data, tuple):
-            data = list(data)
-        elif data is not None:
-            data = [data]
-        else:
-            data = []
-        await self._send_packet(sid, self.packet_class(
-            packet.EVENT, namespace=namespace, data=[event] + data, id=id))
-
     async def _send_packet(self, eio_sid, pkt):
         """Send a Socket.IO packet to a client."""
         encoded_packet = pkt.encode()
@@ -445,6 +432,10 @@ class AsyncServer(server.Server):
                 await self.eio.send(eio_sid, ep)
         else:
             await self.eio.send(eio_sid, encoded_packet)
+
+    async def _send_eio_packet(self, eio_sid, eio_pkt):
+        """Send a raw Engine.IO packet to a client."""
+        await self.eio.send_packet(eio_sid, eio_pkt)
 
     async def _handle_connect(self, eio_sid, namespace, data):
         """Handle a client connection request."""
