@@ -1,5 +1,17 @@
 # python-socketio change log
 
+**Release 5.9.0** - 2023-09-03
+
+- Optimized performance and memory usage for broadcasts [#1233](https://github.com/miguelgrinberg/python-socketio/issues/1233) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/bf11ad36aebeebbc0b7a74d88d4b9a8fad113456))
+- Improved documentation on horizontal scaling [#1099](https://github.com/miguelgrinberg/python-socketio/issues/1099) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/9d02247bc5914798a965cf423e978747a5535e33))
+- Corrected user session documentation example [#1170](https://github.com/miguelgrinberg/python-socketio/issues/1170) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/72dfdc6c8aff7f4f61c409e771df6a19299ad36f))
+- Improved grammar in documentation [#1175](https://github.com/miguelgrinberg/python-socketio/issues/1175) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/c66d7a9f1ade0f728840b8ee9079599dd6a3de3f)) (thanks **zykron1**!)
+- Fix docstring typo: client/server mixup [#1163](https://github.com/miguelgrinberg/python-socketio/issues/1163) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/598dd7e258c0c1d050456bbad2cd867dfca3df0f)) (thanks **Sasja**!)
+- Fix typos in the documentation [#1230](https://github.com/miguelgrinberg/python-socketio/issues/1230) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/1b7ed682e06d7c8a758a2f89391ddc941f70ee98)) (thanks **Alex Kuhrt**!)
+- Upgrade dependencies in Django server example ([commit](https://github.com/miguelgrinberg/python-socketio/commit/00b31663c29968bd50282d22fca9b95c09e4becf))
+- Update reference JavaScript examples ([commit](https://github.com/miguelgrinberg/python-socketio/commit/6df96fb1c598c00ddf8f8995cbc095f0383d38ef))
+- Upgrade to pypy-3.9 in unit tests ([commit](https://github.com/miguelgrinberg/python-socketio/commit/f49d65a0c3ff55f92a817994898c4182efa5ba69))
+
 **Release 5.8.0** - 2023-03-16
 
 - Made kombu client manager more robust and efficient ([commit](https://github.com/miguelgrinberg/python-socketio/commit/8293dc3f8fa90f3d92192a702b28c23d8c516110))
