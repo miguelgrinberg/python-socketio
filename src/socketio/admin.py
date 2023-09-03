@@ -4,6 +4,7 @@ import os
 import socket
 import time
 from urllib.parse import parse_qs
+from .exceptions import ConnectionRefusedError
 
 HOSTNAME = socket.gethostname()
 PID = os.getpid()
@@ -92,8 +93,8 @@ class InstrumentedServer:
             self.sio.manager.leave_room = self._leave_room
 
             # report emit events
-            self.sio.__emit_internal = self.sio._emit_internal
-            self.sio._emit_internal = self._emit_internal
+            self.sio.manager.__emit = self.sio.manager.emit
+            self.sio.manager.emit = self._emit
 
             # report receive events
             self.sio.__handle_event_internal = self.sio._handle_event_internal
@@ -117,9 +118,16 @@ class InstrumentedServer:
             self.__class__._eio_websocket_handler, self)
 
     def admin_connect(self, sid, environ, client_auth):
-        if self.auth:
-            if not self.auth(client_auth):
-                raise ConnectionRefusedError('Invalid credentials')
+        if self.auth != None:
+            authenticated = False
+            if isinstance(self.auth, dict):
+                authenticated = client_auth == self.auth
+            elif isinstance(self.auth, list):
+                authenticated = client_auth in self.auth
+            else:
+                authenticated = self.auth(client_auth)
+            if not authenticated:
+                raise ConnectionRefusedError('authentication failed')
 
         def config(sid):
             self.sio.sleep(0.1)
@@ -183,13 +191,16 @@ class InstrumentedServer:
         def check_for_upgrade():
             for _ in range(5):
                 self.sio.sleep(5)
-                if self.sio.eio._get_socket(eio_sid).upgraded:
-                    self.sio.emit('socket_updated', {
-                        'id': sid,
-                        'nsp': namespace,
-                        'transport': 'websocket',
-                    }, namespace=self.admin_namespace)
-                    break
+                try:
+                    if self.sio.eio._get_socket(eio_sid).upgraded:
+                        self.sio.emit('socket_updated', {
+                            'id': sid,
+                            'nsp': namespace,
+                            'transport': 'websocket',
+                        }, namespace=self.admin_namespace)
+                        break
+                except KeyError:
+                    pass
 
         if serialized_socket['transport'] == 'polling':
             self.sio.start_background_task(check_for_upgrade)
@@ -226,17 +237,24 @@ class InstrumentedServer:
             ), namespace=self.admin_namespace)
         return self.sio.manager.__leave_room(sid, namespace, room)
 
-    def _emit_internal(self, eio_sid, event, data, namespace=None, id=None):
-        ret = self.sio.__emit_internal(eio_sid, event, data,
-                                       namespace=namespace, id=id)
+    def _emit(self, event, data, namespace, room=None, skip_sid=None,
+              callback=None, **kwargs):
+        ret = self.sio.manager.__emit(event, data, namespace, room=room,
+                                      skip_sid=skip_sid, callback=callback,
+                                      **kwargs)
         if namespace != self.admin_namespace:
-            sid = self.sio.manager.sid_from_eio_sid(eio_sid, namespace)
-            self.sio.emit('event_sent', (
-                namespace,
-                sid,
-                [event] + list(data) if isinstance(data, tuple) else [data],
-                datetime.utcnow().isoformat() + 'Z',
-            ), namespace=self.admin_namespace)
+            event_data = [event] + list(data) if isinstance(data, tuple) \
+                else [data]
+            if not isinstance(skip_sid, list):
+                skip_sid = [skip_sid]
+            for sid, _ in self.sio.manager.get_participants(namespace, room):
+                if sid not in skip_sid:
+                    self.sio.emit('event_sent', (
+                        namespace,
+                        sid,
+                        event_data,
+                        datetime.utcnow().isoformat() + 'Z',
+                    ), namespace=self.admin_namespace)
         return ret
 
     def _handle_event_internal(self, server, sid, eio_sid, data, namespace,
@@ -282,7 +300,7 @@ class InstrumentedServer:
         def _wait(ws):
             ret = ws.__wait()
             self.event_buffer.push('packetsIn')
-            self.event_buffer.push('bytesIn', len(ret))
+            self.event_buffer.push('bytesIn', len(ret or ''))
             return ret
 
         ws.__send = ws.send

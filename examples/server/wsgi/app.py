@@ -3,10 +3,26 @@
 # installed
 async_mode = None
 
+# set instrument to `True` to accept connections from the official Socket.IO
+# Admin UI hosted at https://admin.socket.io
+instrument = False
+admin_login = {
+    'username': 'admin',
+    'password': 'python',  # change this to a strong secret for production use!
+}
+
 from flask import Flask, render_template
 import socketio
 
-sio = socketio.Server(logger=True, async_mode=async_mode)
+sio = socketio.Server(
+    async_mode=async_mode,
+    cors_allowed_origins=None if not instrument else [
+        'http://localhost:5000',
+        'https://admin.socket.io',  # edit the allowed origins if necessary
+    ])
+if instrument:
+    sio.instrument(auth=admin_login)
+
 app = Flask(__name__)
 app.wsgi_app = socketio.WSGIApp(sio, app.wsgi_app)
 app.config['SECRET_KEY'] = 'secret!'

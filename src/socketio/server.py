@@ -459,11 +459,16 @@ class Server(base_server.BaseServer):
         """Instrument the Socket.IO server for monitoring with the `Socket.IO
         Admin UI <https://socket.io/docs/v4/admin-ui/>`_.
 
-        :param auth: A function that receives a dictionary with the credentials
-                     provided by the client (usually ``username`` and
-                     ``password``) and returns ``True`` if the user is allowed.
-                     To disable authentication, set this argument to ``False``
-                     (not recommended, never do this on a production server).
+        :param auth: Authentication credentials for Admin UI access. Set to a
+                     dictionary with the expected login (usually ``username``
+                     and ``password``) or a list of dictionaries if more than
+                     one set of credentials need to be available. For more
+                     complex authentication methods, set to a callable that
+                     receives the authentication dictionary as an argument and
+                     returns ``True`` if the user is allowed or ``False``
+                     otherwise. To disable authentication, set this argument to
+                     ``False`` (not recommended, never do this on a production
+                     server).
         :param mode: The reporting mode. The default is ``'development'``,
                      which is best used while debugging, as it may have a
                      significant performance effect. Set to ``'production'`` to
