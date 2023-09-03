@@ -2,6 +2,8 @@ import itertools
 import logging
 
 from bidict import bidict, ValueDuplicationError
+from engineio import packet as eio_packet
+from socketio import packet
 
 default_logger = logging.getLogger('socketio')
 
@@ -161,15 +163,42 @@ class BaseManager(object):
         connected to the namespace."""
         if namespace not in self.rooms:
             return
+        if isinstance(data, tuple):
+            # tuples are expanded to multiple arguments, everything else is
+            # sent as a single argument
+            data = list(data)
+        elif data is not None:
+            data = [data]
+        else:
+            data = []
         if not isinstance(skip_sid, list):
             skip_sid = [skip_sid]
-        for sid, eio_sid in self.get_participants(namespace, room):
-            if sid not in skip_sid:
-                if callback is not None:
+        if not callback:
+            # when callbacks aren't used the packets sent to each recipient are
+            # identical, so they can be generated once and reused
+            pkt = self.server.packet_class(
+                packet.EVENT, namespace=namespace, data=[event] + data)
+            encoded_packet = pkt.encode()
+            if not isinstance(encoded_packet, list):
+                encoded_packet = [encoded_packet]
+            eio_pkt = [eio_packet.Packet(eio_packet.MESSAGE, p)
+                       for p in encoded_packet]
+            for sid, eio_sid in self.get_participants(namespace, room):
+                if sid not in skip_sid:
+                    for p in eio_pkt:
+                        self.server._send_eio_packet(eio_sid, p)
+        else:
+            # callbacks are used, so each recipient must be sent a packet that
+            # contains a unique callback id
+            # note that callbacks when addressing a group of people are
+            # implemented but not tested or supported
+            for sid, eio_sid in self.get_participants(namespace, room):
+                if sid not in skip_sid:  # pragma: no branch
                     id = self._generate_ack_id(sid, callback)
-                else:
-                    id = None
-                self.server._emit_internal(eio_sid, event, data, namespace, id)
+                    pkt = self.server.packet_class(
+                        packet.EVENT, namespace=namespace, data=[event] + data,
+                        id=id)
+                    self.server._send_packet(eio_sid, pkt)
 
     def trigger_callback(self, sid, id, data):
         """Invoke an application callback."""

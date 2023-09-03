@@ -185,7 +185,7 @@ class Server(object):
         Example usage::
 
             # as a decorator:
-            @socket_io.on('connect', namespace='/chat')
+            @sio.on('connect', namespace='/chat')
             def connect_handler(sid, environ):
                 print('Connection request')
                 if environ['REMOTE_ADDR'] in blacklisted:
@@ -194,7 +194,7 @@ class Server(object):
             # as a method:
             def message_handler(sid, msg):
                 print('Received message: ', msg)
-                eio.send(sid, 'response')
+                sio.send(sid, 'response')
             socket_io.on('message', namespace='/chat', handler=message_handler)
 
         The handler function receives the ``sid`` (session ID) for the
@@ -633,19 +633,6 @@ class Server(object):
         """
         return self.eio.sleep(seconds)
 
-    def _emit_internal(self, eio_sid, event, data, namespace=None, id=None):
-        """Send a message to a client."""
-        # tuples are expanded to multiple arguments, everything else is sent
-        # as a single argument
-        if isinstance(data, tuple):
-            data = list(data)
-        elif data is not None:
-            data = [data]
-        else:
-            data = []
-        self._send_packet(eio_sid, self.packet_class(
-            packet.EVENT, namespace=namespace, data=[event] + data, id=id))
-
     def _send_packet(self, eio_sid, pkt):
         """Send a Socket.IO packet to a client."""
         encoded_packet = pkt.encode()
@@ -654,6 +641,10 @@ class Server(object):
                 self.eio.send(eio_sid, ep)
         else:
             self.eio.send(eio_sid, encoded_packet)
+
+    def _send_eio_packet(self, eio_sid, eio_pkt):
+        """Send a raw Engine.IO packet to a client."""
+        self.eio.send_packet(eio_sid, eio_pkt)
 
     def _handle_connect(self, eio_sid, namespace, data):
         """Handle a client connection request."""

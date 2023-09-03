@@ -8,6 +8,7 @@ import pytest
 
 from socketio import asyncio_manager
 from socketio import asyncio_pubsub_manager
+from socketio import packet
 
 
 def AsyncMock(*args, **kwargs):
@@ -38,7 +39,9 @@ class TestAsyncPubSubManager(unittest.TestCase):
 
         mock_server = mock.MagicMock()
         mock_server.eio.generate_id = generate_id
-        mock_server._emit_internal = AsyncMock()
+        mock_server.packet_class = packet.Packet
+        mock_server._send_packet = AsyncMock()
+        mock_server._send_eio_packet = AsyncMock()
         mock_server.disconnect = AsyncMock()
         self.pm = asyncio_pubsub_manager.AsyncPubSubManager()
         self.pm._publish = AsyncMock()
@@ -164,9 +167,11 @@ class TestAsyncPubSubManager(unittest.TestCase):
             )
         )
         self.pm._publish.mock.assert_not_called()
-        self.pm.server._emit_internal.mock.assert_called_once_with(
-            '123', 'foo', 'bar', '/', None
-        )
+        assert self.pm.server._send_eio_packet.mock.call_count == 1
+        assert self.pm.server._send_eio_packet.mock.call_args_list[0][0][0] \
+            == '123'
+        pkt = self.pm.server._send_eio_packet.mock.call_args_list[0][0][1]
+        assert pkt.encode() == '42["foo","bar"]'
 
     def test_can_disconnect(self):
         sid = self.pm.connect('123', '/')
