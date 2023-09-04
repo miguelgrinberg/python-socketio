@@ -87,12 +87,12 @@ Asyncio clients can also use a coroutine::
 A catch-all event handler receives the event name as a first argument. The
 remaining arguments are the same as for a regular event handler.
 
-Connect, Connect Error and Disconnect Event Handlers
-----------------------------------------------------
+Connect, Connect Error, Disconnect and Disconnect Final Event Handlers
+----------------------------------------------------------------------
 
-The ``connect``, ``connect_error`` and ``disconnect`` events are special; they 
-are invoked automatically when a client connects or disconnects from the
-server::
+The ``connect``, ``connect_error``, ``disconnect`` and ``disconnect_final``
+events are special; they  are invoked automatically when a client connects or
+disconnects from the server::
 
     @sio.event
     def connect():
@@ -104,7 +104,11 @@ server::
 
     @sio.event
     def disconnect():
-        print("I'm disconnected!")
+        print("I'm disconnected (reconnection may be attempted)!")
+
+    @sio.event
+    def disconnect_final():
+        print("I'm disconnected (no more reconnection attempts will be made)!")
 
 The ``connect_error`` handler is invoked when a connection attempt fails. If
 the server provides arguments, these are passed on to the handler. The server
@@ -116,10 +120,14 @@ server initiated disconnects, or accidental disconnects, for example due to
 networking failures. In the case of an accidental disconnection, the client is
 going to attempt to reconnect immediately after invoking the disconnect
 handler. As soon as the connection is re-established the connect handler will
-be invoked once again.
+be invoked once again. When the client decides that no more reconnection
+attempts will be issued, it invokes the ``disconnect_final`` handler. This can
+happen when reconnections are disabled, or when the configured number of
+attempts is reached without success.
 
-The ``connect``, ``connect_error`` and ``disconnect`` events have to be
-defined explicitly and are not invoked on a catch-all event handler.
+The ``connect``, ``connect_error``, ``disconnect`` and ``disconnect_final``
+events have to be defined explicitly and are not invoked on a catch-all event
+handler.
 
 Connecting to a Server
 ----------------------
