@@ -143,9 +143,10 @@ class AsyncClient(client.Client):
                                    transports=transports,
                                    engineio_path=socketio_path)
         except engineio.exceptions.ConnectionError as exc:
-            await self._trigger_event(
-                'connect_error', '/',
-                exc.args[1] if len(exc.args) > 1 else exc.args[0])
+            for n in self.connection_namespaces:
+                await self._trigger_event(
+                    'connect_error', n,
+                    exc.args[1] if len(exc.args) > 1 else exc.args[0])
             raise exceptions.ConnectionError(exc.args[0]) from None
 
         if wait:
@@ -271,7 +272,7 @@ class AsyncClient(client.Client):
                           argument is omitted the event is emitted to the
                           default namespace.
         :param timeout: The waiting timeout. If the timeout is reached before
-                        the client acknowledges the event, then a
+                        the server acknowledges the event, then a
                         ``TimeoutError`` exception is raised.
 
         Note: this method is not designed to be used concurrently. If multiple
@@ -369,6 +370,7 @@ class AsyncClient(client.Client):
             return
         namespace = namespace or '/'
         await self._trigger_event('disconnect', namespace=namespace)
+        await self._trigger_event('__disconnect_final', namespace=namespace)
         if namespace in self.namespaces:
             del self.namespaces[namespace]
         if not self.namespaces:
@@ -469,6 +471,9 @@ class AsyncClient(client.Client):
             try:
                 await asyncio.wait_for(self._reconnect_abort.wait(), delay)
                 self.logger.info('Reconnect task aborted')
+                for n in self.connection_namespaces:
+                    await self._trigger_event('__disconnect_final',
+                                              namespace=n)
                 break
             except (asyncio.TimeoutError, asyncio.CancelledError):
                 pass
@@ -490,6 +495,9 @@ class AsyncClient(client.Client):
                     attempt_count >= self.reconnection_attempts:
                 self.logger.info(
                     'Maximum reconnection attempts reached, giving up')
+                for n in self.connection_namespaces:
+                    await self._trigger_event('__disconnect_final',
+                                              namespace=n)
                 break
         client.reconnecting_clients.remove(self)
 
@@ -533,15 +541,19 @@ class AsyncClient(client.Client):
     async def _handle_eio_disconnect(self):
         """Handle the Engine.IO disconnection event."""
         self.logger.info('Engine.IO connection dropped')
+        will_reconnect = self.reconnection and self.eio.state == 'connected'
         if self.connected:
             for n in self.namespaces:
                 await self._trigger_event('disconnect', namespace=n)
+                if not will_reconnect:
+                    await self._trigger_event('__disconnect_final',
+                                              namespace=n)
             self.namespaces = {}
             self.connected = False
         self.callbacks = {}
         self._binary_packet = None
         self.sid = None
-        if self.eio.state == 'connected' and self.reconnection:
+        if will_reconnect:
             self._reconnect_task = self.start_background_task(
                 self._handle_reconnect)
 

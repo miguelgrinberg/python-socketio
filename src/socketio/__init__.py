@@ -1,6 +1,7 @@
 import sys
 
 from .client import Client
+from .simple_client import SimpleClient
 from .base_manager import BaseManager
 from .pubsub_manager import PubSubManager
 from .kombu_manager import KombuManager
@@ -13,6 +14,7 @@ from .middleware import WSGIApp, Middleware
 from .tornado import get_tornado_handler
 if sys.version_info >= (3, 5):  # pragma: no cover
     from .asyncio_client import AsyncClient
+    from .asyncio_simple_client import AsyncSimpleClient
     from .asyncio_server import AsyncServer
     from .asyncio_manager import AsyncManager
     from .asyncio_namespace import AsyncNamespace, AsyncClientNamespace
@@ -20,6 +22,7 @@ if sys.version_info >= (3, 5):  # pragma: no cover
     from .asyncio_aiopika_manager import AsyncAioPikaManager
     from .asgi import ASGIApp
 else:  # pragma: no cover
+    AsyncSimpleClient = None
     AsyncClient = None
     AsyncServer = None
     AsyncManager = None
@@ -27,10 +30,11 @@ else:  # pragma: no cover
     AsyncRedisManager = None
     AsyncAioPikaManager = None
 
-__all__ = ['Client', 'Server', 'BaseManager', 'PubSubManager',
+__all__ = ['SimpleClient', 'Client', 'Server', 'BaseManager', 'PubSubManager',
            'KombuManager', 'RedisManager', 'ZmqManager', 'KafkaManager',
            'Namespace', 'ClientNamespace', 'WSGIApp', 'Middleware']
 if AsyncServer is not None:  # pragma: no cover
-    __all__ += ['AsyncClient', 'AsyncServer', 'AsyncNamespace',
-                'AsyncClientNamespace', 'AsyncManager', 'AsyncRedisManager',
-                'ASGIApp', 'get_tornado_handler', 'AsyncAioPikaManager']
+    __all__ += ['AsyncSimpleClient', 'AsyncClient', 'AsyncServer',
+                'AsyncNamespace', 'AsyncClientNamespace', 'AsyncManager',
+                'AsyncRedisManager', 'ASGIApp', 'get_tornado_handler',
+                'AsyncAioPikaManager']
