@@ -13,22 +13,7 @@ from socketio import asyncio_namespace
 from socketio import exceptions
 from socketio import namespace
 from socketio import packet
-
-
-def AsyncMock(*args, **kwargs):
-    """Return a mock asynchronous function."""
-    m = mock.MagicMock(*args, **kwargs)
-
-    async def mock_coro(*args, **kwargs):
-        return m(*args, **kwargs)
-
-    mock_coro.mock = m
-    return mock_coro
-
-
-def _run(coro):
-    """Run the given coroutine."""
-    return asyncio.get_event_loop().run_until_complete(coro)
+from .helpers import AsyncMock, _run
 
 
 @unittest.skipIf(sys.version_info < (3, 5), 'only for Python 3.5+')
