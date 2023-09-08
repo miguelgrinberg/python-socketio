@@ -4,13 +4,13 @@ Socket.IO Client Examples
 This directory contains several example Socket.IO client applications,
 organized by directory:
 
-threads
--------
+sync
+----
 
 Examples that use standard Python thread concurrency.
 
-asyncio
--------
+async
+-----
 
 Examples that use Python's `asyncio` package for concurrency.
 

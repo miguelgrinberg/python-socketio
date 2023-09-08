@@ -1,15 +1,16 @@
-The Socket.IO Client
-====================
+The Socket.IO Clients
+=====================
 
 This package contains two Socket.IO clients:
 
-- The :func:`socketio.Client` class creates a client compatible with the
-  standard Python library.
-- The :func:`socketio.AsyncClient` class creates a client compatible with
-  the ``asyncio`` package.
+- a "simple" client, which provides a straightforward API that is sufficient
+  for most applications
+- an "event-driven" client, which provides access to all the features of the
+  Socket.IO protocol
 
-The methods in the two clients are the same, with the only difference that in
-the ``asyncio`` client most methods are implemented as coroutines.
+Each of these clients comes in two variants: one for the standard Python
+library, and another for asynchronous applications built with the ``asyncio``
+package.
 
 Installation
 ------------
@@ -23,8 +24,174 @@ If instead you plan on using the ``asyncio`` client, then use this::
 
     pip install "python-socketio[asyncio_client]"
 
+Using the Simple Client
+-----------------------
+
+The advantage of the simple client is that it abstracts away the logic required
+to maintain a Socket.IO connection. This client handles disconnections and
+reconnections in a completely transparent way, without adding any complexity to
+the application.
+
 Creating a Client Instance
---------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+To instantiate a Socket.IO client, create an instance of the appropriate client
+class::
+
+    import socketio
+
+    # standard Python
+    sio = socketio.SimpleClient()
+
+    # asyncio
+    sio = socketio.AsyncSimpleClient()
+
+Connecting to a Server
+~~~~~~~~~~~~~~~~~~~~~~
+
+The connection to a server is established by calling the ``connect()``
+method::
+
+    sio.connect('http://localhost:5000')
+
+In the case of the ``asyncio`` client, the method is a coroutine::
+
+    await sio.connect('http://localhost:5000')
+
+By default the client first connects to the server using the long-polling
+transport, and then attempts to upgrade the connection to use WebSocket. To
+connect directly using WebSocket, use the ``transports`` argument::
+
+    sio.connect('http://localhost:5000', transports=['websocket'])
+
+Upon connection, the server assigns the client a unique session identifier.
+The application can find this identifier in the ``sid`` attribute::
+
+    print('my sid is', sio.sid)
+
+The Socket.IO transport that is used in the connection can be obtained from the
+``transport`` attribute::
+
+    print('my transport is', sio.transport)
+
+The transport is given as a string, and can be either ``'websocket'`` or
+``'polling'``.
+
+TLS/SSL Support
+^^^^^^^^^^^^^^^
+
+The client supports TLS/SSL connections. To enable it, use a ``https://``
+connection URL::
+
+    sio.connect('https://example.com')
+
+Or when using ``asyncio``::
+
+    await sio.connect('https://example.com')
+
+The client verifies server certificates by default. Consult the documentation
+for the event-driven client for information on how to customize this behavior.
+
+Emitting Events
+~~~~~~~~~~~~~~~
+
+The client can emit an event to the server using the ``emit()`` method::
+
+    sio.emit('my message', {'foo': 'bar'})
+
+Or in the case of ``asyncio``, as a coroutine::
+
+    await sio.emit('my message', {'foo': 'bar'})
+
+The arguments provided to the method are the name of the event to emit and the
+optional data that is passed on to the server. The data can be of type ``str``,
+``bytes``, ``dict``, ``list`` or ``tuple``. When sending a ``list`` or a
+``tuple``, the elements in it need to be of any allowed types except ``tuple``.
+When a tuple is used, the elements of the tuple will be passed as individual
+arguments to the server-side event handler function.
+
+Receiving Events
+~~~~~~~~~~~~~~~~
+
+The client can wait for the server to emit an event with the ``receive()``
+method::
+
+    event = sio.receive()
+    print(f'received event: "{event[0]}" with arguments {event[1:]}')
+
+When using ``asyncio``, this method needs to be awaited::
+
+    event = await sio.receive()
+    print(f'received event: "{event[0]}" with arguments {event[1:]}')
+
+The return value of ``receive()`` is a list. The first element of this list is
+the event name, while the remaining elements are the arguments passed by the
+server.
+
+With the usage shown above, the ``receive()`` method will return only when an
+event is received from the server. An optional timeout in seconds can be passed
+to prevent the client from waiting forever::
+
+    from socketio.exceptions import TimeoutError
+
+    try:
+        event = sio.receive(timeout=5)
+    except TimeoutError:
+        print('timed out waiting for event')
+    else:
+        print('received event:', event)
+
+Or with ``asyncio``::
+
+    from socketio.exceptions import TimeoutError
+
+    try:
+        event = await sio.receive(timeout=5)
+    except TimeoutError:
+        print('timed out waiting for event')
+    else:
+        print('received event:', event)
+
+Disconnecting from the Server
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+At any time the client can request to be disconnected from the server by
+invoking the ``disconnect()`` method::
+
+    sio.disconnect()
+
+For the ``asyncio`` client this is a coroutine::
+
+    await sio.disconnect()
+
+Debugging and Troubleshooting
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+To help you debug issues, the client can be configured to output logs to the
+terminal::
+
+    import socketio
+
+    # standard Python
+    sio = socketio.Client(logger=True, engineio_logger=True)
+
+    # asyncio
+    sio = socketio.AsyncClient(logger=True, engineio_logger=True)
+
+The ``logger`` argument controls logging related to the Socket.IO protocol,
+while ``engineio_logger`` controls logs that originate in the low-level
+Engine.IO transport. These arguments can be set to ``True`` to output logs to
+``stderr``, or to an object compatible with Python's ``logging`` package
+where the logs should be emitted to. A value of ``False`` disables logging.
+
+Logging can help identify the cause of connection problems, unexpected
+disconnections and other issues.
+
+Using the Event-Driven Client
+-----------------------------
+
+Creating a Client Instance
+~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 To instantiate an Socket.IO client, simply create an instance of the
 appropriate client class::
@@ -38,7 +205,7 @@ appropriate client class::
     sio = socketio.AsyncClient()
 
 Defining Event Handlers
------------------------
+~~~~~~~~~~~~~~~~~~~~~~~
 
 The Socket.IO protocol is event based. When a server wants to communicate with
 a client it *emits* an event. Each event has a name, and a list of
@@ -69,7 +236,7 @@ If the server includes arguments with an event, those are passed to the
 handler function as arguments.
 
 Catch-All Event Handlers
-------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~
 
 A "catch-all" event handler is invoked for any events that do not have an
 event handler. You can define a catch-all handler using ``'*'`` as event name::
@@ -88,9 +255,9 @@ A catch-all event handler receives the event name as a first argument. The
 remaining arguments are the same as for a regular event handler.
 
 Connect, Connect Error and Disconnect Event Handlers
-----------------------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The ``connect``, ``connect_error`` and ``disconnect`` events are special; they 
+The ``connect``, ``connect_error`` and ``disconnect`` events are special; they
 are invoked automatically when a client connects or disconnects from the
 server::
 
@@ -122,7 +289,7 @@ The ``connect``, ``connect_error`` and ``disconnect`` events have to be
 defined explicitly and are not invoked on a catch-all event handler.
 
 Connecting to a Server
-----------------------
+~~~~~~~~~~~~~~~~~~~~~~
 
 The connection to a server is established by calling the ``connect()``
 method::
@@ -138,8 +305,16 @@ The application can find this identifier in the ``sid`` attribute::
 
     print('my sid is', sio.sid)
 
+The Socket.IO transport that is used in the connection can be obtained from the
+``transport`` attribute::
+
+    print('my transport is', sio.transport)
+
+The transport is given as a string, and can be either ``'websocket'`` or
+``'polling'``.
+
 TLS/SSL Support
-~~~~~~~~~~~~~~~
+^^^^^^^^^^^^^^^
 
 The client supports TLS/SSL connections. To enable it, use a ``https://``
 connection URL::
@@ -206,7 +381,7 @@ And for ``asyncio``::
     await sio.connect('https://example.com')
 
 Emitting Events
----------------
+~~~~~~~~~~~~~~~
 
 The client can emit an event to the server using the ``emit()`` method::
 
@@ -216,18 +391,19 @@ Or in the case of ``asyncio``, as a coroutine::
 
     await sio.emit('my message', {'foo': 'bar'})
 
-The single argument provided to the method is the data that is passed on
-to the server. The data can be of type ``str``, ``bytes``, ``dict``,
-``list`` or ``tuple``. When sending a ``tuple``, the elements in it need to
-be of any of the other four allowed types. The elements of the tuple will be
-passed as multiple arguments to the server-side event handler function.
+The arguments provided to the method are the name of the event to emit and the
+optional data that is passed on to the server. The data can be of type ``str``,
+``bytes``, ``dict``, ``list`` or ``tuple``. When sending a ``list`` or a
+``tuple``, the elements in it need to be of any allowed types except ``tuple``.
+When a tuple is used, the elements of the tuple will be passed as individual
+arguments to the server-side event handler function.
 
 The ``emit()`` method can be invoked inside an event handler as a response
 to a server event, or in any other part of the application, including in
 background tasks.
 
 Event Callbacks
----------------
+~~~~~~~~~~~~~~~
 
 When a server emits an event to a client, it can optionally provide a
 callback function, to be invoked as a way of acknowledgment that the server
@@ -249,7 +425,7 @@ the event, and any values returned by the server handler will be passed as
 arguments to this function.
 
 Namespaces
-----------
+~~~~~~~~~~
 
 The Socket.IO protocol supports multiple logical connections, all multiplexed
 on the same physical connection. Clients can open multiple connections by
@@ -281,7 +457,7 @@ If the ``namespaces`` argument of the ``connect()`` call isn't given, any
 namespaces used in event handlers are automatically connected.
 
 Class-Based Namespaces
-----------------------
+~~~~~~~~~~~~~~~~~~~~~~
 
 As an alternative to the decorator-based event handlers, the event handlers
 that belong to a namespace can be created as methods of a subclass of 
@@ -332,7 +508,7 @@ decorator-based function handler, only the standalone function handler is
 invoked.
 
 Disconnecting from the Server
------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 At any time the client can request to be disconnected from the server by
 invoking the ``disconnect()`` method::
@@ -344,7 +520,7 @@ For the ``asyncio`` client this is a coroutine::
     await sio.disconnect()
 
 Managing Background Tasks
--------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~
 
 When a client connection to the server is established, a few background
 tasks will be spawned to keep the connection alive and handle incoming
@@ -398,7 +574,7 @@ The single argument passed to the method is the number of seconds to sleep
 for.
 
 Debugging and Troubleshooting
------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 To help you debug issues, the client can be configured to output logs to the
 terminal::

@@ -6,6 +6,18 @@ API Reference
 
 .. module:: socketio
 
+``SimpleClient`` class
+----------------------
+
+.. autoclass:: SimpleClient
+   :members:
+
+``AsyncSimpleClient`` class
+---------------------------
+
+.. autoclass:: AsyncSimpleClient
+   :members:
+
 ``Client`` class
 ----------------
 

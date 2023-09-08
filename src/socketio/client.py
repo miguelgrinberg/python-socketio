@@ -92,7 +92,8 @@ class Client(object):
                             fatal errors are logged even when
                             ``engineio_logger`` is ``False``.
     """
-    reserved_events = ['connect', 'connect_error', 'disconnect']
+    reserved_events = ['connect', 'connect_error', 'disconnect',
+                       '__disconnect_final']
 
     def __init__(self, reconnection=True, reconnection_attempts=0,
                  reconnection_delay=1, reconnection_delay_max=5,
@@ -332,9 +333,10 @@ class Client(object):
                              transports=transports,
                              engineio_path=socketio_path)
         except engineio.exceptions.ConnectionError as exc:
-            self._trigger_event(
-                'connect_error', '/',
-                exc.args[1] if len(exc.args) > 1 else exc.args[0])
+            for n in self.connection_namespaces:
+                self._trigger_event(
+                    'connect_error', n,
+                    exc.args[1] if len(exc.args) > 1 else exc.args[0])
             raise exceptions.ConnectionError(exc.args[0]) from None
 
         if wait:
@@ -449,7 +451,7 @@ class Client(object):
                           argument is omitted the event is emitted to the
                           default namespace.
         :param timeout: The waiting timeout. If the timeout is reached before
-                        the client acknowledges the event, then a
+                        the server acknowledges the event, then a
                         ``TimeoutError`` exception is raised.
 
         Note: this method is not thread safe. If multiple threads are emitting
@@ -569,6 +571,7 @@ class Client(object):
             return
         namespace = namespace or '/'
         self._trigger_event('disconnect', namespace=namespace)
+        self._trigger_event('__disconnect_final', namespace=namespace)
         if namespace in self.namespaces:
             del self.namespaces[namespace]
         if not self.namespaces:
@@ -654,6 +657,8 @@ class Client(object):
                     delay))
             if self._reconnect_abort.wait(delay):
                 self.logger.info('Reconnect task aborted')
+                for n in self.connection_namespaces:
+                    self._trigger_event('__disconnect_final', namespace=n)
                 break
             attempt_count += 1
             try:
@@ -673,6 +678,8 @@ class Client(object):
                     attempt_count >= self.reconnection_attempts:
                 self.logger.info(
                     'Maximum reconnection attempts reached, giving up')
+                for n in self.connection_namespaces:
+                    self._trigger_event('__disconnect_final', namespace=n)
                 break
         reconnecting_clients.remove(self)
 
@@ -716,15 +723,18 @@ class Client(object):
     def _handle_eio_disconnect(self):
         """Handle the Engine.IO disconnection event."""
         self.logger.info('Engine.IO connection dropped')
+        will_reconnect = self.reconnection and self.eio.state == 'connected'
         if self.connected:
             for n in self.namespaces:
                 self._trigger_event('disconnect', namespace=n)
+                if not will_reconnect:
+                    self._trigger_event('__disconnect_final', namespace=n)
             self.namespaces = {}
             self.connected = False
         self.callbacks = {}
         self._binary_packet = None
         self.sid = None
-        if self.eio.state == 'connected' and self.reconnection:
+        if will_reconnect:
             self._reconnect_task = self.start_background_task(
                 self._handle_reconnect)
 
