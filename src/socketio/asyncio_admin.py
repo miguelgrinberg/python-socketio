@@ -44,7 +44,7 @@ class InstrumentedAsyncServer:
                     namespace=self.admin_namespace)
 
         if self.mode == 'development':
-            if not self.read_only:
+            if not self.read_only:  # pragma: no branch
                 self.sio.on('emit', self.admin_emit,
                             namespace=self.admin_namespace)
                 self.sio.on('join', self.admin_enter_room,
@@ -89,7 +89,8 @@ class InstrumentedAsyncServer:
         from engineio.asyncio_socket import AsyncSocket
         self.sio.eio.__ok = self.sio.eio._ok
         self.sio.eio._ok = self._eio_http_response
-        AsyncSocket.__handle_post_request = functools.partialmethod(
+        AsyncSocket.__handle_post_request = AsyncSocket.handle_post_request
+        AsyncSocket.handle_post_request = functools.partialmethod(
             self.__class__._eio_handle_post_request, self)
 
         # report websocket packets
@@ -97,9 +98,23 @@ class InstrumentedAsyncServer:
         AsyncSocket._websocket_handler = functools.partialmethod(
             self.__class__._eio_websocket_handler, self)
 
+    def uninstrument(self):  # pragma: no cover
+        if self.mode == 'development':
+            self.sio.manager.connect = self.sio.manager.__connect
+            self.sio.manager.disconnect = self.sio.manager.__disconnect
+            self.sio.manager.enter_room = self.sio.manager.__enter_room
+            self.sio.manager.leave_room = self.sio.manager.__leave_room
+            self.sio.manager.emit = self.sio.manager.__emit
+            self.sio._handle_event_internal = self.sio.__handle_event_internal
+        self.sio.eio._ok = self.sio.eio.__ok
+
+        from engineio.asyncio_socket import AsyncSocket
+        AsyncSocket.handle_post_request = AsyncSocket.__handle_post_request
+        AsyncSocket._websocket_handler = AsyncSocket.__websocket_handler
+
     async def admin_connect(self, sid, environ, client_auth):
         authenticated = True
-        if self.auth != None:
+        if self.auth:
             authenticated = False
             if isinstance(self.auth, dict):
                 authenticated = client_auth == self.auth
@@ -159,8 +174,9 @@ class InstrumentedAsyncServer:
             await self.sio.disconnect(sid, namespace=namespace)
 
     async def shutdown(self):
-        self.stop_stats_event.set()
-        await asyncio.gather(self.stats_task)
+        if self.stats_task:  # pragma: no branch
+            self.stop_stats_event.set()
+            await asyncio.gather(self.stats_task)
 
     async def _connect(self, eio_sid, namespace):
         sid = await self.sio.manager.__connect(eio_sid, namespace)
@@ -172,22 +188,9 @@ class InstrumentedAsyncServer:
             datetime.utcfromtimestamp(t).isoformat() + 'Z',
         ), namespace=self.admin_namespace)
 
-        async def check_for_upgrade():
-            for _ in range(5):
-                await self.sio.sleep(5)
-                try:
-                    if self.sio.eio._get_socket(eio_sid).upgraded:
-                        await self.sio.emit('socket_updated', {
-                            'id': sid,
-                            'nsp': namespace,
-                            'transport': 'websocket',
-                        }, namespace=self.admin_namespace)
-                        break
-                except KeyError:
-                    pass
-
         if serialized_socket['transport'] == 'polling':
-            self.sio.start_background_task(check_for_upgrade)
+            self.sio.start_background_task(
+                self._check_for_upgrade, eio_sid, sid, namespace)
         return sid
 
     async def _disconnect(self, sid, namespace, **kwargs):
@@ -199,6 +202,21 @@ class InstrumentedAsyncServer:
             datetime.utcnow().isoformat() + 'Z',
         ), namespace=self.admin_namespace)
         return await self.sio.manager.__disconnect(sid, namespace, **kwargs)
+
+    async def _check_for_upgrade(self, eio_sid, sid,
+                                 namespace):  # pragma: no cover
+        for _ in range(5):
+            await self.sio.sleep(5)
+            try:
+                if self.sio.eio._get_socket(eio_sid).upgraded:
+                    await self.sio.emit('socket_updated', {
+                        'id': sid,
+                        'nsp': namespace,
+                        'transport': 'websocket',
+                    }, namespace=self.admin_namespace)
+                    break
+            except KeyError:
+                pass
 
     def _enter_room(self, sid, namespace, room, eio_sid=None):
         ret = self.sio.manager.__enter_room(sid, namespace, room, eio_sid)
@@ -223,13 +241,13 @@ class InstrumentedAsyncServer:
 
     async def _emit(self, event, data, namespace, room=None, skip_sid=None,
                     callback=None, **kwargs):
-        ret = await self.sio.manager.__emit(event, data, namespace, room=room,
-                                    skip_sid=skip_sid, callback=callback,
-                                    **kwargs)
+        ret = await self.sio.manager.__emit(
+            event, data, namespace, room=room, skip_sid=skip_sid,
+            callback=callback, **kwargs)
         if namespace != self.admin_namespace:
             event_data = [event] + list(data) if isinstance(data, tuple) \
                 else [data]
-            if not isinstance(skip_sid, list):
+            if not isinstance(skip_sid, list):  # pragma: no branch
                 skip_sid = [skip_sid]
             for sid, _ in self.sio.manager.get_participants(namespace, room):
                 if sid not in skip_sid:
@@ -312,7 +330,7 @@ class InstrumentedAsyncServer:
                 'namespaces': [{
                     'name': nsp,
                     'socketsCount': len(self.sio.manager.rooms.get(
-                        nsp, {None: []})[None])
+                        nsp, {None: []}).get(None, []))
                 } for nsp in namespaces],
             }, namespace=self.admin_namespace)
             while self.admin_queue:
@@ -321,10 +339,12 @@ class InstrumentedAsyncServer:
                                     namespace=self.admin_namespace)
 
     def serialize_socket(self, sid, namespace, eio_sid=None):
-        if eio_sid is None:
+        if eio_sid is None:  # pragma: no cover
             eio_sid = self.sio.manager.eio_sid_from_sid(sid)
         socket = self.sio.eio._get_socket(eio_sid)
         environ = self.sio.environ.get(eio_sid, {})
+        tm = self.sio.manager._timestamps[sid] if sid in \
+            self.sio.manager._timestamps else 0
         return {
             'id': sid,
             'clientId': eio_sid,
@@ -339,9 +359,9 @@ class InstrumentedAsyncServer:
                     environ.get('QUERY_STRING', '')).items()},
                 'secure': environ.get('wsgi.url_scheme', '') == 'https',
                 'url': environ.get('PATH_INFO', ''),
-                'issued': self.sio.manager._timestamps[sid] * 1000,
-                'time': datetime.utcfromtimestamp(
-                    self.sio.manager._timestamps[sid]).isoformat() + 'Z',
+                'issued': tm * 1000,
+                'time': datetime.utcfromtimestamp(tm).isoformat() + 'Z'
+                if tm else '',
             },
             'rooms': self.sio.manager.get_rooms(sid, namespace),
         }

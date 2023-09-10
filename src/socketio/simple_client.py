@@ -23,7 +23,7 @@ class SimpleClient:
         self.input_buffer = []
 
     def connect(self, url, headers={}, auth=None, transports=None,
-                namespace='/', socketio_path='socket.io'):
+                namespace='/', socketio_path='socket.io', wait_timeout=5):
         """Connect to a Socket.IO server.
 
         :param url: The URL of the Socket.IO server. It can include custom
@@ -49,6 +49,9 @@ class SimpleClient:
         :param socketio_path: The endpoint where the Socket.IO server is
                               installed. The default value is appropriate for
                               most cases.
+        :param wait_timeout: How long the client should wait for the
+                             connection to be established. The default is 5
+                             seconds.
         """
         if self.connected:
             raise RuntimeError('Already connected')
@@ -78,7 +81,8 @@ class SimpleClient:
 
         self.client.connect(url, headers=headers, auth=auth,
                             transports=transports, namespaces=[namespace],
-                            socketio_path=socketio_path)
+                            socketio_path=socketio_path,
+                            wait_timeout=wait_timeout)
 
     @property
     def sid(self):
@@ -87,7 +91,7 @@ class SimpleClient:
         The session ID is not guaranteed to remain constant throughout the life
         of the connection, as reconnections can cause it to change.
         """
-        return self.client.sid if self.client else None
+        return self.client.get_sid(self.namespace) if self.client else None
 
     @property
     def transport(self):

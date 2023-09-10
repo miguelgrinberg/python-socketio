@@ -353,7 +353,7 @@ class TestAsyncManager(unittest.TestCase):
         _run(self.bm.emit('my event', {'foo': 'bar'}, namespace='/foo'))
 
     def test_emit_with_tuple(self):
-        sid = self.bm.connect('123', '/foo')
+        sid = _run(self.bm.connect('123', '/foo'))
         _run(
             self.bm.emit(
                 'my event', ('foo', 'bar'), namespace='/foo', room=sid
@@ -366,7 +366,7 @@ class TestAsyncManager(unittest.TestCase):
         assert pkt.encode() == '42/foo,["my event","foo","bar"]'
 
     def test_emit_with_list(self):
-        sid = self.bm.connect('123', '/foo')
+        sid = _run(self.bm.connect('123', '/foo'))
         _run(
             self.bm.emit(
                 'my event', ['foo', 'bar'], namespace='/foo', room=sid
@@ -379,7 +379,7 @@ class TestAsyncManager(unittest.TestCase):
         assert pkt.encode() == '42/foo,["my event",["foo","bar"]]'
 
     def test_emit_with_none(self):
-        sid = self.bm.connect('123', '/foo')
+        sid = _run(self.bm.connect('123', '/foo'))
         _run(
             self.bm.emit(
                 'my event', None, namespace='/foo', room=sid
@@ -392,7 +392,7 @@ class TestAsyncManager(unittest.TestCase):
         assert pkt.encode() == '42/foo,["my event"]'
 
     def test_emit_binary(self):
-        sid = self.bm.connect('123', '/')
+        sid = _run(self.bm.connect('123', '/'))
         _run(
             self.bm.emit(
                 u'my event', b'my binary data', namespace='/', room=sid

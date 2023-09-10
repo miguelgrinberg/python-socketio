@@ -18,12 +18,12 @@ class TestSimpleClient(unittest.TestCase):
         client = SimpleClient(123, a='b')
         with mock.patch('socketio.simple_client.Client') as mock_client:
             client.connect('url', headers='h', auth='a', transports='t',
-                           namespace='n', socketio_path='s')
+                           namespace='n', socketio_path='s', wait_timeout='w')
             mock_client.assert_called_once_with(123, a='b')
             assert client.client == mock_client()
             mock_client().connect.assert_called_once_with(
                 'url', headers='h', auth='a', transports='t',
-                namespaces=['n'], socketio_path='s')
+                namespaces=['n'], socketio_path='s', wait_timeout='w')
             mock_client().event.call_count == 3
             mock_client().on.called_once_with('*')
             assert client.namespace == 'n'
@@ -33,12 +33,13 @@ class TestSimpleClient(unittest.TestCase):
         with SimpleClient(123, a='b') as client:
             with mock.patch('socketio.simple_client.Client') as mock_client:
                 client.connect('url', headers='h', auth='a', transports='t',
-                               namespace='n', socketio_path='s')
+                               namespace='n', socketio_path='s',
+                               wait_timeout='w')
                 mock_client.assert_called_once_with(123, a='b')
                 assert client.client == mock_client()
                 mock_client().connect.assert_called_once_with(
                     'url', headers='h', auth='a', transports='t',
-                    namespaces=['n'], socketio_path='s')
+                    namespaces=['n'], socketio_path='s', wait_timeout='w')
                 mock_client().event.call_count == 3
                 mock_client().on.called_once_with('*')
                 assert client.namespace == 'n'
@@ -54,7 +55,8 @@ class TestSimpleClient(unittest.TestCase):
 
     def test_properties(self):
         client = SimpleClient()
-        client.client = mock.MagicMock(sid='sid', transport='websocket')
+        client.client = mock.MagicMock(transport='websocket')
+        client.client.get_sid.return_value = 'sid'
         client.connected_event.set()
         client.connected = True
 
