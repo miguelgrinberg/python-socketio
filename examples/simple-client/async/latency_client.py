@@ -4,10 +4,8 @@ import socketio
 
 
 async def main():
-    sio = socketio.AsyncSimpleClient()
-    await sio.connect('http://localhost:5000')
-
-    try:
+    async with socketio.AsyncSimpleClient() as sio:
+        await sio.connect('http://localhost:5000')
         while True:
             start_timer = time.time()
             await sio.emit('ping_from_client')
@@ -17,8 +15,6 @@ async def main():
             print('latency is {0:.2f} ms'.format(latency * 1000))
 
             await asyncio.sleep(1)
-    except (KeyboardInterrupt, asyncio.CancelledError):
-        await sio.disconnect()
 
 
 if __name__ == '__main__':

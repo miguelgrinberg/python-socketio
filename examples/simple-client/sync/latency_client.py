@@ -3,10 +3,8 @@ import socketio
 
 
 def main():
-    sio = socketio.SimpleClient()
-    sio.connect('http://localhost:5000')
-
-    try:
+    with socketio.SimpleClient() as sio:
+        sio.connect('http://localhost:5000')
         while True:
             start_timer = time.time()
             sio.emit('ping_from_client')
@@ -16,8 +14,6 @@ def main():
             print('latency is {0:.2f} ms'.format(latency * 1000))
 
             time.sleep(1)
-    except KeyboardInterrupt:
-        sio.disconnect()
 
 
 if __name__ == '__main__':

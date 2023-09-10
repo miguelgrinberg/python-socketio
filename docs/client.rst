@@ -35,8 +35,26 @@ the application.
 Creating a Client Instance
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-To instantiate a Socket.IO client, create an instance of the appropriate client
-class::
+The easiest way to create a Socket.IO client is to use the context manager
+interface::
+
+    import socketio
+
+    # standard Python
+    with socketio.SimpleClient() as sio:
+        # ... connect to a server and use the client
+        # ... no need to manually disconnect!
+
+    # asyncio
+    async with socketio.AsyncSimpleClient() as sio:
+        # ... connect to a server and use the client
+        # ... no need to manually disconnect!
+
+
+With this usage the context manager will ensure that the client is properly
+disconnected before exiting the ``with`` or ``async with`` block.
+
+If preferred, a client can be manually instantiated::
 
     import socketio
 

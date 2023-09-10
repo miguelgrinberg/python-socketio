@@ -29,6 +29,21 @@ class TestSimpleClient(unittest.TestCase):
             assert client.namespace == 'n'
             assert not client.input_event.is_set()
 
+    def test_connect_context_manager(self):
+        with SimpleClient(123, a='b') as client:
+            with mock.patch('socketio.simple_client.Client') as mock_client:
+                client.connect('url', headers='h', auth='a', transports='t',
+                               namespace='n', socketio_path='s')
+                mock_client.assert_called_once_with(123, a='b')
+                assert client.client == mock_client()
+                mock_client().connect.assert_called_once_with(
+                    'url', headers='h', auth='a', transports='t',
+                    namespaces=['n'], socketio_path='s')
+                mock_client().event.call_count == 3
+                mock_client().on.called_once_with('*')
+                assert client.namespace == 'n'
+                assert not client.input_event.is_set()
+
     def test_connect_twice(self):
         client = SimpleClient(123, a='b')
         client.client = mock.MagicMock()
@@ -141,6 +156,8 @@ class TestSimpleClient(unittest.TestCase):
         client = SimpleClient()
         mc = mock.MagicMock()
         client.client = mc
+        client.connected = True
+        client.disconnect()
         client.disconnect()
         mc.disconnect.assert_called_once_with()
         assert client.client is None

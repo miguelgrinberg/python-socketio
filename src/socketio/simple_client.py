@@ -57,21 +57,21 @@ class SimpleClient:
         self.input_event.clear()
         self.client = Client(*self.client_args, **self.client_kwargs)
 
-        @self.client.event
+        @self.client.event(namespace=self.namespace)
         def connect():  # pragma: no cover
             self.connected = True
             self.connected_event.set()
 
-        @self.client.event
+        @self.client.event(namespace=self.namespace)
         def disconnect():  # pragma: no cover
             self.connected_event.clear()
 
-        @self.client.event
+        @self.client.event(namespace=self.namespace)
         def __disconnect_final():  # pragma: no cover
             self.connected = False
             self.connected_event.set()
 
-        @self.client.on('*')
+        @self.client.on('*', namespace=self.namespace)
         def on_event(event, *args):  # pragma: no cover
             self.input_buffer.append([event, *args])
             self.input_event.set()
@@ -162,8 +162,10 @@ class SimpleClient:
         the server included arguments with the event, they are returned as
         additional list elements.
         """
-        if not self.input_buffer:
-            self.connected_event.wait()
+        while not self.input_buffer:
+            if not self.connected_event.wait(
+                    timeout=timeout):  # pragma: no cover
+                raise TimeoutError()
             if not self.connected:
                 raise DisconnectedError()
             if not self.input_event.wait(timeout=timeout):
@@ -173,5 +175,13 @@ class SimpleClient:
 
     def disconnect(self):
         """Disconnect from the server."""
-        self.client.disconnect()
-        self.client = None
+        if self.connected:
+            self.client.disconnect()
+            self.client = None
+            self.connected = False
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.disconnect()
