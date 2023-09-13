@@ -387,6 +387,15 @@ class AsyncServer(server.Server):
             await self.manager.disconnect(sid, namespace=namespace,
                                           ignore_queue=True)
 
+    async def shutdown(self):
+        """Stop Socket.IO background tasks.
+
+        This method stops all background activity initiated by the Socket.IO
+        server. It must be called before shutting down the web server.
+        """
+        self.logger.info('Socket.IO is shutting down')
+        await self.eio.shutdown()
+
     async def handle_request(self, *args, **kwargs):
         """Handle an HTTP request from the client.
 

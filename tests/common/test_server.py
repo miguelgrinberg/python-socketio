@@ -917,6 +917,11 @@ class TestServer(unittest.TestCase):
             None,
         )
 
+    def test_shutdown(self, eio):
+        s = server.Server()
+        s.shutdown()
+        s.eio.shutdown.assert_called_once_with()
+
     def test_start_background_task(self, eio):
         s = server.Server()
         s.start_background_task('foo', 'bar', baz='baz')

@@ -981,6 +981,12 @@ class TestAsyncServer(unittest.TestCase):
             None,
         )
 
+    def test_shutdown(self, eio):
+        s = asyncio_server.AsyncServer()
+        s.eio.shutdown = AsyncMock()
+        _run(s.shutdown())
+        s.eio.shutdown.mock.assert_called_once_with()
+
     def test_start_background_task(self, eio):
         s = asyncio_server.AsyncServer()
         s.start_background_task('foo', 'bar', baz='baz')

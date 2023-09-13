@@ -570,6 +570,15 @@ class Server(object):
             self.manager.disconnect(sid, namespace=namespace,
                                     ignore_queue=True)
 
+    def shutdown(self):
+        """Stop Socket.IO background tasks.
+
+        This method stops all background activity initiated by the Socket.IO
+        server. It must be called before shutting down the web server.
+        """
+        self.logger.info('Socket.IO is shutting down')
+        self.eio.shutdown()
+
     def transport(self, sid):
         """Return the name of the transport used by the client.
 
