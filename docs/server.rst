@@ -617,6 +617,41 @@ callbacks when emitting. When the external process needs to receive callbacks,
 using a client to connect to the server with read and write support is a better
 option than a write-only client manager.
 
+Monitoring and Administration
+-----------------------------
+
+The Socket.IO server can be configured to accept connections from the official
+`Socket.IO Admin UI <https://socket.io/docs/v4/admin-ui/>`_. This tool provides
+real-time information about currently connected clients, rooms in use and
+events being emitted. It also allows an administrator to manually emit events,
+change room assignments and disconnect clients. The hosted version of this tool
+is available at `https://admin.socket.io <https://admin.socket.io>`_. 
+
+Given that enabling this feature can affect the performance of the server, it
+is disabled by default. To enable it, call the
+:func:`instrument() <socketio.Server.instrument>` method. For example::
+
+    import os
+    import socketio
+
+    sio = socketio.Server(cors_allowed_origins=[
+        'http://localhost:5000',
+        'https://admin.socket.io',
+    ])
+    sio.instrument(auth={
+        'username': 'admin',
+        'password': os.environ['ADMIN_PASSWORD'],
+    })
+
+This configures the server to accept connections from the hosted Admin UI
+client. Administrators can then open https://admin.socket.io in their web
+browsers and log in with username ``admin`` and the password given by the
+``ADMIN_PASSWORD`` environment variable. To ensure the Admin UI front end is
+allowed to connect, CORS is also configured.
+
+Consult the reference documentation to learn about additional configuration
+options that are available.
+
 Debugging and Troubleshooting
 -----------------------------
 
