@@ -54,9 +54,7 @@ class KombuManager(PubSubManager):  # pragma: no cover
             raise RuntimeError('Kombu package is not installed '
                                '(Run "pip install kombu" in your '
                                'virtualenv).')
-        super(KombuManager, self).__init__(channel=channel,
-                                           write_only=write_only,
-                                           logger=logger)
+        super().__init__(channel=channel, write_only=write_only, logger=logger)
         self.url = url
         self.connection_options = connection_options or {}
         self.exchange_options = exchange_options or {}
@@ -65,7 +63,7 @@ class KombuManager(PubSubManager):  # pragma: no cover
         self.publisher_connection = self._connection()
 
     def initialize(self):
-        super(KombuManager, self).initialize()
+        super().initialize()
 
         monkey_patched = True
         if self.server.async_mode == 'eventlet':

@@ -72,9 +72,7 @@ class ZmqManager(PubSubManager):  # pragma: no cover
         self.sink = sink
         self.sub = sub
         self.channel = channel
-        super(ZmqManager, self).__init__(channel=channel,
-                                         write_only=write_only,
-                                         logger=logger)
+        super().__init__(channel=channel, write_only=write_only, logger=logger)
 
     def _publish(self, data):
         pickled_data = pickle.dumps(

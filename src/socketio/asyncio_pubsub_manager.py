@@ -83,7 +83,7 @@ class AsyncPubSubManager(AsyncManager):
 
     async def disconnect(self, sid, namespace, **kwargs):
         if kwargs.get('ignore_queue'):
-            return await super(AsyncPubSubManager, self).disconnect(
+            return await super().disconnect(
                 sid, namespace=namespace)
         message = {'method': 'disconnect', 'sid': sid,
                    'namespace': namespace or '/', 'host_id': self.host_id}

@@ -24,14 +24,14 @@ class PubSubManager(BaseManager):
     name = 'pubsub'
 
     def __init__(self, channel='socketio', write_only=False, logger=None):
-        super(PubSubManager, self).__init__()
+        super().__init__()
         self.channel = channel
         self.write_only = write_only
         self.host_id = uuid.uuid4().hex
         self.logger = logger
 
     def initialize(self):
-        super(PubSubManager, self).initialize()
+        super().initialize()
         if not self.write_only:
             self.thread = self.server.start_background_task(self._thread)
         self._get_logger().info(self.name + ' backend initialized.')
@@ -47,7 +47,7 @@ class PubSubManager(BaseManager):
         The parameters are the same as in :meth:`.Server.emit`.
         """
         if kwargs.get('ignore_queue'):
-            return super(PubSubManager, self).emit(
+            return super().emit(
                 event, data, namespace=namespace, room=room, skip_sid=skip_sid,
                 callback=callback)
         namespace = namespace or '/'
@@ -81,8 +81,7 @@ class PubSubManager(BaseManager):
 
     def disconnect(self, sid, namespace=None, **kwargs):
         if kwargs.get('ignore_queue'):
-            return super(PubSubManager, self).disconnect(
-                sid, namespace=namespace)
+            return super().disconnect(sid, namespace=namespace)
         message = {'method': 'disconnect', 'sid': sid,
                    'namespace': namespace or '/', 'host_id': self.host_id}
         self._handle_disconnect(message)  # handle in this host
