@@ -61,10 +61,12 @@ class PubSubManager(BaseManager):
             callback = (room, namespace, id)
         else:
             callback = None
-        self._publish({'method': 'emit', 'event': event, 'data': data,
-                       'namespace': namespace, 'room': room,
-                       'skip_sid': skip_sid, 'callback': callback,
-                       'host_id': self.host_id})
+        message = {'method': 'emit', 'event': event, 'data': data,
+                   'namespace': namespace, 'room': room,
+                   'skip_sid': skip_sid, 'callback': callback,
+                   'host_id': self.host_id}
+        self._handle_emit(message)  # handle in this host
+        self._publish(message)  # notify other hosts
 
     def can_disconnect(self, sid, namespace):
         if self.is_connected(sid, namespace):
@@ -72,19 +74,25 @@ class PubSubManager(BaseManager):
             return super().can_disconnect(sid, namespace)
         else:
             # client is in another server, so we post request to the queue
-            self._publish({'method': 'disconnect', 'sid': sid,
-                           'namespace': namespace or '/'})
+            message = {'method': 'disconnect', 'sid': sid,
+                       'namespace': namespace or '/', 'host_id': self.host_id}
+            self._handle_disconnect(message)  # handle in this host
+            self._publish(message)  # notify other hosts
 
     def disconnect(self, sid, namespace=None, **kwargs):
         if kwargs.get('ignore_queue'):
             return super(PubSubManager, self).disconnect(
                 sid, namespace=namespace)
-        self._publish({'method': 'disconnect', 'sid': sid,
-                       'namespace': namespace or '/'})
+        message = {'method': 'disconnect', 'sid': sid,
+                   'namespace': namespace or '/', 'host_id': self.host_id}
+        self._handle_disconnect(message)  # handle in this host
+        self._publish(message)  # notify other hosts
 
     def close_room(self, room, namespace=None):
-        self._publish({'method': 'close_room', 'room': room,
-                       'namespace': namespace or '/'})
+        message = {'method': 'close_room', 'room': room,
+                   'namespace': namespace or '/', 'host_id': self.host_id}
+        self._handle_close_room(message)  # handle in this host
+        self._publish(message)  # notify other hosts
 
     def _publish(self, data):
         """Publish a message on the Socket.IO channel.
@@ -116,11 +124,10 @@ class PubSubManager(BaseManager):
                                *remote_callback)
         else:
             callback = None
-        super(PubSubManager, self).emit(message['event'], message['data'],
-                                        namespace=message.get('namespace'),
-                                        room=message.get('room'),
-                                        skip_sid=message.get('skip_sid'),
-                                        callback=callback)
+        super().emit(message['event'], message['data'],
+                     namespace=message.get('namespace'),
+                     room=message.get('room'),
+                     skip_sid=message.get('skip_sid'), callback=callback)
 
     def _handle_callback(self, message):
         if self.host_id == message.get('host_id'):
@@ -135,9 +142,12 @@ class PubSubManager(BaseManager):
     def _return_callback(self, host_id, sid, namespace, callback_id, *args):
         # When an event callback is received, the callback is returned back
         # to the sender, which is identified by the host_id
-        self._publish({'method': 'callback', 'host_id': host_id,
-                       'sid': sid, 'namespace': namespace, 'id': callback_id,
-                       'args': args})
+        if host_id == self.host_id:
+            self.trigger_callback(sid, callback_id, args)
+        else:
+            self._publish({'method': 'callback', 'host_id': host_id,
+                           'sid': sid, 'namespace': namespace,
+                           'id': callback_id, 'args': args})
 
     def _handle_disconnect(self, message):
         self.server.disconnect(sid=message.get('sid'),
@@ -145,8 +155,8 @@ class PubSubManager(BaseManager):
                                ignore_queue=True)
 
     def _handle_close_room(self, message):
-        super(PubSubManager, self).close_room(
-            room=message.get('room'), namespace=message.get('namespace'))
+        super().close_room(room=message.get('room'),
+                           namespace=message.get('namespace'))
 
     def _thread(self):
         for message in self._listen():
@@ -165,17 +175,18 @@ class PubSubManager(BaseManager):
                     except:
                         pass
             if data and 'method' in data:
-                self._get_logger().info('pubsub message: {}'.format(
+                self._get_logger().debug('pubsub message: {}'.format(
                     data['method']))
                 try:
-                    if data['method'] == 'emit':
-                        self._handle_emit(data)
-                    elif data['method'] == 'callback':
+                    if data['method'] == 'callback':
                         self._handle_callback(data)
-                    elif data['method'] == 'disconnect':
-                        self._handle_disconnect(data)
-                    elif data['method'] == 'close_room':
-                        self._handle_close_room(data)
+                    elif data.get('host_id') != self.host_id:
+                        if data['method'] == 'emit':
+                            self._handle_emit(data)
+                        elif data['method'] == 'disconnect':
+                            self._handle_disconnect(data)
+                        elif data['method'] == 'close_room':
+                            self._handle_close_room(data)
                 except:
                     self.server.logger.exception(
                         'Unknown error in pubsub listening thread')

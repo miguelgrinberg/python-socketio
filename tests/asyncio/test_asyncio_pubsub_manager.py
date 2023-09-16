@@ -163,13 +163,15 @@ class TestAsyncPubSubManager(unittest.TestCase):
         assert _run(self.pm.can_disconnect(sid, '/')) is True
         _run(self.pm.can_disconnect(sid, '/foo'))
         self.pm._publish.mock.assert_called_once_with(
-            {'method': 'disconnect', 'sid': sid, 'namespace': '/foo'}
+            {'method': 'disconnect', 'sid': sid, 'namespace': '/foo',
+             'host_id': '123456'}
         )
 
     def test_disconnect(self):
         _run(self.pm.disconnect('foo', '/'))
         self.pm._publish.mock.assert_called_once_with(
-            {'method': 'disconnect', 'sid': 'foo', 'namespace': '/'}
+            {'method': 'disconnect', 'sid': 'foo', 'namespace': '/',
+             'host_id': '123456'}
         )
 
     def test_disconnect_ignore_queue(self):
@@ -182,13 +184,15 @@ class TestAsyncPubSubManager(unittest.TestCase):
     def test_close_room(self):
         _run(self.pm.close_room('foo'))
         self.pm._publish.mock.assert_called_once_with(
-            {'method': 'close_room', 'room': 'foo', 'namespace': '/'}
+            {'method': 'close_room', 'room': 'foo', 'namespace': '/',
+             'host_id': '123456'}
         )
 
     def test_close_room_with_namespace(self):
         _run(self.pm.close_room('foo', '/bar'))
         self.pm._publish.mock.assert_called_once_with(
-            {'method': 'close_room', 'room': 'foo', 'namespace': '/bar'}
+            {'method': 'close_room', 'room': 'foo', 'namespace': '/bar',
+             'host_id': '123456'}
         )
 
     def test_handle_emit(self):
@@ -263,8 +267,7 @@ class TestAsyncPubSubManager(unittest.TestCase):
                 callback=None,
             )
 
-    def test_handle_emit_with_callback(self):
-        host_id = self.pm.host_id
+    def test_handle_emit_with_remote_callback(self):
         with mock.patch.object(
             asyncio_manager.AsyncManager, 'emit', new=AsyncMock()
         ) as super_emit:
@@ -275,7 +278,7 @@ class TestAsyncPubSubManager(unittest.TestCase):
                         'data': 'bar',
                         'namespace': '/baz',
                         'callback': ('sid', '/baz', 123),
-                        'host_id': '123456',
+                        'host_id': 'x',
                     }
                 )
             )
@@ -291,13 +294,39 @@ class TestAsyncPubSubManager(unittest.TestCase):
             self.pm._publish.mock.assert_called_once_with(
                 {
                     'method': 'callback',
-                    'host_id': host_id,
+                    'host_id': 'x',
                     'sid': 'sid',
                     'namespace': '/baz',
                     'id': 123,
                     'args': ('one', 2, 'three'),
                 }
             )
+
+    def test_handle_emit_with_local_callback(self):
+        with mock.patch.object(
+            asyncio_manager.AsyncManager, 'emit', new=AsyncMock()
+        ) as super_emit:
+            _run(
+                self.pm._handle_emit(
+                    {
+                        'event': 'foo',
+                        'data': 'bar',
+                        'namespace': '/baz',
+                        'callback': ('sid', '/baz', 123),
+                        'host_id': self.pm.host_id,
+                    }
+                )
+            )
+            assert super_emit.mock.call_count == 1
+            assert super_emit.mock.call_args[0] == (self.pm, 'foo', 'bar')
+            assert super_emit.mock.call_args[1]['namespace'] == '/baz'
+            assert super_emit.mock.call_args[1]['room'] is None
+            assert super_emit.mock.call_args[1]['skip_sid'] is None
+            assert isinstance(
+                super_emit.mock.call_args[1]['callback'], functools.partial
+            )
+            _run(super_emit.mock.call_args[1]['callback']('one', 2, 'three'))
+            self.pm._publish.mock.assert_not_called()
 
     def test_handle_callback(self):
         host_id = self.pm.host_id
@@ -419,34 +448,50 @@ class TestAsyncPubSubManager(unittest.TestCase):
         self.pm._handle_callback = AsyncMock()
         self.pm._handle_disconnect = AsyncMock()
         self.pm._handle_close_room = AsyncMock()
+        host_id = self.pm.host_id
 
         async def messages():
             import pickle
 
-            yield {'method': 'emit', 'value': 'foo'}
-            yield {'missing': 'method'}
-            yield '{"method": "callback", "value": "bar"}'
-            yield {'method': 'disconnect', 'sid': '123', 'namespace': '/foo'}
-            yield {'method': 'bogus'}
-            yield pickle.dumps({'method': 'close_room', 'value': 'baz'})
+            yield {'method': 'emit', 'value': 'foo', 'host_id': 'x'}
+            yield {'missing': 'method', 'host_id': 'x'}
+            yield '{"method": "callback", "value": "bar", "host_id": "x"}'
+            yield {'method': 'disconnect', 'sid': '123', 'namespace': '/foo',
+                   'host_id': 'x'}
+            yield {'method': 'bogus', 'host_id': 'x'}
+            yield pickle.dumps({'method': 'close_room', 'value': 'baz',
+                                'host_id': 'x'})
             yield 'bad json'
             yield b'bad pickled'
+
+            # these should not publish anything on the queue, as they come from
+            # the same host
+            yield {'method': 'emit', 'value': 'foo', 'host_id': host_id}
+            yield {'method': 'callback', 'value': 'bar', 'host_id': host_id}
+            yield {'method': 'disconnect', 'sid': '123', 'namespace': '/foo',
+                   'host_id': host_id}
+            yield pickle.dumps({'method': 'close_room', 'value': 'baz',
+                                'host_id': host_id})
             raise asyncio.CancelledError()  # force the thread to exit
 
         self.pm._listen = messages
         _run(self.pm._thread())
 
         self.pm._handle_emit.mock.assert_called_once_with(
-            {'method': 'emit', 'value': 'foo'}
+            {'method': 'emit', 'value': 'foo', 'host_id': 'x'}
         )
-        self.pm._handle_callback.mock.assert_called_once_with(
-            {'method': 'callback', 'value': 'bar'}
+        self.pm._handle_callback.mock.assert_any_call(
+            {'method': 'callback', 'value': 'bar', 'host_id': 'x'}
+        )
+        self.pm._handle_callback.mock.assert_any_call(
+            {'method': 'callback', 'value': 'bar', 'host_id': host_id}
         )
         self.pm._handle_disconnect.mock.assert_called_once_with(
-            {'method': 'disconnect', 'sid': '123', 'namespace': '/foo'}
+            {'method': 'disconnect', 'sid': '123', 'namespace': '/foo',
+             'host_id': 'x'}
         )
         self.pm._handle_close_room.mock.assert_called_once_with(
-            {'method': 'close_room', 'value': 'baz'}
+            {'method': 'close_room', 'value': 'baz', 'host_id': 'x'}
         )
 
     def test_background_thread_exception(self):
@@ -454,15 +499,15 @@ class TestAsyncPubSubManager(unittest.TestCase):
                                                       asyncio.CancelledError])
 
         async def messages():
-            yield {'method': 'emit', 'value': 'foo'}
-            yield {'method': 'emit', 'value': 'bar'}
+            yield {'method': 'emit', 'value': 'foo', 'host_id': 'x'}
+            yield {'method': 'emit', 'value': 'bar', 'host_id': 'x'}
 
         self.pm._listen = messages
         _run(self.pm._thread())
 
         self.pm._handle_emit.mock.assert_any_call(
-            {'method': 'emit', 'value': 'foo'}
+            {'method': 'emit', 'value': 'foo', 'host_id': 'x'}
         )
         self.pm._handle_emit.mock.assert_called_with(
-            {'method': 'emit', 'value': 'bar'}
+            {'method': 'emit', 'value': 'bar', 'host_id': 'x'}
         )

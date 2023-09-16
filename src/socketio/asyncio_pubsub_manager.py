@@ -64,10 +64,12 @@ class AsyncPubSubManager(AsyncManager):
             callback = (room, namespace, id)
         else:
             callback = None
-        await self._publish({'method': 'emit', 'event': event, 'data': data,
-                             'namespace': namespace, 'room': room,
-                             'skip_sid': skip_sid, 'callback': callback,
-                             'host_id': self.host_id})
+        message = {'method': 'emit', 'event': event, 'data': data,
+                   'namespace': namespace, 'room': room,
+                   'skip_sid': skip_sid, 'callback': callback,
+                   'host_id': self.host_id}
+        await self._handle_emit(message)  # handle in this host
+        await self._publish(message)  # notify other hosts
 
     async def can_disconnect(self, sid, namespace):
         if self.is_connected(sid, namespace):
@@ -76,18 +78,23 @@ class AsyncPubSubManager(AsyncManager):
         else:
             # client is in another server, so we post request to the queue
             await self._publish({'method': 'disconnect', 'sid': sid,
-                                 'namespace': namespace or '/'})
+                                 'namespace': namespace or '/',
+                                 'host_id': self.host_id})
 
     async def disconnect(self, sid, namespace, **kwargs):
         if kwargs.get('ignore_queue'):
             return await super(AsyncPubSubManager, self).disconnect(
                 sid, namespace=namespace)
-        await self._publish({'method': 'disconnect', 'sid': sid,
-                             'namespace': namespace or '/'})
+        message = {'method': 'disconnect', 'sid': sid,
+                   'namespace': namespace or '/', 'host_id': self.host_id}
+        await self._handle_disconnect(message)  # handle in this host
+        await self._publish(message)  # notify other hosts
 
     async def close_room(self, room, namespace=None):
-        await self._publish({'method': 'close_room', 'room': room,
-                             'namespace': namespace or '/'})
+        message = {'method': 'close_room', 'room': room,
+                   'namespace': namespace or '/', 'host_id': self.host_id}
+        await self._handle_close_room(message)  # handle in this host
+        await self._publish(message)  # notify other hosts
 
     async def _publish(self, data):
         """Publish a message on the Socket.IO channel.
@@ -139,9 +146,12 @@ class AsyncPubSubManager(AsyncManager):
                                *args):
         # When an event callback is received, the callback is returned back
         # the sender, which is identified by the host_id
-        await self._publish({'method': 'callback', 'host_id': host_id,
-                             'sid': sid, 'namespace': namespace,
-                             'id': callback_id, 'args': args})
+        if host_id == self.host_id:
+            await self.trigger_callback(sid, callback_id, args)
+        else:
+            await self._publish({'method': 'callback', 'host_id': host_id,
+                                 'sid': sid, 'namespace': namespace,
+                                 'id': callback_id, 'args': args})
 
     async def _handle_disconnect(self, message):
         await self.server.disconnect(sid=message.get('sid'),
@@ -149,8 +159,8 @@ class AsyncPubSubManager(AsyncManager):
                                      ignore_queue=True)
 
     async def _handle_close_room(self, message):
-        await super().close_room(
-            room=message.get('room'), namespace=message.get('namespace'))
+        await super().close_room(room=message.get('room'),
+                                 namespace=message.get('namespace'))
 
     async def _thread(self):
         while True:
@@ -171,17 +181,18 @@ class AsyncPubSubManager(AsyncManager):
                             except:
                                 pass
                     if data and 'method' in data:
-                        self._get_logger().info('pubsub message: {}'.format(
+                        self._get_logger().debug('pubsub message: {}'.format(
                             data['method']))
                         try:
-                            if data['method'] == 'emit':
-                                await self._handle_emit(data)
-                            elif data['method'] == 'callback':
+                            if data['method'] == 'callback':
                                 await self._handle_callback(data)
-                            elif data['method'] == 'disconnect':
-                                await self._handle_disconnect(data)
-                            elif data['method'] == 'close_room':
-                                await self._handle_close_room(data)
+                            elif data.get('host_id') != self.host_id:
+                                if data['method'] == 'emit':
+                                    await self._handle_emit(data)
+                                elif data['method'] == 'disconnect':
+                                    await self._handle_disconnect(data)
+                                elif data['method'] == 'close_room':
+                                    await self._handle_close_room(data)
                         except asyncio.CancelledError:
                             raise  # let the outer try/except handle it
                         except:
