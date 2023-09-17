@@ -132,8 +132,10 @@ class InstrumentedAsyncServer:
             await self.sio.sleep(0.1)
 
             # supported features
-            features = ['EMIT', 'JOIN', 'LEAVE', 'DISCONNECT', 'MJOIN',
-                        'MLEAVE', 'MDISCONNECT', 'AGGREGATED_EVENTS']
+            features = ['AGGREGATED_EVENTS']
+            if not self.read_only:
+                features += ['EMIT', 'JOIN', 'LEAVE', 'DISCONNECT', 'MJOIN',
+                             'MLEAVE', 'MDISCONNECT']
             if self.mode == 'development':
                 features.append('ALL_EVENTS')
             await self.sio.emit('config', {'supportedFeatures': features},

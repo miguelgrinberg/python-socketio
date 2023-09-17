@@ -172,6 +172,8 @@ class TestAsyncAdmin(unittest.TestCase):
 
         assert 'supportedFeatures' in events['config']
         assert 'ALL_EVENTS' in events['config']['supportedFeatures']
+        assert 'AGGREGATED_EVENTS' in events['config']['supportedFeatures']
+        assert 'EMIT' in events['config']['supportedFeatures']
         assert len(events['all_sockets']) == 1
         assert events['all_sockets'][0]['id'] == sid
         assert events['all_sockets'][0]['rooms'] == [sid]
@@ -217,6 +219,8 @@ class TestAsyncAdmin(unittest.TestCase):
 
         assert 'supportedFeatures' in events['config']
         assert 'ALL_EVENTS' in events['config']['supportedFeatures']
+        assert 'AGGREGATED_EVENTS' in events['config']['supportedFeatures']
+        assert 'EMIT' in events['config']['supportedFeatures']
         assert len(events['all_sockets']) == 4
         assert events['server_stats']['clientsCount'] == 4
         assert events['server_stats']['pollingClientsCount'] == 1
@@ -238,7 +242,7 @@ class TestAsyncAdmin(unittest.TestCase):
             elif socket['id'] == sid3:
                 assert socket['rooms'] == [sid3]
 
-    @with_instrumented_server(mode='production')
+    @with_instrumented_server(mode='production', read_only=True)
     def test_admin_connect_production(self, isvr):
         with socketio.SimpleClient() as admin_client:
             admin_client.connect('http://localhost:8900', namespace='/admin')
@@ -252,6 +256,8 @@ class TestAsyncAdmin(unittest.TestCase):
 
         assert 'supportedFeatures' in events['config']
         assert 'ALL_EVENTS' not in events['config']['supportedFeatures']
+        assert 'AGGREGATED_EVENTS' in events['config']['supportedFeatures']
+        assert 'EMIT' not in events['config']['supportedFeatures']
         assert events['server_stats']['clientsCount'] == 1
         assert events['server_stats']['pollingClientsCount'] == 0
         assert len(events['server_stats']['namespaces']) == 3
