@@ -275,6 +275,40 @@ class AsyncServer(server.Server):
             else callback_args[0][0] if len(callback_args[0]) == 1 \
             else None
 
+    async def enter_room(self, sid, room, namespace=None):
+        """Enter a room.
+
+        This function adds the client to a room. The :func:`emit` and
+        :func:`send` functions can optionally broadcast events to all the
+        clients in a room.
+
+        :param sid: Session ID of the client.
+        :param room: Room name. If the room does not exist it is created.
+        :param namespace: The Socket.IO namespace for the event. If this
+                          argument is omitted the default namespace is used.
+
+        Note: this method is a coroutine.
+        """
+        namespace = namespace or '/'
+        self.logger.info('%s is entering room %s [%s]', sid, room, namespace)
+        await self.manager.enter_room(sid, namespace, room)
+
+    async def leave_room(self, sid, room, namespace=None):
+        """Leave a room.
+
+        This function removes the client from a room.
+
+        :param sid: Session ID of the client.
+        :param room: Room name.
+        :param namespace: The Socket.IO namespace for the event. If this
+                          argument is omitted the default namespace is used.
+
+        Note: this method is a coroutine.
+        """
+        namespace = namespace or '/'
+        self.logger.info('%s is leaving room %s [%s]', sid, room, namespace)
+        await self.manager.leave_room(sid, namespace, room)
+
     async def close_room(self, room, namespace=None):
         """Close a room.
 

@@ -33,14 +33,14 @@ async def my_broadcast_event(sid, message):
 
 @sio.event
 async def join(sid, message):
-    sio.enter_room(sid, message['room'])
+    await sio.enter_room(sid, message['room'])
     await sio.emit('my_response', {'data': 'Entered room: ' + message['room']},
                    room=sid)
 
 
 @sio.event
 async def leave(sid, message):
-    sio.leave_room(sid, message['room'])
+    await sio.leave_room(sid, message['room'])
     await sio.emit('my_response', {'data': 'Left room: ' + message['room']},
                    room=sid)
 

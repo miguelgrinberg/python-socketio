@@ -54,11 +54,11 @@ class BaseManager(object):
         """Register a client connection to a namespace."""
         sid = self.server.eio.generate_id()
         try:
-            self.enter_room(sid, namespace, None, eio_sid=eio_sid)
+            self.basic_enter_room(sid, namespace, None, eio_sid=eio_sid)
         except ValueDuplicationError:
             # already connected
             return None
-        self.enter_room(sid, namespace, sid, eio_sid=eio_sid)
+        self.basic_enter_room(sid, namespace, sid, eio_sid=eio_sid)
         return sid
 
     def is_connected(self, sid, namespace):
@@ -106,7 +106,7 @@ class BaseManager(object):
             if sid in room:
                 rooms.append(room_name)
         for room in rooms:
-            self.leave_room(sid, namespace, room)
+            self.basic_leave_room(sid, namespace, room)
         if sid in self.callbacks:
             del self.callbacks[sid]
         if namespace in self.pending_disconnect and \
@@ -115,7 +115,7 @@ class BaseManager(object):
             if len(self.pending_disconnect[namespace]) == 0:
                 del self.pending_disconnect[namespace]
 
-    def enter_room(self, sid, namespace, room, eio_sid=None):
+    def basic_enter_room(self, sid, namespace, room, eio_sid=None):
         """Add a client to a room."""
         if eio_sid is None and namespace not in self.rooms:
             raise ValueError('sid is not connected to requested namespace')
@@ -127,7 +127,7 @@ class BaseManager(object):
             eio_sid = self.rooms[namespace][None][sid]
         self.rooms[namespace][room][sid] = eio_sid
 
-    def leave_room(self, sid, namespace, room):
+    def basic_leave_room(self, sid, namespace, room):
         """Remove a client from a room."""
         try:
             del self.rooms[namespace][room][sid]
@@ -138,11 +138,19 @@ class BaseManager(object):
         except KeyError:
             pass
 
+    def enter_room(self, sid, namespace, room, eio_sid=None):
+        """Add a client to a room."""
+        self.basic_enter_room(sid, namespace, room, eio_sid=eio_sid)
+
+    def leave_room(self, sid, namespace, room):
+        """Remove a client from a room."""
+        self.basic_leave_room(sid, namespace, room)
+
     def close_room(self, room, namespace):
         """Remove all participants from a room."""
         try:
             for sid, _ in self.get_participants(namespace, room):
-                self.leave_room(sid, namespace, room)
+                self.basic_leave_room(sid, namespace, room)
         except KeyError:
             pass
 

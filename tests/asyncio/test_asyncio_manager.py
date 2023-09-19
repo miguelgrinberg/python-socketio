@@ -54,8 +54,8 @@ class TestAsyncManager(unittest.TestCase):
     def test_disconnect(self):
         sid1 = self.bm.connect('123', '/foo')
         sid2 = self.bm.connect('456', '/foo')
-        self.bm.enter_room(sid1, '/foo', 'bar')
-        self.bm.enter_room(sid2, '/foo', 'baz')
+        _run(self.bm.enter_room(sid1, '/foo', 'bar'))
+        _run(self.bm.enter_room(sid2, '/foo', 'baz'))
         _run(self.bm.disconnect(sid1, '/foo'))
         assert dict(self.bm.rooms['/foo'][None]) == {sid2: '456'}
         assert dict(self.bm.rooms['/foo'][sid2]) == {sid2: '456'}
@@ -97,8 +97,8 @@ class TestAsyncManager(unittest.TestCase):
     def test_disconnect_all(self):
         sid1 = self.bm.connect('123', '/foo')
         sid2 = self.bm.connect('456', '/foo')
-        self.bm.enter_room(sid1, '/foo', 'bar')
-        self.bm.enter_room(sid2, '/foo', 'baz')
+        _run(self.bm.enter_room(sid1, '/foo', 'bar'))
+        _run(self.bm.enter_room(sid2, '/foo', 'baz'))
         _run(self.bm.disconnect(sid1, '/foo'))
         _run(self.bm.disconnect(sid2, '/foo'))
         assert self.bm.rooms == {}
@@ -173,8 +173,8 @@ class TestAsyncManager(unittest.TestCase):
 
     def test_leave_invalid_room(self):
         sid = self.bm.connect('123', '/foo')
-        self.bm.leave_room(sid, '/foo', 'baz')
-        self.bm.leave_room(sid, '/bar', 'baz')
+        _run(self.bm.leave_room(sid, '/foo', 'baz'))
+        _run(self.bm.leave_room(sid, '/bar', 'baz'))
 
     def test_no_room(self):
         rooms = self.bm.get_rooms('123', '/foo')
@@ -184,9 +184,11 @@ class TestAsyncManager(unittest.TestCase):
         sid = self.bm.connect('123', '/foo')
         self.bm.connect('456', '/foo')
         self.bm.connect('789', '/foo')
-        self.bm.enter_room(sid, '/foo', 'bar')
-        self.bm.enter_room(sid, '/foo', 'bar')
+        _run(self.bm.enter_room(sid, '/foo', 'bar'))
+        _run(self.bm.enter_room(sid, '/foo', 'bar'))
         _run(self.bm.close_room('bar', '/foo'))
+        from pprint import pprint
+        pprint(self.bm.rooms)
         assert 'bar' not in self.bm.rooms['/foo']
 
     def test_close_invalid_room(self):
@@ -194,7 +196,7 @@ class TestAsyncManager(unittest.TestCase):
 
     def test_rooms(self):
         sid = self.bm.connect('123', '/foo')
-        self.bm.enter_room(sid, '/foo', 'bar')
+        _run(self.bm.enter_room(sid, '/foo', 'bar'))
         r = self.bm.get_rooms(sid, '/foo')
         assert len(r) == 2
         assert sid in r
@@ -216,9 +218,9 @@ class TestAsyncManager(unittest.TestCase):
 
     def test_emit_to_room(self):
         sid1 = self.bm.connect('123', '/foo')
-        self.bm.enter_room(sid1, '/foo', 'bar')
+        _run(self.bm.enter_room(sid1, '/foo', 'bar'))
         sid2 = self.bm.connect('456', '/foo')
-        self.bm.enter_room(sid2, '/foo', 'bar')
+        _run(self.bm.enter_room(sid2, '/foo', 'bar'))
         self.bm.connect('789', '/foo')
         _run(
             self.bm.emit(
@@ -237,12 +239,12 @@ class TestAsyncManager(unittest.TestCase):
 
     def test_emit_to_rooms(self):
         sid1 = self.bm.connect('123', '/foo')
-        self.bm.enter_room(sid1, '/foo', 'bar')
+        _run(self.bm.enter_room(sid1, '/foo', 'bar'))
         sid2 = self.bm.connect('456', '/foo')
-        self.bm.enter_room(sid2, '/foo', 'bar')
-        self.bm.enter_room(sid2, '/foo', 'baz')
+        _run(self.bm.enter_room(sid2, '/foo', 'bar'))
+        _run(self.bm.enter_room(sid2, '/foo', 'baz'))
         sid3 = self.bm.connect('789', '/foo')
-        self.bm.enter_room(sid3, '/foo', 'baz')
+        _run(self.bm.enter_room(sid3, '/foo', 'baz'))
         _run(
             self.bm.emit('my event', {'foo': 'bar'}, namespace='/foo',
                          room=['bar', 'baz'])
@@ -263,9 +265,9 @@ class TestAsyncManager(unittest.TestCase):
 
     def test_emit_to_all(self):
         sid1 = self.bm.connect('123', '/foo')
-        self.bm.enter_room(sid1, '/foo', 'bar')
+        _run(self.bm.enter_room(sid1, '/foo', 'bar'))
         sid2 = self.bm.connect('456', '/foo')
-        self.bm.enter_room(sid2, '/foo', 'bar')
+        _run(self.bm.enter_room(sid2, '/foo', 'bar'))
         self.bm.connect('789', '/foo')
         self.bm.connect('abc', '/bar')
         _run(self.bm.emit('my event', {'foo': 'bar'}, namespace='/foo'))
@@ -285,9 +287,9 @@ class TestAsyncManager(unittest.TestCase):
 
     def test_emit_to_all_skip_one(self):
         sid1 = self.bm.connect('123', '/foo')
-        self.bm.enter_room(sid1, '/foo', 'bar')
+        _run(self.bm.enter_room(sid1, '/foo', 'bar'))
         sid2 = self.bm.connect('456', '/foo')
-        self.bm.enter_room(sid2, '/foo', 'bar')
+        _run(self.bm.enter_room(sid2, '/foo', 'bar'))
         self.bm.connect('789', '/foo')
         self.bm.connect('abc', '/bar')
         _run(
@@ -307,9 +309,9 @@ class TestAsyncManager(unittest.TestCase):
 
     def test_emit_to_all_skip_two(self):
         sid1 = self.bm.connect('123', '/foo')
-        self.bm.enter_room(sid1, '/foo', 'bar')
+        _run(self.bm.enter_room(sid1, '/foo', 'bar'))
         sid2 = self.bm.connect('456', '/foo')
-        self.bm.enter_room(sid2, '/foo', 'bar')
+        _run(self.bm.enter_room(sid2, '/foo', 'bar'))
         sid3 = self.bm.connect('789', '/foo')
         self.bm.connect('abc', '/bar')
         _run(

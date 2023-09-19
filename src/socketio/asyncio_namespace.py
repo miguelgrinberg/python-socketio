@@ -86,6 +86,30 @@ class AsyncNamespace(namespace.Namespace):
                                       timeout=timeout,
                                       ignore_queue=ignore_queue)
 
+    async def enter_room(self, sid, room, namespace=None):
+        """Enter a room.
+
+        The only difference with the :func:`socketio.Server.enter_room` method
+        is that when the ``namespace`` argument is not given the namespace
+        associated with the class is used.
+
+        Note: this method is a coroutine.
+        """
+        return await self.server.enter_room(
+            sid, room, namespace=namespace or self.namespace)
+
+    async def leave_room(self, sid, room, namespace=None):
+        """Leave a room.
+
+        The only difference with the :func:`socketio.Server.leave_room` method
+        is that when the ``namespace`` argument is not given the namespace
+        associated with the class is used.
+
+        Note: this method is a coroutine.
+        """
+        return await self.server.leave_room(
+            sid, room, namespace=namespace or self.namespace)
+
     async def close_room(self, room, namespace=None):
         """Close a room.
 

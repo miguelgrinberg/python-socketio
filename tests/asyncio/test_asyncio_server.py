@@ -29,6 +29,8 @@ class TestAsyncServer(unittest.TestCase):
         mgr = mock.MagicMock()
         mgr.can_disconnect = AsyncMock()
         mgr.emit = AsyncMock()
+        mgr.enter_room = AsyncMock()
+        mgr.leave_room = AsyncMock()
         mgr.close_room = AsyncMock()
         mgr.trigger_callback = AsyncMock()
         return mgr
@@ -231,26 +233,28 @@ class TestAsyncServer(unittest.TestCase):
     def test_enter_room(self, eio):
         mgr = self._get_mock_manager()
         s = asyncio_server.AsyncServer(client_manager=mgr)
-        s.enter_room('123', 'room', namespace='/foo')
-        s.manager.enter_room.assert_called_once_with('123', '/foo', 'room')
+        _run(s.enter_room('123', 'room', namespace='/foo'))
+        s.manager.enter_room.mock.assert_called_once_with('123', '/foo',
+                                                          'room')
 
     def test_enter_room_default_namespace(self, eio):
         mgr = self._get_mock_manager()
         s = asyncio_server.AsyncServer(client_manager=mgr)
-        s.enter_room('123', 'room')
-        s.manager.enter_room.assert_called_once_with('123', '/', 'room')
+        _run(s.enter_room('123', 'room'))
+        s.manager.enter_room.mock.assert_called_once_with('123', '/', 'room')
 
     def test_leave_room(self, eio):
         mgr = self._get_mock_manager()
         s = asyncio_server.AsyncServer(client_manager=mgr)
-        s.leave_room('123', 'room', namespace='/foo')
-        s.manager.leave_room.assert_called_once_with('123', '/foo', 'room')
+        _run(s.leave_room('123', 'room', namespace='/foo'))
+        s.manager.leave_room.mock.assert_called_once_with('123', '/foo',
+                                                          'room')
 
     def test_leave_room_default_namespace(self, eio):
         mgr = self._get_mock_manager()
         s = asyncio_server.AsyncServer(client_manager=mgr)
-        s.leave_room('123', 'room')
-        s.manager.leave_room.assert_called_once_with('123', '/', 'room')
+        _run(s.leave_room('123', 'room'))
+        s.manager.leave_room.mock.assert_called_once_with('123', '/', 'room')
 
     def test_close_room(self, eio):
         mgr = self._get_mock_manager()

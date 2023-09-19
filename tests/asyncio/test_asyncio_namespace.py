@@ -176,25 +176,29 @@ class TestAsyncNamespace(unittest.TestCase):
 
     def test_enter_room(self):
         ns = asyncio_namespace.AsyncNamespace('/foo')
-        ns._set_server(mock.MagicMock())
-        ns.enter_room('sid', 'room')
-        ns.server.enter_room.assert_called_with(
+        mock_server = mock.MagicMock()
+        mock_server.enter_room = AsyncMock()
+        ns._set_server(mock_server)
+        _run(ns.enter_room('sid', 'room'))
+        ns.server.enter_room.mock.assert_called_with(
             'sid', 'room', namespace='/foo'
         )
-        ns.enter_room('sid', 'room', namespace='/bar')
-        ns.server.enter_room.assert_called_with(
+        _run(ns.enter_room('sid', 'room', namespace='/bar'))
+        ns.server.enter_room.mock.assert_called_with(
             'sid', 'room', namespace='/bar'
         )
 
     def test_leave_room(self):
         ns = asyncio_namespace.AsyncNamespace('/foo')
-        ns._set_server(mock.MagicMock())
-        ns.leave_room('sid', 'room')
-        ns.server.leave_room.assert_called_with(
+        mock_server = mock.MagicMock()
+        mock_server.leave_room = AsyncMock()
+        ns._set_server(mock_server)
+        _run(ns.leave_room('sid', 'room'))
+        ns.server.leave_room.mock.assert_called_with(
             'sid', 'room', namespace='/foo'
         )
-        ns.leave_room('sid', 'room', namespace='/bar')
-        ns.server.leave_room.assert_called_with(
+        _run(ns.leave_room('sid', 'room', namespace='/bar'))
+        ns.server.leave_room.mock.assert_called_with(
             'sid', 'room', namespace='/bar'
         )
 
