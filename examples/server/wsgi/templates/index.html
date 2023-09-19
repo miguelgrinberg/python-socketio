@@ -3,10 +3,10 @@
 <head>
     <title>Flask-SocketIO Test</title>
     <script type="text/javascript" src="//code.jquery.com/jquery-2.1.4.min.js"></script>
-    <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/socket.io/3.0.3/socket.io.min.js"></script>
+    <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.min.js"></script>
     <script type="text/javascript" charset="utf-8">
         $(document).ready(function(){
-            var socket = io.connect();
+            var socket = io.connect({transports: ['websocket']});
 
             socket.on('connect', function() {
                 socket.emit('my_event', {data: 'I\'m connected!'});
