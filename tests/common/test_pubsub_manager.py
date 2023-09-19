@@ -187,6 +187,27 @@ class TestPubSubManager(unittest.TestCase):
         self.pm._publish.assert_not_called()
         assert not self.pm.is_connected(sid, '/')
 
+    def test_enter_room(self):
+        sid = self.pm.connect('123', '/')
+        self.pm.enter_room(sid, '/', 'foo')
+        self.pm.enter_room('456', '/', 'foo')
+        assert sid in self.pm.rooms['/']['foo']
+        assert self.pm.rooms['/']['foo'][sid] == '123'
+        self.pm._publish.assert_called_once_with(
+            {'method': 'enter_room', 'sid': '456', 'room': 'foo',
+             'namespace': '/', 'host_id': '123456'}
+        )
+
+    def test_leave_room(self):
+        sid = self.pm.connect('123', '/')
+        self.pm.leave_room(sid, '/', 'foo')
+        self.pm.leave_room('456', '/', 'foo')
+        assert 'foo' not in self.pm.rooms['/']
+        self.pm._publish.assert_called_once_with(
+            {'method': 'leave_room', 'sid': '456', 'room': 'foo',
+             'namespace': '/', 'host_id': '123456'}
+        )
+
     def test_close_room(self):
         self.pm.close_room('foo')
         self.pm._publish.assert_called_once_with(
@@ -373,6 +394,32 @@ class TestPubSubManager(unittest.TestCase):
             sid='123', namespace='/foo', ignore_queue=True
         )
 
+    def test_handle_enter_room(self):
+        sid = self.pm.connect('123', '/')
+        with mock.patch.object(
+            base_manager.BaseManager, 'enter_room'
+        ) as super_enter_room:
+            self.pm._handle_enter_room({
+                'method': 'enter_room', 'sid': sid, 'namespace': '/',
+                'room': 'foo'})
+            self.pm._handle_enter_room({
+                'method': 'enter_room', 'sid': '456', 'namespace': '/',
+                'room': 'foo'})
+            super_enter_room.assert_called_once_with(sid, '/', 'foo')
+
+    def test_handle_leave_room(self):
+        sid = self.pm.connect('123', '/')
+        with mock.patch.object(
+            base_manager.BaseManager, 'leave_room'
+        ) as super_leave_room:
+            self.pm._handle_leave_room({
+                'method': 'leave_room', 'sid': sid, 'namespace': '/',
+                'room': 'foo'})
+            self.pm._handle_leave_room({
+                'method': 'leave_room', 'sid': '456', 'namespace': '/',
+                'room': 'foo'})
+            super_leave_room.assert_called_once_with(sid, '/', 'foo')
+
     def test_handle_close_room(self):
         with mock.patch.object(
             base_manager.BaseManager, 'close_room'
@@ -397,6 +444,8 @@ class TestPubSubManager(unittest.TestCase):
         self.pm._handle_emit = mock.MagicMock()
         self.pm._handle_callback = mock.MagicMock()
         self.pm._handle_disconnect = mock.MagicMock()
+        self.pm._handle_enter_room = mock.MagicMock()
+        self.pm._handle_leave_room = mock.MagicMock()
         self.pm._handle_close_room = mock.MagicMock()
         host_id = self.pm.host_id
 
@@ -411,6 +460,10 @@ class TestPubSubManager(unittest.TestCase):
             yield {'method': 'bogus', 'host_id': 'x'}
             yield pickle.dumps({'method': 'close_room', 'value': 'baz',
                                 'host_id': 'x'})
+            yield {'method': 'enter_room', 'sid': '123', 'namespace': '/foo',
+                   'room': 'room', 'host_id': 'x'}
+            yield {'method': 'leave_room', 'sid': '123', 'namespace': '/foo',
+                   'room': 'room', 'host_id': 'x'}
             yield 'bad json'
             yield b'bad pickled'
 
@@ -441,6 +494,14 @@ class TestPubSubManager(unittest.TestCase):
         self.pm._handle_disconnect.assert_called_once_with(
             {'method': 'disconnect', 'sid': '123', 'namespace': '/foo',
              'host_id': 'x'}
+        )
+        self.pm._handle_enter_room.assert_called_once_with(
+            {'method': 'enter_room', 'sid': '123', 'namespace': '/foo',
+             'room': 'room', 'host_id': 'x'}
+        )
+        self.pm._handle_leave_room.assert_called_once_with(
+            {'method': 'leave_room', 'sid': '123', 'namespace': '/foo',
+             'room': 'room', 'host_id': 'x'}
         )
         self.pm._handle_close_room.assert_called_once_with(
             {'method': 'close_room', 'value': 'baz', 'host_id': 'x'}

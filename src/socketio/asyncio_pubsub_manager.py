@@ -90,6 +90,25 @@ class AsyncPubSubManager(AsyncManager):
         await self._handle_disconnect(message)  # handle in this host
         await self._publish(message)  # notify other hosts
 
+    async def enter_room(self, sid, namespace, room, eio_sid=None):
+        if self.is_connected(sid, namespace):
+            # client is in this server, so we can disconnect directly
+            return await super().enter_room(sid, namespace, room,
+                                            eio_sid=eio_sid)
+        else:
+            message = {'method': 'enter_room', 'sid': sid, 'room': room,
+                       'namespace': namespace or '/', 'host_id': self.host_id}
+            await self._publish(message)  # notify other hosts
+
+    async def leave_room(self, sid, namespace, room):
+        if self.is_connected(sid, namespace):
+            # client is in this server, so we can disconnect directly
+            return await super().leave_room(sid, namespace, room)
+        else:
+            message = {'method': 'leave_room', 'sid': sid, 'room': room,
+                       'namespace': namespace or '/', 'host_id': self.host_id}
+            await self._publish(message)  # notify other hosts
+
     async def close_room(self, room, namespace=None):
         message = {'method': 'close_room', 'room': room,
                    'namespace': namespace or '/', 'host_id': self.host_id}
@@ -158,6 +177,18 @@ class AsyncPubSubManager(AsyncManager):
                                      namespace=message.get('namespace'),
                                      ignore_queue=True)
 
+    async def _handle_enter_room(self, message):
+        sid = message.get('sid')
+        namespace = message.get('namespace')
+        if self.is_connected(sid, namespace):
+            await super().enter_room(sid, namespace, message.get('room'))
+
+    async def _handle_leave_room(self, message):
+        sid = message.get('sid')
+        namespace = message.get('namespace')
+        if self.is_connected(sid, namespace):
+            await super().leave_room(sid, namespace, message.get('room'))
+
     async def _handle_close_room(self, message):
         await super().close_room(room=message.get('room'),
                                  namespace=message.get('namespace'))
@@ -191,6 +222,10 @@ class AsyncPubSubManager(AsyncManager):
                                     await self._handle_emit(data)
                                 elif data['method'] == 'disconnect':
                                     await self._handle_disconnect(data)
+                                elif data['method'] == 'enter_room':
+                                    await self._handle_enter_room(data)
+                                elif data['method'] == 'leave_room':
+                                    await self._handle_leave_room(data)
                                 elif data['method'] == 'close_room':
                                     await self._handle_close_room(data)
                         except asyncio.CancelledError:

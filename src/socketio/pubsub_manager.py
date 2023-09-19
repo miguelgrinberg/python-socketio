@@ -87,6 +87,24 @@ class PubSubManager(BaseManager):
         self._handle_disconnect(message)  # handle in this host
         self._publish(message)  # notify other hosts
 
+    def enter_room(self, sid, namespace, room, eio_sid=None):
+        if self.is_connected(sid, namespace):
+            # client is in this server, so we can add to the room directly
+            return super().enter_room(sid, namespace, room, eio_sid=eio_sid)
+        else:
+            message = {'method': 'enter_room', 'sid': sid, 'room': room,
+                       'namespace': namespace or '/', 'host_id': self.host_id}
+            self._publish(message)  # notify other hosts
+
+    def leave_room(self, sid, namespace, room):
+        if self.is_connected(sid, namespace):
+            # client is in this server, so we can remove from the room directly
+            return super().leave_room(sid, namespace, room)
+        else:
+            message = {'method': 'leave_room', 'sid': sid, 'room': room,
+                       'namespace': namespace or '/', 'host_id': self.host_id}
+            self._publish(message)  # notify other hosts
+
     def close_room(self, room, namespace=None):
         message = {'method': 'close_room', 'room': room,
                    'namespace': namespace or '/', 'host_id': self.host_id}
@@ -153,6 +171,18 @@ class PubSubManager(BaseManager):
                                namespace=message.get('namespace'),
                                ignore_queue=True)
 
+    def _handle_enter_room(self, message):
+        sid = message.get('sid')
+        namespace = message.get('namespace')
+        if self.is_connected(sid, namespace):
+            super().enter_room(sid, namespace, message.get('room'))
+
+    def _handle_leave_room(self, message):
+        sid = message.get('sid')
+        namespace = message.get('namespace')
+        if self.is_connected(sid, namespace):
+            super().leave_room(sid, namespace, message.get('room'))
+
     def _handle_close_room(self, message):
         super().close_room(room=message.get('room'),
                            namespace=message.get('namespace'))
@@ -184,6 +214,10 @@ class PubSubManager(BaseManager):
                             self._handle_emit(data)
                         elif data['method'] == 'disconnect':
                             self._handle_disconnect(data)
+                        elif data['method'] == 'enter_room':
+                            self._handle_enter_room(data)
+                        elif data['method'] == 'leave_room':
+                            self._handle_leave_room(data)
                         elif data['method'] == 'close_room':
                             self._handle_close_room(data)
                 except:
