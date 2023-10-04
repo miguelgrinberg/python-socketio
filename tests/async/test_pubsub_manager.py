@@ -6,8 +6,8 @@ from unittest import mock
 
 import pytest
 
-from socketio import asyncio_manager
-from socketio import asyncio_pubsub_manager
+from socketio import async_manager
+from socketio import async_pubsub_manager
 from socketio import packet
 from .helpers import AsyncMock, _run
 
@@ -28,7 +28,7 @@ class TestAsyncPubSubManager(unittest.TestCase):
         mock_server._send_packet = AsyncMock()
         mock_server._send_eio_packet = AsyncMock()
         mock_server.disconnect = AsyncMock()
-        self.pm = asyncio_pubsub_manager.AsyncPubSubManager()
+        self.pm = async_pubsub_manager.AsyncPubSubManager()
         self.pm._publish = AsyncMock()
         self.pm.set_server(mock_server)
         self.pm.host_id = '123456'
@@ -41,13 +41,13 @@ class TestAsyncPubSubManager(unittest.TestCase):
         )
 
     def test_custom_init(self):
-        pubsub = asyncio_pubsub_manager.AsyncPubSubManager(channel='foo')
+        pubsub = async_pubsub_manager.AsyncPubSubManager(channel='foo')
         assert pubsub.channel == 'foo'
         assert len(pubsub.host_id) == 32
 
     def test_write_only_init(self):
         mock_server = mock.MagicMock()
-        pm = asyncio_pubsub_manager.AsyncPubSubManager(write_only=True)
+        pm = async_pubsub_manager.AsyncPubSubManager(write_only=True)
         pm.set_server(mock_server)
         pm.initialize()
         assert pm.channel == 'socketio'
@@ -133,7 +133,7 @@ class TestAsyncPubSubManager(unittest.TestCase):
             )
 
     def test_emit_with_callback_without_server(self):
-        standalone_pm = asyncio_pubsub_manager.AsyncPubSubManager()
+        standalone_pm = async_pubsub_manager.AsyncPubSubManager()
         with pytest.raises(RuntimeError):
             _run(standalone_pm.emit('foo', 'bar', callback='cb'))
 
@@ -218,7 +218,7 @@ class TestAsyncPubSubManager(unittest.TestCase):
 
     def test_handle_emit(self):
         with mock.patch.object(
-            asyncio_manager.AsyncManager, 'emit', new=AsyncMock()
+            async_manager.AsyncManager, 'emit', new=AsyncMock()
         ) as super_emit:
             _run(self.pm._handle_emit({'event': 'foo', 'data': 'bar'}))
             super_emit.mock.assert_called_once_with(
@@ -233,7 +233,7 @@ class TestAsyncPubSubManager(unittest.TestCase):
 
     def test_handle_emit_with_namespace(self):
         with mock.patch.object(
-            asyncio_manager.AsyncManager, 'emit', new=AsyncMock()
+            async_manager.AsyncManager, 'emit', new=AsyncMock()
         ) as super_emit:
             _run(
                 self.pm._handle_emit(
@@ -252,7 +252,7 @@ class TestAsyncPubSubManager(unittest.TestCase):
 
     def test_handle_emit_with_room(self):
         with mock.patch.object(
-            asyncio_manager.AsyncManager, 'emit', new=AsyncMock()
+            async_manager.AsyncManager, 'emit', new=AsyncMock()
         ) as super_emit:
             _run(
                 self.pm._handle_emit(
@@ -271,7 +271,7 @@ class TestAsyncPubSubManager(unittest.TestCase):
 
     def test_handle_emit_with_skip_sid(self):
         with mock.patch.object(
-            asyncio_manager.AsyncManager, 'emit', new=AsyncMock()
+            async_manager.AsyncManager, 'emit', new=AsyncMock()
         ) as super_emit:
             _run(
                 self.pm._handle_emit(
@@ -290,7 +290,7 @@ class TestAsyncPubSubManager(unittest.TestCase):
 
     def test_handle_emit_with_remote_callback(self):
         with mock.patch.object(
-            asyncio_manager.AsyncManager, 'emit', new=AsyncMock()
+            async_manager.AsyncManager, 'emit', new=AsyncMock()
         ) as super_emit:
             _run(
                 self.pm._handle_emit(
@@ -325,7 +325,7 @@ class TestAsyncPubSubManager(unittest.TestCase):
 
     def test_handle_emit_with_local_callback(self):
         with mock.patch.object(
-            asyncio_manager.AsyncManager, 'emit', new=AsyncMock()
+            async_manager.AsyncManager, 'emit', new=AsyncMock()
         ) as super_emit:
             _run(
                 self.pm._handle_emit(
@@ -437,7 +437,7 @@ class TestAsyncPubSubManager(unittest.TestCase):
     def test_handle_enter_room(self):
         sid = self.pm.connect('123', '/')
         with mock.patch.object(
-            asyncio_manager.AsyncManager, 'enter_room', new=AsyncMock()
+            async_manager.AsyncManager, 'enter_room', new=AsyncMock()
         ) as super_enter_room:
             _run(
                 self.pm._handle_enter_room(
@@ -458,7 +458,7 @@ class TestAsyncPubSubManager(unittest.TestCase):
     def test_handle_leave_room(self):
         sid = self.pm.connect('123', '/')
         with mock.patch.object(
-            asyncio_manager.AsyncManager, 'leave_room', new=AsyncMock()
+            async_manager.AsyncManager, 'leave_room', new=AsyncMock()
         ) as super_leave_room:
             _run(
                 self.pm._handle_leave_room(
@@ -478,7 +478,7 @@ class TestAsyncPubSubManager(unittest.TestCase):
 
     def test_handle_close_room(self):
         with mock.patch.object(
-            asyncio_manager.AsyncManager, 'close_room', new=AsyncMock()
+            async_manager.AsyncManager, 'close_room', new=AsyncMock()
         ) as super_close_room:
             _run(
                 self.pm._handle_close_room(
@@ -491,7 +491,7 @@ class TestAsyncPubSubManager(unittest.TestCase):
 
     def test_handle_close_room_with_namespace(self):
         with mock.patch.object(
-            asyncio_manager.AsyncManager, 'close_room', new=AsyncMock()
+            async_manager.AsyncManager, 'close_room', new=AsyncMock()
         ) as super_close_room:
             _run(
                 self.pm._handle_close_room(

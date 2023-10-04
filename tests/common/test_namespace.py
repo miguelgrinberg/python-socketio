@@ -217,6 +217,18 @@ class TestNamespace(unittest.TestCase):
         ns.disconnect('sid', namespace='/bar')
         ns.server.disconnect.assert_called_with('sid', namespace='/bar')
 
+    def test_event_not_found_client(self):
+        result = {}
+
+        class MyNamespace(namespace.ClientNamespace):
+            def on_custom_message(self, sid, data):
+                result['result'] = (sid, data)
+
+        ns = MyNamespace('/foo')
+        ns._set_client(mock.MagicMock())
+        ns.trigger_event('another_custom_message', 'sid', {'data': 'data'})
+        assert result == {}
+
     def test_emit_client(self):
         ns = namespace.ClientNamespace('/foo')
         ns._set_client(mock.MagicMock())

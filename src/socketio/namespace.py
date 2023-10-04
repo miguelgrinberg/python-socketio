@@ -1,24 +1,7 @@
-class BaseNamespace(object):
-    def __init__(self, namespace=None):
-        self.namespace = namespace or '/'
-
-    def is_asyncio_based(self):
-        return False
-
-    def trigger_event(self, event, *args):
-        """Dispatch an event to the proper handler method.
-
-        In the most common usage, this method is not overloaded by subclasses,
-        as it performs the routing of events to methods. However, this
-        method can be overridden if special dispatching rules are needed, or if
-        having a single method that catches all events is desired.
-        """
-        handler_name = 'on_' + event
-        if hasattr(self, handler_name):
-            return getattr(self, handler_name)(*args)
+from . import base_namespace
 
 
-class Namespace(BaseNamespace):
+class Namespace(base_namespace.BaseServerNamespace):
     """Base class for server-side class-based namespaces.
 
     A class-based namespace is a class that contains all the event handlers
@@ -30,12 +13,17 @@ class Namespace(BaseNamespace):
                       handlers defined in this class. If this argument is
                       omitted, the default namespace is used.
     """
-    def __init__(self, namespace=None):
-        super().__init__(namespace=namespace)
-        self.server = None
+    def trigger_event(self, event, *args):
+        """Dispatch an event to the proper handler method.
 
-    def _set_server(self, server):
-        self.server = server
+        In the most common usage, this method is not overloaded by subclasses,
+        as it performs the routing of events to methods. However, this
+        method can be overridden if special dispatching rules are needed, or if
+        having a single method that catches all events is desired.
+        """
+        handler_name = 'on_' + event
+        if hasattr(self, handler_name):
+            return getattr(self, handler_name)(*args)
 
     def emit(self, event, data=None, to=None, room=None, skip_sid=None,
              namespace=None, callback=None, ignore_queue=False):
@@ -104,15 +92,6 @@ class Namespace(BaseNamespace):
         return self.server.close_room(room,
                                       namespace=namespace or self.namespace)
 
-    def rooms(self, sid, namespace=None):
-        """Return the rooms a client is in.
-
-        The only difference with the :func:`socketio.Server.rooms` method is
-        that when the ``namespace`` argument is not given the namespace
-        associated with the class is used.
-        """
-        return self.server.rooms(sid, namespace=namespace or self.namespace)
-
     def get_session(self, sid, namespace=None):
         """Return the user session for a client.
 
@@ -153,7 +132,7 @@ class Namespace(BaseNamespace):
                                       namespace=namespace or self.namespace)
 
 
-class ClientNamespace(BaseNamespace):
+class ClientNamespace(base_namespace.BaseClientNamespace):
     """Base class for client-side class-based namespaces.
 
     A class-based namespace is a class that contains all the event handlers
@@ -165,12 +144,17 @@ class ClientNamespace(BaseNamespace):
                       handlers defined in this class. If this argument is
                       omitted, the default namespace is used.
     """
-    def __init__(self, namespace=None):
-        super().__init__(namespace=namespace)
-        self.client = None
+    def trigger_event(self, event, *args):
+        """Dispatch an event to the proper handler method.
 
-    def _set_client(self, client):
-        self.client = client
+        In the most common usage, this method is not overloaded by subclasses,
+        as it performs the routing of events to methods. However, this
+        method can be overridden if special dispatching rules are needed, or if
+        having a single method that catches all events is desired.
+        """
+        handler_name = 'on_' + event
+        if hasattr(self, handler_name):
+            return getattr(self, handler_name)(*args)
 
     def emit(self, event, data=None, namespace=None, callback=None):
         """Emit a custom event to the server.

@@ -2,13 +2,13 @@ import asyncio
 
 import engineio
 
-from . import asyncio_manager
+from . import async_manager
+from . import base_server
 from . import exceptions
 from . import packet
-from . import server
 
 
-class AsyncServer(server.Server):
+class AsyncServer(base_server.BaseServer):
     """A Socket.IO server for asyncio.
 
     This class implements a fully compliant Socket.IO web server with support
@@ -104,7 +104,7 @@ class AsyncServer(server.Server):
     def __init__(self, client_manager=None, logger=False, json=None,
                  async_handlers=True, namespaces=None, **kwargs):
         if client_manager is None:
-            client_manager = asyncio_manager.AsyncManager()
+            client_manager = async_manager.AsyncManager()
         super().__init__(client_manager=client_manager, logger=logger,
                          json=json, async_handlers=async_handlers,
                          namespaces=namespaces, **kwargs)

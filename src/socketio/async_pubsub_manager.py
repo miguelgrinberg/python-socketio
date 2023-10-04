@@ -5,7 +5,7 @@ import uuid
 from engineio import json
 import pickle
 
-from .asyncio_manager import AsyncManager
+from .async_manager import AsyncManager
 
 
 class AsyncPubSubManager(AsyncManager):

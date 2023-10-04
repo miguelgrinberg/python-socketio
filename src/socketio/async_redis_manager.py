@@ -12,7 +12,7 @@ except ImportError:  # pragma: no cover
         aioredis = None
         RedisError = None
 
-from .asyncio_pubsub_manager import AsyncPubSubManager
+from .async_pubsub_manager import AsyncPubSubManager
 
 
 class AsyncRedisManager(AsyncPubSubManager):  # pragma: no cover

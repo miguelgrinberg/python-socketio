@@ -2,6 +2,7 @@ import asyncio
 import unittest
 from unittest import mock
 import pytest
+
 from socketio import AsyncSimpleClient
 from socketio.exceptions import SocketIOError, TimeoutError, DisconnectedError
 from .helpers import AsyncMock, _run
@@ -18,7 +19,7 @@ class TestAsyncAsyncSimpleClient(unittest.TestCase):
 
     def test_connect(self):
         client = AsyncSimpleClient(123, a='b')
-        with mock.patch('socketio.asyncio_simple_client.AsyncClient') \
+        with mock.patch('socketio.async_simple_client.AsyncClient') \
                 as mock_client:
             mock_client.return_value.connect = AsyncMock()
 
@@ -37,7 +38,7 @@ class TestAsyncAsyncSimpleClient(unittest.TestCase):
     def test_connect_context_manager(self):
         async def _t():
             async with AsyncSimpleClient(123, a='b') as client:
-                with mock.patch('socketio.asyncio_simple_client.AsyncClient') \
+                with mock.patch('socketio.async_simple_client.AsyncClient') \
                         as mock_client:
                     mock_client.return_value.connect = AsyncMock()
 

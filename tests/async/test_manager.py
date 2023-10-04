@@ -2,7 +2,7 @@ import sys
 import unittest
 from unittest import mock
 
-from socketio import asyncio_manager
+from socketio import async_manager
 from socketio import packet
 from .helpers import AsyncMock, _run
 
@@ -22,7 +22,7 @@ class TestAsyncManager(unittest.TestCase):
         mock_server._send_eio_packet = AsyncMock()
         mock_server.eio.generate_id = generate_id
         mock_server.packet_class = packet.Packet
-        self.bm = asyncio_manager.AsyncManager()
+        self.bm = async_manager.AsyncManager()
         self.bm.set_server(mock_server)
         self.bm.initialize()
 

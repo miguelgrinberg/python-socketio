@@ -1,7 +1,7 @@
 import asyncio
 import pickle
 
-from socketio.asyncio_pubsub_manager import AsyncPubSubManager
+from .async_pubsub_manager import AsyncPubSubManager
 
 try:
     import aio_pika

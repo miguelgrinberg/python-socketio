@@ -3,7 +3,7 @@ from unittest import mock
 
 import pytest
 
-from socketio import base_manager
+from socketio import manager
 from socketio import packet
 
 
@@ -19,7 +19,7 @@ class TestBaseManager(unittest.TestCase):
         mock_server = mock.MagicMock()
         mock_server.eio.generate_id = generate_id
         mock_server.packet_class = packet.Packet
-        self.bm = base_manager.BaseManager()
+        self.bm = manager.Manager()
         self.bm.set_server(mock_server)
         self.bm.initialize()
 

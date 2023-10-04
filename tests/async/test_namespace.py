@@ -2,7 +2,7 @@ import sys
 import unittest
 from unittest import mock
 
-from socketio import asyncio_namespace
+from socketio import async_namespace
 from .helpers import AsyncMock, _run
 
 
@@ -11,7 +11,7 @@ class TestAsyncNamespace(unittest.TestCase):
     def test_connect_event(self):
         result = {}
 
-        class MyNamespace(asyncio_namespace.AsyncNamespace):
+        class MyNamespace(async_namespace.AsyncNamespace):
             async def on_connect(self, sid, environ):
                 result['result'] = (sid, environ)
 
@@ -23,7 +23,7 @@ class TestAsyncNamespace(unittest.TestCase):
     def test_disconnect_event(self):
         result = {}
 
-        class MyNamespace(asyncio_namespace.AsyncNamespace):
+        class MyNamespace(async_namespace.AsyncNamespace):
             async def on_disconnect(self, sid):
                 result['result'] = sid
 
@@ -35,7 +35,7 @@ class TestAsyncNamespace(unittest.TestCase):
     def test_sync_event(self):
         result = {}
 
-        class MyNamespace(asyncio_namespace.AsyncNamespace):
+        class MyNamespace(async_namespace.AsyncNamespace):
             def on_custom_message(self, sid, data):
                 result['result'] = (sid, data)
 
@@ -47,7 +47,7 @@ class TestAsyncNamespace(unittest.TestCase):
     def test_async_event(self):
         result = {}
 
-        class MyNamespace(asyncio_namespace.AsyncNamespace):
+        class MyNamespace(async_namespace.AsyncNamespace):
             async def on_custom_message(self, sid, data):
                 result['result'] = (sid, data)
 
@@ -59,7 +59,7 @@ class TestAsyncNamespace(unittest.TestCase):
     def test_event_not_found(self):
         result = {}
 
-        class MyNamespace(asyncio_namespace.AsyncNamespace):
+        class MyNamespace(async_namespace.AsyncNamespace):
             async def on_custom_message(self, sid, data):
                 result['result'] = (sid, data)
 
@@ -71,7 +71,7 @@ class TestAsyncNamespace(unittest.TestCase):
         assert result == {}
 
     def test_emit(self):
-        ns = asyncio_namespace.AsyncNamespace('/foo')
+        ns = async_namespace.AsyncNamespace('/foo')
         mock_server = mock.MagicMock()
         mock_server.emit = AsyncMock()
         ns._set_server(mock_server)
@@ -113,7 +113,7 @@ class TestAsyncNamespace(unittest.TestCase):
         )
 
     def test_send(self):
-        ns = asyncio_namespace.AsyncNamespace('/foo')
+        ns = async_namespace.AsyncNamespace('/foo')
         mock_server = mock.MagicMock()
         mock_server.send = AsyncMock()
         ns._set_server(mock_server)
@@ -148,7 +148,7 @@ class TestAsyncNamespace(unittest.TestCase):
         )
 
     def test_call(self):
-        ns = asyncio_namespace.AsyncNamespace('/foo')
+        ns = async_namespace.AsyncNamespace('/foo')
         mock_server = mock.MagicMock()
         mock_server.call = AsyncMock()
         ns._set_server(mock_server)
@@ -175,7 +175,7 @@ class TestAsyncNamespace(unittest.TestCase):
         )
 
     def test_enter_room(self):
-        ns = asyncio_namespace.AsyncNamespace('/foo')
+        ns = async_namespace.AsyncNamespace('/foo')
         mock_server = mock.MagicMock()
         mock_server.enter_room = AsyncMock()
         ns._set_server(mock_server)
@@ -189,7 +189,7 @@ class TestAsyncNamespace(unittest.TestCase):
         )
 
     def test_leave_room(self):
-        ns = asyncio_namespace.AsyncNamespace('/foo')
+        ns = async_namespace.AsyncNamespace('/foo')
         mock_server = mock.MagicMock()
         mock_server.leave_room = AsyncMock()
         ns._set_server(mock_server)
@@ -203,7 +203,7 @@ class TestAsyncNamespace(unittest.TestCase):
         )
 
     def test_close_room(self):
-        ns = asyncio_namespace.AsyncNamespace('/foo')
+        ns = async_namespace.AsyncNamespace('/foo')
         mock_server = mock.MagicMock()
         mock_server.close_room = AsyncMock()
         ns._set_server(mock_server)
@@ -213,7 +213,7 @@ class TestAsyncNamespace(unittest.TestCase):
         ns.server.close_room.mock.assert_called_with('room', namespace='/bar')
 
     def test_rooms(self):
-        ns = asyncio_namespace.AsyncNamespace('/foo')
+        ns = async_namespace.AsyncNamespace('/foo')
         ns._set_server(mock.MagicMock())
         ns.rooms('sid')
         ns.server.rooms.assert_called_with('sid', namespace='/foo')
@@ -221,7 +221,7 @@ class TestAsyncNamespace(unittest.TestCase):
         ns.server.rooms.assert_called_with('sid', namespace='/bar')
 
     def test_session(self):
-        ns = asyncio_namespace.AsyncNamespace('/foo')
+        ns = async_namespace.AsyncNamespace('/foo')
         mock_server = mock.MagicMock()
         mock_server.get_session = AsyncMock()
         mock_server.save_session = AsyncMock()
@@ -244,7 +244,7 @@ class TestAsyncNamespace(unittest.TestCase):
         ns.server.session.assert_called_with('sid', namespace='/bar')
 
     def test_disconnect(self):
-        ns = asyncio_namespace.AsyncNamespace('/foo')
+        ns = async_namespace.AsyncNamespace('/foo')
         mock_server = mock.MagicMock()
         mock_server.disconnect = AsyncMock()
         ns._set_server(mock_server)
@@ -256,7 +256,7 @@ class TestAsyncNamespace(unittest.TestCase):
     def test_sync_event_client(self):
         result = {}
 
-        class MyNamespace(asyncio_namespace.AsyncClientNamespace):
+        class MyNamespace(async_namespace.AsyncClientNamespace):
             def on_custom_message(self, sid, data):
                 result['result'] = (sid, data)
 
@@ -268,7 +268,7 @@ class TestAsyncNamespace(unittest.TestCase):
     def test_async_event_client(self):
         result = {}
 
-        class MyNamespace(asyncio_namespace.AsyncClientNamespace):
+        class MyNamespace(async_namespace.AsyncClientNamespace):
             async def on_custom_message(self, sid, data):
                 result['result'] = (sid, data)
 
@@ -280,7 +280,7 @@ class TestAsyncNamespace(unittest.TestCase):
     def test_event_not_found_client(self):
         result = {}
 
-        class MyNamespace(asyncio_namespace.AsyncClientNamespace):
+        class MyNamespace(async_namespace.AsyncClientNamespace):
             async def on_custom_message(self, sid, data):
                 result['result'] = (sid, data)
 
@@ -292,7 +292,7 @@ class TestAsyncNamespace(unittest.TestCase):
         assert result == {}
 
     def test_emit_client(self):
-        ns = asyncio_namespace.AsyncClientNamespace('/foo')
+        ns = async_namespace.AsyncClientNamespace('/foo')
         mock_client = mock.MagicMock()
         mock_client.emit = AsyncMock()
         ns._set_client(mock_client)
@@ -306,7 +306,7 @@ class TestAsyncNamespace(unittest.TestCase):
         )
 
     def test_send_client(self):
-        ns = asyncio_namespace.AsyncClientNamespace('/foo')
+        ns = async_namespace.AsyncClientNamespace('/foo')
         mock_client = mock.MagicMock()
         mock_client.send = AsyncMock()
         ns._set_client(mock_client)
@@ -320,7 +320,7 @@ class TestAsyncNamespace(unittest.TestCase):
         )
 
     def test_call_client(self):
-        ns = asyncio_namespace.AsyncClientNamespace('/foo')
+        ns = async_namespace.AsyncClientNamespace('/foo')
         mock_client = mock.MagicMock()
         mock_client.call = AsyncMock()
         ns._set_client(mock_client)
@@ -334,7 +334,7 @@ class TestAsyncNamespace(unittest.TestCase):
         )
 
     def test_disconnect_client(self):
-        ns = asyncio_namespace.AsyncClientNamespace('/foo')
+        ns = async_namespace.AsyncClientNamespace('/foo')
         mock_client = mock.MagicMock()
         mock_client.disconnect = AsyncMock()
         ns._set_client(mock_client)

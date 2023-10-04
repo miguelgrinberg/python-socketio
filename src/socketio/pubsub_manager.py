@@ -4,10 +4,10 @@ import uuid
 from engineio import json
 import pickle
 
-from .base_manager import BaseManager
+from .manager import Manager
 
 
-class PubSubManager(BaseManager):
+class PubSubManager(Manager):
     """Manage a client list attached to a pub/sub backend.
 
     This is a base class that enables multiple servers to share the list of

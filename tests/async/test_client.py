@@ -5,8 +5,8 @@ from unittest import mock
 
 import pytest
 
-from socketio import asyncio_client
-from socketio import asyncio_namespace
+from socketio import async_client
+from socketio import async_namespace
 from engineio import exceptions as engineio_exceptions
 from socketio import exceptions
 from socketio import packet
@@ -16,11 +16,11 @@ from .helpers import AsyncMock, _run
 @unittest.skipIf(sys.version_info < (3, 5), 'only for Python 3.5+')
 class TestAsyncClient(unittest.TestCase):
     def test_is_asyncio_based(self):
-        c = asyncio_client.AsyncClient()
+        c = async_client.AsyncClient()
         assert c.is_asyncio_based()
 
     def test_connect(self):
-        c = asyncio_client.AsyncClient()
+        c = async_client.AsyncClient()
         c.eio.connect = AsyncMock()
         _run(
             c.connect(
@@ -50,7 +50,7 @@ class TestAsyncClient(unittest.TestCase):
         async def headers():
             return 'headers'
 
-        c = asyncio_client.AsyncClient()
+        c = async_client.AsyncClient()
         c.eio.connect = AsyncMock()
         _run(
             c.connect(
@@ -71,7 +71,7 @@ class TestAsyncClient(unittest.TestCase):
         )
 
     def test_connect_one_namespace(self):
-        c = asyncio_client.AsyncClient()
+        c = async_client.AsyncClient()
         c.eio.connect = AsyncMock()
         _run(
             c.connect(
@@ -96,7 +96,7 @@ class TestAsyncClient(unittest.TestCase):
         )
 
     def test_connect_default_namespaces(self):
-        c = asyncio_client.AsyncClient()
+        c = async_client.AsyncClient()
         c.eio.connect = AsyncMock()
         c.on('foo', mock.MagicMock(), namespace='/foo')
         c.on('bar', mock.MagicMock(), namespace='/')
@@ -123,7 +123,7 @@ class TestAsyncClient(unittest.TestCase):
         )
 
     def test_connect_no_namespaces(self):
-        c = asyncio_client.AsyncClient()
+        c = async_client.AsyncClient()
         c.eio.connect = AsyncMock()
         _run(
             c.connect(
@@ -147,7 +147,7 @@ class TestAsyncClient(unittest.TestCase):
         )
 
     def test_connect_error(self):
-        c = asyncio_client.AsyncClient()
+        c = async_client.AsyncClient()
         c.eio.connect = AsyncMock(
             side_effect=engineio_exceptions.ConnectionError('foo')
         )
@@ -165,7 +165,7 @@ class TestAsyncClient(unittest.TestCase):
             )
 
     def test_connect_twice(self):
-        c = asyncio_client.AsyncClient()
+        c = async_client.AsyncClient()
         c.eio.connect = AsyncMock()
         _run(
             c.connect(
@@ -182,7 +182,7 @@ class TestAsyncClient(unittest.TestCase):
             )
 
     def test_connect_wait_single_namespace(self):
-        c = asyncio_client.AsyncClient()
+        c = async_client.AsyncClient()
         c.eio.connect = AsyncMock()
         c._connect_event = mock.MagicMock()
 
@@ -201,7 +201,7 @@ class TestAsyncClient(unittest.TestCase):
         assert c.connected is True
 
     def test_connect_wait_two_namespaces(self):
-        c = asyncio_client.AsyncClient()
+        c = async_client.AsyncClient()
         c.eio.connect = AsyncMock()
         c._connect_event = mock.MagicMock()
 
@@ -227,7 +227,7 @@ class TestAsyncClient(unittest.TestCase):
         assert c.namespaces == {'/bar': '123', '/foo': '456'}
 
     def test_connect_timeout(self):
-        c = asyncio_client.AsyncClient()
+        c = async_client.AsyncClient()
         c.eio.connect = AsyncMock()
         c.disconnect = AsyncMock()
         with pytest.raises(exceptions.ConnectionError):
@@ -241,7 +241,7 @@ class TestAsyncClient(unittest.TestCase):
         c.disconnect.mock.assert_called_once_with()
 
     def test_wait_no_reconnect(self):
-        c = asyncio_client.AsyncClient()
+        c = async_client.AsyncClient()
         c.eio.wait = AsyncMock()
         c.sleep = AsyncMock()
         c._reconnect_task = None
@@ -250,7 +250,7 @@ class TestAsyncClient(unittest.TestCase):
         c.sleep.mock.assert_called_once_with(1)
 
     def test_wait_reconnect_failed(self):
-        c = asyncio_client.AsyncClient()
+        c = async_client.AsyncClient()
         c.eio.wait = AsyncMock()
         c.sleep = AsyncMock()
         states = ['disconnected']
@@ -264,7 +264,7 @@ class TestAsyncClient(unittest.TestCase):
         c.sleep.mock.assert_called_once_with(1)
 
     def test_wait_reconnect_successful(self):
-        c = asyncio_client.AsyncClient()
+        c = async_client.AsyncClient()
         c.eio.wait = AsyncMock()
         c.sleep = AsyncMock()
         states = ['connected', 'disconnected']
@@ -279,7 +279,7 @@ class TestAsyncClient(unittest.TestCase):
         assert c.sleep.mock.call_count == 2
 
     def test_emit_no_arguments(self):
-        c = asyncio_client.AsyncClient()
+        c = async_client.AsyncClient()
         c.namespaces = {'/': '1'}
         c._send_packet = AsyncMock()
         _run(c.emit('foo'))
@@ -292,7 +292,7 @@ class TestAsyncClient(unittest.TestCase):
         )
 
     def test_emit_one_argument(self):
-        c = asyncio_client.AsyncClient()
+        c = async_client.AsyncClient()
         c.namespaces = {'/': '1'}
         c._send_packet = AsyncMock()
         _run(c.emit('foo', 'bar'))
@@ -309,7 +309,7 @@ class TestAsyncClient(unittest.TestCase):
         )
 
     def test_emit_one_argument_list(self):
-        c = asyncio_client.AsyncClient()
+        c = async_client.AsyncClient()
         c.namespaces = {'/': '1'}
         c._send_packet = AsyncMock()
         _run(c.emit('foo', ['bar', 'baz']))
@@ -326,7 +326,7 @@ class TestAsyncClient(unittest.TestCase):
         )
 
     def test_emit_two_arguments(self):
-        c = asyncio_client.AsyncClient()
+        c = async_client.AsyncClient()
         c.namespaces = {'/': '1'}
         c._send_packet = AsyncMock()
         _run(c.emit('foo', ('bar', 'baz')))
@@ -343,7 +343,7 @@ class TestAsyncClient(unittest.TestCase):
         )
 
     def test_emit_namespace(self):
-        c = asyncio_client.AsyncClient()
+        c = async_client.AsyncClient()
         c.namespaces = {'/foo': '1'}
         c._send_packet = AsyncMock()
         _run(c.emit('foo', namespace='/foo'))
@@ -356,13 +356,13 @@ class TestAsyncClient(unittest.TestCase):
         )
 
     def test_emit_unknown_namespace(self):
-        c = asyncio_client.AsyncClient()
+        c = async_client.AsyncClient()
         c.namespaces = {'/foo': '1'}
         with pytest.raises(exceptions.BadNamespaceError):
             _run(c.emit('foo', namespace='/bar'))
 
     def test_emit_with_callback(self):
-        c = asyncio_client.AsyncClient()
+        c = async_client.AsyncClient()
         c._send_packet = AsyncMock()
         c._generate_ack_id = mock.MagicMock(return_value=123)
         c.namespaces = {'/': '1'}
@@ -377,7 +377,7 @@ class TestAsyncClient(unittest.TestCase):
         c._generate_ack_id.assert_called_once_with('/', 'cb')
 
     def test_emit_namespace_with_callback(self):
-        c = asyncio_client.AsyncClient()
+        c = async_client.AsyncClient()
         c.namespaces = {'/foo': '1'}
         c._send_packet = AsyncMock()
         c._generate_ack_id = mock.MagicMock(return_value=123)
@@ -392,7 +392,7 @@ class TestAsyncClient(unittest.TestCase):
         c._generate_ack_id.assert_called_once_with('/foo', 'cb')
 
     def test_emit_binary(self):
-        c = asyncio_client.AsyncClient()
+        c = async_client.AsyncClient()
         c.namespaces = {'/': '1'}
         c._send_packet = AsyncMock()
         _run(c.emit('foo', b'bar'))
@@ -409,7 +409,7 @@ class TestAsyncClient(unittest.TestCase):
         )
 
     def test_emit_not_binary(self):
-        c = asyncio_client.AsyncClient()
+        c = async_client.AsyncClient()
         c.namespaces = {'/': '1'}
         c._send_packet = AsyncMock()
         _run(c.emit('foo', 'bar'))
@@ -426,7 +426,7 @@ class TestAsyncClient(unittest.TestCase):
         )
 
     def test_send(self):
-        c = asyncio_client.AsyncClient()
+        c = async_client.AsyncClient()
         c.emit = AsyncMock()
         _run(c.send('data', 'namespace', 'callback'))
         c.emit.mock.assert_called_once_with(
@@ -434,7 +434,7 @@ class TestAsyncClient(unittest.TestCase):
         )
 
     def test_send_with_defaults(self):
-        c = asyncio_client.AsyncClient()
+        c = async_client.AsyncClient()
         c.emit = AsyncMock()
         _run(c.send('data'))
         c.emit.mock.assert_called_once_with(
@@ -442,7 +442,7 @@ class TestAsyncClient(unittest.TestCase):
         )
 
     def test_call(self):
-        c = asyncio_client.AsyncClient()
+        c = async_client.AsyncClient()
         c.namespaces = {'/': '1'}
 
         async def fake_event_wait():
@@ -462,7 +462,7 @@ class TestAsyncClient(unittest.TestCase):
         )
 
     def test_call_with_timeout(self):
-        c = asyncio_client.AsyncClient()
+        c = async_client.AsyncClient()
         c.namespaces = {'/': '1'}
 
         async def fake_event_wait():
@@ -483,7 +483,7 @@ class TestAsyncClient(unittest.TestCase):
         )
 
     def test_disconnect(self):
-        c = asyncio_client.AsyncClient()
+        c = async_client.AsyncClient()
         c.connected = True
         c.namespaces = {'/': '1'}
         c._trigger_event = AsyncMock()
@@ -503,7 +503,7 @@ class TestAsyncClient(unittest.TestCase):
         c.eio.disconnect.mock.assert_called_once_with(abort=True)
 
     def test_disconnect_namespaces(self):
-        c = asyncio_client.AsyncClient()
+        c = async_client.AsyncClient()
         c.namespaces = {'/foo': '1', '/bar': '2'}
         c._trigger_event = AsyncMock()
         c._send_packet = AsyncMock()
@@ -525,7 +525,7 @@ class TestAsyncClient(unittest.TestCase):
         )
 
     def test_start_background_task(self):
-        c = asyncio_client.AsyncClient()
+        c = async_client.AsyncClient()
         c.eio.start_background_task = mock.MagicMock(return_value='foo')
         assert c.start_background_task('foo', 'bar', baz='baz') == 'foo'
         c.eio.start_background_task.assert_called_once_with(
@@ -533,19 +533,19 @@ class TestAsyncClient(unittest.TestCase):
         )
 
     def test_sleep(self):
-        c = asyncio_client.AsyncClient()
+        c = async_client.AsyncClient()
         c.eio.sleep = AsyncMock()
         _run(c.sleep(1.23))
         c.eio.sleep.mock.assert_called_once_with(1.23)
 
     def test_send_packet(self):
-        c = asyncio_client.AsyncClient()
+        c = async_client.AsyncClient()
         c.eio.send = AsyncMock()
         _run(c._send_packet(packet.Packet(packet.EVENT, 'foo')))
         c.eio.send.mock.assert_called_once_with('2"foo"')
 
     def test_send_packet_binary(self):
-        c = asyncio_client.AsyncClient()
+        c = async_client.AsyncClient()
         c.eio.send = AsyncMock()
         _run(c._send_packet(packet.Packet(packet.EVENT, b'foo')))
         assert c.eio.send.mock.call_args_list == [
@@ -557,13 +557,13 @@ class TestAsyncClient(unittest.TestCase):
         ]
 
     def test_send_packet_default_binary(self):
-        c = asyncio_client.AsyncClient()
+        c = async_client.AsyncClient()
         c.eio.send = AsyncMock()
         _run(c._send_packet(packet.Packet(packet.EVENT, 'foo')))
         c.eio.send.mock.assert_called_once_with('2"foo"')
 
     def test_handle_connect(self):
-        c = asyncio_client.AsyncClient()
+        c = async_client.AsyncClient()
         c._connect_event = mock.MagicMock()
         c._trigger_event = AsyncMock()
         c._send_packet = AsyncMock()
@@ -573,7 +573,7 @@ class TestAsyncClient(unittest.TestCase):
         c._send_packet.mock.assert_not_called()
 
     def test_handle_connect_with_namespaces(self):
-        c = asyncio_client.AsyncClient()
+        c = async_client.AsyncClient()
         c.namespaces = {'/foo': '1', '/bar': '2'}
         c._connect_event = mock.MagicMock()
         c._trigger_event = AsyncMock()
@@ -584,7 +584,7 @@ class TestAsyncClient(unittest.TestCase):
         assert c.namespaces == {'/': '3', '/foo': '1', '/bar': '2'}
 
     def test_handle_connect_namespace(self):
-        c = asyncio_client.AsyncClient()
+        c = async_client.AsyncClient()
         c.namespaces = {'/foo': '1'}
         c._connect_event = mock.MagicMock()
         c._trigger_event = AsyncMock()
@@ -598,7 +598,7 @@ class TestAsyncClient(unittest.TestCase):
         assert c.namespaces == {'/foo': '1', '/bar': '2'}
 
     def test_handle_disconnect(self):
-        c = asyncio_client.AsyncClient()
+        c = async_client.AsyncClient()
         c.connected = True
         c._trigger_event = AsyncMock()
         _run(c._handle_disconnect('/'))
@@ -613,7 +613,7 @@ class TestAsyncClient(unittest.TestCase):
         assert c._trigger_event.mock.call_count == 2
 
     def test_handle_disconnect_namespace(self):
-        c = asyncio_client.AsyncClient()
+        c = async_client.AsyncClient()
         c.connected = True
         c.namespaces = {'/foo': '1', '/bar': '2'}
         c._trigger_event = AsyncMock()
@@ -637,7 +637,7 @@ class TestAsyncClient(unittest.TestCase):
         assert not c.connected
 
     def test_handle_disconnect_unknown_namespace(self):
-        c = asyncio_client.AsyncClient()
+        c = async_client.AsyncClient()
         c.connected = True
         c.namespaces = {'/foo': '1', '/bar': '2'}
         c._trigger_event = AsyncMock()
@@ -652,7 +652,7 @@ class TestAsyncClient(unittest.TestCase):
         assert c.connected
 
     def test_handle_disconnect_default_namespaces(self):
-        c = asyncio_client.AsyncClient()
+        c = async_client.AsyncClient()
         c.connected = True
         c.namespaces = {'/foo': '1', '/bar': '2'}
         c._trigger_event = AsyncMock()
@@ -664,7 +664,7 @@ class TestAsyncClient(unittest.TestCase):
         assert c.connected
 
     def test_handle_event(self):
-        c = asyncio_client.AsyncClient()
+        c = async_client.AsyncClient()
         c._trigger_event = AsyncMock()
         _run(c._handle_event('/', None, ['foo', ('bar', 'baz')]))
         c._trigger_event.mock.assert_called_once_with(
@@ -672,7 +672,7 @@ class TestAsyncClient(unittest.TestCase):
         )
 
     def test_handle_event_with_id_no_arguments(self):
-        c = asyncio_client.AsyncClient()
+        c = async_client.AsyncClient()
         c._trigger_event = AsyncMock(return_value=None)
         c._send_packet = AsyncMock()
         _run(c._handle_event('/', 123, ['foo', ('bar', 'baz')]))
@@ -688,7 +688,7 @@ class TestAsyncClient(unittest.TestCase):
         )
 
     def test_handle_event_with_id_one_argument(self):
-        c = asyncio_client.AsyncClient()
+        c = async_client.AsyncClient()
         c._trigger_event = AsyncMock(return_value='ret')
         c._send_packet = AsyncMock()
         _run(c._handle_event('/', 123, ['foo', ('bar', 'baz')]))
@@ -704,7 +704,7 @@ class TestAsyncClient(unittest.TestCase):
         )
 
     def test_handle_event_with_id_one_list_argument(self):
-        c = asyncio_client.AsyncClient()
+        c = async_client.AsyncClient()
         c._trigger_event = AsyncMock(return_value=['a', 'b'])
         c._send_packet = AsyncMock()
         _run(c._handle_event('/', 123, ['foo', ('bar', 'baz')]))
@@ -720,7 +720,7 @@ class TestAsyncClient(unittest.TestCase):
         )
 
     def test_handle_event_with_id_two_arguments(self):
-        c = asyncio_client.AsyncClient()
+        c = async_client.AsyncClient()
         c._trigger_event = AsyncMock(return_value=('a', 'b'))
         c._send_packet = AsyncMock()
         _run(c._handle_event('/', 123, ['foo', ('bar', 'baz')]))
@@ -736,7 +736,7 @@ class TestAsyncClient(unittest.TestCase):
         )
 
     def test_handle_ack(self):
-        c = asyncio_client.AsyncClient()
+        c = async_client.AsyncClient()
         mock_cb = mock.MagicMock()
         c.callbacks['/foo'] = {123: mock_cb}
         _run(c._handle_ack('/foo', 123, ['bar', 'baz']))
@@ -744,7 +744,7 @@ class TestAsyncClient(unittest.TestCase):
         assert 123 not in c.callbacks['/foo']
 
     def test_handle_ack_async(self):
-        c = asyncio_client.AsyncClient()
+        c = async_client.AsyncClient()
         mock_cb = AsyncMock()
         c.callbacks['/foo'] = {123: mock_cb}
         _run(c._handle_ack('/foo', 123, ['bar', 'baz']))
@@ -752,7 +752,7 @@ class TestAsyncClient(unittest.TestCase):
         assert 123 not in c.callbacks['/foo']
 
     def test_handle_ack_not_found(self):
-        c = asyncio_client.AsyncClient()
+        c = async_client.AsyncClient()
         mock_cb = mock.MagicMock()
         c.callbacks['/foo'] = {123: mock_cb}
         _run(c._handle_ack('/foo', 124, ['bar', 'baz']))
@@ -760,7 +760,7 @@ class TestAsyncClient(unittest.TestCase):
         assert 123 in c.callbacks['/foo']
 
     def test_handle_error(self):
-        c = asyncio_client.AsyncClient()
+        c = async_client.AsyncClient()
         c.connected = True
         c._connect_event = mock.MagicMock()
         c._trigger_event = AsyncMock()
@@ -774,7 +774,7 @@ class TestAsyncClient(unittest.TestCase):
         )
 
     def test_handle_error_with_no_arguments(self):
-        c = asyncio_client.AsyncClient()
+        c = async_client.AsyncClient()
         c.connected = True
         c._connect_event = mock.MagicMock()
         c._trigger_event = AsyncMock()
@@ -786,7 +786,7 @@ class TestAsyncClient(unittest.TestCase):
         c._trigger_event.mock.assert_called_once_with('connect_error', '/')
 
     def test_handle_error_namespace(self):
-        c = asyncio_client.AsyncClient()
+        c = async_client.AsyncClient()
         c.connected = True
         c.namespaces = {'/foo': '1', '/bar': '2'}
         c._connect_event = mock.MagicMock()
@@ -800,7 +800,7 @@ class TestAsyncClient(unittest.TestCase):
         )
 
     def test_handle_error_namespace_with_no_arguments(self):
-        c = asyncio_client.AsyncClient()
+        c = async_client.AsyncClient()
         c.connected = True
         c.namespaces = {'/foo': '1', '/bar': '2'}
         c._connect_event = mock.MagicMock()
@@ -812,7 +812,7 @@ class TestAsyncClient(unittest.TestCase):
         c._trigger_event.mock.assert_called_once_with('connect_error', '/bar')
 
     def test_handle_error_unknown_namespace(self):
-        c = asyncio_client.AsyncClient()
+        c = async_client.AsyncClient()
         c.connected = True
         c.namespaces = {'/foo': '1', '/bar': '2'}
         c._connect_event = mock.MagicMock()
@@ -822,7 +822,7 @@ class TestAsyncClient(unittest.TestCase):
         c._connect_event.set.assert_called_once_with()
 
     def test_trigger_event(self):
-        c = asyncio_client.AsyncClient()
+        c = async_client.AsyncClient()
         handler = mock.MagicMock()
         catchall_handler = mock.MagicMock()
         c.on('foo', handler)
@@ -834,7 +834,7 @@ class TestAsyncClient(unittest.TestCase):
         catchall_handler.assert_called_once_with('bar', 1, '2', 3)
 
     def test_trigger_event_namespace(self):
-        c = asyncio_client.AsyncClient()
+        c = async_client.AsyncClient()
         handler = AsyncMock()
         catchall_handler = AsyncMock()
         c.on('foo', handler, namespace='/bar')
@@ -845,10 +845,10 @@ class TestAsyncClient(unittest.TestCase):
         catchall_handler.mock.assert_called_once_with('bar', 1, '2', 3)
 
     def test_trigger_event_class_namespace(self):
-        c = asyncio_client.AsyncClient()
+        c = async_client.AsyncClient()
         result = []
 
-        class MyNamespace(asyncio_namespace.AsyncClientNamespace):
+        class MyNamespace(async_namespace.AsyncClientNamespace):
             def on_foo(self, a, b):
                 result.append(a)
                 result.append(b)
@@ -858,10 +858,10 @@ class TestAsyncClient(unittest.TestCase):
         assert result == [1, '2']
 
     def test_trigger_event_unknown_namespace(self):
-        c = asyncio_client.AsyncClient()
+        c = async_client.AsyncClient()
         result = []
 
-        class MyNamespace(asyncio_namespace.AsyncClientNamespace):
+        class MyNamespace(async_namespace.AsyncClientNamespace):
             def on_foo(self, a, b):
                 result.append(a)
                 result.append(b)
@@ -877,7 +877,7 @@ class TestAsyncClient(unittest.TestCase):
     )
     @mock.patch('socketio.client.random.random', side_effect=[1, 0, 0.5])
     def test_handle_reconnect(self, random, wait_for):
-        c = asyncio_client.AsyncClient()
+        c = async_client.AsyncClient()
         c._reconnect_task = 'foo'
         c.connect = AsyncMock(
             side_effect=[ValueError, exceptions.ConnectionError, None]
@@ -898,7 +898,7 @@ class TestAsyncClient(unittest.TestCase):
     )
     @mock.patch('socketio.client.random.random', side_effect=[1, 0, 0.5])
     def test_handle_reconnect_max_delay(self, random, wait_for):
-        c = asyncio_client.AsyncClient(reconnection_delay_max=3)
+        c = async_client.AsyncClient(reconnection_delay_max=3)
         c._reconnect_task = 'foo'
         c.connect = AsyncMock(
             side_effect=[ValueError, exceptions.ConnectionError, None]
@@ -919,7 +919,7 @@ class TestAsyncClient(unittest.TestCase):
     )
     @mock.patch('socketio.client.random.random', side_effect=[1, 0, 0.5])
     def test_handle_reconnect_max_attempts(self, random, wait_for):
-        c = asyncio_client.AsyncClient(reconnection_attempts=2, logger=True)
+        c = async_client.AsyncClient(reconnection_attempts=2, logger=True)
         c.connection_namespaces = ['/']
         c._reconnect_task = 'foo'
         c._trigger_event = AsyncMock()
@@ -943,7 +943,7 @@ class TestAsyncClient(unittest.TestCase):
     )
     @mock.patch('socketio.client.random.random', side_effect=[1, 0, 0.5])
     def test_handle_reconnect_aborted(self, random, wait_for):
-        c = asyncio_client.AsyncClient(logger=True)
+        c = async_client.AsyncClient(logger=True)
         c.connection_namespaces = ['/']
         c._reconnect_task = 'foo'
         c._trigger_event = AsyncMock()
@@ -961,7 +961,7 @@ class TestAsyncClient(unittest.TestCase):
                                                       namespace='/')
 
     def test_handle_eio_connect(self):
-        c = asyncio_client.AsyncClient()
+        c = async_client.AsyncClient()
         c.connection_namespaces = ['/', '/foo']
         c.connection_auth = 'auth'
         c._send_packet = AsyncMock()
@@ -984,7 +984,7 @@ class TestAsyncClient(unittest.TestCase):
         )
 
     def test_handle_eio_connect_function(self):
-        c = asyncio_client.AsyncClient()
+        c = async_client.AsyncClient()
         c.connection_namespaces = ['/', '/foo']
         c.connection_auth = lambda: 'auth'
         c._send_packet = AsyncMock()
@@ -1007,7 +1007,7 @@ class TestAsyncClient(unittest.TestCase):
         )
 
     def test_handle_eio_message(self):
-        c = asyncio_client.AsyncClient()
+        c = async_client.AsyncClient()
         c._handle_connect = AsyncMock()
         c._handle_disconnect = AsyncMock()
         c._handle_event = AsyncMock()
@@ -1056,7 +1056,7 @@ class TestAsyncClient(unittest.TestCase):
             _run(c._handle_eio_message('9'))
 
     def test_eio_disconnect(self):
-        c = asyncio_client.AsyncClient()
+        c = async_client.AsyncClient()
         c.namespaces = {'/': '1'}
         c.connected = True
         c._trigger_event = AsyncMock()
@@ -1071,7 +1071,7 @@ class TestAsyncClient(unittest.TestCase):
         assert not c.connected
 
     def test_eio_disconnect_namespaces(self):
-        c = asyncio_client.AsyncClient(reconnection=False)
+        c = async_client.AsyncClient(reconnection=False)
         c.namespaces = {'/foo': '1', '/bar': '2'}
         c.connected = True
         c._trigger_event = AsyncMock()
@@ -1084,21 +1084,21 @@ class TestAsyncClient(unittest.TestCase):
         assert not c.connected
 
     def test_eio_disconnect_reconnect(self):
-        c = asyncio_client.AsyncClient(reconnection=True)
+        c = async_client.AsyncClient(reconnection=True)
         c.start_background_task = mock.MagicMock()
         c.eio.state = 'connected'
         _run(c._handle_eio_disconnect())
         c.start_background_task.assert_called_once_with(c._handle_reconnect)
 
     def test_eio_disconnect_self_disconnect(self):
-        c = asyncio_client.AsyncClient(reconnection=True)
+        c = async_client.AsyncClient(reconnection=True)
         c.start_background_task = mock.MagicMock()
         c.eio.state = 'disconnected'
         _run(c._handle_eio_disconnect())
         c.start_background_task.assert_not_called()
 
     def test_eio_disconnect_no_reconnect(self):
-        c = asyncio_client.AsyncClient(reconnection=False)
+        c = async_client.AsyncClient(reconnection=False)
         c.namespaces = {'/': '1'}
         c.connected = True
         c._trigger_event = AsyncMock()

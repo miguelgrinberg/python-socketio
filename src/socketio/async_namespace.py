@@ -1,9 +1,9 @@
 import asyncio
 
-from socketio import namespace
+from socketio import base_namespace
 
 
-class AsyncNamespace(namespace.Namespace):
+class AsyncNamespace(base_namespace.BaseServerNamespace):
     """Base class for asyncio server-side class-based namespaces.
 
     A class-based namespace is a class that contains all the event handlers
@@ -168,7 +168,7 @@ class AsyncNamespace(namespace.Namespace):
             sid, namespace=namespace or self.namespace)
 
 
-class AsyncClientNamespace(namespace.ClientNamespace):
+class AsyncClientNamespace(base_namespace.BaseClientNamespace):
     """Base class for asyncio client-side class-based namespaces.
 
     A class-based namespace is a class that contains all the event handlers

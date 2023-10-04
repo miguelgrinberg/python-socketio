@@ -6,141 +6,86 @@ API Reference
 
 .. module:: socketio
 
-``SimpleClient`` class
-----------------------
-
 .. autoclass:: SimpleClient
    :members:
-
-``AsyncSimpleClient`` class
----------------------------
+   :inherited-members:
 
 .. autoclass:: AsyncSimpleClient
    :members:
-
-``Client`` class
-----------------
+   :inherited-members:
 
 .. autoclass:: Client
    :members:
-
-``AsyncClient`` class
----------------------
+   :inherited-members:
 
 .. autoclass:: AsyncClient
    :members:
    :inherited-members:
 
-``Server`` class
-----------------
-
 .. autoclass:: Server
    :members:
-
-``AsyncServer`` class
----------------------
+   :inherited-members:
 
 .. autoclass:: AsyncServer
    :members:
    :inherited-members:
 
-``ConnectionRefusedError`` class
---------------------------------
-
 .. autoclass:: socketio.exceptions.ConnectionRefusedError
    :members:
-
-``WSGIApp`` class
------------------
 
 .. autoclass:: WSGIApp
    :members:
 
-``ASGIApp`` class
------------------
-
 .. autoclass:: ASGIApp
    :members:
 
-``Middleware`` class (deprecated)
----------------------------------
-
 .. autoclass:: Middleware
    :members:
-
-``ClientNamespace`` class
--------------------------
 
 .. autoclass:: ClientNamespace
    :members:
    :inherited-members:
 
-``Namespace`` class
--------------------
-
 .. autoclass:: Namespace
    :members:
    :inherited-members:
-
-``AsyncClientNamespace`` class
-------------------------------
 
 .. autoclass:: AsyncClientNamespace
    :members:
    :inherited-members:
 
-``AsyncNamespace`` class
-------------------------
-
 .. autoclass:: AsyncNamespace
    :members:
    :inherited-members:
 
-``BaseManager`` class
----------------------
-
-.. autoclass:: BaseManager
+.. autoclass:: Manager
    :members:
-
-``PubSubManager`` class
------------------------
+   :inherited-members:
 
 .. autoclass:: PubSubManager
    :members:
-
-``KombuManager`` class
-----------------------
+   :inherited-members:
 
 .. autoclass:: KombuManager
    :members:
-
-``RedisManager`` class
-----------------------
+   :inherited-members:
 
 .. autoclass:: RedisManager
    :members:
-
-``KafkaManager`` class
-----------------------
+   :inherited-members:
 
 .. autoclass:: KafkaManager
    :members:
-
-``AsyncManager`` class
-----------------------
+   :inherited-members:
 
 .. autoclass:: AsyncManager
    :members:
    :inherited-members:
 
-``AsyncRedisManager`` class
----------------------------
-
 .. autoclass:: AsyncRedisManager
    :members:
-
-``AsyncAioPikaManager`` class
------------------------------
+   :inherited-members:
 
 .. autoclass:: AsyncAioPikaManager
    :members:
+   :inherited-members:

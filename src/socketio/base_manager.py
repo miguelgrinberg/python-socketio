@@ -2,21 +2,11 @@ import itertools
 import logging
 
 from bidict import bidict, ValueDuplicationError
-from engineio import packet as eio_packet
-from socketio import packet
 
 default_logger = logging.getLogger('socketio')
 
 
-class BaseManager(object):
-    """Manage client connections.
-
-    This class keeps track of all the clients and the rooms they are in, to
-    support the broadcasting of messages. The data used by this class is
-    stored in a memory structure, making it appropriate only for single process
-    services. More sophisticated storage backends can be implemented by
-    subclasses.
-    """
+class BaseManager:
     def __init__(self):
         self.logger = None
         self.server = None
@@ -82,9 +72,6 @@ class BaseManager(object):
         if namespace in self.rooms:
             return self.rooms[namespace][None].get(sid)
 
-    def can_disconnect(self, sid, namespace):
-        return self.is_connected(sid, namespace)
-
     def pre_disconnect(self, sid, namespace):
         """Put the client in the to-be-disconnected list.
 
@@ -97,8 +84,7 @@ class BaseManager(object):
         self.pending_disconnect[namespace].append(sid)
         return self.rooms[namespace][None].get(sid)
 
-    def disconnect(self, sid, namespace, **kwargs):
-        """Register a client disconnect from a namespace."""
+    def basic_disconnect(self, sid, namespace, **kwargs):
         if namespace not in self.rooms:
             return
         rooms = []
@@ -116,7 +102,6 @@ class BaseManager(object):
                 del self.pending_disconnect[namespace]
 
     def basic_enter_room(self, sid, namespace, room, eio_sid=None):
-        """Add a client to a room."""
         if eio_sid is None and namespace not in self.rooms:
             raise ValueError('sid is not connected to requested namespace')
         if namespace not in self.rooms:
@@ -128,7 +113,6 @@ class BaseManager(object):
         self.rooms[namespace][room][sid] = eio_sid
 
     def basic_leave_room(self, sid, namespace, room):
-        """Remove a client from a room."""
         try:
             del self.rooms[namespace][room][sid]
             if len(self.rooms[namespace][room]) == 0:
@@ -138,16 +122,7 @@ class BaseManager(object):
         except KeyError:
             pass
 
-    def enter_room(self, sid, namespace, room, eio_sid=None):
-        """Add a client to a room."""
-        self.basic_enter_room(sid, namespace, room, eio_sid=eio_sid)
-
-    def leave_room(self, sid, namespace, room):
-        """Remove a client from a room."""
-        self.basic_leave_room(sid, namespace, room)
-
-    def close_room(self, room, namespace):
-        """Remove all participants from a room."""
+    def basic_close_room(self, room, namespace):
         try:
             for sid, _ in self.get_participants(namespace, room):
                 self.basic_leave_room(sid, namespace, room)
@@ -164,62 +139,6 @@ class BaseManager(object):
         except KeyError:
             pass
         return r
-
-    def emit(self, event, data, namespace, room=None, skip_sid=None,
-             callback=None, **kwargs):
-        """Emit a message to a single client, a room, or all the clients
-        connected to the namespace."""
-        if namespace not in self.rooms:
-            return
-        if isinstance(data, tuple):
-            # tuples are expanded to multiple arguments, everything else is
-            # sent as a single argument
-            data = list(data)
-        elif data is not None:
-            data = [data]
-        else:
-            data = []
-        if not isinstance(skip_sid, list):
-            skip_sid = [skip_sid]
-        if not callback:
-            # when callbacks aren't used the packets sent to each recipient are
-            # identical, so they can be generated once and reused
-            pkt = self.server.packet_class(
-                packet.EVENT, namespace=namespace, data=[event] + data)
-            encoded_packet = pkt.encode()
-            if not isinstance(encoded_packet, list):
-                encoded_packet = [encoded_packet]
-            eio_pkt = [eio_packet.Packet(eio_packet.MESSAGE, p)
-                       for p in encoded_packet]
-            for sid, eio_sid in self.get_participants(namespace, room):
-                if sid not in skip_sid:
-                    for p in eio_pkt:
-                        self.server._send_eio_packet(eio_sid, p)
-        else:
-            # callbacks are used, so each recipient must be sent a packet that
-            # contains a unique callback id
-            # note that callbacks when addressing a group of people are
-            # implemented but not tested or supported
-            for sid, eio_sid in self.get_participants(namespace, room):
-                if sid not in skip_sid:  # pragma: no branch
-                    id = self._generate_ack_id(sid, callback)
-                    pkt = self.server.packet_class(
-                        packet.EVENT, namespace=namespace, data=[event] + data,
-                        id=id)
-                    self.server._send_packet(eio_sid, pkt)
-
-    def trigger_callback(self, sid, id, data):
-        """Invoke an application callback."""
-        callback = None
-        try:
-            callback = self.callbacks[sid][id]
-        except KeyError:
-            # if we get an unknown callback we just ignore it
-            self._get_logger().warning('Unknown callback received, ignoring.')
-        else:
-            del self.callbacks[sid][id]
-        if callback is not None:
-            callback(*data)
 
     def _generate_ack_id(self, sid, callback):
         """Generate a unique identifier for an ACK packet."""

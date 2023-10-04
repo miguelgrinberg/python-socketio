@@ -67,28 +67,28 @@ class AsyncManager(BaseManager):
 
         Note: this method is a coroutine.
         """
-        return super().disconnect(sid, namespace, **kwargs)
+        return self.basic_disconnect(sid, namespace, **kwargs)
 
     async def enter_room(self, sid, namespace, room, eio_sid=None):
         """Add a client to a room.
 
         Note: this method is a coroutine.
         """
-        return super().enter_room(sid, namespace, room, eio_sid=eio_sid)
+        return self.basic_enter_room(sid, namespace, room, eio_sid=eio_sid)
 
     async def leave_room(self, sid, namespace, room):
         """Remove a client from a room.
 
         Note: this method is a coroutine.
         """
-        return super().leave_room(sid, namespace, room)
+        return self.basic_leave_room(sid, namespace, room)
 
     async def close_room(self, room, namespace):
         """Remove all participants from a room.
 
         Note: this method is a coroutine.
         """
-        return super().close_room(room, namespace)
+        return self.basic_close_room(room, namespace)
 
     async def trigger_callback(self, sid, id, data):
         """Invoke an application callback.

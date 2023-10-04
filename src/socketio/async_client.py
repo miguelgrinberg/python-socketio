@@ -4,14 +4,14 @@ import random
 
 import engineio
 
-from . import client
+from . import base_client
 from . import exceptions
 from . import packet
 
 default_logger = logging.getLogger('socketio.client')
 
 
-class AsyncClient(client.Client):
+class AsyncClient(base_client.BaseClient):
     """A Socket.IO client for asyncio.
 
     This class implements a fully compliant Socket.IO web client with support
@@ -456,7 +456,7 @@ class AsyncClient(client.Client):
         if self._reconnect_abort is None:  # pragma: no cover
             self._reconnect_abort = self.eio.create_event()
         self._reconnect_abort.clear()
-        client.reconnecting_clients.append(self)
+        base_client.reconnecting_clients.append(self)
         attempt_count = 0
         current_delay = self.reconnection_delay
         while True:
@@ -499,7 +499,7 @@ class AsyncClient(client.Client):
                     await self._trigger_event('__disconnect_final',
                                               namespace=n)
                 break
-        client.reconnecting_clients.remove(self)
+        base_client.reconnecting_clients.remove(self)
 
     async def _handle_eio_connect(self):
         """Handle the Engine.IO connection event."""

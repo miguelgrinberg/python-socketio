@@ -192,7 +192,7 @@ class AsyncSimpleClient:
         """Disconnect from the server.
 
         Note: this method is a coroutine.
-i       """
+        """
         if self.connected:
             await self.client.disconnect()
             self.client = None

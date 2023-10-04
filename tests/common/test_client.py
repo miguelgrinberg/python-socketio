@@ -8,7 +8,7 @@ from engineio import json
 from engineio import packet as engineio_packet
 import pytest
 
-from socketio import asyncio_namespace
+from socketio import async_namespace
 from socketio import client
 from socketio import exceptions
 from socketio import msgpack_packet
@@ -157,7 +157,7 @@ class TestClient(unittest.TestCase):
 
     @unittest.skipIf(sys.version_info < (3, 0), 'only for Python 3')
     def test_namespace_handler_wrong_async(self):
-        class MyNamespace(asyncio_namespace.AsyncClientNamespace):
+        class MyNamespace(async_namespace.AsyncClientNamespace):
             pass
 
         c = client.Client()

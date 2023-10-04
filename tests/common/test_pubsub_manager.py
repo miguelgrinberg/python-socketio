@@ -5,7 +5,7 @@ from unittest import mock
 
 import pytest
 
-from socketio import base_manager
+from socketio import manager
 from socketio import pubsub_manager
 from socketio import packet
 
@@ -223,7 +223,7 @@ class TestPubSubManager(unittest.TestCase):
         )
 
     def test_handle_emit(self):
-        with mock.patch.object(base_manager.BaseManager, 'emit') as super_emit:
+        with mock.patch.object(manager.Manager, 'emit') as super_emit:
             self.pm._handle_emit({'event': 'foo', 'data': 'bar'})
             super_emit.assert_called_once_with(
                 'foo',
@@ -235,7 +235,7 @@ class TestPubSubManager(unittest.TestCase):
             )
 
     def test_handle_emit_with_namespace(self):
-        with mock.patch.object(base_manager.BaseManager, 'emit') as super_emit:
+        with mock.patch.object(manager.Manager, 'emit') as super_emit:
             self.pm._handle_emit(
                 {'event': 'foo', 'data': 'bar', 'namespace': '/baz'}
             )
@@ -249,7 +249,7 @@ class TestPubSubManager(unittest.TestCase):
             )
 
     def test_handle_emit_with_room(self):
-        with mock.patch.object(base_manager.BaseManager, 'emit') as super_emit:
+        with mock.patch.object(manager.Manager, 'emit') as super_emit:
             self.pm._handle_emit(
                 {'event': 'foo', 'data': 'bar', 'room': 'baz'}
             )
@@ -263,7 +263,7 @@ class TestPubSubManager(unittest.TestCase):
             )
 
     def test_handle_emit_with_skip_sid(self):
-        with mock.patch.object(base_manager.BaseManager, 'emit') as super_emit:
+        with mock.patch.object(manager.Manager, 'emit') as super_emit:
             self.pm._handle_emit(
                 {'event': 'foo', 'data': 'bar', 'skip_sid': '123'}
             )
@@ -277,7 +277,7 @@ class TestPubSubManager(unittest.TestCase):
             )
 
     def test_handle_emit_with_remote_callback(self):
-        with mock.patch.object(base_manager.BaseManager, 'emit') as super_emit:
+        with mock.patch.object(manager.Manager, 'emit') as super_emit:
             self.pm._handle_emit(
                 {
                     'event': 'foo',
@@ -308,7 +308,7 @@ class TestPubSubManager(unittest.TestCase):
             )
 
     def test_handle_emit_with_local_callback(self):
-        with mock.patch.object(base_manager.BaseManager, 'emit') as super_emit:
+        with mock.patch.object(manager.Manager, 'emit') as super_emit:
             self.pm._handle_emit(
                 {
                     'event': 'foo',
@@ -397,7 +397,7 @@ class TestPubSubManager(unittest.TestCase):
     def test_handle_enter_room(self):
         sid = self.pm.connect('123', '/')
         with mock.patch.object(
-            base_manager.BaseManager, 'enter_room'
+            manager.Manager, 'enter_room'
         ) as super_enter_room:
             self.pm._handle_enter_room({
                 'method': 'enter_room', 'sid': sid, 'namespace': '/',
@@ -410,7 +410,7 @@ class TestPubSubManager(unittest.TestCase):
     def test_handle_leave_room(self):
         sid = self.pm.connect('123', '/')
         with mock.patch.object(
-            base_manager.BaseManager, 'leave_room'
+            manager.Manager, 'leave_room'
         ) as super_leave_room:
             self.pm._handle_leave_room({
                 'method': 'leave_room', 'sid': sid, 'namespace': '/',
@@ -422,7 +422,7 @@ class TestPubSubManager(unittest.TestCase):
 
     def test_handle_close_room(self):
         with mock.patch.object(
-            base_manager.BaseManager, 'close_room'
+            manager.Manager, 'close_room'
         ) as super_close_room:
             self.pm._handle_close_room({'method': 'close_room', 'room': 'foo'})
             super_close_room.assert_called_once_with(
@@ -431,7 +431,7 @@ class TestPubSubManager(unittest.TestCase):
 
     def test_handle_close_room_with_namespace(self):
         with mock.patch.object(
-            base_manager.BaseManager, 'close_room'
+            manager.Manager, 'close_room'
         ) as super_close_room:
             self.pm._handle_close_room(
                 {'method': 'close_room', 'room': 'foo', 'namespace': '/bar'}
