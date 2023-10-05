@@ -28,6 +28,16 @@ fiddle.py
 This is a very simple application based on a JavaScript example of the same
 name.
 
+fastapi-fiddle.py
+-----------------
+
+A version of `fiddle.py` that is integrated with the FastAPI framework.
+
+litestar-fiddle.py
+------------------
+
+A version of `fiddle.py` that is integrated with the Litestar framework.
+
 Running the Examples
 --------------------
 
