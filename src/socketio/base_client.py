@@ -1,11 +1,31 @@
 import itertools
 import logging
+import signal
+import threading
 
 from . import base_namespace
 from . import packet
 
 default_logger = logging.getLogger('socketio.client')
 reconnecting_clients = []
+
+
+def signal_handler(sig, frame):  # pragma: no cover
+    """SIGINT handler.
+
+    Notify any clients that are in a reconnect loop to abort. Other
+    disconnection tasks are handled at the engine.io level.
+    """
+    for client in reconnecting_clients[:]:
+        client._reconnect_abort.set()
+    if callable(original_signal_handler):
+        return original_signal_handler(sig, frame)
+    else:  # pragma: no cover
+        # Handle case where no original SIGINT handler was present.
+        return signal.default_int_handler(sig, frame)
+
+
+original_signal_handler = None
 
 
 class BaseClient:
@@ -16,6 +36,11 @@ class BaseClient:
                  reconnection_delay=1, reconnection_delay_max=5,
                  randomization_factor=0.5, logger=False, serializer='default',
                  json=None, handle_sigint=True, **kwargs):
+        global original_signal_handler
+        if handle_sigint and original_signal_handler is None and \
+                threading.current_thread() == threading.main_thread():
+            original_signal_handler = signal.signal(signal.SIGINT,
+                                                    signal_handler)
         self.reconnection = reconnection
         self.reconnection_attempts = reconnection_attempts
         self.reconnection_delay = reconnection_delay

@@ -1,30 +1,10 @@
 import random
-import signal
-import threading
 
 import engineio
 
 from . import base_client
 from . import exceptions
 from . import packet
-
-
-def signal_handler(sig, frame):  # pragma: no cover
-    """SIGINT handler.
-
-    Notify any clients that are in a reconnect loop to abort. Other
-    disconnection tasks are handled at the engine.io level.
-    """
-    for client in base_client.reconnecting_clients[:]:
-        client._reconnect_abort.set()
-    if callable(original_signal_handler):
-        return original_signal_handler(sig, frame)
-    else:  # pragma: no cover
-        # Handle case where no original SIGINT handler was present.
-        return signal.default_int_handler(sig, frame)
-
-
-original_signal_handler = None
 
 
 class Client(base_client.BaseClient):
@@ -87,24 +67,6 @@ class Client(base_client.BaseClient):
                             fatal errors are logged even when
                             ``engineio_logger`` is ``False``.
     """
-    def __init__(self, reconnection=True, reconnection_attempts=0,
-                 reconnection_delay=1, reconnection_delay_max=5,
-                 randomization_factor=0.5, logger=False, serializer='default',
-                 json=None, handle_sigint=True, **kwargs):
-        global original_signal_handler
-        if handle_sigint and original_signal_handler is None and \
-                threading.current_thread() == threading.main_thread():
-            original_signal_handler = signal.signal(signal.SIGINT,
-                                                    signal_handler)
-
-        super().__init__(reconnection=reconnection,
-                         reconnection_attempts=reconnection_attempts,
-                         reconnection_delay=reconnection_delay,
-                         reconnection_delay_max=reconnection_delay_max,
-                         randomization_factor=randomization_factor,
-                         logger=logger, serializer=serializer, json=json,
-                         handle_sigint=handle_sigint, **kwargs)
-
     def connect(self, url, headers={}, auth=None, transports=None,
                 namespaces=None, socketio_path='socket.io', wait=True,
                 wait_timeout=1):
