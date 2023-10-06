@@ -66,12 +66,14 @@ class InstrumentedAsyncServer:
             self.sio.manager.disconnect = self._disconnect
 
             # report join rooms
-            self.sio.manager.__enter_room = self.sio.manager.enter_room
-            self.sio.manager.enter_room = self._enter_room
+            self.sio.manager.__basic_enter_room = \
+                self.sio.manager.basic_enter_room
+            self.sio.manager.basic_enter_room = self._basic_enter_room
 
             # report leave rooms
-            self.sio.manager.__leave_room = self.sio.manager.leave_room
-            self.sio.manager.leave_room = self._leave_room
+            self.sio.manager.__basic_leave_room = \
+                self.sio.manager.basic_leave_room
+            self.sio.manager.basic_leave_room = self._basic_leave_room
 
             # report emit events
             self.sio.manager.__emit = self.sio.manager.emit
@@ -102,8 +104,10 @@ class InstrumentedAsyncServer:
         if self.mode == 'development':
             self.sio.manager.connect = self.sio.manager.__connect
             self.sio.manager.disconnect = self.sio.manager.__disconnect
-            self.sio.manager.enter_room = self.sio.manager.__enter_room
-            self.sio.manager.leave_room = self.sio.manager.__leave_room
+            self.sio.manager.basic_enter_room = \
+                self.sio.manager.__basic_enter_room
+            self.sio.manager.basic_leave_room = \
+                self.sio.manager.__basic_leave_room
             self.sio.manager.emit = self.sio.manager.__emit
             self.sio._handle_event_internal = self.sio.__handle_event_internal
         self.sio.eio._ok = self.sio.eio.__ok
@@ -160,15 +164,15 @@ class InstrumentedAsyncServer:
     async def admin_emit(self, _, namespace, room_filter, event, *data):
         await self.sio.emit(event, data, to=room_filter, namespace=namespace)
 
-    def admin_enter_room(self, _, namespace, room, room_filter=None):
+    async def admin_enter_room(self, _, namespace, room, room_filter=None):
         for sid, _ in self.sio.manager.get_participants(
                 namespace, room_filter):
-            self.sio.enter_room(sid, room, namespace=namespace)
+            await self.sio.enter_room(sid, room, namespace=namespace)
 
-    def admin_leave_room(self, _, namespace, room, room_filter=None):
+    async def admin_leave_room(self, _, namespace, room, room_filter=None):
         for sid, _ in self.sio.manager.get_participants(
                 namespace, room_filter):
-            self.sio.leave_room(sid, room, namespace=namespace)
+            await self.sio.leave_room(sid, room, namespace=namespace)
 
     async def admin_disconnect(self, _, namespace, close, room_filter=None):
         for sid, _ in self.sio.manager.get_participants(
@@ -220,8 +224,9 @@ class InstrumentedAsyncServer:
             except KeyError:
                 pass
 
-    def _enter_room(self, sid, namespace, room, eio_sid=None):
-        ret = self.sio.manager.__enter_room(sid, namespace, room, eio_sid)
+    def _basic_enter_room(self, sid, namespace, room, eio_sid=None):
+        ret = self.sio.manager.__basic_enter_room(sid, namespace, room,
+                                                  eio_sid)
         if room:
             self.admin_queue.append(('room_joined', (
                 namespace,
@@ -231,7 +236,7 @@ class InstrumentedAsyncServer:
             )))
         return ret
 
-    def _leave_room(self, sid, namespace, room):
+    def _basic_leave_room(self, sid, namespace, room):
         if room:
             self.admin_queue.append(('room_left', (
                 namespace,
@@ -239,7 +244,7 @@ class InstrumentedAsyncServer:
                 sid,
                 datetime.utcnow().isoformat() + 'Z',
             )))
-        return self.sio.manager.__leave_room(sid, namespace, room)
+        return self.sio.manager.__basic_leave_room(sid, namespace, room)
 
     async def _emit(self, event, data, namespace, room=None, skip_sid=None,
                     callback=None, **kwargs):

@@ -4,7 +4,10 @@ import time
 from unittest import mock
 import unittest
 import pytest
-from engineio.asyncio_socket import AsyncSocket as EngineIOSocket
+try:
+    from engineio.async_socket import AsyncSocket as EngineIOSocket
+except ImportError:
+    from engineio.asyncio_socket import AsyncSocket as EngineIOSocket
 import socketio
 from socketio.exceptions import ConnectionError
 from tests.asyncio_web_server import SocketIOWebServer
@@ -24,8 +27,8 @@ def with_instrumented_server(auth=False, **ikwargs):
             instrumented_server = sio.instrument(auth=auth, **ikwargs)
 
             @sio.event
-            def enter_room(sid, data):
-                sio.enter_room(sid, data)
+            async def enter_room(sid, data):
+                await sio.enter_room(sid, data)
 
             @sio.event
             async def emit(sid, event):

@@ -85,12 +85,14 @@ class InstrumentedServer:
             self.sio.manager.disconnect = self._disconnect
 
             # report join rooms
-            self.sio.manager.__enter_room = self.sio.manager.enter_room
-            self.sio.manager.enter_room = self._enter_room
+            self.sio.manager.__basic_enter_room = \
+                self.sio.manager.basic_enter_room
+            self.sio.manager.basic_enter_room = self._basic_enter_room
 
             # report leave rooms
-            self.sio.manager.__leave_room = self.sio.manager.leave_room
-            self.sio.manager.leave_room = self._leave_room
+            self.sio.manager.__basic_leave_room = \
+                self.sio.manager.basic_leave_room
+            self.sio.manager.basic_leave_room = self._basic_leave_room
 
             # report emit events
             self.sio.manager.__emit = self.sio.manager.emit
@@ -121,8 +123,10 @@ class InstrumentedServer:
         if self.mode == 'development':
             self.sio.manager.connect = self.sio.manager.__connect
             self.sio.manager.disconnect = self.sio.manager.__disconnect
-            self.sio.manager.enter_room = self.sio.manager.__enter_room
-            self.sio.manager.leave_room = self.sio.manager.__leave_room
+            self.sio.manager.basic_enter_room = \
+                self.sio.manager.__basic_enter_room
+            self.sio.manager.basic_leave_room = \
+                self.sio.manager.__basic_leave_room
             self.sio.manager.emit = self.sio.manager.__emit
             self.sio._handle_event_internal = self.sio.__handle_event_internal
         self.sio.eio._ok = self.sio.eio.__ok
@@ -234,8 +238,9 @@ class InstrumentedServer:
             except KeyError:
                 pass
 
-    def _enter_room(self, sid, namespace, room, eio_sid=None):
-        ret = self.sio.manager.__enter_room(sid, namespace, room, eio_sid)
+    def _basic_enter_room(self, sid, namespace, room, eio_sid=None):
+        ret = self.sio.manager.__basic_enter_room(sid, namespace, room,
+                                                  eio_sid)
         if room:
             self.sio.emit('room_joined', (
                 namespace,
@@ -245,7 +250,7 @@ class InstrumentedServer:
             ), namespace=self.admin_namespace)
         return ret
 
-    def _leave_room(self, sid, namespace, room):
+    def _basic_leave_room(self, sid, namespace, room):
         if room:
             self.sio.emit('room_left', (
                 namespace,
@@ -253,7 +258,7 @@ class InstrumentedServer:
                 sid,
                 datetime.utcnow().isoformat() + 'Z',
             ), namespace=self.admin_namespace)
-        return self.sio.manager.__leave_room(sid, namespace, room)
+        return self.sio.manager.__basic_leave_room(sid, namespace, room)
 
     def _emit(self, event, data, namespace, room=None, skip_sid=None,
               callback=None, **kwargs):

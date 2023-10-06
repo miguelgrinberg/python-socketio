@@ -496,7 +496,7 @@ class AsyncServer(base_server.BaseServer):
         :param namespace: The Socket.IO namespace to use for the admin
                           interface. The default is ``/admin``.
         """
-        from .asyncio_admin import InstrumentedAsyncServer
+        from .async_admin import InstrumentedAsyncServer
         return InstrumentedAsyncServer(self, auth=auth, mode=mode,
                                        read_only=read_only,
                                        server_id=server_id,

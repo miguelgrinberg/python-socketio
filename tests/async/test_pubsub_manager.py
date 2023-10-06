@@ -182,7 +182,7 @@ class TestAsyncPubSubManager(unittest.TestCase):
         assert self.pm.is_connected(sid, '/') is False
 
     def test_enter_room(self):
-        sid = self.pm.connect('123', '/')
+        sid = _run(self.pm.connect('123', '/'))
         _run(self.pm.enter_room(sid, '/', 'foo'))
         _run(self.pm.enter_room('456', '/', 'foo'))
         assert sid in self.pm.rooms['/']['foo']
@@ -193,7 +193,7 @@ class TestAsyncPubSubManager(unittest.TestCase):
         )
 
     def test_leave_room(self):
-        sid = self.pm.connect('123', '/')
+        sid = _run(self.pm.connect('123', '/'))
         _run(self.pm.leave_room(sid, '/', 'foo'))
         _run(self.pm.leave_room('456', '/', 'foo'))
         assert 'foo' not in self.pm.rooms['/']
@@ -435,7 +435,7 @@ class TestAsyncPubSubManager(unittest.TestCase):
         )
 
     def test_handle_enter_room(self):
-        sid = self.pm.connect('123', '/')
+        sid = _run(self.pm.connect('123', '/'))
         with mock.patch.object(
             async_manager.AsyncManager, 'enter_room', new=AsyncMock()
         ) as super_enter_room:
@@ -456,7 +456,7 @@ class TestAsyncPubSubManager(unittest.TestCase):
             )
 
     def test_handle_leave_room(self):
-        sid = self.pm.connect('123', '/')
+        sid = _run(self.pm.connect('123', '/'))
         with mock.patch.object(
             async_manager.AsyncManager, 'leave_room', new=AsyncMock()
         ) as super_leave_room:

@@ -126,7 +126,7 @@ class BaseManager:
         try:
             for sid, _ in self.get_participants(namespace, room):
                 self.basic_leave_room(sid, namespace, room)
-        except KeyError:
+        except KeyError:  # pragma: no cover
             pass
 
     def get_rooms(self, sid, namespace):
