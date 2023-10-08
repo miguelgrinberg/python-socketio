@@ -56,7 +56,8 @@ class InstrumentedServer:
 
         # start thread that emits "server_stats" every 2 seconds
         self.stop_stats_event = sio.eio.create_event()
-        self.stats_task = None
+        self.stats_task = self.sio.start_background_task(
+            self._emit_server_stats)
 
     def instrument(self):
         self.sio.on('connect', self.admin_connect,
@@ -119,6 +120,12 @@ class InstrumentedServer:
         Socket._websocket_handler = functools.partialmethod(
             self.__class__._eio_websocket_handler, self)
 
+        # report connected sockets with each ping
+        if self.mode == 'development':
+            Socket.__send_ping = Socket._send_ping
+            Socket._send_ping = functools.partialmethod(
+                self.__class__._eio_send_ping, self)
+
     def uninstrument(self):  # pragma: no cover
         if self.mode == 'development':
             self.sio.manager.connect = self.sio.manager.__connect
@@ -134,6 +141,7 @@ class InstrumentedServer:
         from engineio.socket import Socket
         Socket.handle_post_request = Socket.__handle_post_request
         Socket._websocket_handler = Socket.__websocket_handler
+        Socket.send_ping = Socket.__send_ping
 
     def admin_connect(self, sid, environ, client_auth):
         if self.auth:
@@ -172,9 +180,6 @@ class InstrumentedServer:
                               namespace=self.admin_namespace)
 
         self.sio.start_background_task(config, sid)
-        if self.stats_task is None:
-            self.stats_task = self.sio.start_background_task(
-                self._emit_server_stats)
 
     def admin_emit(self, _, namespace, room_filter, event, *data):
         self.sio.emit(event, data, to=room_filter, namespace=namespace)
@@ -208,10 +213,6 @@ class InstrumentedServer:
             serialized_socket,
             datetime.utcfromtimestamp(t).isoformat() + 'Z',
         ), namespace=self.admin_namespace)
-
-        if serialized_socket['transport'] == 'polling':  # pragma: no cover
-            self.sio.start_background_task(
-                self._check_for_upgrade, eio_sid, sid, namespace)
         return sid
 
     def _disconnect(self, sid, namespace, **kwargs):
@@ -331,6 +332,20 @@ class InstrumentedServer:
         ws.__wait = ws.wait
         ws.wait = functools.partial(_wait, ws)
         return socket.__websocket_handler(ws)
+
+    def _eio_send_ping(socket, self):
+        eio_sid = socket.sid
+        t = time.time()
+        for namespace in self.sio.manager.get_namespaces():
+            sid = self.sio.manager.sid_from_eio_sid(eio_sid, namespace)
+            if sid:
+                serialized_socket = self.serialize_socket(sid, namespace,
+                                                          eio_sid)
+                self.sio.emit('socket_connected', (
+                    serialized_socket,
+                    datetime.utcfromtimestamp(t).isoformat() + 'Z',
+                ), namespace=self.admin_namespace)
+        return socket.__send_ping()
 
     def _emit_server_stats(self):
         start_time = time.time()

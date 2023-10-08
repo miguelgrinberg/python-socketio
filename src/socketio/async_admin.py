@@ -37,7 +37,8 @@ class InstrumentedAsyncServer:
 
         # start thread that emits "server_stats" every 2 seconds
         self.stop_stats_event = sio.eio.create_event()
-        self.stats_task = None
+        self.stats_task = self.sio.start_background_task(
+            self._emit_server_stats)
 
     def instrument(self):
         self.sio.on('connect', self.admin_connect,
@@ -88,7 +89,7 @@ class InstrumentedAsyncServer:
         self.sio.eio.on('disconnect', self._handle_eio_disconnect)
 
         # report polling packets
-        from engineio.asyncio_socket import AsyncSocket
+        from engineio.async_socket import AsyncSocket
         self.sio.eio.__ok = self.sio.eio._ok
         self.sio.eio._ok = self._eio_http_response
         AsyncSocket.__handle_post_request = AsyncSocket.handle_post_request
@@ -99,6 +100,12 @@ class InstrumentedAsyncServer:
         AsyncSocket.__websocket_handler = AsyncSocket._websocket_handler
         AsyncSocket._websocket_handler = functools.partialmethod(
             self.__class__._eio_websocket_handler, self)
+
+        # report connected sockets with each ping
+        if self.mode == 'development':
+            AsyncSocket.__send_ping = AsyncSocket._send_ping
+            AsyncSocket._send_ping = functools.partialmethod(
+                self.__class__._eio_send_ping, self)
 
     def uninstrument(self):  # pragma: no cover
         if self.mode == 'development':
@@ -112,9 +119,10 @@ class InstrumentedAsyncServer:
             self.sio._handle_event_internal = self.sio.__handle_event_internal
         self.sio.eio._ok = self.sio.eio.__ok
 
-        from engineio.asyncio_socket import AsyncSocket
+        from engineio.async_socket import AsyncSocket
         AsyncSocket.handle_post_request = AsyncSocket.__handle_post_request
         AsyncSocket._websocket_handler = AsyncSocket.__websocket_handler
+        AsyncSocket.schedule_ping = AsyncSocket.__schedule_ping
 
     async def admin_connect(self, sid, environ, client_auth):
         authenticated = True
@@ -157,9 +165,6 @@ class InstrumentedAsyncServer:
                                     namespace=self.admin_namespace)
 
         self.sio.start_background_task(config, sid)
-        if self.stats_task is None:
-            self.stats_task = self.sio.start_background_task(
-                self._emit_server_stats)
 
     async def admin_emit(self, _, namespace, room_filter, event, *data):
         await self.sio.emit(event, data, to=room_filter, namespace=namespace)
@@ -193,10 +198,6 @@ class InstrumentedAsyncServer:
             serialized_socket,
             datetime.utcfromtimestamp(t).isoformat() + 'Z',
         ), namespace=self.admin_namespace)
-
-        if serialized_socket['transport'] == 'polling':
-            self.sio.start_background_task(
-                self._check_for_upgrade, eio_sid, sid, namespace)
         return sid
 
     async def _disconnect(self, sid, namespace, **kwargs):
@@ -317,6 +318,20 @@ class InstrumentedAsyncServer:
         ws.__wait = ws.wait
         ws.wait = functools.partial(_wait, ws)
         return await socket.__websocket_handler(ws)
+
+    async def _eio_send_ping(socket, self):
+        eio_sid = socket.sid
+        t = time.time()
+        for namespace in self.sio.manager.get_namespaces():
+            sid = self.sio.manager.sid_from_eio_sid(eio_sid, namespace)
+            if sid:
+                serialized_socket = self.serialize_socket(sid, namespace,
+                                                          eio_sid)
+                await self.sio.emit('socket_connected', (
+                    serialized_socket,
+                    datetime.utcfromtimestamp(t).isoformat() + 'Z',
+                ), namespace=self.admin_namespace)
+        return await socket.__send_ping()
 
     async def _emit_server_stats(self):
         start_time = time.time()

@@ -2,7 +2,7 @@
 
 # set instrument to `True` to accept connections from the official Socket.IO
 # Admin UI hosted at https://admin.socket.io
-instrument = True
+instrument = False
 admin_login = {
     'username': 'admin',
     'password': 'python',  # change this to a strong secret for production use!
