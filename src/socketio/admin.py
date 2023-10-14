@@ -33,8 +33,8 @@ class EventBuffer:
 
 
 class InstrumentedServer:
-    def __init__(self, sio, auth=None, namespace='/admin', read_only=False,
-                 server_id=None, mode='development'):
+    def __init__(self, sio, auth=None, mode='development', read_only=False,
+                 server_id=None, namespace='/admin', server_stats_interval=2):
         """Instrument the Socket.IO server for monitoring with the `Socket.IO
         Admin UI <https://socket.io/docs/v4/admin-ui/>`_.
         """
@@ -49,6 +49,7 @@ class InstrumentedServer:
             else HOSTNAME
         )
         self.mode = mode
+        self.server_stats_interval = server_stats_interval
         self.event_buffer = EventBuffer()
 
         # task that emits "server_stats" every 2 seconds
@@ -338,7 +339,7 @@ class InstrumentedServer:
         ws.wait = functools.partial(_wait, ws)
         return socket.__websocket_handler(ws)
 
-    def _eio_send_ping(socket, self):
+    def _eio_send_ping(socket, self):  # pragma: no cover
         eio_sid = socket.sid
         t = time.time()
         for namespace in self.sio.manager.get_namespaces():
@@ -357,7 +358,7 @@ class InstrumentedServer:
         namespaces = list(self.sio.handlers.keys())
         namespaces.sort()
         while not self.stop_stats_event.is_set():
-            self.sio.sleep(2)
+            self.sio.sleep(self.server_stats_interval)
             self.sio.emit('server_stats', {
                 'serverId': self.server_id,
                 'hostname': HOSTNAME,

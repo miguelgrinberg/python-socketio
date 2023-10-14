@@ -455,7 +455,8 @@ class Server(base_server.BaseServer):
         return self.eio.sleep(seconds)
 
     def instrument(self, auth=None, mode='development', read_only=False,
-                   server_id=None, namespace='/admin'):
+                   server_id=None, namespace='/admin',
+                   server_stats_interval=2):
         """Instrument the Socket.IO server for monitoring with the `Socket.IO
         Admin UI <https://socket.io/docs/v4/admin-ui/>`_.
 
@@ -482,11 +483,15 @@ class Server(base_server.BaseServer):
                           name.
         :param namespace: The Socket.IO namespace to use for the admin
                           interface. The default is ``/admin``.
+        :param server_stats_interval: The interval in seconds at which the
+                                      server emits a summary of it stats to all
+                                      connected admins.
         """
         from .admin import InstrumentedServer
-        return InstrumentedServer(self, auth=auth, mode=mode,
-                                  read_only=read_only, server_id=server_id,
-                                  namespace=namespace)
+        return InstrumentedServer(
+            self, auth=auth, mode=mode, read_only=read_only,
+            server_id=server_id, namespace=namespace,
+            server_stats_interval=server_stats_interval)
 
     def _send_packet(self, eio_sid, pkt):
         """Send a Socket.IO packet to a client."""

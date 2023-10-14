@@ -33,6 +33,9 @@ def with_instrumented_server(auth=False, **ikwargs):
             def connect(sid, environ, auth):
                 pass
 
+            if 'server_stats_interval' not in ikwargs:
+                ikwargs['server_stats_interval'] = 0.1
+
             instrumented_server = sio.instrument(auth=auth, **ikwargs)
             server = SocketIOWebServer(sio)
             server.start()

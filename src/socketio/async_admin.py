@@ -14,7 +14,7 @@ PID = os.getpid()
 
 class InstrumentedAsyncServer:
     def __init__(self, sio, auth=None, namespace='/admin', read_only=False,
-                 server_id=None, mode='development'):
+                 server_id=None, mode='development', server_stats_interval=2):
         """Instrument the Socket.IO server for monitoring with the `Socket.IO
         Admin UI <https://socket.io/docs/v4/admin-ui/>`_.
         """
@@ -29,6 +29,7 @@ class InstrumentedAsyncServer:
             else HOSTNAME
         )
         self.mode = mode
+        self.server_stats_interval = server_stats_interval
         self.admin_queue = []
         self.event_buffer = EventBuffer()
 
@@ -327,7 +328,7 @@ class InstrumentedAsyncServer:
         ws.wait = functools.partial(_wait, ws)
         return await socket.__websocket_handler(ws)
 
-    async def _eio_send_ping(socket, self):
+    async def _eio_send_ping(socket, self):  # pragma: no cover
         eio_sid = socket.sid
         t = time.time()
         for namespace in self.sio.manager.get_namespaces():
@@ -346,7 +347,7 @@ class InstrumentedAsyncServer:
         namespaces = list(self.sio.handlers.keys())
         namespaces.sort()
         while not self.stop_stats_event.is_set():
-            await self.sio.sleep(2)
+            await self.sio.sleep(self.server_stats_interval)
             await self.sio.emit('server_stats', {
                 'serverId': self.server_id,
                 'hostname': HOSTNAME,
