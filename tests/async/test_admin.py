@@ -24,7 +24,6 @@ def with_instrumented_server(auth=False, **ikwargs):
         @wraps(f)
         def wrapped(self, *args, **kwargs):
             sio = socketio.AsyncServer(async_mode='asgi')
-            instrumented_server = sio.instrument(auth=auth, **ikwargs)
 
             @sio.event
             async def enter_room(sid, data):
@@ -42,6 +41,7 @@ def with_instrumented_server(auth=False, **ikwargs):
                 await instrumented_server.shutdown()
                 await sio.shutdown()
 
+            instrumented_server = sio.instrument(auth=auth, **ikwargs)
             server = SocketIOWebServer(sio, on_shutdown=shutdown)
             server.start()
 

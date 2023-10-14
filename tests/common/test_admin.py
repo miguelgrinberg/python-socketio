@@ -20,7 +20,6 @@ def with_instrumented_server(auth=False, **ikwargs):
         @wraps(f)
         def wrapped(self, *args, **kwargs):
             sio = socketio.Server(async_mode='threading')
-            instrumented_server = sio.instrument(auth=auth, **ikwargs)
 
             @sio.event
             def enter_room(sid, data):
@@ -34,6 +33,7 @@ def with_instrumented_server(auth=False, **ikwargs):
             def connect(sid, environ, auth):
                 pass
 
+            instrumented_server = sio.instrument(auth=auth, **ikwargs)
             server = SocketIOWebServer(sio)
             server.start()
 

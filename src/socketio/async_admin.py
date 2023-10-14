@@ -32,13 +32,12 @@ class InstrumentedAsyncServer:
         self.admin_queue = []
         self.event_buffer = EventBuffer()
 
+        # task that emits "server_stats" every 2 seconds
+        self.stop_stats_event = None
+        self.stats_task = None
+
         # monkey-patch the server to report metrics to the admin UI
         self.instrument()
-
-        # start thread that emits "server_stats" every 2 seconds
-        self.stop_stats_event = sio.eio.create_event()
-        self.stats_task = self.sio.start_background_task(
-            self._emit_server_stats)
 
     def instrument(self):
         self.sio.on('connect', self.admin_connect,
@@ -122,7 +121,8 @@ class InstrumentedAsyncServer:
         from engineio.async_socket import AsyncSocket
         AsyncSocket.handle_post_request = AsyncSocket.__handle_post_request
         AsyncSocket._websocket_handler = AsyncSocket.__websocket_handler
-        AsyncSocket.schedule_ping = AsyncSocket.__schedule_ping
+        if self.mode == 'development':
+            AsyncSocket._send_ping = AsyncSocket.__send_ping
 
     async def admin_connect(self, sid, environ, client_auth):
         authenticated = True
@@ -165,6 +165,9 @@ class InstrumentedAsyncServer:
                                     namespace=self.admin_namespace)
 
         self.sio.start_background_task(config, sid)
+        self.stop_stats_event = self.sio.eio.create_event()
+        self.stats_task = self.sio.start_background_task(
+            self._emit_server_stats)
 
     async def admin_emit(self, _, namespace, room_filter, event, *data):
         await self.sio.emit(event, data, to=room_filter, namespace=namespace)
@@ -280,6 +283,11 @@ class InstrumentedAsyncServer:
         return ret
 
     async def _handle_eio_connect(self, eio_sid, environ):
+        if self.stop_stats_event is None:
+            self.stop_stats_event = self.sio.eio.create_event()
+            self.stats_task = self.sio.start_background_task(
+                self._emit_server_stats)
+
         self.event_buffer.push('rawConnection')
         return await self.sio._handle_eio_connect(eio_sid, environ)
 
