@@ -42,7 +42,7 @@ def with_instrumented_server(auth=False, **ikwargs):
                 await sio.shutdown()
 
             if 'server_stats_interval' not in ikwargs:
-                ikwargs['server_stats_interval'] = 0.1
+                ikwargs['server_stats_interval'] = 0.25
 
             instrumented_server = sio.instrument(auth=auth, **ikwargs)
             server = SocketIOWebServer(sio, on_shutdown=shutdown)
