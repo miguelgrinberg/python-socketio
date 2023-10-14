@@ -1,6 +1,56 @@
-[build-system]
-requires = [
-    "setuptools>=42",
-    "wheel"
+[project]
+name = "python-socketio"
+version = "5.9.1.dev0"
+authors = [
+    { name = "Miguel Grinberg", email = "miguel.grinberg@gmail.com" },
 ]
+description = "Socket.IO server and client for Python"
+classifiers = [
+    "Environment :: Web Environment",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+requires-python = ">=3.6"
+dependencies = [
+    "bidict >= 0.21.0",
+    "python-engineio >= 4.8.0",
+]
+
+[project.readme]
+file = "README.md"
+content-type = "text/markdown"
+
+[project.urls]
+Homepage = "https://github.com/miguelgrinberg/python-socketio"
+"Bug Tracker" = "https://github.com/miguelgrinberg/python-socketio/issues"
+
+[project.optional-dependencies]
+client = [
+    "requests >= 2.21.0",
+    "websocket-client >= 0.54.0",
+]
+asyncio_client = [
+    "aiohttp >= 3.4",
+]
+docs = [
+    "sphinx",
+]
+
+[tool.setuptools]
+zip-safe = false
+include-package-data = true
+
+[tool.setuptools.package-dir]
+"" = "src"
+
+[tool.setuptools.packages.find]
+where = [
+    "src",
+]
+namespaces = false
+
+[build-system]
+requires = ["setuptools>=61.2"]
 build-backend = "setuptools.build_meta"
