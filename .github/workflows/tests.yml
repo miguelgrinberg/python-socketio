@@ -26,7 +26,7 @@ jobs:
         exclude:
           # pypy3 currently fails to run on Windows
           - os: windows-latest
-            python: pypy-3.8
+            python: pypy-3.9
       fail-fast: false
     runs-on: ${{ matrix.os }}
     steps:

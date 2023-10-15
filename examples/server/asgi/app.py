@@ -1,9 +1,25 @@
 #!/usr/bin/env python
-import uvicorn
 
+# set instrument to `True` to accept connections from the official Socket.IO
+# Admin UI hosted at https://admin.socket.io
+instrument = False
+admin_login = {
+    'username': 'admin',
+    'password': 'python',  # change this to a strong secret for production use!
+}
+
+import uvicorn
 import socketio
 
-sio = socketio.AsyncServer(async_mode='asgi')
+sio = socketio.AsyncServer(
+    async_mode='asgi',
+    cors_allowed_origins=None if not instrument else [
+        'http://localhost:5000',
+        'https://admin.socket.io',  # edit the allowed origins if necessary
+    ])
+if instrument:
+    sio.instrument(auth=admin_login)
+
 app = socketio.ASGIApp(sio, static_files={
     '/': 'app.html',
 })

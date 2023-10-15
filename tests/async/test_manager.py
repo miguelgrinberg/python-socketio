@@ -27,7 +27,7 @@ class TestAsyncManager(unittest.TestCase):
         self.bm.initialize()
 
     def test_connect(self):
-        sid = self.bm.connect('123', '/foo')
+        sid = _run(self.bm.connect('123', '/foo'))
         assert None in self.bm.rooms['/foo']
         assert sid in self.bm.rooms['/foo']
         assert sid in self.bm.rooms['/foo'][None]
@@ -37,8 +37,8 @@ class TestAsyncManager(unittest.TestCase):
         assert self.bm.sid_from_eio_sid('123', '/foo') == sid
 
     def test_pre_disconnect(self):
-        sid1 = self.bm.connect('123', '/foo')
-        sid2 = self.bm.connect('456', '/foo')
+        sid1 = _run(self.bm.connect('123', '/foo'))
+        sid2 = _run(self.bm.connect('456', '/foo'))
         assert self.bm.is_connected(sid1, '/foo')
         assert self.bm.pre_disconnect(sid1, '/foo') == '123'
         assert self.bm.pending_disconnect == {'/foo': [sid1]}
@@ -52,8 +52,8 @@ class TestAsyncManager(unittest.TestCase):
         assert self.bm.pending_disconnect == {}
 
     def test_disconnect(self):
-        sid1 = self.bm.connect('123', '/foo')
-        sid2 = self.bm.connect('456', '/foo')
+        sid1 = _run(self.bm.connect('123', '/foo'))
+        sid2 = _run(self.bm.connect('456', '/foo'))
         _run(self.bm.enter_room(sid1, '/foo', 'bar'))
         _run(self.bm.enter_room(sid2, '/foo', 'baz'))
         _run(self.bm.disconnect(sid1, '/foo'))
@@ -62,10 +62,10 @@ class TestAsyncManager(unittest.TestCase):
         assert dict(self.bm.rooms['/foo']['baz']) == {sid2: '456'}
 
     def test_disconnect_default_namespace(self):
-        sid1 = self.bm.connect('123', '/')
-        sid2 = self.bm.connect('123', '/foo')
-        sid3 = self.bm.connect('456', '/')
-        sid4 = self.bm.connect('456', '/foo')
+        sid1 = _run(self.bm.connect('123', '/'))
+        sid2 = _run(self.bm.connect('123', '/foo'))
+        sid3 = _run(self.bm.connect('456', '/'))
+        sid4 = _run(self.bm.connect('456', '/foo'))
         assert self.bm.is_connected(sid1, '/')
         assert self.bm.is_connected(sid2, '/foo')
         assert not self.bm.is_connected(sid2, '/')
@@ -81,10 +81,10 @@ class TestAsyncManager(unittest.TestCase):
         assert dict(self.bm.rooms['/foo'][sid4]) == {sid4: '456'}
 
     def test_disconnect_twice(self):
-        sid1 = self.bm.connect('123', '/')
-        sid2 = self.bm.connect('123', '/foo')
-        sid3 = self.bm.connect('456', '/')
-        sid4 = self.bm.connect('456', '/foo')
+        sid1 = _run(self.bm.connect('123', '/'))
+        sid2 = _run(self.bm.connect('123', '/foo'))
+        sid3 = _run(self.bm.connect('456', '/'))
+        sid4 = _run(self.bm.connect('456', '/foo'))
         _run(self.bm.disconnect(sid1, '/'))
         _run(self.bm.disconnect(sid2, '/foo'))
         _run(self.bm.disconnect(sid1, '/'))
@@ -95,8 +95,8 @@ class TestAsyncManager(unittest.TestCase):
         assert dict(self.bm.rooms['/foo'][sid4]) == {sid4: '456'}
 
     def test_disconnect_all(self):
-        sid1 = self.bm.connect('123', '/foo')
-        sid2 = self.bm.connect('456', '/foo')
+        sid1 = _run(self.bm.connect('123', '/foo'))
+        sid2 = _run(self.bm.connect('456', '/foo'))
         _run(self.bm.enter_room(sid1, '/foo', 'bar'))
         _run(self.bm.enter_room(sid2, '/foo', 'baz'))
         _run(self.bm.disconnect(sid1, '/foo'))
@@ -104,9 +104,9 @@ class TestAsyncManager(unittest.TestCase):
         assert self.bm.rooms == {}
 
     def test_disconnect_with_callbacks(self):
-        sid1 = self.bm.connect('123', '/')
-        sid2 = self.bm.connect('123', '/foo')
-        sid3 = self.bm.connect('456', '/foo')
+        sid1 = _run(self.bm.connect('123', '/'))
+        sid2 = _run(self.bm.connect('123', '/foo'))
+        sid3 = _run(self.bm.connect('456', '/foo'))
         self.bm._generate_ack_id(sid1, 'f')
         self.bm._generate_ack_id(sid2, 'g')
         self.bm._generate_ack_id(sid3, 'h')
@@ -117,8 +117,8 @@ class TestAsyncManager(unittest.TestCase):
         assert sid3 in self.bm.callbacks
 
     def test_trigger_sync_callback(self):
-        sid1 = self.bm.connect('123', '/')
-        sid2 = self.bm.connect('123', '/foo')
+        sid1 = _run(self.bm.connect('123', '/'))
+        sid2 = _run(self.bm.connect('123', '/foo'))
         cb = mock.MagicMock()
         id1 = self.bm._generate_ack_id(sid1, cb)
         id2 = self.bm._generate_ack_id(sid2, cb)
@@ -129,8 +129,8 @@ class TestAsyncManager(unittest.TestCase):
         cb.assert_any_call('bar', 'baz')
 
     def test_trigger_async_callback(self):
-        sid1 = self.bm.connect('123', '/')
-        sid2 = self.bm.connect('123', '/foo')
+        sid1 = _run(self.bm.connect('123', '/'))
+        sid2 = _run(self.bm.connect('123', '/foo'))
         cb = AsyncMock()
         id1 = self.bm._generate_ack_id(sid1, cb)
         id2 = self.bm._generate_ack_id(sid2, cb)
@@ -141,7 +141,7 @@ class TestAsyncManager(unittest.TestCase):
         cb.mock.assert_any_call('bar', 'baz')
 
     def test_invalid_callback(self):
-        sid = self.bm.connect('123', '/')
+        sid = _run(self.bm.connect('123', '/'))
         cb = mock.MagicMock()
         id = self.bm._generate_ack_id(sid, cb)
 
@@ -152,17 +152,17 @@ class TestAsyncManager(unittest.TestCase):
 
     def test_get_namespaces(self):
         assert list(self.bm.get_namespaces()) == []
-        self.bm.connect('123', '/')
-        self.bm.connect('123', '/foo')
+        _run(self.bm.connect('123', '/'))
+        _run(self.bm.connect('123', '/foo'))
         namespaces = list(self.bm.get_namespaces())
         assert len(namespaces) == 2
         assert '/' in namespaces
         assert '/foo' in namespaces
 
     def test_get_participants(self):
-        sid1 = self.bm.connect('123', '/')
-        sid2 = self.bm.connect('456', '/')
-        sid3 = self.bm.connect('789', '/')
+        sid1 = _run(self.bm.connect('123', '/'))
+        sid2 = _run(self.bm.connect('456', '/'))
+        sid3 = _run(self.bm.connect('789', '/'))
         _run(self.bm.disconnect(sid3, '/'))
         assert sid3 not in self.bm.rooms['/'][None]
         participants = list(self.bm.get_participants('/', None))
@@ -172,7 +172,7 @@ class TestAsyncManager(unittest.TestCase):
         assert (sid3, '789') not in participants
 
     def test_leave_invalid_room(self):
-        sid = self.bm.connect('123', '/foo')
+        sid = _run(self.bm.connect('123', '/foo'))
         _run(self.bm.leave_room(sid, '/foo', 'baz'))
         _run(self.bm.leave_room(sid, '/bar', 'baz'))
 
@@ -181,9 +181,9 @@ class TestAsyncManager(unittest.TestCase):
         assert [] == rooms
 
     def test_close_room(self):
-        sid = self.bm.connect('123', '/foo')
-        self.bm.connect('456', '/foo')
-        self.bm.connect('789', '/foo')
+        sid = _run(self.bm.connect('123', '/foo'))
+        _run(self.bm.connect('456', '/foo'))
+        _run(self.bm.connect('789', '/foo'))
         _run(self.bm.enter_room(sid, '/foo', 'bar'))
         _run(self.bm.enter_room(sid, '/foo', 'bar'))
         _run(self.bm.close_room('bar', '/foo'))
@@ -195,7 +195,7 @@ class TestAsyncManager(unittest.TestCase):
         self.bm.close_room('bar', '/foo')
 
     def test_rooms(self):
-        sid = self.bm.connect('123', '/foo')
+        sid = _run(self.bm.connect('123', '/foo'))
         _run(self.bm.enter_room(sid, '/foo', 'bar'))
         r = self.bm.get_rooms(sid, '/foo')
         assert len(r) == 2
@@ -203,8 +203,8 @@ class TestAsyncManager(unittest.TestCase):
         assert 'bar' in r
 
     def test_emit_to_sid(self):
-        sid = self.bm.connect('123', '/foo')
-        self.bm.connect('456', '/foo')
+        sid = _run(self.bm.connect('123', '/foo'))
+        _run(self.bm.connect('456', '/foo'))
         _run(
             self.bm.emit(
                 'my event', {'foo': 'bar'}, namespace='/foo', room=sid
@@ -217,11 +217,11 @@ class TestAsyncManager(unittest.TestCase):
         assert pkt.encode() == '42/foo,["my event",{"foo":"bar"}]'
 
     def test_emit_to_room(self):
-        sid1 = self.bm.connect('123', '/foo')
+        sid1 = _run(self.bm.connect('123', '/foo'))
         _run(self.bm.enter_room(sid1, '/foo', 'bar'))
-        sid2 = self.bm.connect('456', '/foo')
+        sid2 = _run(self.bm.connect('456', '/foo'))
         _run(self.bm.enter_room(sid2, '/foo', 'bar'))
-        self.bm.connect('789', '/foo')
+        _run(self.bm.connect('789', '/foo'))
         _run(
             self.bm.emit(
                 'my event', {'foo': 'bar'}, namespace='/foo', room='bar'
@@ -238,12 +238,12 @@ class TestAsyncManager(unittest.TestCase):
         assert pkt.encode() == '42/foo,["my event",{"foo":"bar"}]'
 
     def test_emit_to_rooms(self):
-        sid1 = self.bm.connect('123', '/foo')
+        sid1 = _run(self.bm.connect('123', '/foo'))
         _run(self.bm.enter_room(sid1, '/foo', 'bar'))
-        sid2 = self.bm.connect('456', '/foo')
+        sid2 = _run(self.bm.connect('456', '/foo'))
         _run(self.bm.enter_room(sid2, '/foo', 'bar'))
         _run(self.bm.enter_room(sid2, '/foo', 'baz'))
-        sid3 = self.bm.connect('789', '/foo')
+        sid3 = _run(self.bm.connect('789', '/foo'))
         _run(self.bm.enter_room(sid3, '/foo', 'baz'))
         _run(
             self.bm.emit('my event', {'foo': 'bar'}, namespace='/foo',
@@ -264,12 +264,12 @@ class TestAsyncManager(unittest.TestCase):
         assert pkt.encode() == '42/foo,["my event",{"foo":"bar"}]'
 
     def test_emit_to_all(self):
-        sid1 = self.bm.connect('123', '/foo')
+        sid1 = _run(self.bm.connect('123', '/foo'))
         _run(self.bm.enter_room(sid1, '/foo', 'bar'))
-        sid2 = self.bm.connect('456', '/foo')
+        sid2 = _run(self.bm.connect('456', '/foo'))
         _run(self.bm.enter_room(sid2, '/foo', 'bar'))
-        self.bm.connect('789', '/foo')
-        self.bm.connect('abc', '/bar')
+        _run(self.bm.connect('789', '/foo'))
+        _run(self.bm.connect('abc', '/bar'))
         _run(self.bm.emit('my event', {'foo': 'bar'}, namespace='/foo'))
         assert self.bm.server._send_eio_packet.mock.call_count == 3
         assert self.bm.server._send_eio_packet.mock.call_args_list[0][0][0] \
@@ -286,12 +286,12 @@ class TestAsyncManager(unittest.TestCase):
         assert pkt.encode() == '42/foo,["my event",{"foo":"bar"}]'
 
     def test_emit_to_all_skip_one(self):
-        sid1 = self.bm.connect('123', '/foo')
+        sid1 = _run(self.bm.connect('123', '/foo'))
         _run(self.bm.enter_room(sid1, '/foo', 'bar'))
-        sid2 = self.bm.connect('456', '/foo')
+        sid2 = _run(self.bm.connect('456', '/foo'))
         _run(self.bm.enter_room(sid2, '/foo', 'bar'))
-        self.bm.connect('789', '/foo')
-        self.bm.connect('abc', '/bar')
+        _run(self.bm.connect('789', '/foo'))
+        _run(self.bm.connect('abc', '/bar'))
         _run(
             self.bm.emit(
                 'my event', {'foo': 'bar'}, namespace='/foo', skip_sid=sid2
@@ -308,12 +308,12 @@ class TestAsyncManager(unittest.TestCase):
         assert pkt.encode() == '42/foo,["my event",{"foo":"bar"}]'
 
     def test_emit_to_all_skip_two(self):
-        sid1 = self.bm.connect('123', '/foo')
+        sid1 = _run(self.bm.connect('123', '/foo'))
         _run(self.bm.enter_room(sid1, '/foo', 'bar'))
-        sid2 = self.bm.connect('456', '/foo')
+        sid2 = _run(self.bm.connect('456', '/foo'))
         _run(self.bm.enter_room(sid2, '/foo', 'bar'))
-        sid3 = self.bm.connect('789', '/foo')
-        self.bm.connect('abc', '/bar')
+        sid3 = _run(self.bm.connect('789', '/foo'))
+        _run(self.bm.connect('abc', '/bar'))
         _run(
             self.bm.emit(
                 'my event',
@@ -329,7 +329,7 @@ class TestAsyncManager(unittest.TestCase):
         assert pkt.encode() == '42/foo,["my event",{"foo":"bar"}]'
 
     def test_emit_with_callback(self):
-        sid = self.bm.connect('123', '/foo')
+        sid = _run(self.bm.connect('123', '/foo'))
         self.bm._generate_ack_id = mock.MagicMock()
         self.bm._generate_ack_id.return_value = 11
         _run(
@@ -353,7 +353,7 @@ class TestAsyncManager(unittest.TestCase):
         _run(self.bm.emit('my event', {'foo': 'bar'}, namespace='/foo'))
 
     def test_emit_with_tuple(self):
-        sid = self.bm.connect('123', '/foo')
+        sid = _run(self.bm.connect('123', '/foo'))
         _run(
             self.bm.emit(
                 'my event', ('foo', 'bar'), namespace='/foo', room=sid
@@ -366,7 +366,7 @@ class TestAsyncManager(unittest.TestCase):
         assert pkt.encode() == '42/foo,["my event","foo","bar"]'
 
     def test_emit_with_list(self):
-        sid = self.bm.connect('123', '/foo')
+        sid = _run(self.bm.connect('123', '/foo'))
         _run(
             self.bm.emit(
                 'my event', ['foo', 'bar'], namespace='/foo', room=sid
@@ -379,7 +379,7 @@ class TestAsyncManager(unittest.TestCase):
         assert pkt.encode() == '42/foo,["my event",["foo","bar"]]'
 
     def test_emit_with_none(self):
-        sid = self.bm.connect('123', '/foo')
+        sid = _run(self.bm.connect('123', '/foo'))
         _run(
             self.bm.emit(
                 'my event', None, namespace='/foo', room=sid
@@ -392,7 +392,7 @@ class TestAsyncManager(unittest.TestCase):
         assert pkt.encode() == '42/foo,["my event"]'
 
     def test_emit_binary(self):
-        sid = self.bm.connect('123', '/')
+        sid = _run(self.bm.connect('123', '/'))
         _run(
             self.bm.emit(
                 u'my event', b'my binary data', namespace='/', room=sid

@@ -23,7 +23,8 @@ class AsyncSimpleClient:
         self.input_buffer = []
 
     async def connect(self, url, headers={}, auth=None, transports=None,
-                      namespace='/', socketio_path='socket.io'):
+                      namespace='/', socketio_path='socket.io',
+                      wait_timeout=5):
         """Connect to a Socket.IO server.
 
         :param url: The URL of the Socket.IO server. It can include custom
@@ -49,6 +50,8 @@ class AsyncSimpleClient:
         :param socketio_path: The endpoint where the Socket.IO server is
                               installed. The default value is appropriate for
                               most cases.
+        :param wait_timeout: How long the client should wait for the
+                             connection. The default is 5 seconds.
 
         Note: this method is a coroutine.
         """
@@ -80,7 +83,8 @@ class AsyncSimpleClient:
 
         await self.client.connect(
             url, headers=headers, auth=auth, transports=transports,
-            namespaces=[namespace], socketio_path=socketio_path)
+            namespaces=[namespace], socketio_path=socketio_path,
+            wait_timeout=wait_timeout)
 
     @property
     def sid(self):
@@ -89,7 +93,7 @@ class AsyncSimpleClient:
         The session ID is not guaranteed to remain constant throughout the life
         of the connection, as reconnections can cause it to change.
         """
-        return self.client.sid if self.client else None
+        return self.client.get_sid(self.namespace) if self.client else None
 
     @property
     def transport(self):

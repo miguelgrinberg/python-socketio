@@ -62,6 +62,13 @@ class AsyncManager(BaseManager):
             return
         await asyncio.wait(tasks)
 
+    async def connect(self, eio_sid, namespace):
+        """Register a client connection to a namespace.
+
+        Note: this method is a coroutine.
+        """
+        return super().connect(eio_sid, namespace)
+
     async def disconnect(self, sid, namespace, **kwargs):
         """Disconnect a client.
 

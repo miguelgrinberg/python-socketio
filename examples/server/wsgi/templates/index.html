@@ -6,7 +6,7 @@
     <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.min.js"></script>
     <script type="text/javascript" charset="utf-8">
         $(document).ready(function(){
-            var socket = io.connect({transports: ['websocket']});
+            var socket = io.connect();
 
             socket.on('connect', function() {
                 socket.emit('my_event', {data: 'I\'m connected!'});

@@ -30,7 +30,7 @@ class BaseManager:
 
     def get_participants(self, namespace, room):
         """Return an iterable with the active participants in a room."""
-        ns = self.rooms[namespace]
+        ns = self.rooms.get(namespace, {})
         if hasattr(room, '__len__') and not isinstance(room, str):
             participants = ns[room[0]]._fwdm.copy() if room[0] in ns else {}
             for r in room[1:]:
@@ -126,7 +126,7 @@ class BaseManager:
         try:
             for sid, _ in self.get_participants(namespace, room):
                 self.basic_leave_room(sid, namespace, room)
-        except KeyError:
+        except KeyError:  # pragma: no cover
             pass
 
     def get_rooms(self, sid, namespace):
