@@ -1,5 +1,21 @@
 # python-socketio change log
 
+**Release 5.10.0** - 2023-10-15
+
+- New `SimpleClient` and `AsyncSimpleClient` classes [#1237](https://github.com/miguelgrinberg/python-socketio/issues/1237) ([commit #1](https://github.com/miguelgrinberg/python-socketio/commit/55d6310eb3e194b1e67e40942a953bc4413b98b7)) ([commit #2](https://github.com/miguelgrinberg/python-socketio/commit/699ee9c47adcb44f1a8150d8c92a9555d07f7b5b))
+- Reporting to Socket.IO Admin UI (https://admin.socket.io) [#1164](https://github.com/miguelgrinberg/python-socketio/issues/1164) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/4bf48776ca08acba255bf660f5ca61810202826a))
+- Support entering and leaving rooms through pubsub client managers ([commit](https://github.com/miguelgrinberg/python-socketio/commit/d222f4c3deb7a12f3a8c584777dbfc18448a206d))
+- Async versions of enter_room and leave_room should be coroutines (**breaking change**) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/8e3460c5fcc351ca0cff83c690eedcde0e8a6e7e))
+- Add a `shutdown()` function for the server ([commit](https://github.com/miguelgrinberg/python-socketio/commit/c419fc5481846ab026ca847234f5ebe5420e510a))
+- Message queue optimizations [#1240](https://github.com/miguelgrinberg/python-socketio/issues/1240) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/dc6e4f516f38d1125cb44ccae11b120ffa8fe7f3))
+- Remove unneeded arguments from super() ([commit](https://github.com/miguelgrinberg/python-socketio/commit/8da3c617a66877ec0fc5ab25256ead41ae611351))
+- Internal code restructure (no functional changes) ([commit #1](https://github.com/miguelgrinberg/python-socketio/commit/ef0f88f6cf5687dddfd0e3be9a90af2865d5871f)) ([commit #2](https://github.com/miguelgrinberg/python-socketio/commit/58b57068ab770d099bdd54d4eb8d22ce8a4f6751))
+- Add FastAPI and Litestar server examples ([commit](https://github.com/miguelgrinberg/python-socketio/commit/2e1f0262ad9a037858b04b9dcec7509ee5008f8c))
+- Update Socket.IO JavaScript client to version 4.7.2 in all examples ([commit](https://github.com/miguelgrinberg/python-socketio/commit/3f78af283171d23b7f1dbfd055e21afe00877399))
+- Update `ping_timeout` documented default to accord with current Engine.IO behavior [#1255](https://github.com/miguelgrinberg/python-socketio/issues/1255) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/d40b3a33fff5c6b896559fc534ccd611ab9cf1f4)) (thanks **[object Object]**!)
+- Refactor common testing helpers into a separate module ([commit](https://github.com/miguelgrinberg/python-socketio/commit/7208ec09e17466758cebb0732801ec84b25f1299))
+- Migrate Python package metadata to pyproject.toml ([commit](https://github.com/miguelgrinberg/python-socketio/commit/6bdc498d423ca793b3db2d158fba4a461610de6a))
+
 **Release 5.9.0** - 2023-09-03
 
 - Optimized performance and memory usage for broadcasts [#1233](https://github.com/miguelgrinberg/python-socketio/issues/1233) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/bf11ad36aebeebbc0b7a74d88d4b9a8fad113456))
