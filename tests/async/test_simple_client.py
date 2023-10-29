@@ -32,7 +32,7 @@ class TestAsyncAsyncSimpleClient(unittest.TestCase):
                 'url', headers='h', auth='a', transports='t',
                 namespaces=['n'], socketio_path='s', wait_timeout='w')
             mock_client().event.call_count == 3
-            mock_client().on.called_once_with('*')
+            mock_client().on.assert_called_once_with('*', namespace='n')
             assert client.namespace == 'n'
             assert not client.input_event.is_set()
 
@@ -52,7 +52,8 @@ class TestAsyncAsyncSimpleClient(unittest.TestCase):
                         'url', headers='h', auth='a', transports='t',
                         namespaces=['n'], socketio_path='s', wait_timeout='w')
                     mock_client().event.call_count == 3
-                    mock_client().on.called_once_with('*')
+                    mock_client().on.assert_called_once_with(
+                        '*', namespace='n')
                     assert client.namespace == 'n'
                     assert not client.input_event.is_set()
 
@@ -85,7 +86,7 @@ class TestAsyncAsyncSimpleClient(unittest.TestCase):
         client.connected = True
 
         _run(client.emit('foo', 'bar'))
-        assert client.client.emit.mock.called_once_with('foo', 'bar',
+        client.client.emit.mock.assert_called_once_with('foo', 'bar',
                                                         namespace='/ns')
 
     def test_emit_disconnected(self):
@@ -116,9 +117,8 @@ class TestAsyncAsyncSimpleClient(unittest.TestCase):
         client.connected = True
 
         assert _run(client.call('foo', 'bar')) == 'result'
-        assert client.client.call.mock.called_once_with('foo', 'bar',
-                                                        namespace='/ns',
-                                                        timeout=60)
+        client.client.call.mock.assert_called_once_with(
+            'foo', 'bar', namespace='/ns', timeout=60)
 
     def test_call_disconnected(self):
         client = AsyncSimpleClient()

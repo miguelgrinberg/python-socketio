@@ -25,7 +25,7 @@ class TestSimpleClient(unittest.TestCase):
                 'url', headers='h', auth='a', transports='t',
                 namespaces=['n'], socketio_path='s', wait_timeout='w')
             mock_client().event.call_count == 3
-            mock_client().on.called_once_with('*')
+            mock_client().on.assert_called_once_with('*', namespace='n')
             assert client.namespace == 'n'
             assert not client.input_event.is_set()
 
@@ -41,7 +41,7 @@ class TestSimpleClient(unittest.TestCase):
                     'url', headers='h', auth='a', transports='t',
                     namespaces=['n'], socketio_path='s', wait_timeout='w')
                 mock_client().event.call_count == 3
-                mock_client().on.called_once_with('*')
+                mock_client().on.assert_called_once_with('*', namespace='n')
                 assert client.namespace == 'n'
                 assert not client.input_event.is_set()
 
@@ -71,7 +71,7 @@ class TestSimpleClient(unittest.TestCase):
         client.connected = True
 
         client.emit('foo', 'bar')
-        assert client.client.emit.called_once_with('foo', 'bar',
+        client.client.emit.assert_called_once_with('foo', 'bar',
                                                    namespace='/ns')
 
     def test_emit_disconnected(self):
@@ -100,8 +100,8 @@ class TestSimpleClient(unittest.TestCase):
         client.connected = True
 
         assert client.call('foo', 'bar') == 'result'
-        client.client.call.called_once_with('foo', 'bar', namespace='/ns',
-                                            timeout=60)
+        client.client.call.assert_called_once_with('foo', 'bar',
+                                                   namespace='/ns', timeout=60)
 
     def test_call_disconnected(self):
         client = SimpleClient()
