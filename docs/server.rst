@@ -495,9 +495,6 @@ To use a Redis message queue, a Python Redis client must be installed::
     # socketio.Server class
     pip install redis
 
-    # socketio.AsyncServer class
-    pip install aioredis
-
 The Redis queue is configured through the :class:`socketio.RedisManager` and
 :class:`socketio.AsyncRedisManager` classes. These classes connect directly to
 the Redis store and use the queue's pub/sub functionality::
