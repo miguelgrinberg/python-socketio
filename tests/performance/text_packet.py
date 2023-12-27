@@ -3,7 +3,7 @@ from socketio import packet
 
 
 def test():
-    p = packet.Packet(packet.EVENT, 'hello')
+    p = packet.Packet(packet.EVENT, "hello")
     start = time.time()
     count = 0
     while True:
@@ -14,6 +14,6 @@ def test():
     return count
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     count = test()
-    print('text_packet:', count, 'packets processed.')
+    print("text_packet:", count, "packets processed.")

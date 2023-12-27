@@ -3,7 +3,7 @@ from socketio import packet
 
 
 def test():
-    p = packet.Packet(packet.EVENT, {'foo': b'bar'})
+    p = packet.Packet(packet.EVENT, {"foo": b"bar"})
     start = time.time()
     count = 0
     while True:
@@ -17,6 +17,6 @@ def test():
     return count
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     count = test()
-    print('binary_packet:', count, 'packets processed.')
+    print("binary_packet:", count, "packets processed.")

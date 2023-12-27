@@ -9,7 +9,7 @@ import socketio
 define("port", default=5000, help="run on the given port", type=int)
 define("debug", default=False, help="run in debug mode")
 
-sio = socketio.AsyncServer(async_mode='tornado')
+sio = socketio.AsyncServer(async_mode="tornado")
 
 
 async def background_task():
@@ -18,7 +18,7 @@ async def background_task():
     while True:
         await sio.sleep(10)
         count += 1
-        await sio.emit('my_response', {'data': 'Server generated event'})
+        await sio.emit("my_response", {"data": "Server generated event"})
 
 
 class MainHandler(tornado.web.RequestHandler):
@@ -28,40 +28,41 @@ class MainHandler(tornado.web.RequestHandler):
 
 @sio.event
 async def my_event(sid, message):
-    await sio.emit('my_response', {'data': message['data']}, room=sid)
+    await sio.emit("my_response", {"data": message["data"]}, room=sid)
 
 
 @sio.event
 async def my_broadcast_event(sid, message):
-    await sio.emit('my_response', {'data': message['data']})
+    await sio.emit("my_response", {"data": message["data"]})
 
 
 @sio.event
 async def join(sid, message):
-    await sio.enter_room(sid, message['room'])
-    await sio.emit('my_response', {'data': 'Entered room: ' + message['room']},
-                   room=sid)
+    await sio.enter_room(sid, message["room"])
+    await sio.emit(
+        "my_response", {"data": "Entered room: " + message["room"]}, room=sid
+    )
 
 
 @sio.event
 async def leave(sid, message):
-    await sio.leave_room(sid, message['room'])
-    await sio.emit('my_response', {'data': 'Left room: ' + message['room']},
-                   room=sid)
+    await sio.leave_room(sid, message["room"])
+    await sio.emit("my_response", {"data": "Left room: " + message["room"]}, room=sid)
 
 
 @sio.event
 async def close_room(sid, message):
-    await sio.emit('my_response',
-                   {'data': 'Room ' + message['room'] + ' is closing.'},
-                   room=message['room'])
-    await sio.close_room(message['room'])
+    await sio.emit(
+        "my_response",
+        {"data": "Room " + message["room"] + " is closing."},
+        room=message["room"],
+    )
+    await sio.close_room(message["room"])
 
 
 @sio.event
 async def my_room_event(sid, message):
-    await sio.emit('my_response', {'data': message['data']},
-                   room=message['room'])
+    await sio.emit("my_response", {"data": message["data"]}, room=message["room"])
 
 
 @sio.event
@@ -71,12 +72,12 @@ async def disconnect_request(sid):
 
 @sio.event
 async def connect(sid, environ):
-    await sio.emit('my_response', {'data': 'Connected', 'count': 0}, room=sid)
+    await sio.emit("my_response", {"data": "Connected", "count": 0}, room=sid)
 
 
 @sio.event
 def disconnect(sid):
-    print('Client disconnected')
+    print("Client disconnected")
 
 
 def main():

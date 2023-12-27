@@ -9,7 +9,7 @@ import socketio
 define("port", default=5000, help="run on the given port", type=int)
 define("debug", default=False, help="run in debug mode")
 
-sio = socketio.AsyncServer(async_mode='tornado')
+sio = socketio.AsyncServer(async_mode="tornado")
 
 
 class MainHandler(tornado.web.RequestHandler):
@@ -19,7 +19,7 @@ class MainHandler(tornado.web.RequestHandler):
 
 @sio.event
 async def ping_from_client(sid):
-    await sio.emit('pong_from_server', room=sid)
+    await sio.emit("pong_from_server", room=sid)
 
 
 def main():

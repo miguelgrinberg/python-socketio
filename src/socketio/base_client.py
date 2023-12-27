@@ -6,7 +6,7 @@ import threading
 from . import base_namespace
 from . import packet
 
-default_logger = logging.getLogger('socketio.client')
+default_logger = logging.getLogger("socketio.client")
 reconnecting_clients = []
 
 
@@ -29,18 +29,28 @@ original_signal_handler = None
 
 
 class BaseClient:
-    reserved_events = ['connect', 'connect_error', 'disconnect',
-                       '__disconnect_final']
+    reserved_events = ["connect", "connect_error", "disconnect", "__disconnect_final"]
 
-    def __init__(self, reconnection=True, reconnection_attempts=0,
-                 reconnection_delay=1, reconnection_delay_max=5,
-                 randomization_factor=0.5, logger=False, serializer='default',
-                 json=None, handle_sigint=True, **kwargs):
+    def __init__(
+        self,
+        reconnection=True,
+        reconnection_attempts=0,
+        reconnection_delay=1,
+        reconnection_delay_max=5,
+        randomization_factor=0.5,
+        logger=False,
+        serializer="default",
+        json=None,
+        handle_sigint=True,
+        **kwargs,
+    ):
         global original_signal_handler
-        if handle_sigint and original_signal_handler is None and \
-                threading.current_thread() == threading.main_thread():
-            original_signal_handler = signal.signal(signal.SIGINT,
-                                                    signal_handler)
+        if (
+            handle_sigint
+            and original_signal_handler is None
+            and threading.current_thread() == threading.main_thread()
+        ):
+            original_signal_handler = signal.signal(signal.SIGINT, signal_handler)
         self.reconnection = reconnection
         self.reconnection_attempts = reconnection_attempts
         self.reconnection_delay = reconnection_delay
@@ -49,25 +59,26 @@ class BaseClient:
         self.handle_sigint = handle_sigint
 
         engineio_options = kwargs
-        engineio_options['handle_sigint'] = handle_sigint
-        engineio_logger = engineio_options.pop('engineio_logger', None)
+        engineio_options["handle_sigint"] = handle_sigint
+        engineio_logger = engineio_options.pop("engineio_logger", None)
         if engineio_logger is not None:
-            engineio_options['logger'] = engineio_logger
-        if serializer == 'default':
+            engineio_options["logger"] = engineio_logger
+        if serializer == "default":
             self.packet_class = packet.Packet
-        elif serializer == 'msgpack':
+        elif serializer == "msgpack":
             from . import msgpack_packet
+
             self.packet_class = msgpack_packet.MsgPackPacket
         else:
             self.packet_class = serializer
         if json is not None:
             self.packet_class.json = json
-            engineio_options['json'] = json
+            engineio_options["json"] = json
 
         self.eio = self._engineio_client_class()(**engineio_options)
-        self.eio.on('connect', self._handle_eio_connect)
-        self.eio.on('message', self._handle_eio_message)
-        self.eio.on('disconnect', self._handle_eio_disconnect)
+        self.eio.on("connect", self._handle_eio_connect)
+        self.eio.on("message", self._handle_eio_message)
+        self.eio.on("disconnect", self._handle_eio_disconnect)
 
         if not isinstance(logger, bool):
             self.logger = logger
@@ -134,7 +145,7 @@ class BaseClient:
         function if it exists. The ``'disconnect'`` handler does not take
         arguments.
         """
-        namespace = namespace or '/'
+        namespace = namespace or "/"
 
         def set_handler(handler):
             if namespace not in self.handlers:
@@ -188,14 +199,12 @@ class BaseClient:
                                   subclass that handles all the event traffic
                                   for a namespace.
         """
-        if not isinstance(namespace_handler,
-                          base_namespace.BaseClientNamespace):
-            raise ValueError('Not a namespace instance')
+        if not isinstance(namespace_handler, base_namespace.BaseClientNamespace):
+            raise ValueError("Not a namespace instance")
         if self.is_asyncio_based() != namespace_handler.is_asyncio_based():
-            raise ValueError('Not a valid namespace class for this client')
+            raise ValueError("Not a valid namespace class for this client")
         namespace_handler._set_client(self)
-        self.namespace_handlers[namespace_handler.namespace] = \
-            namespace_handler
+        self.namespace_handlers[namespace_handler.namespace] = namespace_handler
 
     def get_sid(self, namespace=None):
         """Return the ``sid`` associated with a connection.
@@ -209,7 +218,7 @@ class BaseClient:
         This method returns the ``sid`` for the requested namespace as a
         string.
         """
-        return self.namespaces.get(namespace or '/')
+        return self.namespaces.get(namespace or "/")
 
     def transport(self):
         """Return the name of the transport used by the client.
@@ -221,7 +230,7 @@ class BaseClient:
 
     def _generate_ack_id(self, namespace, callback):
         """Generate a unique identifier for an ACK packet."""
-        namespace = namespace or '/'
+        namespace = namespace or "/"
         if namespace not in self.callbacks:
             self.callbacks[namespace] = {0: itertools.count(1)}
         id = next(self.callbacks[namespace][0])

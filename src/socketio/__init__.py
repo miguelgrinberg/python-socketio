@@ -19,10 +19,28 @@ from .async_redis_manager import AsyncRedisManager
 from .async_aiopika_manager import AsyncAioPikaManager
 from .asgi import ASGIApp
 
-__all__ = ['SimpleClient', 'Client', 'Server', 'Manager', 'PubSubManager',
-           'KombuManager', 'RedisManager', 'ZmqManager', 'KafkaManager',
-           'Namespace', 'ClientNamespace', 'WSGIApp', 'Middleware',
-           'AsyncSimpleClient', 'AsyncClient', 'AsyncServer',
-           'AsyncNamespace', 'AsyncClientNamespace', 'AsyncManager',
-           'AsyncRedisManager', 'ASGIApp', 'get_tornado_handler',
-           'AsyncAioPikaManager']
+__all__ = [
+    "SimpleClient",
+    "Client",
+    "Server",
+    "Manager",
+    "PubSubManager",
+    "KombuManager",
+    "RedisManager",
+    "ZmqManager",
+    "KafkaManager",
+    "Namespace",
+    "ClientNamespace",
+    "WSGIApp",
+    "Middleware",
+    "AsyncSimpleClient",
+    "AsyncClient",
+    "AsyncServer",
+    "AsyncNamespace",
+    "AsyncClientNamespace",
+    "AsyncManager",
+    "AsyncRedisManager",
+    "ASGIApp",
+    "get_tornado_handler",
+    "AsyncAioPikaManager",
+]

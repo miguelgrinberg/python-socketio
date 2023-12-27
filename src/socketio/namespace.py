@@ -13,6 +13,7 @@ class Namespace(base_namespace.BaseServerNamespace):
                       handlers defined in this class. If this argument is
                       omitted, the default namespace is used.
     """
+
     def trigger_event(self, event, *args):
         """Dispatch an event to the proper handler method.
 
@@ -21,46 +22,89 @@ class Namespace(base_namespace.BaseServerNamespace):
         method can be overridden if special dispatching rules are needed, or if
         having a single method that catches all events is desired.
         """
-        handler_name = 'on_' + event
+        handler_name = "on_" + event
         if hasattr(self, handler_name):
             return getattr(self, handler_name)(*args)
 
-    def emit(self, event, data=None, to=None, room=None, skip_sid=None,
-             namespace=None, callback=None, ignore_queue=False):
+    def emit(
+        self,
+        event,
+        data=None,
+        to=None,
+        room=None,
+        skip_sid=None,
+        namespace=None,
+        callback=None,
+        ignore_queue=False,
+    ):
         """Emit a custom event to one or more connected clients.
 
         The only difference with the :func:`socketio.Server.emit` method is
         that when the ``namespace`` argument is not given the namespace
         associated with the class is used.
         """
-        return self.server.emit(event, data=data, to=to, room=room,
-                                skip_sid=skip_sid,
-                                namespace=namespace or self.namespace,
-                                callback=callback, ignore_queue=ignore_queue)
+        return self.server.emit(
+            event,
+            data=data,
+            to=to,
+            room=room,
+            skip_sid=skip_sid,
+            namespace=namespace or self.namespace,
+            callback=callback,
+            ignore_queue=ignore_queue,
+        )
 
-    def send(self, data, to=None, room=None, skip_sid=None, namespace=None,
-             callback=None, ignore_queue=False):
+    def send(
+        self,
+        data,
+        to=None,
+        room=None,
+        skip_sid=None,
+        namespace=None,
+        callback=None,
+        ignore_queue=False,
+    ):
         """Send a message to one or more connected clients.
 
         The only difference with the :func:`socketio.Server.send` method is
         that when the ``namespace`` argument is not given the namespace
         associated with the class is used.
         """
-        return self.server.send(data, to=to, room=room, skip_sid=skip_sid,
-                                namespace=namespace or self.namespace,
-                                callback=callback, ignore_queue=ignore_queue)
+        return self.server.send(
+            data,
+            to=to,
+            room=room,
+            skip_sid=skip_sid,
+            namespace=namespace or self.namespace,
+            callback=callback,
+            ignore_queue=ignore_queue,
+        )
 
-    def call(self, event, data=None, to=None, sid=None, namespace=None,
-             timeout=None, ignore_queue=False):
+    def call(
+        self,
+        event,
+        data=None,
+        to=None,
+        sid=None,
+        namespace=None,
+        timeout=None,
+        ignore_queue=False,
+    ):
         """Emit a custom event to a client and wait for the response.
 
         The only difference with the :func:`socketio.Server.call` method is
         that when the ``namespace`` argument is not given the namespace
         associated with the class is used.
         """
-        return self.server.call(event, data=data, to=to, sid=sid,
-                                namespace=namespace or self.namespace,
-                                timeout=timeout, ignore_queue=ignore_queue)
+        return self.server.call(
+            event,
+            data=data,
+            to=to,
+            sid=sid,
+            namespace=namespace or self.namespace,
+            timeout=timeout,
+            ignore_queue=ignore_queue,
+        )
 
     def enter_room(self, sid, room, namespace=None):
         """Enter a room.
@@ -69,8 +113,7 @@ class Namespace(base_namespace.BaseServerNamespace):
         is that when the ``namespace`` argument is not given the namespace
         associated with the class is used.
         """
-        return self.server.enter_room(sid, room,
-                                      namespace=namespace or self.namespace)
+        return self.server.enter_room(sid, room, namespace=namespace or self.namespace)
 
     def leave_room(self, sid, room, namespace=None):
         """Leave a room.
@@ -79,8 +122,7 @@ class Namespace(base_namespace.BaseServerNamespace):
         is that when the ``namespace`` argument is not given the namespace
         associated with the class is used.
         """
-        return self.server.leave_room(sid, room,
-                                      namespace=namespace or self.namespace)
+        return self.server.leave_room(sid, room, namespace=namespace or self.namespace)
 
     def close_room(self, room, namespace=None):
         """Close a room.
@@ -89,8 +131,7 @@ class Namespace(base_namespace.BaseServerNamespace):
         is that when the ``namespace`` argument is not given the namespace
         associated with the class is used.
         """
-        return self.server.close_room(room,
-                                      namespace=namespace or self.namespace)
+        return self.server.close_room(room, namespace=namespace or self.namespace)
 
     def get_session(self, sid, namespace=None):
         """Return the user session for a client.
@@ -99,8 +140,7 @@ class Namespace(base_namespace.BaseServerNamespace):
         method is that when the ``namespace`` argument is not given the
         namespace associated with the class is used.
         """
-        return self.server.get_session(
-            sid, namespace=namespace or self.namespace)
+        return self.server.get_session(sid, namespace=namespace or self.namespace)
 
     def save_session(self, sid, session, namespace=None):
         """Store the user session for a client.
@@ -110,7 +150,8 @@ class Namespace(base_namespace.BaseServerNamespace):
         namespace associated with the class is used.
         """
         return self.server.save_session(
-            sid, session, namespace=namespace or self.namespace)
+            sid, session, namespace=namespace or self.namespace
+        )
 
     def session(self, sid, namespace=None):
         """Return the user session for a client with context manager syntax.
@@ -128,8 +169,7 @@ class Namespace(base_namespace.BaseServerNamespace):
         is that when the ``namespace`` argument is not given the namespace
         associated with the class is used.
         """
-        return self.server.disconnect(sid,
-                                      namespace=namespace or self.namespace)
+        return self.server.disconnect(sid, namespace=namespace or self.namespace)
 
 
 class ClientNamespace(base_namespace.BaseClientNamespace):
@@ -144,6 +184,7 @@ class ClientNamespace(base_namespace.BaseClientNamespace):
                       handlers defined in this class. If this argument is
                       omitted, the default namespace is used.
     """
+
     def trigger_event(self, event, *args):
         """Dispatch an event to the proper handler method.
 
@@ -152,7 +193,7 @@ class ClientNamespace(base_namespace.BaseClientNamespace):
         method can be overridden if special dispatching rules are needed, or if
         having a single method that catches all events is desired.
         """
-        handler_name = 'on_' + event
+        handler_name = "on_" + event
         if hasattr(self, handler_name):
             return getattr(self, handler_name)(*args)
 
@@ -163,9 +204,9 @@ class ClientNamespace(base_namespace.BaseClientNamespace):
         that when the ``namespace`` argument is not given the namespace
         associated with the class is used.
         """
-        return self.client.emit(event, data=data,
-                                namespace=namespace or self.namespace,
-                                callback=callback)
+        return self.client.emit(
+            event, data=data, namespace=namespace or self.namespace, callback=callback
+        )
 
     def send(self, data, room=None, namespace=None, callback=None):
         """Send a message to the server.
@@ -174,8 +215,9 @@ class ClientNamespace(base_namespace.BaseClientNamespace):
         that when the ``namespace`` argument is not given the namespace
         associated with the class is used.
         """
-        return self.client.send(data, namespace=namespace or self.namespace,
-                                callback=callback)
+        return self.client.send(
+            data, namespace=namespace or self.namespace, callback=callback
+        )
 
     def call(self, event, data=None, namespace=None, timeout=None):
         """Emit a custom event to the server and wait for the response.
@@ -184,9 +226,9 @@ class ClientNamespace(base_namespace.BaseClientNamespace):
         that when the ``namespace`` argument is not given the namespace
         associated with the class is used.
         """
-        return self.client.call(event, data=data,
-                                namespace=namespace or self.namespace,
-                                timeout=timeout)
+        return self.client.call(
+            event, data=data, namespace=namespace or self.namespace, timeout=timeout
+        )
 
     def disconnect(self):
         """Disconnect from the server.

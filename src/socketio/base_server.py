@@ -4,34 +4,43 @@ from . import manager
 from . import base_namespace
 from . import packet
 
-default_logger = logging.getLogger('socketio.server')
+default_logger = logging.getLogger("socketio.server")
 
 
 class BaseServer:
-    reserved_events = ['connect', 'disconnect']
+    reserved_events = ["connect", "disconnect"]
 
-    def __init__(self, client_manager=None, logger=False, serializer='default',
-                 json=None, async_handlers=True, always_connect=False,
-                 namespaces=None, **kwargs):
+    def __init__(
+        self,
+        client_manager=None,
+        logger=False,
+        serializer="default",
+        json=None,
+        async_handlers=True,
+        always_connect=False,
+        namespaces=None,
+        **kwargs,
+    ):
         engineio_options = kwargs
-        engineio_logger = engineio_options.pop('engineio_logger', None)
+        engineio_logger = engineio_options.pop("engineio_logger", None)
         if engineio_logger is not None:
-            engineio_options['logger'] = engineio_logger
-        if serializer == 'default':
+            engineio_options["logger"] = engineio_logger
+        if serializer == "default":
             self.packet_class = packet.Packet
-        elif serializer == 'msgpack':
+        elif serializer == "msgpack":
             from . import msgpack_packet
+
             self.packet_class = msgpack_packet.MsgPackPacket
         else:
             self.packet_class = serializer
         if json is not None:
             self.packet_class.json = json
-            engineio_options['json'] = json
-        engineio_options['async_handlers'] = False
+            engineio_options["json"] = json
+        engineio_options["async_handlers"] = False
         self.eio = self._engineio_server_class()(**engineio_options)
-        self.eio.on('connect', self._handle_eio_connect)
-        self.eio.on('message', self._handle_eio_message)
-        self.eio.on('disconnect', self._handle_eio_disconnect)
+        self.eio.on("connect", self._handle_eio_connect)
+        self.eio.on("message", self._handle_eio_message)
+        self.eio.on("disconnect", self._handle_eio_disconnect)
 
         self.environ = {}
         self.handlers = {}
@@ -59,7 +68,7 @@ class BaseServer:
 
         self.async_handlers = async_handlers
         self.always_connect = always_connect
-        self.namespaces = namespaces or ['/']
+        self.namespaces = namespaces or ["/"]
 
         self.async_mode = self.eio.async_mode
 
@@ -103,7 +112,7 @@ class BaseServer:
         client's acknowledgement callback function if it exists. The
         ``'disconnect'`` handler does not take a second argument.
         """
-        namespace = namespace or '/'
+        namespace = namespace or "/"
 
         def set_handler(handler):
             if namespace not in self.handlers:
@@ -157,14 +166,12 @@ class BaseServer:
                                   subclass that handles all the event traffic
                                   for a namespace.
         """
-        if not isinstance(namespace_handler,
-                          base_namespace.BaseServerNamespace):
-            raise ValueError('Not a namespace instance')
+        if not isinstance(namespace_handler, base_namespace.BaseServerNamespace):
+            raise ValueError("Not a namespace instance")
         if self.is_asyncio_based() != namespace_handler.is_asyncio_based():
-            raise ValueError('Not a valid namespace class for this server')
+            raise ValueError("Not a valid namespace class for this server")
         namespace_handler._set_server(self)
-        self.namespace_handlers[namespace_handler.namespace] = \
-            namespace_handler
+        self.namespace_handlers[namespace_handler.namespace] = namespace_handler
 
     def rooms(self, sid, namespace=None):
         """Return the rooms a client is in.
@@ -173,7 +180,7 @@ class BaseServer:
         :param namespace: The Socket.IO namespace for the event. If this
                           argument is omitted the default namespace is used.
         """
-        namespace = namespace or '/'
+        namespace = namespace or "/"
         return self.manager.get_rooms(sid, namespace)
 
     def transport(self, sid):
@@ -193,7 +200,7 @@ class BaseServer:
         :param namespace: The Socket.IO namespace. If this argument is omitted
                           the default namespace is used.
         """
-        eio_sid = self.manager.eio_sid_from_sid(sid, namespace or '/')
+        eio_sid = self.manager.eio_sid_from_sid(sid, namespace or "/")
         return self.environ.get(eio_sid)
 
     def _handle_eio_connect(self):  # pragma: no cover
@@ -206,4 +213,4 @@ class BaseServer:
         raise NotImplementedError()
 
     def _engineio_server_class(self):  # pragma: no cover
-        raise NotImplementedError('Must be implemented in subclasses')
+        raise NotImplementedError("Must be implemented in subclasses")

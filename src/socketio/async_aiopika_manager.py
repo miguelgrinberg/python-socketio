@@ -35,14 +35,21 @@ class AsyncAioPikaManager(AsyncPubSubManager):  # pragma: no cover
                        and receiving.
     """
 
-    name = 'asyncaiopika'
+    name = "asyncaiopika"
 
-    def __init__(self, url='amqp://guest:guest@localhost:5672//',
-                 channel='socketio', write_only=False, logger=None):
+    def __init__(
+        self,
+        url="amqp://guest:guest@localhost:5672//",
+        channel="socketio",
+        write_only=False,
+        logger=None,
+    ):
         if aio_pika is None:
-            raise RuntimeError('aio_pika package is not installed '
-                               '(Run "pip install aio_pika" in your '
-                               'virtualenv).')
+            raise RuntimeError(
+                "aio_pika package is not installed "
+                '(Run "pip install aio_pika" in your '
+                "virtualenv)."
+            )
         self.url = url
         self._lock = asyncio.Lock()
         self.publisher_connection = None
@@ -57,12 +64,14 @@ class AsyncAioPikaManager(AsyncPubSubManager):  # pragma: no cover
         return await connection.channel()
 
     async def _exchange(self, channel):
-        return await channel.declare_exchange(self.channel,
-                                              aio_pika.ExchangeType.FANOUT)
+        return await channel.declare_exchange(
+            self.channel, aio_pika.ExchangeType.FANOUT
+        )
 
     async def _queue(self, channel, exchange):
-        queue = await channel.declare_queue(durable=False,
-                                            arguments={'x-expires': 300000})
+        queue = await channel.declare_queue(
+            durable=False, arguments={"x-expires": 300000}
+        )
         await queue.bind(exchange)
         return queue
 
@@ -83,25 +92,26 @@ class AsyncAioPikaManager(AsyncPubSubManager):  # pragma: no cover
                 await self.publisher_exchange.publish(
                     aio_pika.Message(
                         body=pickle.dumps(data),
-                        delivery_mode=aio_pika.DeliveryMode.PERSISTENT
-                    ), routing_key='*',
+                        delivery_mode=aio_pika.DeliveryMode.PERSISTENT,
+                    ),
+                    routing_key="*",
                 )
                 break
             except aio_pika.AMQPException:
                 if retry:
-                    self._get_logger().error('Cannot publish to rabbitmq... '
-                                             'retrying')
+                    self._get_logger().error(
+                        "Cannot publish to rabbitmq... " "retrying"
+                    )
                     retry = False
                 else:
-                    self._get_logger().error(
-                        'Cannot publish to rabbitmq... giving up')
+                    self._get_logger().error("Cannot publish to rabbitmq... giving up")
                     break
             except aio_pika.exceptions.ChannelInvalidStateError:
                 # aio_pika raises this exception when the task is cancelled
                 raise asyncio.CancelledError()
 
     async def _listen(self):
-        async with (await self._connection()) as connection:
+        async with await self._connection() as connection:
             channel = await self._channel(connection)
             await channel.set_qos(prefetch_count=1)
             exchange = await self._exchange(channel)
@@ -117,8 +127,10 @@ class AsyncAioPikaManager(AsyncPubSubManager):  # pragma: no cover
                                 retry_sleep = 1
                 except aio_pika.AMQPException:
                     self._get_logger().error(
-                        'Cannot receive from rabbitmq... '
-                        'retrying in {} secs'.format(retry_sleep))
+                        "Cannot receive from rabbitmq... " "retrying in {} secs".format(
+                            retry_sleep
+                        )
+                    )
                     await asyncio.sleep(retry_sleep)
                     retry_sleep = min(retry_sleep * 2, 60)
                 except aio_pika.exceptions.ChannelInvalidStateError:

@@ -40,33 +40,39 @@ class ZmqManager(PubSubManager):  # pragma: no cover
         while True:
             publisher.send(receiver.recv())
     """
-    name = 'zmq'
 
-    def __init__(self, url='zmq+tcp://localhost:5555+5556',
-                 channel='socketio',
-                 write_only=False,
-                 logger=None):
+    name = "zmq"
+
+    def __init__(
+        self,
+        url="zmq+tcp://localhost:5555+5556",
+        channel="socketio",
+        write_only=False,
+        logger=None,
+    ):
         try:
             from eventlet.green import zmq
         except ImportError:
-            raise RuntimeError('zmq package is not installed '
-                               '(Run "pip install pyzmq" in your '
-                               'virtualenv).')
+            raise RuntimeError(
+                "zmq package is not installed "
+                '(Run "pip install pyzmq" in your '
+                "virtualenv)."
+            )
 
-        r = re.compile(r':\d+\+\d+$')
-        if not (url.startswith('zmq+tcp://') and r.search(url)):
-            raise RuntimeError('unexpected connection string: ' + url)
+        r = re.compile(r":\d+\+\d+$")
+        if not (url.startswith("zmq+tcp://") and r.search(url)):
+            raise RuntimeError("unexpected connection string: " + url)
 
-        url = url.replace('zmq+', '')
-        (sink_url, sub_port) = url.split('+')
-        sink_port = sink_url.split(':')[-1]
+        url = url.replace("zmq+", "")
+        (sink_url, sub_port) = url.split("+")
+        sink_port = sink_url.split(":")[-1]
         sub_url = sink_url.replace(sink_port, sub_port)
 
         sink = zmq.Context().socket(zmq.PUSH)
         sink.connect(sink_url)
 
         sub = zmq.Context().socket(zmq.SUB)
-        sub.setsockopt_string(zmq.SUBSCRIBE, u'')
+        sub.setsockopt_string(zmq.SUBSCRIBE, "")
         sub.connect(sub_url)
 
         self.sink = sink
@@ -76,11 +82,7 @@ class ZmqManager(PubSubManager):  # pragma: no cover
 
     def _publish(self, data):
         pickled_data = pickle.dumps(
-            {
-                'type': 'message',
-                'channel': self.channel,
-                'data': data
-            }
+            {"type": "message", "channel": self.channel, "data": data}
         )
         return self.sink.send(pickled_data)
 
@@ -97,9 +99,11 @@ class ZmqManager(PubSubManager):  # pragma: no cover
                     message = pickle.loads(message)
                 except Exception:
                     pass
-            if isinstance(message, dict) and \
-                    message['type'] == 'message' and \
-                    message['channel'] == self.channel and \
-                    'data' in message:
-                yield message['data']
+            if (
+                isinstance(message, dict)
+                and message["type"] == "message"
+                and message["channel"] == self.channel
+                and "data" in message
+            ):
+                yield message["data"]
         return

@@ -13,16 +13,20 @@ class SocketIOWebServer:
     Note 1: This class is not production-ready and is intended for testing.
     Note 2: This class only supports the "asgi" async_mode.
     """
+
     def __init__(self, sio, on_shutdown=None):
-        if sio.async_mode != 'asgi':
+        if sio.async_mode != "asgi":
             raise ValueError('The async_mode must be "asgi"')
 
         async def http_app(scope, receive, send):
-            await send({'type': 'http.response.start',
-                        'status': 200,
-                        'headers': [('Content-Type', 'text/plain')]})
-            await send({'type': 'http.response.body',
-                        'body': b'OK'})
+            await send(
+                {
+                    "type": "http.response.start",
+                    "status": 200,
+                    "headers": [("Content-Type", "text/plain")],
+                }
+            )
+            await send({"type": "http.response.body", "body": b"OK"})
 
         self.sio = sio
         self.app = socketio.ASGIApp(sio, http_app, on_shutdown=on_shutdown)
@@ -43,9 +47,9 @@ class SocketIOWebServer:
         # wait for the server to start
         while True:
             try:
-                r = requests.get(f'http://localhost:{port}/')
+                r = requests.get(f"http://localhost:{port}/")
                 r.raise_for_status()
-                if r.text == 'OK':
+                if r.text == "OK":
                     break
             except:
                 time.sleep(0.1)
