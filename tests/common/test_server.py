@@ -574,6 +574,29 @@ class TestServer(unittest.TestCase):
         catchall_handler.assert_called_once_with(
             'my message', '1', 'a', 'b', 'c')
 
+    def test_handle_event_with_catchall_namespace(self, eio):
+        s = server.Server(async_handlers=False)
+        sid_foo = s.manager.connect('123', '/foo')
+        sid_bar = s.manager.connect('123', '/bar')
+        msg_foo_handler = mock.MagicMock()
+        msg_star_handler = mock.MagicMock()
+        star_foo_handler = mock.MagicMock()
+        star_star_handler = mock.MagicMock()
+        s.on('msg', msg_foo_handler, namespace='/foo')
+        s.on('msg', msg_star_handler, namespace='*')
+        s.on('*', star_foo_handler, namespace='/foo')
+        s.on('*', star_star_handler, namespace='*')
+        s._handle_eio_message('123', '2/foo,["msg","a","b"]')
+        s._handle_eio_message('123', '2/bar,["msg","a","b"]')
+        s._handle_eio_message('123', '2/foo,["my message","a","b","c"]')
+        s._handle_eio_message('123', '2/bar,["my message","a","b","c"]')
+        msg_foo_handler.assert_called_once_with(sid_foo, 'a', 'b')
+        msg_star_handler.assert_called_once_with('/bar', sid_bar, 'a', 'b')
+        star_foo_handler.assert_called_once_with(
+            'my message', sid_foo, 'a', 'b', 'c')
+        star_star_handler.assert_called_once_with(
+            'my message', '/bar', sid_bar, 'a', 'b', 'c')
+
     def test_handle_event_with_disconnected_namespace(self, eio):
         s = server.Server(async_handlers=False)
         s.manager.connect('123', '/foo')
