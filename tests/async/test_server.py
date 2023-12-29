@@ -928,7 +928,7 @@ class TestAsyncServer(unittest.TestCase):
         _run(s.disconnect('1', '/foo'))
         assert result['result'] == ('disconnect', '1')
 
-    def test_namespace_handler(self, eio):
+    def test_catchall_namespace_handler(self, eio):
         eio.return_value.send = AsyncMock()
         result = {}
 
