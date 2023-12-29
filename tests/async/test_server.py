@@ -928,6 +928,40 @@ class TestAsyncServer(unittest.TestCase):
         _run(s.disconnect('1', '/foo'))
         assert result['result'] == ('disconnect', '1')
 
+    def test_namespace_handler(self, eio):
+        eio.return_value.send = AsyncMock()
+        result = {}
+
+        class MyNamespace(async_namespace.AsyncNamespace):
+            def on_connect(self, ns, sid, environ):
+                result['result'] = (sid, ns, environ)
+
+            async def on_disconnect(self, ns, sid):
+                result['result'] = ('disconnect', sid, ns)
+
+            async def on_foo(self, ns, sid, data):
+                result['result'] = (sid, ns, data)
+
+            def on_bar(self, ns, sid):
+                result['result'] = 'bar' + ns
+
+            async def on_baz(self, ns, sid, data1, data2):
+                result['result'] = (ns, data1, data2)
+
+        s = async_server.AsyncServer(async_handlers=False, namespaces='*')
+        s.register_namespace(MyNamespace('*'))
+        _run(s._handle_eio_connect('123', 'environ'))
+        _run(s._handle_eio_message('123', '0/foo,'))
+        assert result['result'] == ('1', '/foo', 'environ')
+        _run(s._handle_eio_message('123', '2/foo,["foo","a"]'))
+        assert result['result'] == ('1', '/foo', 'a')
+        _run(s._handle_eio_message('123', '2/foo,["bar"]'))
+        assert result['result'] == 'bar/foo'
+        _run(s._handle_eio_message('123', '2/foo,["baz","a","b"]'))
+        assert result['result'] == ('/foo', 'a', 'b')
+        _run(s.disconnect('1', '/foo'))
+        assert result['result'] == ('disconnect', '1', '/foo')
+
     def test_bad_namespace_handler(self, eio):
         class Dummy(object):
             pass

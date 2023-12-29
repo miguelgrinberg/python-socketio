@@ -838,6 +838,39 @@ class TestServer(unittest.TestCase):
         s.disconnect('1', '/foo')
         assert result['result'] == ('disconnect', '1')
 
+    def test_catchall_namespace_handler(self, eio):
+        result = {}
+
+        class MyNamespace(namespace.Namespace):
+            def on_connect(self, ns, sid, environ):
+                result['result'] = (sid, ns, environ)
+
+            def on_disconnect(self, ns, sid):
+                result['result'] = ('disconnect', sid, ns)
+
+            def on_foo(self, ns, sid, data):
+                result['result'] = (sid, ns, data)
+
+            def on_bar(self, ns, sid):
+                result['result'] = 'bar' + ns
+
+            def on_baz(self, ns, sid, data1, data2):
+                result['result'] = (ns, data1, data2)
+
+        s = server.Server(async_handlers=False, namespaces='*')
+        s.register_namespace(MyNamespace('*'))
+        s._handle_eio_connect('123', 'environ')
+        s._handle_eio_message('123', '0/foo,')
+        assert result['result'] == ('1', '/foo', 'environ')
+        s._handle_eio_message('123', '2/foo,["foo","a"]')
+        assert result['result'] == ('1', '/foo', 'a')
+        s._handle_eio_message('123', '2/foo,["bar"]')
+        assert result['result'] == 'bar/foo'
+        s._handle_eio_message('123', '2/foo,["baz","a","b"]')
+        assert result['result'] == ('/foo', 'a', 'b')
+        s.disconnect('1', '/foo')
+        assert result['result'] == ('disconnect', '1', '/foo')
+
     def test_bad_namespace_handler(self, eio):
         class Dummy(object):
             pass
