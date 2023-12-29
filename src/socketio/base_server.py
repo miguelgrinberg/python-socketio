@@ -196,6 +196,54 @@ class BaseServer:
         eio_sid = self.manager.eio_sid_from_sid(sid, namespace or '/')
         return self.environ.get(eio_sid)
 
+    def _get_event_handler(self, event, namespace, *args):
+        """Return the appropriate application event handler.
+
+        Resolution priority:
+        - self.handlers[namespace][event]
+        - self.handlers[namespace]["*"]
+        - self.handlers["*"][event]
+        - self.handlers["*"]["*"]
+        """
+        handler = None
+        if namespace in self.handlers and \
+                    event in self.handlers[namespace]:
+            handler = self.handlers[namespace][event]
+        elif namespace in self.handlers and \
+                    event not in self.reserved_events and \
+                    '*' in self.handlers[namespace]:
+            handler = self.handlers[namespace]['*']
+            args = (event, *args)
+        elif '*' in self.handlers and \
+                    event in self.handlers['*']:
+            handler = self.handlers['*'][event]
+            args = (namespace, *args)
+        elif '*' in self.handlers and \
+                    event not in self.reserved_events and \
+                    '*' in self.handlers['*']:
+            handler = self.handlers['*']['*']
+            args = (event, namespace, *args)
+        else:
+            handler = None
+        return handler, args
+
+    def _get_namespace_handler(self, namespace, *args):
+        """Return the appropriate application event handler.
+
+        Resolution priority:
+        - self.namespace_handlers[namespace]
+        - self.namespace_handlers["*"]
+        """
+        handler = None
+        if namespace in self.namespace_handlers:
+            handler = self.namespace_handlers[namespace]
+        elif '*' in self.namespace_handlers:
+            handler = self.namespace_handlers['*']
+            args = (namespace, *args)
+        else:
+            handler = None
+        return handler, args
+
     def _handle_eio_connect(self):  # pragma: no cover
         raise NotImplementedError()
 
