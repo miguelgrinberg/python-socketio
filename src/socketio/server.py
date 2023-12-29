@@ -602,21 +602,41 @@ class Server(base_server.BaseServer):
         self.manager.trigger_callback(sid, id, data)
 
     def _trigger_event(self, event, namespace, *args):
-        """Invoke an application event handler."""
-        # first see if we have an explicit handler for the event
-        if namespace in self.handlers:
-            if event in self.handlers[namespace]:
-                return self.handlers[namespace][event](*args)
-            elif event not in self.reserved_events and \
-                    '*' in self.handlers[namespace]:
-                return self.handlers[namespace]['*'](event, *args)
-            else:
-                return self.not_handled
+        """Invoke an application event handler.
 
+        Resolution priority:
+        - self.handlers[namespace][event]
+        - self.handlers[namespace]["*"]
+        - self.handlers["*"][event]
+        - self.handlers["*"]["*"]
+        - self.namespace_handlers[namespace]
+        - self.namespace_handlers["*"]
+        - self.not_handled
+        """
+        # first see if we have an explicit handler for the event
+        if namespace in self.handlers and \
+                    event in self.handlers[namespace]:
+            return self.handlers[namespace][event](*args)
+        elif namespace in self.handlers and \
+                    event not in self.reserved_events and \
+                    '*' in self.handlers[namespace]:
+            return self.handlers[namespace]['*'](event, *args)
+        elif '*' in self.handlers and \
+                    event in self.handlers['*']:
+            return self.handlers['*'][event](namespace, *args)
+        elif '*' in self.handlers and \
+                    event not in self.reserved_events and \
+                    '*' in self.handlers[namespace]:
+            return self.handlers['*']['*'](event, namespace, *args)
         # or else, forward the event to a namespace handler if one exists
         elif namespace in self.namespace_handlers:  # pragma: no branch
             return self.namespace_handlers[namespace].trigger_event(
                 event, *args)
+        elif '*' in self.namespace_handlers:  # pragma: no branch
+            return self.namespace_handlers['*'].trigger_event(
+                event, namespace, *args)
+        else:
+            return self.not_handled
 
     def _handle_eio_connect(self, eio_sid, environ):
         """Handle the Engine.IO connection event."""

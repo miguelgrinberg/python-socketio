@@ -615,32 +615,55 @@ class AsyncServer(base_server.BaseServer):
         await self.manager.trigger_callback(sid, id, data)
 
     async def _trigger_event(self, event, namespace, *args):
-        """Invoke an application event handler."""
-        # first see if we have an explicit handler for the event
-        if namespace in self.handlers:
-            handler = None
-            if event in self.handlers[namespace]:
-                handler = self.handlers[namespace][event]
-            elif event not in self.reserved_events and \
-                    '*' in self.handlers[namespace]:
-                handler = self.handlers[namespace]['*']
-                args = (event, *args)
-            if handler:
-                if asyncio.iscoroutinefunction(handler):
-                    try:
-                        ret = await handler(*args)
-                    except asyncio.CancelledError:  # pragma: no cover
-                        ret = None
-                else:
-                    ret = handler(*args)
-                return ret
-            else:
-                return self.not_handled
+        """Invoke an application event handler.
 
+        Resolution priority:
+        - self.handlers[namespace][event]
+        - self.handlers[namespace]["*"]
+        - self.handlers["*"][event]
+        - self.handlers["*"]["*"]
+        - self.namespace_handlers[namespace]
+        - self.namespace_handlers["*"]
+        - self.not_handled
+        """
+        handler = None
+        # first see if we have an explicit handler for the event
+        if namespace in self.handlers and \
+                    event in self.handlers[namespace]:
+            handler = self.handlers[namespace][event]
+        elif namespace in self.handlers and \
+                    event not in self.reserved_events and \
+                    '*' in self.handlers[namespace]:
+            handler = self.handlers[namespace]['*']
+            args = (event, *args)
+        elif '*' in self.handlers and \
+                    event in self.handlers['*']:
+            handler = self.handlers['*'][event]
+            args = (namespace, *args)
+        elif '*' in self.handlers and \
+                    event not in self.reserved_events and \
+                    '*' in self.handlers['*']:
+            handler = self.handlers['*']['*']
+            args = (event, namespace, *args)
         # or else, forward the event to a namepsace handler if one exists
         elif namespace in self.namespace_handlers:  # pragma: no branch
             return await self.namespace_handlers[namespace].trigger_event(
                 event, *args)
+        elif '*' in self.namespace_handlers:  # pragma: no branch
+            return await self.namespace_handlers['*'].trigger_event(
+                event, namespace, *args)
+
+        if handler:
+            if asyncio.iscoroutinefunction(handler):
+                try:
+                    ret = await handler(*args)
+                except asyncio.CancelledError:  # pragma: no cover
+                    ret = None
+            else:
+                ret = handler(*args)
+            return ret
+        else:
+            return self.not_handled
 
     async def _handle_eio_connect(self, eio_sid, environ):
         """Handle the Engine.IO connection event."""
