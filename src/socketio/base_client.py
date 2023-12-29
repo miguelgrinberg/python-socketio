@@ -219,6 +219,46 @@ class BaseClient:
         """
         return self.eio.transport()
 
+    def _get_event_handler(self, event, namespace, args):
+        # return the appropriate application event handler
+        #
+        # Resolution priority:
+        # - self.handlers[namespace][event]
+        # - self.handlers[namespace]["*"]
+        # - self.handlers["*"][event]
+        # - self.handlers["*"]["*"]
+        handler = None
+        if namespace in self.handlers:
+            if event in self.handlers[namespace]:
+                handler = self.handlers[namespace][event]
+            elif event not in self.reserved_events and \
+                    '*' in self.handlers[namespace]:
+                handler = self.handlers[namespace]['*']
+                args = (event, *args)
+        elif '*' in self.handlers:
+            if event in self.handlers['*']:
+                handler = self.handlers['*'][event]
+                args = (namespace, *args)
+            elif event not in self.reserved_events and \
+                    '*' in self.handlers['*']:
+                handler = self.handlers['*']['*']
+                args = (event, namespace, *args)
+        return handler, args
+
+    def _get_namespace_handler(self, namespace, args):
+        # Return the appropriate application event handler.
+        #
+        # Resolution priority:
+        # - self.namespace_handlers[namespace]
+        # - self.namespace_handlers["*"]
+        handler = None
+        if namespace in self.namespace_handlers:
+            handler = self.namespace_handlers[namespace]
+        elif '*' in self.namespace_handlers:
+            handler = self.namespace_handlers['*']
+            args = (namespace, *args)
+        return handler, args
+
     def _generate_ack_id(self, namespace, callback):
         """Generate a unique identifier for an ACK packet."""
         namespace = namespace or '/'

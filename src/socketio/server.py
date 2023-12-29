@@ -604,19 +604,15 @@ class Server(base_server.BaseServer):
     def _trigger_event(self, event, namespace, *args):
         """Invoke an application event handler."""
         # first see if we have an explicit handler for the event
-        if namespace in self.handlers:
-            if event in self.handlers[namespace]:
-                return self.handlers[namespace][event](*args)
-            elif event not in self.reserved_events and \
-                    '*' in self.handlers[namespace]:
-                return self.handlers[namespace]['*'](event, *args)
-            else:
-                return self.not_handled
-
+        handler, args = self._get_event_handler(event, namespace, args)
+        if handler:
+            return handler(*args)
         # or else, forward the event to a namespace handler if one exists
-        elif namespace in self.namespace_handlers:  # pragma: no branch
-            return self.namespace_handlers[namespace].trigger_event(
-                event, *args)
+        handler, args = self._get_namespace_handler(namespace, args)
+        if handler:
+            return handler.trigger_event(event, *args)
+        else:
+            return self.not_handled
 
     def _handle_eio_connect(self, eio_sid, environ):
         """Handle the Engine.IO connection event."""

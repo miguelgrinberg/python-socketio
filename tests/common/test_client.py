@@ -970,6 +970,64 @@ class TestClient(unittest.TestCase):
         handler.assert_called_once_with(1, '2')
         catchall_handler.assert_called_once_with('bar', 1, '2', 3)
 
+    def test_trigger_event_with_catchall_namespace(self):
+        c = client.Client()
+        connect_star_handler = mock.MagicMock()
+        msg_foo_handler = mock.MagicMock()
+        msg_star_handler = mock.MagicMock()
+        star_foo_handler = mock.MagicMock()
+        star_star_handler = mock.MagicMock()
+        c.on('connect', connect_star_handler, namespace='*')
+        c.on('msg', msg_foo_handler, namespace='/foo')
+        c.on('msg', msg_star_handler, namespace='*')
+        c.on('*', star_foo_handler, namespace='/foo')
+        c.on('*', star_star_handler, namespace='*')
+        c._trigger_event('connect', '/bar')
+        c._trigger_event('msg', '/foo', 'a', 'b')
+        c._trigger_event('msg', '/bar', 'a', 'b')
+        c._trigger_event('my message', '/foo', 'a', 'b', 'c')
+        c._trigger_event('my message', '/bar', 'a', 'b', 'c')
+        c._trigger_event('disconnect', '/bar')
+        connect_star_handler.assert_called_once_with('/bar')
+        msg_foo_handler.assert_called_once_with('a', 'b')
+        msg_star_handler.assert_called_once_with('/bar', 'a', 'b')
+        star_foo_handler.assert_called_once_with(
+            'my message', 'a', 'b', 'c')
+        star_star_handler.assert_called_once_with(
+            'my message', '/bar', 'a', 'b', 'c')
+
+    def test_trigger_event_with_catchall_namespace_handler(self):
+        result = {}
+
+        class MyNamespace(namespace.ClientNamespace):
+            def on_connect(self, ns):
+                result['result'] = (ns,)
+
+            def on_disconnect(self, ns):
+                result['result'] = ('disconnect', ns)
+
+            def on_foo(self, ns, data):
+                result['result'] = (ns, data)
+
+            def on_bar(self, ns):
+                result['result'] = 'bar' + ns
+
+            def on_baz(self, ns, data1, data2):
+                result['result'] = (ns, data1, data2)
+
+        c = client.Client()
+        c.register_namespace(MyNamespace('*'))
+        c._trigger_event('connect', '/foo')
+        assert result['result'] == ('/foo',)
+        c._trigger_event('foo', '/foo', 'a')
+        assert result['result'] == ('/foo', 'a')
+        c._trigger_event('bar', '/foo')
+        assert result['result'] == 'bar/foo'
+        c._trigger_event('baz', '/foo', 'a', 'b')
+        assert result['result'] == ('/foo', 'a', 'b')
+        c._trigger_event('disconnect', '/foo')
+        assert result['result'] == ('disconnect', '/foo')
+
     def test_trigger_event_class_namespace(self):
         c = client.Client()
         result = []

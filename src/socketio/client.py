@@ -404,17 +404,14 @@ class Client(base_client.BaseClient):
     def _trigger_event(self, event, namespace, *args):
         """Invoke an application event handler."""
         # first see if we have an explicit handler for the event
-        if namespace in self.handlers:
-            if event in self.handlers[namespace]:
-                return self.handlers[namespace][event](*args)
-            elif event not in self.reserved_events and \
-                    '*' in self.handlers[namespace]:
-                return self.handlers[namespace]['*'](event, *args)
+        handler, args = self._get_event_handler(event, namespace, args)
+        if handler:
+            return handler(*args)
 
         # or else, forward the event to a namespace handler if one exists
-        elif namespace in self.namespace_handlers:
-            return self.namespace_handlers[namespace].trigger_event(
-                event, *args)
+        handler, args = self._get_namespace_handler(namespace, args)
+        if handler:
+            return handler.trigger_event(event, *args)
 
     def _handle_reconnect(self):
         if self._reconnect_abort is None:  # pragma: no cover

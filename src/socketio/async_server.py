@@ -617,30 +617,22 @@ class AsyncServer(base_server.BaseServer):
     async def _trigger_event(self, event, namespace, *args):
         """Invoke an application event handler."""
         # first see if we have an explicit handler for the event
-        if namespace in self.handlers:
-            handler = None
-            if event in self.handlers[namespace]:
-                handler = self.handlers[namespace][event]
-            elif event not in self.reserved_events and \
-                    '*' in self.handlers[namespace]:
-                handler = self.handlers[namespace]['*']
-                args = (event, *args)
-            if handler:
-                if asyncio.iscoroutinefunction(handler):
-                    try:
-                        ret = await handler(*args)
-                    except asyncio.CancelledError:  # pragma: no cover
-                        ret = None
-                else:
-                    ret = handler(*args)
-                return ret
+        handler, args = self._get_event_handler(event, namespace, args)
+        if handler:
+            if asyncio.iscoroutinefunction(handler):
+                try:
+                    ret = await handler(*args)
+                except asyncio.CancelledError:  # pragma: no cover
+                    ret = None
             else:
-                return self.not_handled
-
-        # or else, forward the event to a namepsace handler if one exists
-        elif namespace in self.namespace_handlers:  # pragma: no branch
-            return await self.namespace_handlers[namespace].trigger_event(
-                event, *args)
+                ret = handler(*args)
+            return ret
+        # or else, forward the event to a namespace handler if one exists
+        handler, args = self._get_namespace_handler(namespace, args)
+        if handler:
+            return await handler.trigger_event(event, *args)
+        else:
+            return self.not_handled
 
     async def _handle_eio_connect(self, eio_sid, environ):
         """Handle the Engine.IO connection event."""

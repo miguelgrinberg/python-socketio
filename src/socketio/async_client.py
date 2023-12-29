@@ -429,28 +429,21 @@ class AsyncClient(base_client.BaseClient):
     async def _trigger_event(self, event, namespace, *args):
         """Invoke an application event handler."""
         # first see if we have an explicit handler for the event
-        if namespace in self.handlers:
-            handler = None
-            if event in self.handlers[namespace]:
-                handler = self.handlers[namespace][event]
-            elif event not in self.reserved_events and \
-                    '*' in self.handlers[namespace]:
-                handler = self.handlers[namespace]['*']
-                args = (event, *args)
-            if handler:
-                if asyncio.iscoroutinefunction(handler):
-                    try:
-                        ret = await handler(*args)
-                    except asyncio.CancelledError:  # pragma: no cover
-                        ret = None
-                else:
-                    ret = handler(*args)
-                return ret
+        handler, args = self._get_event_handler(event, namespace, args)
+        if handler:
+            if asyncio.iscoroutinefunction(handler):
+                try:
+                    ret = await handler(*args)
+                except asyncio.CancelledError:  # pragma: no cover
+                    ret = None
+            else:
+                ret = handler(*args)
+            return ret
 
         # or else, forward the event to a namepsace handler if one exists
-        elif namespace in self.namespace_handlers:
-            return await self.namespace_handlers[namespace].trigger_event(
-                event, *args)
+        handler, args = self._get_namespace_handler(namespace, args)
+        if handler:
+            return await handler.trigger_event(event, *args)
 
     async def _handle_reconnect(self):
         if self._reconnect_abort is None:  # pragma: no cover

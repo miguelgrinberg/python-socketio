@@ -857,6 +857,38 @@ class TestAsyncClient(unittest.TestCase):
         _run(c._trigger_event('foo', '/', 1, '2'))
         assert result == [1, '2']
 
+    def test_trigger_event_with_catchall_class_namespace(self):
+        result = {}
+
+        class MyNamespace(async_namespace.AsyncClientNamespace):
+            def on_connect(self, ns):
+                result['result'] = (ns,)
+
+            def on_disconnect(self, ns):
+                result['result'] = ('disconnect', ns)
+
+            def on_foo(self, ns, data):
+                result['result'] = (ns, data)
+
+            def on_bar(self, ns):
+                result['result'] = 'bar' + ns
+
+            def on_baz(self, ns, data1, data2):
+                result['result'] = (ns, data1, data2)
+
+        c = async_client.AsyncClient()
+        c.register_namespace(MyNamespace('*'))
+        _run(c._trigger_event('connect', '/foo'))
+        assert result['result'] == ('/foo',)
+        _run(c._trigger_event('foo', '/foo', 'a'))
+        assert result['result'] == ('/foo', 'a')
+        _run(c._trigger_event('bar', '/foo'))
+        assert result['result'] == 'bar/foo'
+        _run(c._trigger_event('baz', '/foo', 'a', 'b'))
+        assert result['result'] == ('/foo', 'a', 'b')
+        _run(c._trigger_event('disconnect', '/foo'))
+        assert result['result'] == ('disconnect', '/foo')
+
     def test_trigger_event_unknown_namespace(self):
         c = async_client.AsyncClient()
         result = []

@@ -621,6 +621,35 @@ class TestAsyncServer(unittest.TestCase):
         catchall_handler.assert_called_once_with(
             'my message', sid, 'a', 'b', 'c')
 
+    def test_handle_event_with_catchall_namespace(self, eio):
+        eio.return_value.send = AsyncMock()
+        s = async_server.AsyncServer(async_handlers=False)
+        sid_foo = _run(s.manager.connect('123', '/foo'))
+        sid_bar = _run(s.manager.connect('123', '/bar'))
+        connect_star_handler = mock.MagicMock()
+        msg_foo_handler = mock.MagicMock()
+        msg_star_handler = mock.MagicMock()
+        star_foo_handler = mock.MagicMock()
+        star_star_handler = mock.MagicMock()
+        s.on('connect', connect_star_handler, namespace='*')
+        s.on('msg', msg_foo_handler, namespace='/foo')
+        s.on('msg', msg_star_handler, namespace='*')
+        s.on('*', star_foo_handler, namespace='/foo')
+        s.on('*', star_star_handler, namespace='*')
+        _run(s._trigger_event('connect', '/bar', sid_bar))
+        _run(s._handle_eio_message('123', '2/foo,["msg","a","b"]'))
+        _run(s._handle_eio_message('123', '2/bar,["msg","a","b"]'))
+        _run(s._handle_eio_message('123', '2/foo,["my message","a","b","c"]'))
+        _run(s._handle_eio_message('123', '2/bar,["my message","a","b","c"]'))
+        _run(s._trigger_event('disconnect', '/bar', sid_bar))
+        connect_star_handler.assert_called_once_with('/bar', sid_bar)
+        msg_foo_handler.assert_called_once_with(sid_foo, 'a', 'b')
+        msg_star_handler.assert_called_once_with('/bar', sid_bar, 'a', 'b')
+        star_foo_handler.assert_called_once_with(
+            'my message', sid_foo, 'a', 'b', 'c')
+        star_star_handler.assert_called_once_with(
+            'my message', '/bar', sid_bar, 'a', 'b', 'c')
+
     def test_handle_event_with_disconnected_namespace(self, eio):
         eio.return_value.send = AsyncMock()
         s = async_server.AsyncServer(async_handlers=False)
@@ -903,6 +932,40 @@ class TestAsyncServer(unittest.TestCase):
         assert result['result'] == ('a', 'b')
         _run(s.disconnect('1', '/foo'))
         assert result['result'] == ('disconnect', '1')
+
+    def test_catchall_namespace_handler(self, eio):
+        eio.return_value.send = AsyncMock()
+        result = {}
+
+        class MyNamespace(async_namespace.AsyncNamespace):
+            def on_connect(self, ns, sid, environ):
+                result['result'] = (sid, ns, environ)
+
+            async def on_disconnect(self, ns, sid):
+                result['result'] = ('disconnect', sid, ns)
+
+            async def on_foo(self, ns, sid, data):
+                result['result'] = (sid, ns, data)
+
+            def on_bar(self, ns, sid):
+                result['result'] = 'bar' + ns
+
+            async def on_baz(self, ns, sid, data1, data2):
+                result['result'] = (ns, data1, data2)
+
+        s = async_server.AsyncServer(async_handlers=False, namespaces='*')
+        s.register_namespace(MyNamespace('*'))
+        _run(s._handle_eio_connect('123', 'environ'))
+        _run(s._handle_eio_message('123', '0/foo,'))
+        assert result['result'] == ('1', '/foo', 'environ')
+        _run(s._handle_eio_message('123', '2/foo,["foo","a"]'))
+        assert result['result'] == ('1', '/foo', 'a')
+        _run(s._handle_eio_message('123', '2/foo,["bar"]'))
+        assert result['result'] == 'bar/foo'
+        _run(s._handle_eio_message('123', '2/foo,["baz","a","b"]'))
+        assert result['result'] == ('/foo', 'a', 'b')
+        _run(s.disconnect('1', '/foo'))
+        assert result['result'] == ('disconnect', '1', '/foo')
 
     def test_bad_namespace_handler(self, eio):
         class Dummy(object):
