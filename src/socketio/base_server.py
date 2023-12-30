@@ -207,20 +207,20 @@ class BaseServer:
         """
         handler = None
         if namespace in self.handlers and \
-                    event in self.handlers[namespace]:
+                event in self.handlers[namespace]:
             handler = self.handlers[namespace][event]
         elif namespace in self.handlers and \
-                    event not in self.reserved_events and \
-                    '*' in self.handlers[namespace]:
+                event not in self.reserved_events and \
+                '*' in self.handlers[namespace]:
             handler = self.handlers[namespace]['*']
             args = (event, *args)
         elif '*' in self.handlers and \
-                    event in self.handlers['*']:
+                event in self.handlers['*']:
             handler = self.handlers['*'][event]
             args = (namespace, *args)
         elif '*' in self.handlers and \
-                    event not in self.reserved_events and \
-                    '*' in self.handlers['*']:
+                event not in self.reserved_events and \
+                '*' in self.handlers['*']:
             handler = self.handlers['*']['*']
             args = (event, namespace, *args)
         else:
