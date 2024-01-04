@@ -845,11 +845,9 @@ database drivers are likely to require it.
 Gevent
 ~~~~~~
 
-`Gevent <http://gevent.org/>`_ is another asynchronous framework based on
-coroutines, very similar to eventlet. An Socket.IO server deployed with
-gevent has access to the long-polling transport. If project
-`gevent-websocket <https://bitbucket.org/Jeffrey/gevent-websocket/>`_ is
-installed, the WebSocket transport is also available.
+`Gevent <http://gevent.org>`_ is another asynchronous framework based on
+coroutines, very similar to eventlet. An Engine.IO server deployed with
+gevent has access to the long-polling and websocket transports.
 
 Instances of class ``socketio.Server`` will automatically use gevent for
 asynchronous operations if the library is installed and eventlet is not
@@ -865,15 +863,6 @@ using the provided ``socketio.WSGIApp``::
     from gevent import pywsgi
     pywsgi.WSGIServer(('', 8000), app).serve_forever()
 
-If the WebSocket transport is installed, then the server must be started as
-follows::
-
-    from gevent import pywsgi
-    from geventwebsocket.handler import WebSocketHandler
-    app = socketio.WSGIApp(sio)
-    pywsgi.WSGIServer(('', 8000), app,
-                      handler_class=WebSocketHandler).serve_forever()
-
 Gevent with Gunicorn
 ~~~~~~~~~~~~~~~~~~~~
 
@@ -882,10 +871,6 @@ An alternative to running the gevent WSGI server as above is to use
 command to launch the application under gunicorn is shown below::
 
     $ gunicorn -k gevent -w 1 module:app
-
-Or to include WebSocket::
-
-    $ gunicorn -k geventwebsocket.gunicorn.workers.GeventWebSocketWorker -w 1 module: app
 
 Same as with eventlet, due to limitations in its load balancing algorithm,
 gunicorn can only be used with one worker process, so the ``-w`` option cannot
