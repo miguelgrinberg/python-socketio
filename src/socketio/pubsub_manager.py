@@ -188,38 +188,45 @@ class PubSubManager(Manager):
                            namespace=message.get('namespace'))
 
     def _thread(self):
-        for message in self._listen():
-            data = None
-            if isinstance(message, dict):
-                data = message
-            else:
-                if isinstance(message, bytes):  # pragma: no cover
-                    try:
-                        data = pickle.loads(message)
-                    except:
-                        pass
-                if data is None:
-                    try:
-                        data = json.loads(message)
-                    except:
-                        pass
-            if data and 'method' in data:
-                self._get_logger().debug('pubsub message: {}'.format(
-                    data['method']))
-                try:
-                    if data['method'] == 'callback':
-                        self._handle_callback(data)
-                    elif data.get('host_id') != self.host_id:
-                        if data['method'] == 'emit':
-                            self._handle_emit(data)
-                        elif data['method'] == 'disconnect':
-                            self._handle_disconnect(data)
-                        elif data['method'] == 'enter_room':
-                            self._handle_enter_room(data)
-                        elif data['method'] == 'leave_room':
-                            self._handle_leave_room(data)
-                        elif data['method'] == 'close_room':
-                            self._handle_close_room(data)
-                except:
-                    self.server.logger.exception(
-                        'Unknown error in pubsub listening thread')
+        while True:
+            try:
+                for message in self._listen():
+                    data = None
+                    if isinstance(message, dict):
+                        data = message
+                    else:
+                        if isinstance(message, bytes):  # pragma: no cover
+                            try:
+                                data = pickle.loads(message)
+                            except:
+                                pass
+                        if data is None:
+                            try:
+                                data = json.loads(message)
+                            except:
+                                pass
+                    if data and 'method' in data:
+                        self._get_logger().debug('pubsub message: {}'.format(
+                            data['method']))
+                        try:
+                            if data['method'] == 'callback':
+                                self._handle_callback(data)
+                            elif data.get('host_id') != self.host_id:
+                                if data['method'] == 'emit':
+                                    self._handle_emit(data)
+                                elif data['method'] == 'disconnect':
+                                    self._handle_disconnect(data)
+                                elif data['method'] == 'enter_room':
+                                    self._handle_enter_room(data)
+                                elif data['method'] == 'leave_room':
+                                    self._handle_leave_room(data)
+                                elif data['method'] == 'close_room':
+                                    self._handle_close_room(data)
+                        except Exception:
+                            self.server.logger.exception(
+                                'Handler error in pubsub listening thread')
+                self.server.logger.error('pubsub listen() exited unexpectedly')
+                break  # loop should never exit except in unit tests!
+            except Exception:  # pragma: no cover
+                self.server.logger.exception('Unexpected Error in pubsub '
+                                             'listening thread')

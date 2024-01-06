@@ -230,11 +230,13 @@ class AsyncPubSubManager(AsyncManager):
                                     await self._handle_close_room(data)
                         except asyncio.CancelledError:
                             raise  # let the outer try/except handle it
-                        except:
+                        except Exception:
                             self.server.logger.exception(
-                                'Unknown error in pubsub listening task')
+                                'Handler error in pubsub listening thread')
+                self.server.logger.error('pubsub listen() exited unexpectedly')
+                break  # loop should never exit except in unit tests!
             except asyncio.CancelledError:  # pragma: no cover
                 break
-            except:  # pragma: no cover
-                import traceback
-                traceback.print_exc()
+            except Exception:  # pragma: no cover
+                self.server.logger.exception('Unexpected Error in pubsub '
+                                             'listening thread')

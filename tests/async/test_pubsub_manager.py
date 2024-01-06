@@ -541,7 +541,6 @@ class TestAsyncPubSubManager(unittest.TestCase):
                    'host_id': host_id}
             yield pickle.dumps({'method': 'close_room', 'value': 'baz',
                                 'host_id': host_id})
-            raise asyncio.CancelledError()  # force the thread to exit
 
         self.pm._listen = messages
         _run(self.pm._thread())
