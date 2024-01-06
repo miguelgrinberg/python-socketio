@@ -78,6 +78,18 @@ class TestAdmin(unittest.TestCase):
         print('threads at end:', threading.enumerate())
         assert self.thread_count == threading.active_count()
 
+    def _expect(self, expected, admin_client):
+        events = {}
+        while expected:
+            data = admin_client.receive(timeout=5)
+            if data[0] in expected:
+                if expected[data[0]] == 1:
+                    events[data[0]] = data[1]
+                    del expected[data[0]]
+                else:
+                    expected[data[0]] -= 1
+        return events
+
     def test_missing_auth(self):
         sio = socketio.Server(async_mode='threading')
         with pytest.raises(ValueError):
@@ -143,13 +155,8 @@ class TestAdmin(unittest.TestCase):
         with socketio.SimpleClient() as admin_client:
             admin_client.connect('http://localhost:8900', namespace='/admin')
             sid = admin_client.sid
-            expected = ['config', 'all_sockets', 'server_stats']
-            events = {}
-            while expected:
-                data = admin_client.receive(timeout=5)
-                if data[0] in expected:
-                    events[data[0]] = data[1]
-                    expected.remove(data[0])
+            events = self._expect({'config': 1, 'all_sockets': 1,
+                                   'server_stats': 2}, admin_client)
 
         assert 'supportedFeatures' in events['config']
         assert 'ALL_EVENTS' in events['config']['supportedFeatures']
@@ -190,13 +197,8 @@ class TestAdmin(unittest.TestCase):
 
             admin_client.connect('http://localhost:8900', namespace='/admin')
             sid = admin_client.sid
-            expected = ['config', 'all_sockets', 'server_stats']
-            events = {}
-            while expected:
-                data = admin_client.receive(timeout=5)
-                if data[0] in expected:
-                    events[data[0]] = data[1]
-                    expected.remove(data[0])
+            events = self._expect({'config': 1, 'all_sockets': 1,
+                                   'server_stats': 2}, admin_client)
 
         assert 'supportedFeatures' in events['config']
         assert 'ALL_EVENTS' in events['config']['supportedFeatures']
@@ -227,13 +229,8 @@ class TestAdmin(unittest.TestCase):
     def test_admin_connect_production(self, isvr):
         with socketio.SimpleClient() as admin_client:
             admin_client.connect('http://localhost:8900', namespace='/admin')
-            expected = ['config', 'server_stats']
-            events = {}
-            while expected:
-                data = admin_client.receive(timeout=5)
-                if data[0] in expected:
-                    events[data[0]] = data[1]
-                    expected.remove(data[0])
+            events = self._expect({'config': 1, 'server_stats': 2},
+                                  admin_client)
 
         assert 'supportedFeatures' in events['config']
         assert 'ALL_EVENTS' not in events['config']['supportedFeatures']
