@@ -9,7 +9,7 @@ class AsyncSimpleClient:
     This class implements a simple, yet fully compliant Socket.IO web client
     with support for websocket and long-polling transports.
 
-    Th positional and keyword arguments given in the constructor are passed
+    The positional and keyword arguments given in the constructor are passed
     to the underlying :func:`socketio.AsyncClient` object.
     """
     def __init__(self, *args, **kwargs):
