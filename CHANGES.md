@@ -1,5 +1,18 @@
 # python-socketio change log
 
+**Release 5.11.0** - 2024-01-06
+
+- Support catch-all namespaces [#1288](https://github.com/miguelgrinberg/python-socketio/issues/1288) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/801241378ec6cbbaef6490399220b00473f66d34)) (thanks **mooomooo**!)
+- Prevent pubsub managers from ever crashing [#1262](https://github.com/miguelgrinberg/python-socketio/issues/1262) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/12134bd5c50851a1c1cd9ac319beeb7b12a9398b))
+- Hold references to background tasks to avoid garbage collection [#1191](https://github.com/miguelgrinberg/python-socketio/issues/1191) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/2f07824347190026e3dc40c66cffbb5604d09799))
+- Clearer documentation for the `max_http_buffer_size` argument [#1272](https://github.com/miguelgrinberg/python-socketio/issues/1272) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/1f488b03b669ee8b4435e342ff00d8b88f43d5fc))
+- Improved catch-all handler documentation ([commit](https://github.com/miguelgrinberg/python-socketio/commit/0a54ec6ae46848b336849d6c198c11a6e1dcf51f))
+- Documentation typos ([commit](https://github.com/miguelgrinberg/python-socketio/commit/29c794333ec284bd8f968db68d24738ef2b43923))
+- Remove documentation references to gevent-websocket, which is not needed anymore ([commit](https://github.com/miguelgrinberg/python-socketio/commit/0aa8683a3b13f5175fea70e52f889297d605b2bc))
+- Remove documentation reference to outdated aioredis package [#1268](https://github.com/miguelgrinberg/python-socketio/issues/1268) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/344e5c1d6b3927464cf31069cea198569c6540b3))
+- Update requirements for Django example ([commit](https://github.com/miguelgrinberg/python-socketio/commit/f72139b89e4de9eb38aa90d62ca0fa205db196d9))
+- Unit test fixes for the new simple clients [#1265](https://github.com/miguelgrinberg/python-socketio/issues/1265) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/66b9586a65564d82ae3589c65e541a0e593d90d3))
+
 **Release 5.10.0** - 2023-10-15
 
 - New `SimpleClient` and `AsyncSimpleClient` classes [#1237](https://github.com/miguelgrinberg/python-socketio/issues/1237) ([commit #1](https://github.com/miguelgrinberg/python-socketio/commit/55d6310eb3e194b1e67e40942a953bc4413b98b7)) ([commit #2](https://github.com/miguelgrinberg/python-socketio/commit/699ee9c47adcb44f1a8150d8c92a9555d07f7b5b))
