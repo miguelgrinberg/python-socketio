@@ -216,8 +216,6 @@ class BaseServer:
         # - self.handlers["*"][event]
         # - self.handlers["*"]["*"]
         handler = None
-        print(event, namespace)
-        print(namespace in self.handlers)
         if namespace in self.handlers:
             if event in self.handlers[namespace]:
                 handler = self.handlers[namespace][event]

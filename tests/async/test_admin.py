@@ -296,6 +296,7 @@ class TestAsyncAdmin(unittest.TestCase):
 
             # join and leave
             admin_client.emit('join', ('/', 'room', client1.sid))
+            time.sleep(0.2)
             admin_client.emit(
                 'emit', ('/', 'room', 'foo', {'bar': 'baz'}))
             data = client1.receive(timeout=5)
