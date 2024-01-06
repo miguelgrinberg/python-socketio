@@ -71,13 +71,15 @@ class BaseServer:
 
         :param event: The event name. It can be any string. The event names
                       ``'connect'``, ``'message'`` and ``'disconnect'`` are
-                      reserved and should not be used.
+                      reserved and should not be used. The ``'*'`` event name
+                      can be used to define a catch-all event handler.
         :param handler: The function that should be invoked to handle the
                         event. When this parameter is not given, the method
                         acts as a decorator for the handler function.
         :param namespace: The Socket.IO namespace for the event. If this
                           argument is omitted the handler is associated with
-                          the default namespace.
+                          the default namespace. A catch-all namespace can be
+                          defined by passing ``'*'`` as the namespace.
 
         Example usage::
 
@@ -94,14 +96,23 @@ class BaseServer:
                 sio.send(sid, 'response')
             socket_io.on('message', namespace='/chat', handler=message_handler)
 
-        The handler function receives the ``sid`` (session ID) for the
-        client as first argument. The ``'connect'`` event handler receives the
-        WSGI environment as a second argument, and can return ``False`` to
-        reject the connection. The ``'message'`` handler and handlers for
-        custom event names receive the message payload as a second argument.
-        Any values returned from a message handler will be passed to the
-        client's acknowledgement callback function if it exists. The
-        ``'disconnect'`` handler does not take a second argument.
+        The arguments passed to the handler function depend on the event type:
+
+        - The ``'connect'`` event handler receives the ``sid`` (session ID) for
+          the client and the WSGI environment dictionary as arguments.
+        - The ``'disconnect'`` handler receives the ``sid`` for the client as
+          only argument.
+        - The ``'message'`` handler and handlers for custom event names receive
+          the ``sid`` for the client and the message payload as arguments. Any
+          values returned from a message handler will be passed to the client's
+          acknowledgement callback function if it exists.
+        - A catch-all event handler receives the event name as first argument,
+          followed by any arguments specific to the event.
+        - A catch-all namespace event handler receives the namespace as first
+          argument, followed by any arguments specific to the event.
+        - A combined catch-all namespace and catch-all event handler receives
+          the event name as first argument and the namespace as second
+          argument, followed by any arguments specific to the event.
         """
         namespace = namespace or '/'
 

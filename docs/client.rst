@@ -533,6 +533,11 @@ coroutines if desired::
 
     sio.register_namespace(MyCustomNamespace('/chat'))
 
+A catch-all class-based namespace handler can be defined by passing ``'*'`` as
+the namespace during registration::
+
+    sio.register_namespace(MyCustomNamespace('*'))
+
 When class-based namespaces are used, any events received by the client are
 dispatched to a method named as the event name with the ``on_`` prefix. For
 example, event ``my_event`` will be handled by a method named ``on_my_event``.
