@@ -12,7 +12,7 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
 ]
-requires-python = ">=3.6"
+requires-python = ">=3.8"
 dependencies = [
     "bidict >= 0.21.0",
     "python-engineio >= 4.8.0",
