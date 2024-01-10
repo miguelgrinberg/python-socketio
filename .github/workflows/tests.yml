@@ -16,11 +16,11 @@ jobs:
     strategy:
       matrix:
         os: [windows-latest, macos-latest, ubuntu-latest]
-        python: ['pypy-3.9', '3.8', '3.9', '3.10', '3.11', '3.12']
+        python: ['pypy-3.10', '3.8', '3.9', '3.10', '3.11', '3.12']
         exclude:
           # pypy3 currently fails to run on Windows
           - os: windows-latest
-            python: pypy-3.9
+            python: pypy-3.10
       fail-fast: false
     runs-on: ${{ matrix.os }}
     steps:
