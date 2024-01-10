@@ -1,5 +1,4 @@
 import logging
-import sys
 import unittest
 from unittest import mock
 
@@ -155,7 +154,6 @@ class TestClient(unittest.TestCase):
         with pytest.raises(ValueError):
             c.register_namespace(n)
 
-    @unittest.skipIf(sys.version_info < (3, 0), 'only for Python 3')
     def test_namespace_handler_wrong_async(self):
         class MyNamespace(async_namespace.AsyncClientNamespace):
             pass

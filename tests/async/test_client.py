@@ -1,5 +1,4 @@
 import asyncio
-import sys
 import unittest
 from unittest import mock
 
@@ -13,7 +12,6 @@ from socketio import packet
 from .helpers import AsyncMock, _run
 
 
-@unittest.skipIf(sys.version_info < (3, 5), 'only for Python 3.5+')
 class TestAsyncClient(unittest.TestCase):
     def test_is_asyncio_based(self):
         c = async_client.AsyncClient()

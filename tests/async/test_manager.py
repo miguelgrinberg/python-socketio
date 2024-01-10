@@ -1,4 +1,3 @@
-import sys
 import unittest
 from unittest import mock
 
@@ -7,7 +6,6 @@ from socketio import packet
 from .helpers import AsyncMock, _run
 
 
-@unittest.skipIf(sys.version_info < (3, 5), 'only for Python 3.5+')
 class TestAsyncManager(unittest.TestCase):
     def setUp(self):
         id = 0
