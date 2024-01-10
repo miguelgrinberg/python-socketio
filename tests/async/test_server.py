@@ -1,6 +1,5 @@
 import asyncio
 import logging
-import sys
 import unittest
 from unittest import mock
 
@@ -16,7 +15,6 @@ from socketio import packet
 from .helpers import AsyncMock, _run
 
 
-@unittest.skipIf(sys.version_info < (3, 5), 'only for Python 3.5+')
 @mock.patch('socketio.server.engineio.AsyncServer', **{
     'return_value.generate_id.side_effect': [str(i) for i in range(1, 10)],
     'return_value.send_packet': AsyncMock()})
