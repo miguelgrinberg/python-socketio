@@ -307,9 +307,9 @@ class TestAsyncServer(unittest.TestCase):
         eio.return_value.send = AsyncMock()
         s = async_server.AsyncServer()
         s.eio.transport = mock.MagicMock(return_value='polling')
-        _run(s._handle_eio_connect('foo', 'environ'))
-        assert s.transport('foo') == 'polling'
-        s.eio.transport.assert_called_once_with('foo')
+        sid_foo = _run(s.manager.connect('123', '/foo'))
+        assert s.transport(sid_foo, '/foo') == 'polling'
+        s.eio.transport.assert_called_once_with('123')
 
     def test_handle_connect(self, eio):
         eio.return_value.send = AsyncMock()

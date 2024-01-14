@@ -292,9 +292,9 @@ class TestServer(unittest.TestCase):
     def test_transport(self, eio):
         s = server.Server()
         s.eio.transport = mock.MagicMock(return_value='polling')
-        s._handle_eio_connect('foo', 'environ')
-        assert s.transport('foo') == 'polling'
-        s.eio.transport.assert_called_once_with('foo')
+        sid_foo = s.manager.connect('123', '/foo')
+        assert s.transport(sid_foo, '/foo') == 'polling'
+        s.eio.transport.assert_called_once_with('123')
 
     def test_handle_connect(self, eio):
         s = server.Server()
