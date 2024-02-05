@@ -1,5 +1,11 @@
 # python-socketio change log
 
+**Release 5.11.1** - 2024-02-05
+
+- Connection retry option in the client [#1306](https://github.com/miguelgrinberg/python-socketio/issues/1306) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/b4f36148d816b2fbf2a81237dff70b18d909aebf))
+- use Socket.IO sid in transport[#1299](https://github.com/miguelgrinberg/python-socketio/issues/1299) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/0e1f23229dc5a478df474e5bb6e5c91e5e30aa04))
+- Add support for Python 3.12 and drop 3.7 [#1297](https://github.com/miguelgrinberg/python-socketio/issues/1297) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/417785293f6c1351be6ea10b6b9f57abff03fdfc)) (thanks **Hugo van Kemenade**!)
+
 **Release 5.11.0** - 2024-01-06
 
 - Support catch-all namespaces [#1288](https://github.com/miguelgrinberg/python-socketio/issues/1288) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/801241378ec6cbbaef6490399220b00473f66d34)) (thanks **mooomooo**!)
