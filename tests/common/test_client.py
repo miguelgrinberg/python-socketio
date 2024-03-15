@@ -145,7 +145,7 @@ class TestClient(unittest.TestCase):
         assert c.namespace_handlers['/foo'] == n
 
     def test_namespace_handler_wrong_class(self):
-        class MyNamespace(object):
+        class MyNamespace:
             def __init__(self, n):
                 pass
 
