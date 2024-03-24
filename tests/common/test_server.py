@@ -578,16 +578,20 @@ class TestServer(unittest.TestCase):
         s = server.Server(async_handlers=False)
         sid_foo = s.manager.connect('123', '/foo')
         sid_bar = s.manager.connect('123', '/bar')
+        sid_baz = s.manager.connect('123', '/baz')
         connect_star_handler = mock.MagicMock()
         msg_foo_handler = mock.MagicMock()
         msg_star_handler = mock.MagicMock()
         star_foo_handler = mock.MagicMock()
         star_star_handler = mock.MagicMock()
+        my_message_baz_handler = mock.MagicMock()
         s.on('connect', connect_star_handler, namespace='*')
         s.on('msg', msg_foo_handler, namespace='/foo')
         s.on('msg', msg_star_handler, namespace='*')
         s.on('*', star_foo_handler, namespace='/foo')
         s.on('*', star_star_handler, namespace='*')
+        s.on('my message', my_message_baz_handler, namespace='/baz')
+
         s._trigger_event('connect', '/bar', sid_bar)
         s._handle_eio_message('123', '2/foo,["msg","a","b"]')
         s._handle_eio_message('123', '2/bar,["msg","a","b"]')
@@ -601,6 +605,11 @@ class TestServer(unittest.TestCase):
             'my message', sid_foo, 'a', 'b', 'c')
         star_star_handler.assert_called_once_with(
             'my message', '/bar', sid_bar, 'a', 'b', 'c')
+
+        s._handle_eio_message('123', '2/baz,["my message","a","b","c"]')
+        s._handle_eio_message('123', '2/baz,["msg","a","b"]')
+        my_message_baz_handler.assert_called_once_with(sid_baz, 'a', 'b', 'c')
+        msg_star_handler.assert_called_with('/baz', sid_baz, 'a', 'b')
 
     def test_handle_event_with_disconnected_namespace(self, eio):
         s = server.Server(async_handlers=False)
