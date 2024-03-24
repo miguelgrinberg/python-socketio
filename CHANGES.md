@@ -1,5 +1,10 @@
 # python-socketio change log
 
+**Release 5.11.2** - 2024-03-24
+
+- Improved routing to catch-all namespace handlers [#1316](https://github.com/miguelgrinberg/python-socketio/issues/1316) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/bd39b8f2156f600ea6de558af03a6be205d6e892)) (thanks **asuka**!)
+- Option to disable routing in ASGIApp ([commit](https://github.com/miguelgrinberg/python-socketio/commit/7cc84bd13dfa0a86b0326446fb6954949ef948c0))
+
 **Release 5.11.1** - 2024-02-05
 
 - Connection retry option in the client [#1306](https://github.com/miguelgrinberg/python-socketio/issues/1306) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/b4f36148d816b2fbf2a81237dff70b18d909aebf))
