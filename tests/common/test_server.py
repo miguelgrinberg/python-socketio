@@ -585,7 +585,6 @@ class TestServer(unittest.TestCase):
         star_foo_handler = mock.MagicMock()
         star_star_handler = mock.MagicMock()
         my_message_baz_handler = mock.MagicMock()
-        star_baz_handler = mock.MagicMock()
         s.on('connect', connect_star_handler, namespace='*')
         s.on('msg', msg_foo_handler, namespace='/foo')
         s.on('msg', msg_star_handler, namespace='*')
