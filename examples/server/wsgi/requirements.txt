@@ -1,7 +1,7 @@
 Click==7.0
 enum-compat==0.0.2
 enum34==1.1.6
-eventlet==0.20.1
+eventlet==0.35.2
 Flask==1.0.2
 greenlet==0.4.12
 itsdangerous==1.1.0
