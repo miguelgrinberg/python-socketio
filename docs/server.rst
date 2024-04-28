@@ -722,7 +722,7 @@ ASGI web application and the Socket.IO server as a bundle::
    sio = socketio.AsyncServer(async_mode='asgi')
    app = socketio.ASGIApp(sio, other_app)
 
-The ``ASGIApp`` instance is a fully complaint ASGI instance that can be
+The ``ASGIApp`` instance is a fully compliant ASGI instance that can be
 deployed with an ASGI compatible web server.
 
 Aiohttp
@@ -947,7 +947,7 @@ constructor::
     sio = socketio.Server(async_mode='threading')
 
 A server configured for threading is deployed as a regular web application,
-using any WSGI complaint multi-threaded server. The example below deploys an
+using any WSGI compliant multi-threaded server. The example below deploys an
 Socket.IO application combined with a Flask web application, using Flask's
 development web server based on Werkzeug::
 
