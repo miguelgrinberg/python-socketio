@@ -1,4 +1,5 @@
 import logging
+import time
 import unittest
 from unittest import mock
 
@@ -636,6 +637,7 @@ class TestClient(unittest.TestCase):
 
     def test_disconnect_namespaces(self):
         c = client.Client()
+        c.connected = True
         c.namespaces = {'/foo': '1', '/bar': '2'}
         c._trigger_event = mock.MagicMock()
         c._send_packet = mock.MagicMock()
@@ -1127,6 +1129,61 @@ class TestClient(unittest.TestCase):
         assert c._reconnect_task == 'foo'
         c._trigger_event.assert_called_once_with('__disconnect_final',
                                                  namespace='/')
+
+    def test_shutdown_disconnect(self):
+        c = client.Client()
+        c.connected = True
+        c.namespaces = {'/': '1'}
+        c._trigger_event = mock.MagicMock()
+        c._send_packet = mock.MagicMock()
+        c.eio = mock.MagicMock()
+        c.eio.state = 'connected'
+        c.shutdown()
+        assert c._trigger_event.call_count == 0
+        assert c._send_packet.call_count == 1
+        expected_packet = packet.Packet(packet.DISCONNECT, namespace='/')
+        assert (
+            c._send_packet.call_args_list[0][0][0].encode()
+            == expected_packet.encode()
+        )
+        c.eio.disconnect.assert_called_once_with(abort=True)
+
+    def test_shutdown_disconnect_namespaces(self):
+        c = client.Client()
+        c.connected = True
+        c.namespaces = {'/foo': '1', '/bar': '2'}
+        c._trigger_event = mock.MagicMock()
+        c._send_packet = mock.MagicMock()
+        c.eio = mock.MagicMock()
+        c.eio.state = 'connected'
+        c.shutdown()
+        assert c._trigger_event.call_count == 0
+        assert c._send_packet.call_count == 2
+        expected_packet = packet.Packet(packet.DISCONNECT, namespace='/foo')
+        assert (
+            c._send_packet.call_args_list[0][0][0].encode()
+            == expected_packet.encode()
+        )
+        expected_packet = packet.Packet(packet.DISCONNECT, namespace='/bar')
+        assert (
+            c._send_packet.call_args_list[1][0][0].encode()
+            == expected_packet.encode()
+        )
+
+    @mock.patch('socketio.client.random.random', side_effect=[1, 0, 0.5])
+    def test_shutdown_reconnect(self, random):
+        c = client.Client()
+        c.connection_namespaces = ['/']
+        c._reconnect_task = mock.MagicMock()
+        c._trigger_event = mock.MagicMock()
+        c.connect = mock.MagicMock(side_effect=exceptions.ConnectionError)
+        task = c.start_background_task(c._handle_reconnect)
+        time.sleep(0.1)
+        c.shutdown()
+        task.join()
+        c._trigger_event.assert_called_once_with('__disconnect_final',
+                                                 namespace='/')
+        assert c._reconnect_task.join.called_once_with()
 
     def test_handle_eio_connect(self):
         c = client.Client()

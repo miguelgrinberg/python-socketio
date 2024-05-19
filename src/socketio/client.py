@@ -298,6 +298,20 @@ class Client(base_client.BaseClient):
                 packet.DISCONNECT, namespace=n))
         self.eio.disconnect(abort=True)
 
+    def shutdown(self):
+        """Stop the client.
+
+        If the client is connected to a server, it is disconnected. If the
+        client is attempting to reconnect to server, the reconnection attempts
+        are stopped. If the client is not connected to a server and is not
+        attempting to reconnect, then this function does nothing.
+        """
+        if self.connected:
+            self.disconnect()
+        elif self._reconnect_task:  # pragma: no branch
+            self._reconnect_abort.set()
+            self._reconnect_task.join()
+
     def start_background_task(self, target, *args, **kwargs):
         """Start a background task using the appropriate async model.
 

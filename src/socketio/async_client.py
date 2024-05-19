@@ -318,6 +318,21 @@ class AsyncClient(base_client.BaseClient):
                                     namespace=n))
         await self.eio.disconnect(abort=True)
 
+    async def shutdown(self):
+        """Stop the client.
+
+        If the client is connected to a server, it is disconnected. If the
+        client is attempting to reconnect to server, the reconnection attempts
+        are stopped. If the client is not connected to a server and is not
+        attempting to reconnect, then this function does nothing.
+        """
+        if self.connected:
+            await self.disconnect()
+        elif self._reconnect_task:  # pragma: no branch
+            self._reconnect_abort.set()
+            print(self._reconnect_task)
+            await self._reconnect_task
+
     def start_background_task(self, target, *args, **kwargs):
         """Start a background task using the appropriate async model.
 
@@ -467,15 +482,20 @@ class AsyncClient(base_client.BaseClient):
             self.logger.info(
                 'Connection failed, new attempt in {:.02f} seconds'.format(
                     delay))
+            abort = False
             try:
                 await asyncio.wait_for(self._reconnect_abort.wait(), delay)
+                abort = True
+            except asyncio.TimeoutError:
+                pass
+            except asyncio.CancelledError:  # pragma: no cover
+                abort = True
+            if abort:
                 self.logger.info('Reconnect task aborted')
                 for n in self.connection_namespaces:
                     await self._trigger_event('__disconnect_final',
                                               namespace=n)
                 break
-            except (asyncio.TimeoutError, asyncio.CancelledError):
-                pass
             attempt_count += 1
             try:
                 await self.connect(self.connection_url,

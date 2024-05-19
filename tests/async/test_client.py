@@ -990,6 +990,66 @@ class TestAsyncClient(unittest.TestCase):
         c._trigger_event.mock.assert_called_once_with('__disconnect_final',
                                                       namespace='/')
 
+    def test_shutdown_disconnect(self):
+        c = async_client.AsyncClient()
+        c.connected = True
+        c.namespaces = {'/': '1'}
+        c._trigger_event = AsyncMock()
+        c._send_packet = AsyncMock()
+        c.eio = mock.MagicMock()
+        c.eio.disconnect = AsyncMock()
+        c.eio.state = 'connected'
+        _run(c.shutdown())
+        assert c._trigger_event.mock.call_count == 0
+        assert c._send_packet.mock.call_count == 1
+        expected_packet = packet.Packet(packet.DISCONNECT, namespace='/')
+        assert (
+            c._send_packet.mock.call_args_list[0][0][0].encode()
+            == expected_packet.encode()
+        )
+        c.eio.disconnect.mock.assert_called_once_with(abort=True)
+
+    def test_shutdown_disconnect_namespaces(self):
+        c = async_client.AsyncClient()
+        c.connected = True
+        c.namespaces = {'/foo': '1', '/bar': '2'}
+        c._trigger_event = AsyncMock()
+        c._send_packet = AsyncMock()
+        c.eio = mock.MagicMock()
+        c.eio.disconnect = AsyncMock()
+        c.eio.state = 'connected'
+        _run(c.shutdown())
+        assert c._trigger_event.mock.call_count == 0
+        assert c._send_packet.mock.call_count == 2
+        expected_packet = packet.Packet(packet.DISCONNECT, namespace='/foo')
+        assert (
+            c._send_packet.mock.call_args_list[0][0][0].encode()
+            == expected_packet.encode()
+        )
+        expected_packet = packet.Packet(packet.DISCONNECT, namespace='/bar')
+        assert (
+            c._send_packet.mock.call_args_list[1][0][0].encode()
+            == expected_packet.encode()
+        )
+
+    @mock.patch('socketio.client.random.random', side_effect=[1, 0, 0.5])
+    def test_shutdown_reconnect(self, random):
+        c = async_client.AsyncClient()
+        c.connection_namespaces = ['/']
+        c._reconnect_task = AsyncMock()()
+        c._trigger_event = AsyncMock()
+        c.connect = AsyncMock(side_effect=exceptions.ConnectionError)
+
+        async def r():
+            task = c.start_background_task(c._handle_reconnect)
+            await asyncio.sleep(0.1)
+            await c.shutdown()
+            await task
+
+        _run(r())
+        c._trigger_event.mock.assert_called_once_with('__disconnect_final',
+                                                      namespace='/')
+
     def test_handle_eio_connect(self):
         c = async_client.AsyncClient()
         c.connection_namespaces = ['/', '/foo']
