@@ -1183,7 +1183,7 @@ class TestClient(unittest.TestCase):
         task.join()
         c._trigger_event.assert_called_once_with('__disconnect_final',
                                                  namespace='/')
-        assert c._reconnect_task.join.called_once_with()
+        c._reconnect_task.join.assert_called_once_with()
 
     def test_handle_eio_connect(self):
         c = client.Client()
