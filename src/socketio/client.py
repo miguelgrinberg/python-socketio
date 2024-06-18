@@ -126,6 +126,8 @@ class Client(base_client.BaseClient):
         if namespaces is None:
             namespaces = list(set(self.handlers.keys()).union(
                 set(self.namespace_handlers.keys())))
+            if '*' in namespaces:
+                namespaces.remove('*')
             if len(namespaces) == 0:
                 namespaces = ['/']
         elif isinstance(namespaces, str):

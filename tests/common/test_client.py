@@ -236,6 +236,7 @@ class TestClient(unittest.TestCase):
         c.eio.connect = mock.MagicMock()
         c.on('foo', mock.MagicMock(), namespace='/foo')
         c.on('bar', mock.MagicMock(), namespace='/')
+        c.on('baz', mock.MagicMock(), namespace='*')
         c.connect(
             'url',
             headers='headers',

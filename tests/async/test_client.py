@@ -98,6 +98,7 @@ class TestAsyncClient(unittest.TestCase):
         c.eio.connect = AsyncMock()
         c.on('foo', mock.MagicMock(), namespace='/foo')
         c.on('bar', mock.MagicMock(), namespace='/')
+        c.on('baz', mock.MagicMock(), namespace='*')
         _run(
             c.connect(
                 'url',
