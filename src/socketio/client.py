@@ -56,11 +56,14 @@ class Client(base_client.BaseClient):
     :param http_session: an initialized ``requests.Session`` object to be used
                          when sending requests to the server. Use it if you
                          need to add special client options such as proxy
-                         servers, SSL certificates, etc.
+                         servers, SSL certificates, custom CA bundle, etc.
     :param ssl_verify: ``True`` to verify SSL certificates, or ``False`` to
                        skip SSL certificate verification, allowing
                        connections to servers with self signed certificates.
                        The default is ``True``.
+    :param websocket_extra_options: Dictionary containing additional keyword
+                                    arguments passed to
+                                    ``websocket.create_connection()``.
     :param engineio_logger: To enable Engine.IO logging set to ``True`` or pass
                             a logger object to use. To disable logging set to
                             ``False``. The default is ``False``. Note that
