@@ -1,6 +1,6 @@
 [project]
 name = "python-socketio"
-version = "5.11.3.dev0"
+version = "5.11.3"
 authors = [
     { name = "Miguel Grinberg", email = "miguel.grinberg@gmail.com" },
 ]

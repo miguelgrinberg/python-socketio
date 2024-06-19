@@ -1,5 +1,14 @@
 # python-socketio change log
 
+**Release 5.11.3** - 2024-06-19
+
+- New `shutdown()` method added to the client [#1333](https://github.com/miguelgrinberg/python-socketio/issues/1333) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/811e044a46b7d6e4d94bf870e59d0cd8187850d3))
+- Ignore catch-all namespace in client connections [#1351](https://github.com/miguelgrinberg/python-socketio/issues/1351) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/469b7c0dd51eea97979f784d0c94359ad18a96ac))
+- Accept 0 as a callback id [#1329](https://github.com/miguelgrinberg/python-socketio/issues/1329) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/e59351969241c3d7f44560027cf1e44206e17d6c)) (thanks **Ruslan Bel'kov**!)
+- Minor updates to the server and client documentation ([commit](https://github.com/miguelgrinberg/python-socketio/commit/5e78ecbc343d9c7252a6449029263b4a5cb967c8))
+- Remove outdated information in intro section of documentation [#1337](https://github.com/miguelgrinberg/python-socketio/issues/1337) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/82ceaf7a23c51ed1911e550aaf71d6449584eaa0))
+- Fixed typos in server documentation [#1331](https://github.com/miguelgrinberg/python-socketio/issues/1331) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/547449bc70248b1a2c68e362a026d42db083222c)) (thanks **John Sigg**!)
+
 **Release 5.11.2** - 2024-03-24
 
 - Improved routing to catch-all namespace handlers [#1316](https://github.com/miguelgrinberg/python-socketio/issues/1316) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/bd39b8f2156f600ea6de558af03a6be205d6e892)) (thanks **asuka**!)
