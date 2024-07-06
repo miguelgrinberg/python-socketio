@@ -28,9 +28,9 @@ class WSGIApp(engineio.WSGIApp):
         eventlet.wsgi.server(eventlet.listen(('', 8000)), app)
     """
     def __init__(self, socketio_app, wsgi_app=None, static_files=None,
-                 socketio_path='socket.io'):
+                 socketio_path='socket.io', add_trailing_slash=True):
         super().__init__(socketio_app, wsgi_app, static_files=static_files,
-                         engineio_path=socketio_path)
+                         engineio_path=socketio_path, add_trailing_slash=add_trailing_slash)
 
 
 class Middleware(WSGIApp):
