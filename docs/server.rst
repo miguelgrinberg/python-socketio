@@ -969,9 +969,8 @@ Sanic
 ~~~~~
 
 .. note::
-   Due to some backward incompatible changes introduced in recent versions of
-   Sanic, it is currently recommended that a Sanic application is deployed with
-   the ASGI integration.
+   The Sanic integration has not been updated in a long time. It is currently
+   recommended that a Sanic application is deployed with the ASGI integration.
 
 .. _using-a-message-queue:
 
