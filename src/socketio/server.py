@@ -161,7 +161,7 @@ class Server(base_server.BaseServer):
         """
         namespace = namespace or '/'
         room = to or room
-        self.logger.info('emitting event "%s" to %s [%s]', event,
+        self.logger.debug('emitting event "%s" to %s [%s]', event,
                          room or 'all', namespace)
         self.manager.emit(event, data, namespace, room=room,
                           skip_sid=skip_sid, callback=callback,
@@ -571,7 +571,7 @@ class Server(base_server.BaseServer):
         """Handle an incoming client event."""
         namespace = namespace or '/'
         sid = self.manager.sid_from_eio_sid(eio_sid, namespace)
-        self.logger.info('received event "%s" from %s [%s]', data[0], sid,
+        self.logger.debug('received event "%s" from %s [%s]', data[0], sid,
                          namespace)
         if not self.manager.is_connected(sid, namespace):
             self.logger.warning('%s is not connected to namespace %s',

@@ -224,7 +224,7 @@ class AsyncClient(base_client.BaseClient):
         if namespace not in self.namespaces:
             raise exceptions.BadNamespaceError(
                 namespace + ' is not a connected namespace.')
-        self.logger.info('Emitting event "%s" [%s]', event, namespace)
+        self.logger.debug('Emitting event "%s" [%s]', event, namespace)
         if callback is not None:
             id = self._generate_ack_id(namespace, callback)
         else:
@@ -405,7 +405,7 @@ class AsyncClient(base_client.BaseClient):
 
     async def _handle_event(self, namespace, id, data):
         namespace = namespace or '/'
-        self.logger.info('Received event "%s" [%s]', data[0], namespace)
+        self.logger.debug('Received event "%s" [%s]', data[0], namespace)
         r = await self._trigger_event(data[0], namespace, *data[1:])
         if id is not None:
             # send ACK packet with the response returned by the handler
