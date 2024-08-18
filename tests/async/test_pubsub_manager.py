@@ -83,7 +83,6 @@ class TestAsyncPubSubManager(unittest.TestCase):
             }
         )
 
-
     def test_emit_with_namespace(self):
         _run(self.pm.emit('foo', 'bar', namespace='/baz'))
         self.pm._publish.mock.assert_called_once_with(
