@@ -67,7 +67,7 @@ class TestAsyncPubSubManager(unittest.TestCase):
             }
         )
 
-    def test_emit_single_client(self):
+    def test_emit_with_to(self):
         sid = 'room-mate'
         _run(self.pm.emit('foo', 'bar', to=sid))
         self.pm._publish.mock.assert_called_once_with(
