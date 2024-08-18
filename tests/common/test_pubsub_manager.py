@@ -78,6 +78,22 @@ class TestPubSubManager(unittest.TestCase):
             }
         )
 
+    def test_emit_with_to(self):
+        sid = "ferris"
+        self.pm.emit('foo', 'bar', to=sid)
+        self.pm._publish.assert_called_once_with(
+            {
+                'method': 'emit',
+                'event': 'foo',
+                'data': 'bar',
+                'namespace': '/',
+                'room': sid,
+                'skip_sid': None,
+                'callback': None,
+                'host_id': '123456',
+            }
+        )
+
     def test_emit_with_namespace(self):
         self.pm.emit('foo', 'bar', namespace='/baz')
         self.pm._publish.assert_called_once_with(

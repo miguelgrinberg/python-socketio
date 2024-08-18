@@ -205,7 +205,7 @@ class TestAsyncManager(unittest.TestCase):
         _run(self.bm.connect('456', '/foo'))
         _run(
             self.bm.emit(
-                'my event', {'foo': 'bar'}, namespace='/foo', room=sid
+                'my event', {'foo': 'bar'}, namespace='/foo', to=sid
             )
         )
         assert self.bm.server._send_eio_packet.mock.call_count == 1

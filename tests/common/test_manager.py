@@ -206,7 +206,7 @@ class TestBaseManager(unittest.TestCase):
     def test_emit_to_sid(self):
         sid = self.bm.connect('123', '/foo')
         self.bm.connect('456', '/foo')
-        self.bm.emit('my event', {'foo': 'bar'}, namespace='/foo', room=sid)
+        self.bm.emit('my event', {'foo': 'bar'}, namespace='/foo', to=sid)
         assert self.bm.server._send_eio_packet.call_count == 1
         assert self.bm.server._send_eio_packet.call_args_list[0][0][0] == '123'
         pkt = self.bm.server._send_eio_packet.call_args_list[0][0][1]
