@@ -67,6 +67,22 @@ class TestAsyncPubSubManager(unittest.TestCase):
             }
         )
 
+    def test_emit_with_to(self):
+        sid = 'room-mate'
+        _run(self.pm.emit('foo', 'bar', to=sid))
+        self.pm._publish.mock.assert_called_once_with(
+            {
+                'method': 'emit',
+                'event': 'foo',
+                'data': 'bar',
+                'namespace': '/',
+                'room': sid,
+                'skip_sid': None,
+                'callback': None,
+                'host_id': '123456',
+            }
+        )
+
     def test_emit_with_namespace(self):
         _run(self.pm.emit('foo', 'bar', namespace='/baz'))
         self.pm._publish.mock.assert_called_once_with(
