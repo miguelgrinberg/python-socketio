@@ -1,5 +1,12 @@
 # python-socketio change log
 
+**Release 5.11.4** - 2024-09-02
+
+- Prevent crash when client sends empty event ([commit](https://github.com/miguelgrinberg/python-socketio/commit/1b901de0077322eedb3509318ccba939f5f0bf10))
+- Add missing `to` argument in manager's `emit()` method [#1374](https://github.com/miguelgrinberg/python-socketio/issues/1374) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/f1476041e5bb0857a99024c9a38203edfc974bdf)) (thanks **Pavieł Michalkievič**!)
+- Reorganization of server documentation [#1350](https://github.com/miguelgrinberg/python-socketio/issues/1350) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/3a618c67ef60736d5619b9ac52c47d96a6acf3c3))
+- Update documentation note about Sanic issues [#1365](https://github.com/miguelgrinberg/python-socketio/issues/1365) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/287d6ed551090eed822f924bb548ba93923dd4d1))
+
 **Release 5.11.3** - 2024-06-19
 
 - New `shutdown()` method added to the client [#1333](https://github.com/miguelgrinberg/python-socketio/issues/1333) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/811e044a46b7d6e4d94bf870e59d0cd8187850d3))
