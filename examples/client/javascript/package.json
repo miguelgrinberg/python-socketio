@@ -2,7 +2,7 @@
   "name": "socketio-examples",
   "version": "0.1.0",
   "dependencies": {
-    "express": "^4.19.2",
+    "express": "^4.20.0",
     "smoothie": "1.19.0",
     "socket.io": "^4.6.1",
     "socket.io-client": "^4.6.1"
