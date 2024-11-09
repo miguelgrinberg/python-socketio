@@ -116,7 +116,7 @@ class AsyncClient(base_client.BaseClient):
         Example usage::
 
             sio = socketio.AsyncClient()
-            sio.connect('http://localhost:5000')
+            await sio.connect('http://localhost:5000')
         """
         if self.connected:
             raise exceptions.ConnectionError('Already connected')
