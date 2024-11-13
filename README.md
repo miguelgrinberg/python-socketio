@@ -1,7 +1,7 @@
 python-socketio
 ===============
 
-[![Build status](https://github.com/miguelgrinberg/python-socketio/workflows/build/badge.svg)](https://github.com/miguelgrinberg/python-socketio/actions) [![codecov](https://codecov.io/gh/miguelgrinberg/python-socketio/branch/main/graph/badge.svg)](https://codecov.io/gh/miguelgrinberg/python-socketio)
+[![Build status](https://github.com/miguelgrinberg/python-socketio/workflows/build/badge.svg)](https://github.com/miguelgrinberg/python-socketio/actions) [![codecov](https://codecov.io/gh/miguelgrinberg/python-socketio/branch/main/graph/badge.svg)](https://codecov.io/gh/miguelgrinberg/python-socketio) [![Gurubase](https://img.shields.io/badge/Gurubase-Ask%20python--socketio%20Guru-006BFF)](https://gurubase.io/g/python-socketio)
 
 Python implementation of the `Socket.IO` realtime client and server.
 
