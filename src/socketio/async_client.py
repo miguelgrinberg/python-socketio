@@ -188,7 +188,7 @@ class AsyncClient(base_client.BaseClient):
         while True:
             await self.eio.wait()
             await self.sleep(1)  # give the reconnect task time to start up
-            if not self._reconnect_task:
+            if not self._reconnect_task and self.eio.state != 'connected':
                 break
             await self._reconnect_task
             if self.eio.state != 'connected':
