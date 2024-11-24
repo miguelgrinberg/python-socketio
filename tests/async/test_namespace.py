@@ -1,7 +1,7 @@
 from unittest import mock
 
 from socketio import async_namespace
-from .helpers import AsyncMock, _run
+from .helpers import _run
 
 
 class TestAsyncNamespace:
@@ -70,14 +70,14 @@ class TestAsyncNamespace:
     def test_emit(self):
         ns = async_namespace.AsyncNamespace('/foo')
         mock_server = mock.MagicMock()
-        mock_server.emit = AsyncMock()
+        mock_server.emit = mock.AsyncMock()
         ns._set_server(mock_server)
         _run(
             ns.emit(
                 'ev', data='data', to='room', skip_sid='skip', callback='cb'
             )
         )
-        ns.server.emit.mock.assert_called_with(
+        ns.server.emit.assert_awaited_with(
             'ev',
             data='data',
             to='room',
@@ -98,7 +98,7 @@ class TestAsyncNamespace:
                 ignore_queue=True,
             )
         )
-        ns.server.emit.mock.assert_called_with(
+        ns.server.emit.assert_awaited_with(
             'ev',
             data='data',
             to=None,
@@ -112,10 +112,10 @@ class TestAsyncNamespace:
     def test_send(self):
         ns = async_namespace.AsyncNamespace('/foo')
         mock_server = mock.MagicMock()
-        mock_server.send = AsyncMock()
+        mock_server.send = mock.AsyncMock()
         ns._set_server(mock_server)
         _run(ns.send(data='data', to='room', skip_sid='skip', callback='cb'))
-        ns.server.send.mock.assert_called_with(
+        ns.server.send.assert_awaited_with(
             'data',
             to='room',
             room=None,
@@ -134,7 +134,7 @@ class TestAsyncNamespace:
                 ignore_queue=True,
             )
         )
-        ns.server.send.mock.assert_called_with(
+        ns.server.send.assert_awaited_with(
             'data',
             to=None,
             room='room',
@@ -147,10 +147,10 @@ class TestAsyncNamespace:
     def test_call(self):
         ns = async_namespace.AsyncNamespace('/foo')
         mock_server = mock.MagicMock()
-        mock_server.call = AsyncMock()
+        mock_server.call = mock.AsyncMock()
         ns._set_server(mock_server)
         _run(ns.call('ev', data='data', to='sid'))
-        ns.server.call.mock.assert_called_with(
+        ns.server.call.assert_awaited_with(
             'ev',
             data='data',
             to='sid',
@@ -161,7 +161,7 @@ class TestAsyncNamespace:
         )
         _run(ns.call('ev', data='data', sid='sid', namespace='/bar',
                      timeout=45, ignore_queue=True))
-        ns.server.call.mock.assert_called_with(
+        ns.server.call.assert_awaited_with(
             'ev',
             data='data',
             to=None,
@@ -174,40 +174,40 @@ class TestAsyncNamespace:
     def test_enter_room(self):
         ns = async_namespace.AsyncNamespace('/foo')
         mock_server = mock.MagicMock()
-        mock_server.enter_room = AsyncMock()
+        mock_server.enter_room = mock.AsyncMock()
         ns._set_server(mock_server)
         _run(ns.enter_room('sid', 'room'))
-        ns.server.enter_room.mock.assert_called_with(
+        ns.server.enter_room.assert_awaited_with(
             'sid', 'room', namespace='/foo'
         )
         _run(ns.enter_room('sid', 'room', namespace='/bar'))
-        ns.server.enter_room.mock.assert_called_with(
+        ns.server.enter_room.assert_awaited_with(
             'sid', 'room', namespace='/bar'
         )
 
     def test_leave_room(self):
         ns = async_namespace.AsyncNamespace('/foo')
         mock_server = mock.MagicMock()
-        mock_server.leave_room = AsyncMock()
+        mock_server.leave_room = mock.AsyncMock()
         ns._set_server(mock_server)
         _run(ns.leave_room('sid', 'room'))
-        ns.server.leave_room.mock.assert_called_with(
+        ns.server.leave_room.assert_awaited_with(
             'sid', 'room', namespace='/foo'
         )
         _run(ns.leave_room('sid', 'room', namespace='/bar'))
-        ns.server.leave_room.mock.assert_called_with(
+        ns.server.leave_room.assert_awaited_with(
             'sid', 'room', namespace='/bar'
         )
 
     def test_close_room(self):
         ns = async_namespace.AsyncNamespace('/foo')
         mock_server = mock.MagicMock()
-        mock_server.close_room = AsyncMock()
+        mock_server.close_room = mock.AsyncMock()
         ns._set_server(mock_server)
         _run(ns.close_room('room'))
-        ns.server.close_room.mock.assert_called_with('room', namespace='/foo')
+        ns.server.close_room.assert_awaited_with('room', namespace='/foo')
         _run(ns.close_room('room', namespace='/bar'))
-        ns.server.close_room.mock.assert_called_with('room', namespace='/bar')
+        ns.server.close_room.assert_awaited_with('room', namespace='/bar')
 
     def test_rooms(self):
         ns = async_namespace.AsyncNamespace('/foo')
@@ -220,19 +220,19 @@ class TestAsyncNamespace:
     def test_session(self):
         ns = async_namespace.AsyncNamespace('/foo')
         mock_server = mock.MagicMock()
-        mock_server.get_session = AsyncMock()
-        mock_server.save_session = AsyncMock()
+        mock_server.get_session = mock.AsyncMock()
+        mock_server.save_session = mock.AsyncMock()
         ns._set_server(mock_server)
         _run(ns.get_session('sid'))
-        ns.server.get_session.mock.assert_called_with('sid', namespace='/foo')
+        ns.server.get_session.assert_awaited_with('sid', namespace='/foo')
         _run(ns.get_session('sid', namespace='/bar'))
-        ns.server.get_session.mock.assert_called_with('sid', namespace='/bar')
+        ns.server.get_session.assert_awaited_with('sid', namespace='/bar')
         _run(ns.save_session('sid', {'a': 'b'}))
-        ns.server.save_session.mock.assert_called_with(
+        ns.server.save_session.assert_awaited_with(
             'sid', {'a': 'b'}, namespace='/foo'
         )
         _run(ns.save_session('sid', {'a': 'b'}, namespace='/bar'))
-        ns.server.save_session.mock.assert_called_with(
+        ns.server.save_session.assert_awaited_with(
             'sid', {'a': 'b'}, namespace='/bar'
         )
         ns.session('sid')
@@ -243,12 +243,12 @@ class TestAsyncNamespace:
     def test_disconnect(self):
         ns = async_namespace.AsyncNamespace('/foo')
         mock_server = mock.MagicMock()
-        mock_server.disconnect = AsyncMock()
+        mock_server.disconnect = mock.AsyncMock()
         ns._set_server(mock_server)
         _run(ns.disconnect('sid'))
-        ns.server.disconnect.mock.assert_called_with('sid', namespace='/foo')
+        ns.server.disconnect.assert_awaited_with('sid', namespace='/foo')
         _run(ns.disconnect('sid', namespace='/bar'))
-        ns.server.disconnect.mock.assert_called_with('sid', namespace='/bar')
+        ns.server.disconnect.assert_awaited_with('sid', namespace='/bar')
 
     def test_sync_event_client(self):
         result = {}
@@ -291,49 +291,49 @@ class TestAsyncNamespace:
     def test_emit_client(self):
         ns = async_namespace.AsyncClientNamespace('/foo')
         mock_client = mock.MagicMock()
-        mock_client.emit = AsyncMock()
+        mock_client.emit = mock.AsyncMock()
         ns._set_client(mock_client)
         _run(ns.emit('ev', data='data', callback='cb'))
-        ns.client.emit.mock.assert_called_with(
+        ns.client.emit.assert_awaited_with(
             'ev', data='data', namespace='/foo', callback='cb'
         )
         _run(ns.emit('ev', data='data', namespace='/bar', callback='cb'))
-        ns.client.emit.mock.assert_called_with(
+        ns.client.emit.assert_awaited_with(
             'ev', data='data', namespace='/bar', callback='cb'
         )
 
     def test_send_client(self):
         ns = async_namespace.AsyncClientNamespace('/foo')
         mock_client = mock.MagicMock()
-        mock_client.send = AsyncMock()
+        mock_client.send = mock.AsyncMock()
         ns._set_client(mock_client)
         _run(ns.send(data='data', callback='cb'))
-        ns.client.send.mock.assert_called_with(
+        ns.client.send.assert_awaited_with(
             'data', namespace='/foo', callback='cb'
         )
         _run(ns.send(data='data', namespace='/bar', callback='cb'))
-        ns.client.send.mock.assert_called_with(
+        ns.client.send.assert_awaited_with(
             'data', namespace='/bar', callback='cb'
         )
 
     def test_call_client(self):
         ns = async_namespace.AsyncClientNamespace('/foo')
         mock_client = mock.MagicMock()
-        mock_client.call = AsyncMock()
+        mock_client.call = mock.AsyncMock()
         ns._set_client(mock_client)
         _run(ns.call('ev', data='data'))
-        ns.client.call.mock.assert_called_with(
+        ns.client.call.assert_awaited_with(
             'ev', data='data', namespace='/foo', timeout=None
         )
         _run(ns.call('ev', data='data', namespace='/bar', timeout=45))
-        ns.client.call.mock.assert_called_with(
+        ns.client.call.assert_awaited_with(
             'ev', data='data', namespace='/bar', timeout=45
         )
 
     def test_disconnect_client(self):
         ns = async_namespace.AsyncClientNamespace('/foo')
         mock_client = mock.MagicMock()
-        mock_client.disconnect = AsyncMock()
+        mock_client.disconnect = mock.AsyncMock()
         ns._set_client(mock_client)
         _run(ns.disconnect())
-        ns.client.disconnect.mock.assert_called_with()
+        ns.client.disconnect.assert_awaited_with()

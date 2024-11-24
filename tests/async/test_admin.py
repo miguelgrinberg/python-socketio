@@ -10,7 +10,6 @@ except ImportError:
 import socketio
 from socketio.exceptions import ConnectionError
 from tests.asyncio_web_server import SocketIOWebServer
-from .helpers import AsyncMock
 
 
 def with_instrumented_server(auth=False, **ikwargs):
@@ -211,7 +210,7 @@ class TestAsyncAdmin:
             sid1 = client1.sid
 
             saved_check_for_upgrade = self.isvr._check_for_upgrade
-            self.isvr._check_for_upgrade = AsyncMock()
+            self.isvr._check_for_upgrade = mock.AsyncMock()
             client2.connect('http://localhost:8900', namespace='/foo',
                             transports=['polling'])
             sid2 = client2.sid

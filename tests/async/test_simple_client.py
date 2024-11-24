@@ -4,7 +4,7 @@ import pytest
 
 from socketio import AsyncSimpleClient
 from socketio.exceptions import SocketIOError, TimeoutError, DisconnectedError
-from .helpers import AsyncMock, _run
+from .helpers import _run
 
 
 class TestAsyncAsyncSimpleClient:
@@ -20,14 +20,14 @@ class TestAsyncAsyncSimpleClient:
         client = AsyncSimpleClient(123, a='b')
         with mock.patch('socketio.async_simple_client.AsyncClient') \
                 as mock_client:
-            mock_client.return_value.connect = AsyncMock()
+            mock_client.return_value.connect = mock.AsyncMock()
 
             _run(client.connect('url', headers='h', auth='a', transports='t',
                                 namespace='n', socketio_path='s',
                                 wait_timeout='w'))
             mock_client.assert_called_once_with(123, a='b')
             assert client.client == mock_client()
-            mock_client().connect.mock.assert_called_once_with(
+            mock_client().connect.assert_awaited_once_with(
                 'url', headers='h', auth='a', transports='t',
                 namespaces=['n'], socketio_path='s', wait_timeout='w')
             mock_client().event.call_count == 3
@@ -40,14 +40,14 @@ class TestAsyncAsyncSimpleClient:
             async with AsyncSimpleClient(123, a='b') as client:
                 with mock.patch('socketio.async_simple_client.AsyncClient') \
                         as mock_client:
-                    mock_client.return_value.connect = AsyncMock()
+                    mock_client.return_value.connect = mock.AsyncMock()
 
                     await client.connect('url', headers='h', auth='a',
                                          transports='t', namespace='n',
                                          socketio_path='s', wait_timeout='w')
                     mock_client.assert_called_once_with(123, a='b')
                     assert client.client == mock_client()
-                    mock_client().connect.mock.assert_called_once_with(
+                    mock_client().connect.assert_awaited_once_with(
                         'url', headers='h', auth='a', transports='t',
                         namespaces=['n'], socketio_path='s', wait_timeout='w')
                     mock_client().event.call_count == 3
@@ -79,14 +79,14 @@ class TestAsyncAsyncSimpleClient:
     def test_emit(self):
         client = AsyncSimpleClient()
         client.client = mock.MagicMock()
-        client.client.emit = AsyncMock()
+        client.client.emit = mock.AsyncMock()
         client.namespace = '/ns'
         client.connected_event.set()
         client.connected = True
 
         _run(client.emit('foo', 'bar'))
-        client.client.emit.mock.assert_called_once_with('foo', 'bar',
-                                                        namespace='/ns')
+        client.client.emit.assert_awaited_once_with('foo', 'bar',
+                                                    namespace='/ns')
 
     def test_emit_disconnected(self):
         client = AsyncSimpleClient()
@@ -100,23 +100,23 @@ class TestAsyncAsyncSimpleClient:
         client.connected_event.set()
         client.connected = True
         client.client = mock.MagicMock()
-        client.client.emit = AsyncMock()
-        client.client.emit.mock.side_effect = [SocketIOError(), None]
+        client.client.emit = mock.AsyncMock()
+        client.client.emit.side_effect = [SocketIOError(), None]
 
         _run(client.emit('foo', 'bar'))
-        client.client.emit.mock.assert_called_with('foo', 'bar', namespace='/')
+        client.client.emit.assert_awaited_with('foo', 'bar', namespace='/')
 
     def test_call(self):
         client = AsyncSimpleClient()
         client.client = mock.MagicMock()
-        client.client.call = AsyncMock()
-        client.client.call.mock.return_value = 'result'
+        client.client.call = mock.AsyncMock()
+        client.client.call.return_value = 'result'
         client.namespace = '/ns'
         client.connected_event.set()
         client.connected = True
 
         assert _run(client.call('foo', 'bar')) == 'result'
-        client.client.call.mock.assert_called_once_with(
+        client.client.call.assert_awaited_once_with(
             'foo', 'bar', namespace='/ns', timeout=60)
 
     def test_call_disconnected(self):
@@ -131,12 +131,12 @@ class TestAsyncAsyncSimpleClient:
         client.connected_event.set()
         client.connected = True
         client.client = mock.MagicMock()
-        client.client.call = AsyncMock()
-        client.client.call.mock.side_effect = [SocketIOError(), 'result']
+        client.client.call = mock.AsyncMock()
+        client.client.call.side_effect = [SocketIOError(), 'result']
 
         assert _run(client.call('foo', 'bar')) == 'result'
-        client.client.call.mock.assert_called_with('foo', 'bar', namespace='/',
-                                                   timeout=60)
+        client.client.call.assert_awaited_with('foo', 'bar', namespace='/',
+                                               timeout=60)
 
     def test_receive_with_input_buffer(self):
         client = AsyncSimpleClient()
@@ -180,10 +180,10 @@ class TestAsyncAsyncSimpleClient:
     def test_disconnect(self):
         client = AsyncSimpleClient()
         mc = mock.MagicMock()
-        mc.disconnect = AsyncMock()
+        mc.disconnect = mock.AsyncMock()
         client.client = mc
         client.connected = True
         _run(client.disconnect())
         _run(client.disconnect())
-        mc.disconnect.mock.assert_called_once_with()
+        mc.disconnect.assert_awaited_once_with()
         assert client.client is None

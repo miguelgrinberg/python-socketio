@@ -2,7 +2,7 @@ from unittest import mock
 
 from socketio import async_manager
 from socketio import packet
-from .helpers import AsyncMock, _run
+from .helpers import _run
 
 
 class TestAsyncManager:
@@ -15,8 +15,8 @@ class TestAsyncManager:
             return str(id)
 
         mock_server = mock.MagicMock()
-        mock_server._send_packet = AsyncMock()
-        mock_server._send_eio_packet = AsyncMock()
+        mock_server._send_packet = mock.AsyncMock()
+        mock_server._send_eio_packet = mock.AsyncMock()
         mock_server.eio.generate_id = generate_id
         mock_server.packet_class = packet.Packet
         self.bm = async_manager.AsyncManager()
@@ -128,14 +128,14 @@ class TestAsyncManager:
     def test_trigger_async_callback(self):
         sid1 = _run(self.bm.connect('123', '/'))
         sid2 = _run(self.bm.connect('123', '/foo'))
-        cb = AsyncMock()
+        cb = mock.AsyncMock()
         id1 = self.bm._generate_ack_id(sid1, cb)
         id2 = self.bm._generate_ack_id(sid2, cb)
         _run(self.bm.trigger_callback(sid1, id1, ['foo']))
         _run(self.bm.trigger_callback(sid2, id2, ['bar', 'baz']))
-        assert cb.mock.call_count == 2
-        cb.mock.assert_any_call('foo')
-        cb.mock.assert_any_call('bar', 'baz')
+        assert cb.await_count == 2
+        cb.assert_any_await('foo')
+        cb.assert_any_await('bar', 'baz')
 
     def test_invalid_callback(self):
         sid = _run(self.bm.connect('123', '/'))
@@ -145,7 +145,7 @@ class TestAsyncManager:
         # these should not raise an exception
         _run(self.bm.trigger_callback('xxx', id, ['foo']))
         _run(self.bm.trigger_callback(sid, id + 1, ['foo']))
-        assert cb.mock.call_count == 0
+        assert cb.call_count == 0
 
     def test_get_namespaces(self):
         assert list(self.bm.get_namespaces()) == []
@@ -207,10 +207,10 @@ class TestAsyncManager:
                 'my event', {'foo': 'bar'}, namespace='/foo', to=sid
             )
         )
-        assert self.bm.server._send_eio_packet.mock.call_count == 1
-        assert self.bm.server._send_eio_packet.mock.call_args_list[0][0][0] \
+        assert self.bm.server._send_eio_packet.await_count == 1
+        assert self.bm.server._send_eio_packet.await_args_list[0][0][0] \
             == '123'
-        pkt = self.bm.server._send_eio_packet.mock.call_args_list[0][0][1]
+        pkt = self.bm.server._send_eio_packet.await_args_list[0][0][1]
         assert pkt.encode() == '42/foo,["my event",{"foo":"bar"}]'
 
     def test_emit_to_room(self):
@@ -224,13 +224,13 @@ class TestAsyncManager:
                 'my event', {'foo': 'bar'}, namespace='/foo', room='bar'
             )
         )
-        assert self.bm.server._send_eio_packet.mock.call_count == 2
-        assert self.bm.server._send_eio_packet.mock.call_args_list[0][0][0] \
+        assert self.bm.server._send_eio_packet.await_count == 2
+        assert self.bm.server._send_eio_packet.await_args_list[0][0][0] \
             == '123'
-        assert self.bm.server._send_eio_packet.mock.call_args_list[1][0][0] \
+        assert self.bm.server._send_eio_packet.await_args_list[1][0][0] \
             == '456'
-        pkt = self.bm.server._send_eio_packet.mock.call_args_list[0][0][1]
-        assert self.bm.server._send_eio_packet.mock.call_args_list[1][0][1] \
+        pkt = self.bm.server._send_eio_packet.await_args_list[0][0][1]
+        assert self.bm.server._send_eio_packet.await_args_list[1][0][1] \
             == pkt
         assert pkt.encode() == '42/foo,["my event",{"foo":"bar"}]'
 
@@ -246,17 +246,17 @@ class TestAsyncManager:
             self.bm.emit('my event', {'foo': 'bar'}, namespace='/foo',
                          room=['bar', 'baz'])
         )
-        assert self.bm.server._send_eio_packet.mock.call_count == 3
-        assert self.bm.server._send_eio_packet.mock.call_args_list[0][0][0] \
+        assert self.bm.server._send_eio_packet.await_count == 3
+        assert self.bm.server._send_eio_packet.await_args_list[0][0][0] \
             == '123'
-        assert self.bm.server._send_eio_packet.mock.call_args_list[1][0][0] \
+        assert self.bm.server._send_eio_packet.await_args_list[1][0][0] \
             == '456'
-        assert self.bm.server._send_eio_packet.mock.call_args_list[2][0][0] \
+        assert self.bm.server._send_eio_packet.await_args_list[2][0][0] \
             == '789'
-        pkt = self.bm.server._send_eio_packet.mock.call_args_list[0][0][1]
-        assert self.bm.server._send_eio_packet.mock.call_args_list[1][0][1] \
+        pkt = self.bm.server._send_eio_packet.await_args_list[0][0][1]
+        assert self.bm.server._send_eio_packet.await_args_list[1][0][1] \
             == pkt
-        assert self.bm.server._send_eio_packet.mock.call_args_list[2][0][1] \
+        assert self.bm.server._send_eio_packet.await_args_list[2][0][1] \
             == pkt
         assert pkt.encode() == '42/foo,["my event",{"foo":"bar"}]'
 
@@ -268,17 +268,17 @@ class TestAsyncManager:
         _run(self.bm.connect('789', '/foo'))
         _run(self.bm.connect('abc', '/bar'))
         _run(self.bm.emit('my event', {'foo': 'bar'}, namespace='/foo'))
-        assert self.bm.server._send_eio_packet.mock.call_count == 3
-        assert self.bm.server._send_eio_packet.mock.call_args_list[0][0][0] \
+        assert self.bm.server._send_eio_packet.await_count == 3
+        assert self.bm.server._send_eio_packet.await_args_list[0][0][0] \
             == '123'
-        assert self.bm.server._send_eio_packet.mock.call_args_list[1][0][0] \
+        assert self.bm.server._send_eio_packet.await_args_list[1][0][0] \
             == '456'
-        assert self.bm.server._send_eio_packet.mock.call_args_list[2][0][0] \
+        assert self.bm.server._send_eio_packet.await_args_list[2][0][0] \
             == '789'
-        pkt = self.bm.server._send_eio_packet.mock.call_args_list[0][0][1]
-        assert self.bm.server._send_eio_packet.mock.call_args_list[1][0][1] \
+        pkt = self.bm.server._send_eio_packet.await_args_list[0][0][1]
+        assert self.bm.server._send_eio_packet.await_args_list[1][0][1] \
             == pkt
-        assert self.bm.server._send_eio_packet.mock.call_args_list[2][0][1] \
+        assert self.bm.server._send_eio_packet.await_args_list[2][0][1] \
             == pkt
         assert pkt.encode() == '42/foo,["my event",{"foo":"bar"}]'
 
@@ -294,13 +294,13 @@ class TestAsyncManager:
                 'my event', {'foo': 'bar'}, namespace='/foo', skip_sid=sid2
             )
         )
-        assert self.bm.server._send_eio_packet.mock.call_count == 2
-        assert self.bm.server._send_eio_packet.mock.call_args_list[0][0][0] \
+        assert self.bm.server._send_eio_packet.await_count == 2
+        assert self.bm.server._send_eio_packet.await_args_list[0][0][0] \
             == '123'
-        assert self.bm.server._send_eio_packet.mock.call_args_list[1][0][0] \
+        assert self.bm.server._send_eio_packet.await_args_list[1][0][0] \
             == '789'
-        pkt = self.bm.server._send_eio_packet.mock.call_args_list[0][0][1]
-        assert self.bm.server._send_eio_packet.mock.call_args_list[1][0][1] \
+        pkt = self.bm.server._send_eio_packet.await_args_list[0][0][1]
+        assert self.bm.server._send_eio_packet.await_args_list[1][0][1] \
             == pkt
         assert pkt.encode() == '42/foo,["my event",{"foo":"bar"}]'
 
@@ -319,10 +319,10 @@ class TestAsyncManager:
                 skip_sid=[sid1, sid3],
             )
         )
-        assert self.bm.server._send_eio_packet.mock.call_count == 1
-        assert self.bm.server._send_eio_packet.mock.call_args_list[0][0][0] \
+        assert self.bm.server._send_eio_packet.await_count == 1
+        assert self.bm.server._send_eio_packet.await_args_list[0][0][0] \
             == '456'
-        pkt = self.bm.server._send_eio_packet.mock.call_args_list[0][0][1]
+        pkt = self.bm.server._send_eio_packet.await_args_list[0][0][1]
         assert pkt.encode() == '42/foo,["my event",{"foo":"bar"}]'
 
     def test_emit_with_callback(self):
@@ -335,10 +335,10 @@ class TestAsyncManager:
             )
         )
         self.bm._generate_ack_id.assert_called_once_with(sid, 'cb')
-        assert self.bm.server._send_packet.mock.call_count == 1
-        assert self.bm.server._send_packet.mock.call_args_list[0][0][0] \
+        assert self.bm.server._send_packet.await_count == 1
+        assert self.bm.server._send_packet.await_args_list[0][0][0] \
             == '123'
-        pkt = self.bm.server._send_packet.mock.call_args_list[0][0][1]
+        pkt = self.bm.server._send_packet.await_args_list[0][0][1]
         assert pkt.encode() == '2/foo,11["my event",{"foo":"bar"}]'
 
     def test_emit_to_invalid_room(self):
@@ -356,10 +356,10 @@ class TestAsyncManager:
                 'my event', ('foo', 'bar'), namespace='/foo', room=sid
             )
         )
-        assert self.bm.server._send_eio_packet.mock.call_count == 1
-        assert self.bm.server._send_eio_packet.mock.call_args_list[0][0][0] \
+        assert self.bm.server._send_eio_packet.await_count == 1
+        assert self.bm.server._send_eio_packet.await_args_list[0][0][0] \
             == '123'
-        pkt = self.bm.server._send_eio_packet.mock.call_args_list[0][0][1]
+        pkt = self.bm.server._send_eio_packet.await_args_list[0][0][1]
         assert pkt.encode() == '42/foo,["my event","foo","bar"]'
 
     def test_emit_with_list(self):
@@ -369,10 +369,10 @@ class TestAsyncManager:
                 'my event', ['foo', 'bar'], namespace='/foo', room=sid
             )
         )
-        assert self.bm.server._send_eio_packet.mock.call_count == 1
-        assert self.bm.server._send_eio_packet.mock.call_args_list[0][0][0] \
+        assert self.bm.server._send_eio_packet.await_count == 1
+        assert self.bm.server._send_eio_packet.await_args_list[0][0][0] \
             == '123'
-        pkt = self.bm.server._send_eio_packet.mock.call_args_list[0][0][1]
+        pkt = self.bm.server._send_eio_packet.await_args_list[0][0][1]
         assert pkt.encode() == '42/foo,["my event",["foo","bar"]]'
 
     def test_emit_with_none(self):
@@ -382,10 +382,10 @@ class TestAsyncManager:
                 'my event', None, namespace='/foo', room=sid
             )
         )
-        assert self.bm.server._send_eio_packet.mock.call_count == 1
-        assert self.bm.server._send_eio_packet.mock.call_args_list[0][0][0] \
+        assert self.bm.server._send_eio_packet.await_count == 1
+        assert self.bm.server._send_eio_packet.await_args_list[0][0][0] \
             == '123'
-        pkt = self.bm.server._send_eio_packet.mock.call_args_list[0][0][1]
+        pkt = self.bm.server._send_eio_packet.await_args_list[0][0][1]
         assert pkt.encode() == '42/foo,["my event"]'
 
     def test_emit_binary(self):
@@ -395,12 +395,12 @@ class TestAsyncManager:
                 u'my event', b'my binary data', namespace='/', room=sid
             )
         )
-        assert self.bm.server._send_eio_packet.mock.call_count == 2
-        assert self.bm.server._send_eio_packet.mock.call_args_list[0][0][0] \
+        assert self.bm.server._send_eio_packet.await_count == 2
+        assert self.bm.server._send_eio_packet.await_args_list[0][0][0] \
             == '123'
-        pkt = self.bm.server._send_eio_packet.mock.call_args_list[0][0][1]
+        pkt = self.bm.server._send_eio_packet.await_args_list[0][0][1]
         assert pkt.encode() == '451-["my event",{"_placeholder":true,"num":0}]'
-        assert self.bm.server._send_eio_packet.mock.call_args_list[1][0][0] \
+        assert self.bm.server._send_eio_packet.await_args_list[1][0][0] \
             == '123'
-        pkt = self.bm.server._send_eio_packet.mock.call_args_list[1][0][1]
+        pkt = self.bm.server._send_eio_packet.await_args_list[1][0][1]
         assert pkt.encode() == b'my binary data'

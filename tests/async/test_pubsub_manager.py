@@ -7,7 +7,7 @@ import pytest
 from socketio import async_manager
 from socketio import async_pubsub_manager
 from socketio import packet
-from .helpers import AsyncMock, _run
+from .helpers import _run
 
 
 class TestAsyncPubSubManager:
@@ -22,11 +22,11 @@ class TestAsyncPubSubManager:
         mock_server = mock.MagicMock()
         mock_server.eio.generate_id = generate_id
         mock_server.packet_class = packet.Packet
-        mock_server._send_packet = AsyncMock()
-        mock_server._send_eio_packet = AsyncMock()
-        mock_server.disconnect = AsyncMock()
+        mock_server._send_packet = mock.AsyncMock()
+        mock_server._send_eio_packet = mock.AsyncMock()
+        mock_server.disconnect = mock.AsyncMock()
         self.pm = async_pubsub_manager.AsyncPubSubManager()
-        self.pm._publish = AsyncMock()
+        self.pm._publish = mock.AsyncMock()
         self.pm.set_server(mock_server)
         self.pm.host_id = '123456'
         self.pm.initialize()
@@ -53,7 +53,7 @@ class TestAsyncPubSubManager:
 
     def test_emit(self):
         _run(self.pm.emit('foo', 'bar'))
-        self.pm._publish.mock.assert_called_once_with(
+        self.pm._publish.assert_awaited_once_with(
             {
                 'method': 'emit',
                 'event': 'foo',
@@ -69,7 +69,7 @@ class TestAsyncPubSubManager:
     def test_emit_with_to(self):
         sid = 'room-mate'
         _run(self.pm.emit('foo', 'bar', to=sid))
-        self.pm._publish.mock.assert_called_once_with(
+        self.pm._publish.assert_awaited_once_with(
             {
                 'method': 'emit',
                 'event': 'foo',
@@ -84,7 +84,7 @@ class TestAsyncPubSubManager:
 
     def test_emit_with_namespace(self):
         _run(self.pm.emit('foo', 'bar', namespace='/baz'))
-        self.pm._publish.mock.assert_called_once_with(
+        self.pm._publish.assert_awaited_once_with(
             {
                 'method': 'emit',
                 'event': 'foo',
@@ -99,7 +99,7 @@ class TestAsyncPubSubManager:
 
     def test_emit_with_room(self):
         _run(self.pm.emit('foo', 'bar', room='baz'))
-        self.pm._publish.mock.assert_called_once_with(
+        self.pm._publish.assert_awaited_once_with(
             {
                 'method': 'emit',
                 'event': 'foo',
@@ -114,7 +114,7 @@ class TestAsyncPubSubManager:
 
     def test_emit_with_skip_sid(self):
         _run(self.pm.emit('foo', 'bar', skip_sid='baz'))
-        self.pm._publish.mock.assert_called_once_with(
+        self.pm._publish.assert_awaited_once_with(
             {
                 'method': 'emit',
                 'event': 'foo',
@@ -132,7 +132,7 @@ class TestAsyncPubSubManager:
             self.pm, '_generate_ack_id', return_value='123'
         ):
             _run(self.pm.emit('foo', 'bar', room='baz', callback='cb'))
-            self.pm._publish.mock.assert_called_once_with(
+            self.pm._publish.assert_awaited_once_with(
                 {
                     'method': 'emit',
                     'event': 'foo',
@@ -164,25 +164,25 @@ class TestAsyncPubSubManager:
                 'foo', 'bar', room=sid, namespace='/', ignore_queue=True
             )
         )
-        self.pm._publish.mock.assert_not_called()
-        assert self.pm.server._send_eio_packet.mock.call_count == 1
-        assert self.pm.server._send_eio_packet.mock.call_args_list[0][0][0] \
+        self.pm._publish.assert_not_awaited()
+        assert self.pm.server._send_eio_packet.await_count == 1
+        assert self.pm.server._send_eio_packet.await_args_list[0][0][0] \
             == '123'
-        pkt = self.pm.server._send_eio_packet.mock.call_args_list[0][0][1]
+        pkt = self.pm.server._send_eio_packet.await_args_list[0][0][1]
         assert pkt.encode() == '42["foo","bar"]'
 
     def test_can_disconnect(self):
         sid = _run(self.pm.connect('123', '/'))
         assert _run(self.pm.can_disconnect(sid, '/')) is True
         _run(self.pm.can_disconnect(sid, '/foo'))
-        self.pm._publish.mock.assert_called_once_with(
+        self.pm._publish.assert_awaited_once_with(
             {'method': 'disconnect', 'sid': sid, 'namespace': '/foo',
              'host_id': '123456'}
         )
 
     def test_disconnect(self):
         _run(self.pm.disconnect('foo', '/'))
-        self.pm._publish.mock.assert_called_once_with(
+        self.pm._publish.assert_awaited_once_with(
             {'method': 'disconnect', 'sid': 'foo', 'namespace': '/',
              'host_id': '123456'}
         )
@@ -191,7 +191,7 @@ class TestAsyncPubSubManager:
         sid = _run(self.pm.connect('123', '/'))
         self.pm.pre_disconnect(sid, '/')
         _run(self.pm.disconnect(sid, '/', ignore_queue=True))
-        self.pm._publish.mock.assert_not_called()
+        self.pm._publish.assert_not_awaited()
         assert self.pm.is_connected(sid, '/') is False
 
     def test_enter_room(self):
@@ -200,7 +200,7 @@ class TestAsyncPubSubManager:
         _run(self.pm.enter_room('456', '/', 'foo'))
         assert sid in self.pm.rooms['/']['foo']
         assert self.pm.rooms['/']['foo'][sid] == '123'
-        self.pm._publish.mock.assert_called_once_with(
+        self.pm._publish.assert_awaited_once_with(
             {'method': 'enter_room', 'sid': '456', 'room': 'foo',
              'namespace': '/', 'host_id': '123456'}
         )
@@ -210,32 +210,31 @@ class TestAsyncPubSubManager:
         _run(self.pm.leave_room(sid, '/', 'foo'))
         _run(self.pm.leave_room('456', '/', 'foo'))
         assert 'foo' not in self.pm.rooms['/']
-        self.pm._publish.mock.assert_called_once_with(
+        self.pm._publish.assert_awaited_once_with(
             {'method': 'leave_room', 'sid': '456', 'room': 'foo',
              'namespace': '/', 'host_id': '123456'}
         )
 
     def test_close_room(self):
         _run(self.pm.close_room('foo'))
-        self.pm._publish.mock.assert_called_once_with(
+        self.pm._publish.assert_awaited_once_with(
             {'method': 'close_room', 'room': 'foo', 'namespace': '/',
              'host_id': '123456'}
         )
 
     def test_close_room_with_namespace(self):
         _run(self.pm.close_room('foo', '/bar'))
-        self.pm._publish.mock.assert_called_once_with(
+        self.pm._publish.assert_awaited_once_with(
             {'method': 'close_room', 'room': 'foo', 'namespace': '/bar',
              'host_id': '123456'}
         )
 
     def test_handle_emit(self):
         with mock.patch.object(
-            async_manager.AsyncManager, 'emit', new=AsyncMock()
+            async_manager.AsyncManager, 'emit'
         ) as super_emit:
             _run(self.pm._handle_emit({'event': 'foo', 'data': 'bar'}))
-            super_emit.mock.assert_called_once_with(
-                self.pm,
+            super_emit.assert_awaited_once_with(
                 'foo',
                 'bar',
                 namespace=None,
@@ -246,15 +245,14 @@ class TestAsyncPubSubManager:
 
     def test_handle_emit_with_namespace(self):
         with mock.patch.object(
-            async_manager.AsyncManager, 'emit', new=AsyncMock()
+            async_manager.AsyncManager, 'emit'
         ) as super_emit:
             _run(
                 self.pm._handle_emit(
                     {'event': 'foo', 'data': 'bar', 'namespace': '/baz'}
                 )
             )
-            super_emit.mock.assert_called_once_with(
-                self.pm,
+            super_emit.assert_awaited_once_with(
                 'foo',
                 'bar',
                 namespace='/baz',
@@ -265,15 +263,14 @@ class TestAsyncPubSubManager:
 
     def test_handle_emit_with_room(self):
         with mock.patch.object(
-            async_manager.AsyncManager, 'emit', new=AsyncMock()
+            async_manager.AsyncManager, 'emit'
         ) as super_emit:
             _run(
                 self.pm._handle_emit(
                     {'event': 'foo', 'data': 'bar', 'room': 'baz'}
                 )
             )
-            super_emit.mock.assert_called_once_with(
-                self.pm,
+            super_emit.assert_awaited_once_with(
                 'foo',
                 'bar',
                 namespace=None,
@@ -284,15 +281,14 @@ class TestAsyncPubSubManager:
 
     def test_handle_emit_with_skip_sid(self):
         with mock.patch.object(
-            async_manager.AsyncManager, 'emit', new=AsyncMock()
+            async_manager.AsyncManager, 'emit'
         ) as super_emit:
             _run(
                 self.pm._handle_emit(
                     {'event': 'foo', 'data': 'bar', 'skip_sid': '123'}
                 )
             )
-            super_emit.mock.assert_called_once_with(
-                self.pm,
+            super_emit.assert_awaited_once_with(
                 'foo',
                 'bar',
                 namespace=None,
@@ -303,7 +299,7 @@ class TestAsyncPubSubManager:
 
     def test_handle_emit_with_remote_callback(self):
         with mock.patch.object(
-            async_manager.AsyncManager, 'emit', new=AsyncMock()
+            async_manager.AsyncManager, 'emit'
         ) as super_emit:
             _run(
                 self.pm._handle_emit(
@@ -316,16 +312,16 @@ class TestAsyncPubSubManager:
                     }
                 )
             )
-            assert super_emit.mock.call_count == 1
-            assert super_emit.mock.call_args[0] == (self.pm, 'foo', 'bar')
-            assert super_emit.mock.call_args[1]['namespace'] == '/baz'
-            assert super_emit.mock.call_args[1]['room'] is None
-            assert super_emit.mock.call_args[1]['skip_sid'] is None
+            assert super_emit.await_count == 1
+            assert super_emit.await_args[0] == ('foo', 'bar')
+            assert super_emit.await_args[1]['namespace'] == '/baz'
+            assert super_emit.await_args[1]['room'] is None
+            assert super_emit.await_args[1]['skip_sid'] is None
             assert isinstance(
-                super_emit.mock.call_args[1]['callback'], functools.partial
+                super_emit.await_args[1]['callback'], functools.partial
             )
-            _run(super_emit.mock.call_args[1]['callback']('one', 2, 'three'))
-            self.pm._publish.mock.assert_called_once_with(
+            _run(super_emit.await_args[1]['callback']('one', 2, 'three'))
+            self.pm._publish.assert_awaited_once_with(
                 {
                     'method': 'callback',
                     'host_id': 'x',
@@ -338,7 +334,7 @@ class TestAsyncPubSubManager:
 
     def test_handle_emit_with_local_callback(self):
         with mock.patch.object(
-            async_manager.AsyncManager, 'emit', new=AsyncMock()
+            async_manager.AsyncManager, 'emit'
         ) as super_emit:
             _run(
                 self.pm._handle_emit(
@@ -351,21 +347,21 @@ class TestAsyncPubSubManager:
                     }
                 )
             )
-            assert super_emit.mock.call_count == 1
-            assert super_emit.mock.call_args[0] == (self.pm, 'foo', 'bar')
-            assert super_emit.mock.call_args[1]['namespace'] == '/baz'
-            assert super_emit.mock.call_args[1]['room'] is None
-            assert super_emit.mock.call_args[1]['skip_sid'] is None
+            assert super_emit.await_count == 1
+            assert super_emit.await_args[0] == ('foo', 'bar')
+            assert super_emit.await_args[1]['namespace'] == '/baz'
+            assert super_emit.await_args[1]['room'] is None
+            assert super_emit.await_args[1]['skip_sid'] is None
             assert isinstance(
-                super_emit.mock.call_args[1]['callback'], functools.partial
+                super_emit.await_args[1]['callback'], functools.partial
             )
-            _run(super_emit.mock.call_args[1]['callback']('one', 2, 'three'))
-            self.pm._publish.mock.assert_not_called()
+            _run(super_emit.await_args[1]['callback']('one', 2, 'three'))
+            self.pm._publish.assert_not_awaited()
 
     def test_handle_callback(self):
         host_id = self.pm.host_id
         with mock.patch.object(
-            self.pm, 'trigger_callback', new=AsyncMock()
+            self.pm, 'trigger_callback'
         ) as trigger:
             _run(
                 self.pm._handle_callback(
@@ -379,11 +375,11 @@ class TestAsyncPubSubManager:
                     }
                 )
             )
-            trigger.mock.assert_called_once_with('sid', 123, ('one', 2))
+            trigger.assert_awaited_once_with('sid', 123, ('one', 2))
 
     def test_handle_callback_bad_host_id(self):
         with mock.patch.object(
-            self.pm, 'trigger_callback', new=AsyncMock()
+            self.pm, 'trigger_callback'
         ) as trigger:
             _run(
                 self.pm._handle_callback(
@@ -397,12 +393,12 @@ class TestAsyncPubSubManager:
                     }
                 )
             )
-            assert trigger.mock.call_count == 0
+            assert trigger.await_count == 0
 
     def test_handle_callback_missing_args(self):
         host_id = self.pm.host_id
         with mock.patch.object(
-            self.pm, 'trigger_callback', new=AsyncMock()
+            self.pm, 'trigger_callback'
         ) as trigger:
             _run(
                 self.pm._handle_callback(
@@ -435,7 +431,7 @@ class TestAsyncPubSubManager:
                     {'method': 'callback', 'host_id': host_id}
                 )
             )
-            assert trigger.mock.call_count == 0
+            assert trigger.await_count == 0
 
     def test_handle_disconnect(self):
         _run(
@@ -443,14 +439,14 @@ class TestAsyncPubSubManager:
                 {'method': 'disconnect', 'sid': '123', 'namespace': '/foo'}
             )
         )
-        self.pm.server.disconnect.mock.assert_called_once_with(
+        self.pm.server.disconnect.assert_awaited_once_with(
             sid='123', namespace='/foo', ignore_queue=True
         )
 
     def test_handle_enter_room(self):
         sid = _run(self.pm.connect('123', '/'))
         with mock.patch.object(
-            async_manager.AsyncManager, 'enter_room', new=AsyncMock()
+            async_manager.AsyncManager, 'enter_room'
         ) as super_enter_room:
             _run(
                 self.pm._handle_enter_room(
@@ -464,14 +460,12 @@ class TestAsyncPubSubManager:
                      'room': 'foo'}
                 )
             )
-            super_enter_room.mock.assert_called_once_with(
-                self.pm, sid, '/', 'foo'
-            )
+            super_enter_room.assert_awaited_once_with(sid, '/', 'foo')
 
     def test_handle_leave_room(self):
         sid = _run(self.pm.connect('123', '/'))
         with mock.patch.object(
-            async_manager.AsyncManager, 'leave_room', new=AsyncMock()
+            async_manager.AsyncManager, 'leave_room'
         ) as super_leave_room:
             _run(
                 self.pm._handle_leave_room(
@@ -485,26 +479,24 @@ class TestAsyncPubSubManager:
                      'room': 'foo'}
                 )
             )
-            super_leave_room.mock.assert_called_once_with(
-                self.pm, sid, '/', 'foo'
-            )
+            super_leave_room.assert_awaited_once_with(sid, '/', 'foo')
 
     def test_handle_close_room(self):
         with mock.patch.object(
-            async_manager.AsyncManager, 'close_room', new=AsyncMock()
+            async_manager.AsyncManager, 'close_room'
         ) as super_close_room:
             _run(
                 self.pm._handle_close_room(
                     {'method': 'close_room', 'room': 'foo'}
                 )
             )
-            super_close_room.mock.assert_called_once_with(
-                self.pm, room='foo', namespace=None
+            super_close_room.assert_awaited_once_with(
+                room='foo', namespace=None
             )
 
     def test_handle_close_room_with_namespace(self):
         with mock.patch.object(
-            async_manager.AsyncManager, 'close_room', new=AsyncMock()
+            async_manager.AsyncManager, 'close_room'
         ) as super_close_room:
             _run(
                 self.pm._handle_close_room(
@@ -515,17 +507,17 @@ class TestAsyncPubSubManager:
                     }
                 )
             )
-            super_close_room.mock.assert_called_once_with(
-                self.pm, room='foo', namespace='/bar'
+            super_close_room.assert_awaited_once_with(
+                room='foo', namespace='/bar'
             )
 
     def test_background_thread(self):
-        self.pm._handle_emit = AsyncMock()
-        self.pm._handle_callback = AsyncMock()
-        self.pm._handle_disconnect = AsyncMock()
-        self.pm._handle_enter_room = AsyncMock()
-        self.pm._handle_leave_room = AsyncMock()
-        self.pm._handle_close_room = AsyncMock()
+        self.pm._handle_emit = mock.AsyncMock()
+        self.pm._handle_callback = mock.AsyncMock()
+        self.pm._handle_disconnect = mock.AsyncMock()
+        self.pm._handle_enter_room = mock.AsyncMock()
+        self.pm._handle_leave_room = mock.AsyncMock()
+        self.pm._handle_close_room = mock.AsyncMock()
         host_id = self.pm.host_id
 
         async def messages():
@@ -558,34 +550,34 @@ class TestAsyncPubSubManager:
         self.pm._listen = messages
         _run(self.pm._thread())
 
-        self.pm._handle_emit.mock.assert_called_once_with(
+        self.pm._handle_emit.assert_awaited_once_with(
             {'method': 'emit', 'value': 'foo', 'host_id': 'x'}
         )
-        self.pm._handle_callback.mock.assert_any_call(
+        self.pm._handle_callback.assert_any_await(
             {'method': 'callback', 'value': 'bar', 'host_id': 'x'}
         )
-        self.pm._handle_callback.mock.assert_any_call(
+        self.pm._handle_callback.assert_any_await(
             {'method': 'callback', 'value': 'bar', 'host_id': host_id}
         )
-        self.pm._handle_disconnect.mock.assert_called_once_with(
+        self.pm._handle_disconnect.assert_awaited_once_with(
             {'method': 'disconnect', 'sid': '123', 'namespace': '/foo',
              'host_id': 'x'}
         )
-        self.pm._handle_enter_room.mock.assert_called_once_with(
+        self.pm._handle_enter_room.assert_awaited_once_with(
             {'method': 'enter_room', 'sid': '123', 'namespace': '/foo',
              'room': 'room', 'host_id': 'x'}
         )
-        self.pm._handle_leave_room.mock.assert_called_once_with(
+        self.pm._handle_leave_room.assert_awaited_once_with(
             {'method': 'leave_room', 'sid': '123', 'namespace': '/foo',
              'room': 'room', 'host_id': 'x'}
         )
-        self.pm._handle_close_room.mock.assert_called_once_with(
+        self.pm._handle_close_room.assert_awaited_once_with(
             {'method': 'close_room', 'value': 'baz', 'host_id': 'x'}
         )
 
     def test_background_thread_exception(self):
-        self.pm._handle_emit = AsyncMock(side_effect=[ValueError(),
-                                                      asyncio.CancelledError])
+        self.pm._handle_emit = mock.AsyncMock(side_effect=[
+            ValueError(), asyncio.CancelledError])
 
         async def messages():
             yield {'method': 'emit', 'value': 'foo', 'host_id': 'x'}
@@ -594,9 +586,9 @@ class TestAsyncPubSubManager:
         self.pm._listen = messages
         _run(self.pm._thread())
 
-        self.pm._handle_emit.mock.assert_any_call(
+        self.pm._handle_emit.assert_any_await(
             {'method': 'emit', 'value': 'foo', 'host_id': 'x'}
         )
-        self.pm._handle_emit.mock.assert_called_with(
+        self.pm._handle_emit.assert_awaited_with(
             {'method': 'emit', 'value': 'bar', 'host_id': 'x'}
         )
