@@ -1,5 +1,4 @@
 import asyncio
-import unittest
 from unittest import mock
 import pytest
 
@@ -8,7 +7,7 @@ from socketio.exceptions import SocketIOError, TimeoutError, DisconnectedError
 from .helpers import AsyncMock, _run
 
 
-class TestAsyncAsyncSimpleClient(unittest.TestCase):
+class TestAsyncAsyncSimpleClient:
     def test_constructor(self):
         client = AsyncSimpleClient(1, '2', a='3', b=4)
         assert client.client_args == (1, '2')

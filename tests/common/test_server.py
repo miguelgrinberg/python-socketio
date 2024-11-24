@@ -1,5 +1,4 @@
 import logging
-import unittest
 from unittest import mock
 
 from engineio import json
@@ -15,8 +14,8 @@ from socketio import server
 
 @mock.patch('socketio.server.engineio.Server', **{
     'return_value.generate_id.side_effect': [str(i) for i in range(1, 10)]})
-class TestServer(unittest.TestCase):
-    def tearDown(self):
+class TestServer:
+    def teardown_method(self):
         # restore JSON encoder, in case a test changed it
         packet.Packet.json = json
 

@@ -1,6 +1,5 @@
 import asyncio
 import logging
-import unittest
 from unittest import mock
 
 from engineio import json
@@ -18,8 +17,8 @@ from .helpers import AsyncMock, _run
 @mock.patch('socketio.server.engineio.AsyncServer', **{
     'return_value.generate_id.side_effect': [str(i) for i in range(1, 10)],
     'return_value.send_packet': AsyncMock()})
-class TestAsyncServer(unittest.TestCase):
-    def tearDown(self):
+class TestAsyncServer:
+    def teardown_method(self):
         # restore JSON encoder, in case a test changed it
         packet.Packet.json = json
 

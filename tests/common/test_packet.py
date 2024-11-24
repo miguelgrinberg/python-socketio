@@ -1,11 +1,9 @@
-import unittest
-
 import pytest
 
 from socketio import packet
 
 
-class TestPacket(unittest.TestCase):
+class TestPacket:
     def test_encode_default_packet(self):
         pkt = packet.Packet()
         assert pkt.packet_type == packet.EVENT

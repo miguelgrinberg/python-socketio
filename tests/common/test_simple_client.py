@@ -1,11 +1,10 @@
-import unittest
 from unittest import mock
 import pytest
 from socketio import SimpleClient
 from socketio.exceptions import SocketIOError, TimeoutError, DisconnectedError
 
 
-class TestSimpleClient(unittest.TestCase):
+class TestSimpleClient:
     def test_constructor(self):
         client = SimpleClient(1, '2', a='3', b=4)
         assert client.client_args == (1, '2')

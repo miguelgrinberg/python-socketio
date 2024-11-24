@@ -1,10 +1,9 @@
-import unittest
 from unittest import mock
 
 from socketio import middleware
 
 
-class TestMiddleware(unittest.TestCase):
+class TestMiddleware:
     def test_wsgi_routing(self):
         mock_wsgi_app = mock.MagicMock()
         mock_sio_app = 'foo'

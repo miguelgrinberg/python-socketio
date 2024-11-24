@@ -1,10 +1,8 @@
-import unittest
-
 from socketio import msgpack_packet
 from socketio import packet
 
 
-class TestMsgPackPacket(unittest.TestCase):
+class TestMsgPackPacket:
     def test_encode_decode(self):
         p = msgpack_packet.MsgPackPacket(
             packet.CONNECT, data={'auth': {'token': '123'}}, namespace='/foo')

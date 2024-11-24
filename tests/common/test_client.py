@@ -1,6 +1,5 @@
 import logging
 import time
-import unittest
 from unittest import mock
 
 from engineio import exceptions as engineio_exceptions
@@ -16,7 +15,7 @@ from socketio import namespace
 from socketio import packet
 
 
-class TestClient(unittest.TestCase):
+class TestClient:
     def test_is_asyncio_based(self):
         c = client.Client()
         assert not c.is_asyncio_based()

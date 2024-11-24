@@ -1,13 +1,10 @@
-import sys
-import unittest
 from unittest import mock
 
 from socketio import async_namespace
 from .helpers import AsyncMock, _run
 
 
-@unittest.skipIf(sys.version_info < (3, 5), 'only for Python 3.5+')
-class TestAsyncNamespace(unittest.TestCase):
+class TestAsyncNamespace:
     def test_connect_event(self):
         result = {}
 

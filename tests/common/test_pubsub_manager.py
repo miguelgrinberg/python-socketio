@@ -1,6 +1,5 @@
 import functools
 import logging
-import unittest
 from unittest import mock
 
 import pytest
@@ -10,8 +9,8 @@ from socketio import pubsub_manager
 from socketio import packet
 
 
-class TestPubSubManager(unittest.TestCase):
-    def setUp(self):
+class TestPubSubManager:
+    def setup_method(self):
         id = 0
 
         def generate_id():

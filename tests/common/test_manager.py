@@ -1,4 +1,3 @@
-import unittest
 from unittest import mock
 
 import pytest
@@ -7,8 +6,8 @@ from socketio import manager
 from socketio import packet
 
 
-class TestBaseManager(unittest.TestCase):
-    def setUp(self):
+class TestBaseManager:
+    def setup_method(self):
         id = 0
 
         def generate_id():

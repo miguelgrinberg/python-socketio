@@ -1,10 +1,9 @@
-import unittest
 from unittest import mock
 
 from socketio import namespace
 
 
-class TestNamespace(unittest.TestCase):
+class TestNamespace:
     def test_connect_event(self):
         result = {}
 

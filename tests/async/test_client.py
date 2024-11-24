@@ -1,5 +1,4 @@
 import asyncio
-import unittest
 from unittest import mock
 
 import pytest
@@ -12,7 +11,7 @@ from socketio import packet
 from .helpers import AsyncMock, _run
 
 
-class TestAsyncClient(unittest.TestCase):
+class TestAsyncClient:
     def test_is_asyncio_based(self):
         c = async_client.AsyncClient()
         assert c.is_asyncio_based()

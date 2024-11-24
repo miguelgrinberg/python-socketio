@@ -2,7 +2,6 @@ from functools import wraps
 import threading
 import time
 from unittest import mock
-import unittest
 import pytest
 from engineio.socket import Socket as EngineIOSocket
 import socketio
@@ -36,7 +35,7 @@ def with_instrumented_server(auth=False, **ikwargs):
             if 'server_stats_interval' not in ikwargs:
                 ikwargs['server_stats_interval'] = 0.25
 
-            instrumented_server = sio.instrument(auth=auth, **ikwargs)
+            self.isvr = sio.instrument(auth=auth, **ikwargs)
             server = SocketIOWebServer(sio)
             server.start()
 
@@ -48,11 +47,12 @@ def with_instrumented_server(auth=False, **ikwargs):
             EngineIOSocket.schedule_ping = mock.MagicMock()
 
             try:
-                ret = f(self, instrumented_server, *args, **kwargs)
+                ret = f(self, *args, **kwargs)
             finally:
                 server.stop()
-                instrumented_server.shutdown()
-                instrumented_server.uninstrument()
+                self.isvr.shutdown()
+                self.isvr.uninstrument()
+                self.isvr = None
 
             EngineIOSocket.schedule_ping = original_schedule_ping
 
@@ -69,12 +69,12 @@ def _custom_auth(auth):
     return auth == {'foo': 'bar'}
 
 
-class TestAdmin(unittest.TestCase):
-    def setUp(self):
+class TestAdmin:
+    def setup_method(self):
         print('threads at start:', threading.enumerate())
         self.thread_count = threading.active_count()
 
-    def tearDown(self):
+    def teardown_method(self):
         print('threads at end:', threading.enumerate())
         assert self.thread_count == threading.active_count()
 
@@ -96,7 +96,7 @@ class TestAdmin(unittest.TestCase):
             sio.instrument()
 
     @with_instrumented_server(auth=False)
-    def test_admin_connect_with_no_auth(self, isvr):
+    def test_admin_connect_with_no_auth(self):
         with socketio.SimpleClient() as admin_client:
             admin_client.connect('http://localhost:8900', namespace='/admin')
         with socketio.SimpleClient() as admin_client:
@@ -104,7 +104,7 @@ class TestAdmin(unittest.TestCase):
                                  auth={'foo': 'bar'})
 
     @with_instrumented_server(auth={'foo': 'bar'})
-    def test_admin_connect_with_dict_auth(self, isvr):
+    def test_admin_connect_with_dict_auth(self):
         with socketio.SimpleClient() as admin_client:
             admin_client.connect('http://localhost:8900', namespace='/admin',
                                  auth={'foo': 'bar'})
@@ -120,7 +120,7 @@ class TestAdmin(unittest.TestCase):
 
     @with_instrumented_server(auth=[{'foo': 'bar'},
                                     {'u': 'admin', 'p': 'secret'}])
-    def test_admin_connect_with_list_auth(self, isvr):
+    def test_admin_connect_with_list_auth(self):
         with socketio.SimpleClient() as admin_client:
             admin_client.connect('http://localhost:8900', namespace='/admin',
                                  auth={'foo': 'bar'})
@@ -137,7 +137,7 @@ class TestAdmin(unittest.TestCase):
                                      namespace='/admin')
 
     @with_instrumented_server(auth=_custom_auth)
-    def test_admin_connect_with_function_auth(self, isvr):
+    def test_admin_connect_with_function_auth(self):
         with socketio.SimpleClient() as admin_client:
             admin_client.connect('http://localhost:8900', namespace='/admin',
                                  auth={'foo': 'bar'})
@@ -151,7 +151,7 @@ class TestAdmin(unittest.TestCase):
                                      namespace='/admin')
 
     @with_instrumented_server()
-    def test_admin_connect_only_admin(self, isvr):
+    def test_admin_connect_only_admin(self):
         with socketio.SimpleClient() as admin_client:
             admin_client.connect('http://localhost:8900', namespace='/admin')
             sid = admin_client.sid
@@ -176,7 +176,7 @@ class TestAdmin(unittest.TestCase):
             events['server_stats']['namespaces']
 
     @with_instrumented_server()
-    def test_admin_connect_with_others(self, isvr):
+    def test_admin_connect_with_others(self):
         with socketio.SimpleClient() as client1, \
                 socketio.SimpleClient() as client2, \
                 socketio.SimpleClient() as client3, \
@@ -185,12 +185,12 @@ class TestAdmin(unittest.TestCase):
             client1.emit('enter_room', 'room')
             sid1 = client1.sid
 
-            saved_check_for_upgrade = isvr._check_for_upgrade
-            isvr._check_for_upgrade = mock.MagicMock()
+            saved_check_for_upgrade = self.isvr._check_for_upgrade
+            self.isvr._check_for_upgrade = mock.MagicMock()
             client2.connect('http://localhost:8900', namespace='/foo',
                             transports=['polling'])
             sid2 = client2.sid
-            isvr._check_for_upgrade = saved_check_for_upgrade
+            self.isvr._check_for_upgrade = saved_check_for_upgrade
 
             client3.connect('http://localhost:8900', namespace='/admin')
             sid3 = client3.sid
@@ -226,7 +226,7 @@ class TestAdmin(unittest.TestCase):
                 assert socket['rooms'] == [sid3]
 
     @with_instrumented_server(mode='production', read_only=True)
-    def test_admin_connect_production(self, isvr):
+    def test_admin_connect_production(self):
         with socketio.SimpleClient() as admin_client:
             admin_client.connect('http://localhost:8900', namespace='/admin')
             events = self._expect({'config': 1, 'server_stats': 2},
@@ -247,7 +247,7 @@ class TestAdmin(unittest.TestCase):
             events['server_stats']['namespaces']
 
     @with_instrumented_server()
-    def test_admin_features(self, isvr):
+    def test_admin_features(self):
         with socketio.SimpleClient() as client1, \
                 socketio.SimpleClient() as client2, \
                 socketio.SimpleClient() as admin_client:

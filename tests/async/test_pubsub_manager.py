@@ -1,6 +1,5 @@
 import asyncio
 import functools
-import unittest
 from unittest import mock
 
 import pytest
@@ -11,8 +10,8 @@ from socketio import packet
 from .helpers import AsyncMock, _run
 
 
-class TestAsyncPubSubManager(unittest.TestCase):
-    def setUp(self):
+class TestAsyncPubSubManager:
+    def setup_method(self):
         id = 0
 
         def generate_id():

@@ -1,4 +1,3 @@
-import unittest
 from unittest import mock
 
 from socketio import async_manager
@@ -6,8 +5,8 @@ from socketio import packet
 from .helpers import AsyncMock, _run
 
 
-class TestAsyncManager(unittest.TestCase):
-    def setUp(self):
+class TestAsyncManager:
+    def setup_method(self):
         id = 0
 
         def generate_id():
