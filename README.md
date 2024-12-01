@@ -170,7 +170,6 @@ Your contributions help improve the project for everyone!
 ## License
 
 `python-socketio` is licensed under the [MIT License](LICENSE).
-```
 
 ### Explanation of the Content:
 
