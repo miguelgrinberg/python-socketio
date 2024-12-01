@@ -1,4 +1,3 @@
-```markdown
 # python-socketio
 
 [![Build Status](https://img.shields.io/travis/miguelgrinberg/python-socketio/master.svg)](https://travis-ci.org/miguelgrinberg/python-socketio)
@@ -51,7 +50,6 @@ To ensure compatibility between your `python-socketio` client and your JavaScrip
 
    ```bash
    pip install python-socketio==<version>
-   ```
 
 3. **Match versions**: Refer to the compatibility chart above to ensure that your Python client version matches the JavaScript server version.
 
