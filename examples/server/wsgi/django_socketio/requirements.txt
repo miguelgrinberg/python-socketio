@@ -1,6 +1,6 @@
 asgiref==3.6.0
 bidict==0.22.1
-Django==4.2.16
+Django==4.2.17
 gunicorn==22.0.0
 h11==0.14.0
 python-engineio
