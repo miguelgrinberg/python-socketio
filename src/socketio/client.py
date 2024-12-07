@@ -179,6 +179,8 @@ class Client(base_client.BaseClient):
         while True:
             self.eio.wait()
             self.sleep(1)  # give the reconnect task time to start up
+            if self.eio.state != 'connected': # reconnect task finished while `self.sleep(1)` was executing
+                continue
             if not self._reconnect_task:
                 break
             self._reconnect_task.join()
