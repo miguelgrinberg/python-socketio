@@ -341,7 +341,7 @@ class TestBaseManager:
 
     def test_emit_binary(self):
         sid = self.bm.connect('123', '/')
-        self.bm.emit(u'my event', b'my binary data', namespace='/', room=sid)
+        self.bm.emit('my event', b'my binary data', namespace='/', room=sid)
         assert self.bm.server._send_eio_packet.call_count == 2
         assert self.bm.server._send_eio_packet.call_args_list[0][0][0] == '123'
         pkt = self.bm.server._send_eio_packet.call_args_list[0][0][1]

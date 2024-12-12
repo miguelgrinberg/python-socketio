@@ -963,7 +963,7 @@ class TestAsyncServer:
         assert result['result'] == ('disconnect', '1', '/foo')
 
     def test_bad_namespace_handler(self, eio):
-        class Dummy(object):
+        class Dummy:
             pass
 
         class SyncNS(namespace.Namespace):
@@ -1004,7 +1004,7 @@ class TestAsyncServer:
         # Warning: this test cannot run in parallel with other tests, as it
         # changes the JSON encoding/decoding functions
 
-        class CustomJSON(object):
+        class CustomJSON:
             @staticmethod
             def dumps(*args, **kwargs):
                 return '*** encoded ***'

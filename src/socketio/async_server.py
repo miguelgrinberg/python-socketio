@@ -385,7 +385,7 @@ class AsyncServer(base_server.BaseServer):
                 async with eio.session(sid) as session:
                     print('received message from ', session['username'])
         """
-        class _session_context_manager(object):
+        class _session_context_manager:
             def __init__(self, server, sid, namespace):
                 self.server = server
                 self.sid = sid

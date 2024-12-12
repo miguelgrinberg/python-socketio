@@ -392,7 +392,7 @@ class TestAsyncManager:
         sid = _run(self.bm.connect('123', '/'))
         _run(
             self.bm.emit(
-                u'my event', b'my binary data', namespace='/', room=sid
+                'my event', b'my binary data', namespace='/', room=sid
             )
         )
         assert self.bm.server._send_eio_packet.await_count == 2

@@ -386,7 +386,7 @@ class AsyncClient(base_client.BaseClient):
     async def _handle_connect(self, namespace, data):
         namespace = namespace or '/'
         if namespace not in self.namespaces:
-            self.logger.info('Namespace {} is connected'.format(namespace))
+            self.logger.info(f'Namespace {namespace} is connected')
             self.namespaces[namespace] = (data or {}).get('sid', self.sid)
             await self._trigger_event('connect', namespace=namespace)
             self._connect_event.set()

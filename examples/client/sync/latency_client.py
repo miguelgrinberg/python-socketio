@@ -21,7 +21,7 @@ def connect():
 def pong_from_server():
     global start_timer
     latency = time.time() - start_timer
-    print('latency is {0:.2f} ms'.format(latency * 1000))
+    print(f'latency is {latency * 1000:.2f} ms')
     sio.sleep(1)
     if sio.connected:
         send_ping()
