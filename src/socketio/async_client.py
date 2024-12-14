@@ -578,7 +578,7 @@ class AsyncClient(base_client.BaseClient):
         self.callbacks = {}
         self._binary_packet = None
         self.sid = None
-        if will_reconnect:
+        if will_reconnect and not self._reconnect_task:
             self._reconnect_task = self.start_background_task(
                 self._handle_reconnect)
 
