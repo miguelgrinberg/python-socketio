@@ -180,7 +180,12 @@ class Client(base_client.BaseClient):
             self.eio.wait()
             self.sleep(1)  # give the reconnect task time to start up
             if not self._reconnect_task:
-                break
+                if self.eio.state == 'connected':  # pragma: no cover
+                    # connected while sleeping above
+                    continue
+                else:
+                    # the reconnect task gave up
+                    break
             self._reconnect_task.join()
             if self.eio.state != 'connected':
                 break
