@@ -403,7 +403,8 @@ class Server(base_server.BaseServer):
             eio_sid = self.manager.pre_disconnect(sid, namespace=namespace)
             self._send_packet(eio_sid, self.packet_class(
                 packet.DISCONNECT, namespace=namespace))
-            self._trigger_event('disconnect', namespace, sid)
+            self._trigger_event('disconnect', namespace, sid,
+                                self.reason.SERVER_DISCONNECT)
             self.manager.disconnect(sid, namespace=namespace,
                                     ignore_queue=True)
 
@@ -557,14 +558,15 @@ class Server(base_server.BaseServer):
             self._send_packet(eio_sid, self.packet_class(
                 packet.CONNECT, {'sid': sid}, namespace=namespace))
 
-    def _handle_disconnect(self, eio_sid, namespace):
+    def _handle_disconnect(self, eio_sid, namespace, reason=None):
         """Handle a client disconnect."""
         namespace = namespace or '/'
         sid = self.manager.sid_from_eio_sid(eio_sid, namespace)
         if not self.manager.is_connected(sid, namespace):  # pragma: no cover
             return
         self.manager.pre_disconnect(sid, namespace=namespace)
-        self._trigger_event('disconnect', namespace, sid)
+        self._trigger_event('disconnect', namespace, sid,
+                            reason or self.reason.UNKNOWN)
         self.manager.disconnect(sid, namespace, ignore_queue=True)
 
     def _handle_event(self, eio_sid, namespace, id, data):
@@ -611,7 +613,14 @@ class Server(base_server.BaseServer):
         # first see if we have an explicit handler for the event
         handler, args = self._get_event_handler(event, namespace, args)
         if handler:
-            return handler(*args)
+            try:
+                return handler(*args)
+            except TypeError:
+                # legacy disconnect events use only one argument
+                if event == 'disconnect':
+                    return handler(*args[:-1])
+                else:  # pragma: no cover
+                    raise
         # or else, forward the event to a namespace handler if one exists
         handler, args = self._get_namespace_handler(namespace, args)
         if handler:
@@ -642,7 +651,8 @@ class Server(base_server.BaseServer):
             if pkt.packet_type == packet.CONNECT:
                 self._handle_connect(eio_sid, pkt.namespace, pkt.data)
             elif pkt.packet_type == packet.DISCONNECT:
-                self._handle_disconnect(eio_sid, pkt.namespace)
+                self._handle_disconnect(eio_sid, pkt.namespace,
+                                        self.reason.CLIENT_DISCONNECT)
             elif pkt.packet_type == packet.EVENT:
                 self._handle_event(eio_sid, pkt.namespace, pkt.id, pkt.data)
             elif pkt.packet_type == packet.ACK:
@@ -655,10 +665,10 @@ class Server(base_server.BaseServer):
             else:
                 raise ValueError('Unknown packet type.')
 
-    def _handle_eio_disconnect(self, eio_sid):
+    def _handle_eio_disconnect(self, eio_sid, reason):
         """Handle Engine.IO disconnect event."""
         for n in list(self.manager.get_namespaces()).copy():
-            self._handle_disconnect(eio_sid, n)
+            self._handle_disconnect(eio_sid, n, reason)
         if eio_sid in self.environ:
             del self.environ[eio_sid]
 
