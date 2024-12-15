@@ -20,12 +20,36 @@ class TestAsyncNamespace:
         result = {}
 
         class MyNamespace(async_namespace.AsyncNamespace):
+            async def on_disconnect(self, sid, reason):
+                result['result'] = (sid, reason)
+
+        ns = MyNamespace('/foo')
+        ns._set_server(mock.MagicMock())
+        _run(ns.trigger_event('disconnect', 'sid', 'foo'))
+        assert result['result'] == ('sid', 'foo')
+
+    def test_legacy_disconnect_event(self):
+        result = {}
+
+        class MyNamespace(async_namespace.AsyncNamespace):
+            def on_disconnect(self, sid):
+                result['result'] = sid
+
+        ns = MyNamespace('/foo')
+        ns._set_server(mock.MagicMock())
+        _run(ns.trigger_event('disconnect', 'sid', 'foo'))
+        assert result['result'] == 'sid'
+
+    def test_legacy_disconnect_event_async(self):
+        result = {}
+
+        class MyNamespace(async_namespace.AsyncNamespace):
             async def on_disconnect(self, sid):
                 result['result'] = sid
 
         ns = MyNamespace('/foo')
         ns._set_server(mock.MagicMock())
-        await ns.trigger_event('disconnect', 'sid')
+        await ns.trigger_event('disconnect', 'sid', 'foo')
         assert result['result'] == 'sid'
 
     async def test_sync_event(self):
@@ -241,6 +265,42 @@ class TestAsyncNamespace:
         ns.server.disconnect.assert_awaited_with('sid', namespace='/foo')
         await ns.disconnect('sid', namespace='/bar')
         ns.server.disconnect.assert_awaited_with('sid', namespace='/bar')
+
+    async def test_disconnect_event(self):
+        result = {}
+
+        class MyNamespace(async_namespace.AsyncClientNamespace):
+            async def on_disconnect(self, reason):
+                result['result'] = reason
+
+        ns = MyNamespace('/foo')
+        ns._set_client(mock.MagicMock())
+        await ns.trigger_event('disconnect', 'foo')
+        assert result['result'] == 'foo'
+
+    async def test_legacy_disconnect_event_client(self):
+        result = {}
+
+        class MyNamespace(async_namespace.AsyncClientNamespace):
+            def on_disconnect(self):
+                result['result'] = 'ok'
+
+        ns = MyNamespace('/foo')
+        ns._set_client(mock.MagicMock())
+        await ns.trigger_event('disconnect', 'foo')
+        assert result['result'] == 'ok'
+
+    async def test_legacy_disconnect_event_client_async(self):
+        result = {}
+
+        class MyNamespace(async_namespace.AsyncClientNamespace):
+            async def on_disconnect(self):
+                result['result'] = 'ok'
+
+        ns = MyNamespace('/foo')
+        ns._set_client(mock.MagicMock())
+        await ns.trigger_event('disconnect', 'foo')
+        assert result['result'] == 'ok'
 
     async def test_sync_event_client(self):
         result = {}

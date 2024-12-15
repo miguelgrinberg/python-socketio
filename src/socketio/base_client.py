@@ -289,7 +289,7 @@ class BaseClient:
     def _handle_eio_message(self, data):  # pragma: no cover
         raise NotImplementedError()
 
-    def _handle_eio_disconnect(self):  # pragma: no cover
+    def _handle_eio_disconnect(self, reason):  # pragma: no cover
         raise NotImplementedError()
 
     def _engineio_client_class(self):  # pragma: no cover

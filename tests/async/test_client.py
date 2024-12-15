@@ -578,11 +578,9 @@ class TestAsyncClient:
         c._trigger_event = mock.AsyncMock()
         await c._handle_disconnect('/')
         c._trigger_event.assert_any_await(
-            'disconnect', namespace='/'
+            'disconnect', '/', c.reason.SERVER_DISCONNECT
         )
-        c._trigger_event.assert_any_await(
-            '__disconnect_final', namespace='/'
-        )
+        c._trigger_event.assert_any_await('__disconnect_final', '/')
         assert not c.connected
         await c._handle_disconnect('/')
         assert c._trigger_event.await_count == 2
@@ -593,21 +591,15 @@ class TestAsyncClient:
         c.namespaces = {'/foo': '1', '/bar': '2'}
         c._trigger_event = mock.AsyncMock()
         await c._handle_disconnect('/foo')
-        c._trigger_event.assert_any_await(
-            'disconnect', namespace='/foo'
-        )
-        c._trigger_event.assert_any_await(
-            '__disconnect_final', namespace='/foo'
-        )
+        c._trigger_event.assert_any_await('disconnect', '/foo',
+                                          c.reason.SERVER_DISCONNECT)
+        c._trigger_event.assert_any_await('__disconnect_final', '/foo')
         assert c.namespaces == {'/bar': '2'}
         assert c.connected
         await c._handle_disconnect('/bar')
-        c._trigger_event.assert_any_await(
-            'disconnect', namespace='/bar'
-        )
-        c._trigger_event.assert_any_await(
-            '__disconnect_final', namespace='/bar'
-        )
+        c._trigger_event.assert_any_await('disconnect', '/bar',
+                                          c.reason.SERVER_DISCONNECT)
+        c._trigger_event.assert_any_await('__disconnect_final', '/bar')
         assert c.namespaces == {}
         assert not c.connected
 
@@ -617,12 +609,9 @@ class TestAsyncClient:
         c.namespaces = {'/foo': '1', '/bar': '2'}
         c._trigger_event = mock.AsyncMock()
         await c._handle_disconnect('/baz')
-        c._trigger_event.assert_any_await(
-            'disconnect', namespace='/baz'
-        )
-        c._trigger_event.assert_any_await(
-            '__disconnect_final', namespace='/baz'
-        )
+        c._trigger_event.assert_any_await('disconnect', '/baz',
+                                          c.reason.SERVER_DISCONNECT)
+        c._trigger_event.assert_any_await('__disconnect_final', '/baz')
         assert c.namespaces == {'/foo': '1', '/bar': '2'}
         assert c.connected
 
@@ -632,8 +621,9 @@ class TestAsyncClient:
         c.namespaces = {'/foo': '1', '/bar': '2'}
         c._trigger_event = mock.AsyncMock()
         await c._handle_disconnect('/')
-        c._trigger_event.assert_any_await('disconnect', namespace='/')
-        c._trigger_event.assert_any_await('__disconnect_final', namespace='/')
+        c._trigger_event.assert_any_await('disconnect', '/',
+                                          c.reason.SERVER_DISCONNECT)
+        c._trigger_event.assert_any_await('__disconnect_final', '/')
         assert c.namespaces == {'/foo': '1', '/bar': '2'}
         assert c.connected
 
@@ -817,6 +807,26 @@ class TestAsyncClient:
         await c._trigger_event('bar', '/bar', 1, '2', 3)
         handler.assert_awaited_once_with(1, '2')
         catchall_handler.assert_awaited_once_with('bar', 1, '2', 3)
+
+    async def test_trigger_legacy_disconnect_event(self):
+        c = async_client.AsyncClient()
+
+        @c.on('disconnect')
+        def baz():
+            return 'baz'
+
+        r = await c._trigger_event('disconnect', '/', 'foo')
+        assert r == 'baz'
+
+    async def test_trigger_legacy_disconnect_event_async(self):
+        c = async_client.AsyncClient()
+
+        @c.on('disconnect')
+        async def baz():
+            return 'baz'
+
+        r = await c._trigger_event('disconnect', '/', 'foo')
+        assert r == 'baz'
 
     async def test_trigger_event_class_namespace(self):
         c = async_client.AsyncClient()
@@ -1127,10 +1137,8 @@ class TestAsyncClient:
         c.start_background_task = mock.MagicMock()
         c.sid = 'foo'
         c.eio.state = 'connected'
-        await c._handle_eio_disconnect()
-        c._trigger_event.assert_awaited_once_with(
-            'disconnect', namespace='/'
-        )
+        await c._handle_eio_disconnect('foo')
+        c._trigger_event.assert_awaited_once_with('disconnect', '/', 'foo')
         assert c.sid is None
         assert not c.connected
 
@@ -1141,9 +1149,13 @@ class TestAsyncClient:
         c._trigger_event = mock.AsyncMock()
         c.sid = 'foo'
         c.eio.state = 'connected'
-        await c._handle_eio_disconnect()
-        c._trigger_event.assert_any_await('disconnect', namespace='/foo')
-        c._trigger_event.assert_any_await('disconnect', namespace='/bar')
+        await c._handle_eio_disconnect(c.reason.CLIENT_DISCONNECT)
+        c._trigger_event.assert_any_await('disconnect', '/foo',
+                                          c.reason.CLIENT_DISCONNECT)
+        c._trigger_event.assert_any_await('disconnect', '/bar',
+                                          c.reason.CLIENT_DISCONNECT)
+        c._trigger_event.asserT_any_await('disconnect', '/',
+                                          c.reason.CLIENT_DISCONNECT)
         assert c.sid is None
         assert not c.connected
 
@@ -1151,14 +1163,14 @@ class TestAsyncClient:
         c = async_client.AsyncClient(reconnection=True)
         c.start_background_task = mock.MagicMock()
         c.eio.state = 'connected'
-        await c._handle_eio_disconnect()
+        await c._handle_eio_disconnect(c.reason.CLIENT_DISCONNECT)
         c.start_background_task.assert_called_once_with(c._handle_reconnect)
 
     async def test_eio_disconnect_self_disconnect(self):
         c = async_client.AsyncClient(reconnection=True)
         c.start_background_task = mock.MagicMock()
         c.eio.state = 'disconnected'
-        await c._handle_eio_disconnect()
+        await c._handle_eio_disconnect(c.reason.CLIENT_DISCONNECT)
         c.start_background_task.assert_not_called()
 
     async def test_eio_disconnect_no_reconnect(self):
@@ -1169,13 +1181,10 @@ class TestAsyncClient:
         c.start_background_task = mock.MagicMock()
         c.sid = 'foo'
         c.eio.state = 'connected'
-        await c._handle_eio_disconnect()
-        c._trigger_event.assert_any_await(
-            'disconnect', namespace='/'
-        )
-        c._trigger_event.assert_any_await(
-            '__disconnect_final', namespace='/'
-        )
+        await c._handle_eio_disconnect(c.reason.TRANSPORT_ERROR)
+        c._trigger_event.assert_any_await('disconnect', '/',
+                                          c.reason.TRANSPORT_ERROR)
+        c._trigger_event.assert_any_await('__disconnect_final', '/')
         assert c.sid is None
         assert not c.connected
         c.start_background_task.assert_not_called()
