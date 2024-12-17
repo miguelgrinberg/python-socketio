@@ -17,8 +17,8 @@ async def connect(sid, environ, auth):
 
 
 @sio.event
-def disconnect(sid):
-    print('disconnected', sid)
+def disconnect(sid, reason):
+    print('disconnected', sid, reason)
 
 
 if __name__ == '__main__':
