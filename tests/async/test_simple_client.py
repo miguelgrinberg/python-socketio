@@ -4,11 +4,10 @@ import pytest
 
 from socketio import AsyncSimpleClient
 from socketio.exceptions import SocketIOError, TimeoutError, DisconnectedError
-from .helpers import _run
 
 
 class TestAsyncAsyncSimpleClient:
-    def test_constructor(self):
+    async def test_constructor(self):
         client = AsyncSimpleClient(1, '2', a='3', b=4)
         assert client.client_args == (1, '2')
         assert client.client_kwargs == {'a': '3', 'b': 4}
@@ -16,15 +15,15 @@ class TestAsyncAsyncSimpleClient:
         assert client.input_buffer == []
         assert not client.connected
 
-    def test_connect(self):
+    async def test_connect(self):
         client = AsyncSimpleClient(123, a='b')
         with mock.patch('socketio.async_simple_client.AsyncClient') \
                 as mock_client:
             mock_client.return_value.connect = mock.AsyncMock()
 
-            _run(client.connect('url', headers='h', auth='a', transports='t',
-                                namespace='n', socketio_path='s',
-                                wait_timeout='w'))
+            await client.connect('url', headers='h', auth='a', transports='t',
+                                 namespace='n', socketio_path='s',
+                                 wait_timeout='w')
             mock_client.assert_called_once_with(123, a='b')
             assert client.client == mock_client()
             mock_client().connect.assert_awaited_once_with(
@@ -35,7 +34,7 @@ class TestAsyncAsyncSimpleClient:
             assert client.namespace == 'n'
             assert not client.input_event.is_set()
 
-    def test_connect_context_manager(self):
+    async def test_connect_context_manager(self):
         async def _t():
             async with AsyncSimpleClient(123, a='b') as client:
                 with mock.patch('socketio.async_simple_client.AsyncClient') \
@@ -56,17 +55,17 @@ class TestAsyncAsyncSimpleClient:
                     assert client.namespace == 'n'
                     assert not client.input_event.is_set()
 
-        _run(_t())
+        await _t()
 
-    def test_connect_twice(self):
+    async def test_connect_twice(self):
         client = AsyncSimpleClient(123, a='b')
         client.client = mock.MagicMock()
         client.connected = True
 
         with pytest.raises(RuntimeError):
-            _run(client.connect('url'))
+            await client.connect('url')
 
-    def test_properties(self):
+    async def test_properties(self):
         client = AsyncSimpleClient()
         client.client = mock.MagicMock(transport='websocket')
         client.client.get_sid.return_value = 'sid'
@@ -76,7 +75,7 @@ class TestAsyncAsyncSimpleClient:
         assert client.sid == 'sid'
         assert client.transport == 'websocket'
 
-    def test_emit(self):
+    async def test_emit(self):
         client = AsyncSimpleClient()
         client.client = mock.MagicMock()
         client.client.emit = mock.AsyncMock()
@@ -84,18 +83,18 @@ class TestAsyncAsyncSimpleClient:
         client.connected_event.set()
         client.connected = True
 
-        _run(client.emit('foo', 'bar'))
+        await client.emit('foo', 'bar')
         client.client.emit.assert_awaited_once_with('foo', 'bar',
                                                     namespace='/ns')
 
-    def test_emit_disconnected(self):
+    async def test_emit_disconnected(self):
         client = AsyncSimpleClient()
         client.connected_event.set()
         client.connected = False
         with pytest.raises(DisconnectedError):
-            _run(client.emit('foo', 'bar'))
+            await client.emit('foo', 'bar')
 
-    def test_emit_retries(self):
+    async def test_emit_retries(self):
         client = AsyncSimpleClient()
         client.connected_event.set()
         client.connected = True
@@ -103,10 +102,10 @@ class TestAsyncAsyncSimpleClient:
         client.client.emit = mock.AsyncMock()
         client.client.emit.side_effect = [SocketIOError(), None]
 
-        _run(client.emit('foo', 'bar'))
+        await client.emit('foo', 'bar')
         client.client.emit.assert_awaited_with('foo', 'bar', namespace='/')
 
-    def test_call(self):
+    async def test_call(self):
         client = AsyncSimpleClient()
         client.client = mock.MagicMock()
         client.client.call = mock.AsyncMock()
@@ -115,18 +114,18 @@ class TestAsyncAsyncSimpleClient:
         client.connected_event.set()
         client.connected = True
 
-        assert _run(client.call('foo', 'bar')) == 'result'
+        assert await client.call('foo', 'bar') == 'result'
         client.client.call.assert_awaited_once_with(
             'foo', 'bar', namespace='/ns', timeout=60)
 
-    def test_call_disconnected(self):
+    async def test_call_disconnected(self):
         client = AsyncSimpleClient()
         client.connected_event.set()
         client.connected = False
         with pytest.raises(DisconnectedError):
-            _run(client.call('foo', 'bar'))
+            await client.call('foo', 'bar')
 
-    def test_call_retries(self):
+    async def test_call_retries(self):
         client = AsyncSimpleClient()
         client.connected_event.set()
         client.connected = True
@@ -134,17 +133,17 @@ class TestAsyncAsyncSimpleClient:
         client.client.call = mock.AsyncMock()
         client.client.call.side_effect = [SocketIOError(), 'result']
 
-        assert _run(client.call('foo', 'bar')) == 'result'
+        assert await client.call('foo', 'bar') == 'result'
         client.client.call.assert_awaited_with('foo', 'bar', namespace='/',
                                                timeout=60)
 
-    def test_receive_with_input_buffer(self):
+    async def test_receive_with_input_buffer(self):
         client = AsyncSimpleClient()
         client.input_buffer = ['foo', 'bar']
-        assert _run(client.receive()) == 'foo'
-        assert _run(client.receive()) == 'bar'
+        assert await client.receive() == 'foo'
+        assert await client.receive() == 'bar'
 
-    def test_receive_without_input_buffer(self):
+    async def test_receive_without_input_buffer(self):
         client = AsyncSimpleClient()
         client.connected_event.set()
         client.connected = True
@@ -155,9 +154,9 @@ class TestAsyncAsyncSimpleClient:
             return True
 
         client.input_event.wait = fake_wait
-        assert _run(client.receive()) == 'foo'
+        assert await client.receive() == 'foo'
 
-    def test_receive_with_timeout(self):
+    async def test_receive_with_timeout(self):
         client = AsyncSimpleClient()
         client.connected_event.set()
         client.connected = True
@@ -168,22 +167,22 @@ class TestAsyncAsyncSimpleClient:
 
         client.input_event.wait = fake_wait
         with pytest.raises(TimeoutError):
-            _run(client.receive(timeout=0.01))
+            await client.receive(timeout=0.01)
 
-    def test_receive_disconnected(self):
+    async def test_receive_disconnected(self):
         client = AsyncSimpleClient()
         client.connected_event.set()
         client.connected = False
         with pytest.raises(DisconnectedError):
-            _run(client.receive())
+            await client.receive()
 
-    def test_disconnect(self):
+    async def test_disconnect(self):
         client = AsyncSimpleClient()
         mc = mock.MagicMock()
         mc.disconnect = mock.AsyncMock()
         client.client = mc
         client.connected = True
-        _run(client.disconnect())
-        _run(client.disconnect())
+        await client.disconnect()
+        await client.disconnect()
         mc.disconnect.assert_awaited_once_with()
         assert client.client is None

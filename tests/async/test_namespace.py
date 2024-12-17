@@ -1,11 +1,10 @@
 from unittest import mock
 
 from socketio import async_namespace
-from .helpers import _run
 
 
 class TestAsyncNamespace:
-    def test_connect_event(self):
+    async def test_connect_event(self):
         result = {}
 
         class MyNamespace(async_namespace.AsyncNamespace):
@@ -14,10 +13,10 @@ class TestAsyncNamespace:
 
         ns = MyNamespace('/foo')
         ns._set_server(mock.MagicMock())
-        _run(ns.trigger_event('connect', 'sid', {'foo': 'bar'}))
+        await ns.trigger_event('connect', 'sid', {'foo': 'bar'})
         assert result['result'] == ('sid', {'foo': 'bar'})
 
-    def test_disconnect_event(self):
+    async def test_disconnect_event(self):
         result = {}
 
         class MyNamespace(async_namespace.AsyncNamespace):
@@ -26,10 +25,10 @@ class TestAsyncNamespace:
 
         ns = MyNamespace('/foo')
         ns._set_server(mock.MagicMock())
-        _run(ns.trigger_event('disconnect', 'sid'))
+        await ns.trigger_event('disconnect', 'sid')
         assert result['result'] == 'sid'
 
-    def test_sync_event(self):
+    async def test_sync_event(self):
         result = {}
 
         class MyNamespace(async_namespace.AsyncNamespace):
@@ -38,10 +37,10 @@ class TestAsyncNamespace:
 
         ns = MyNamespace('/foo')
         ns._set_server(mock.MagicMock())
-        _run(ns.trigger_event('custom_message', 'sid', {'data': 'data'}))
+        await ns.trigger_event('custom_message', 'sid', {'data': 'data'})
         assert result['result'] == ('sid', {'data': 'data'})
 
-    def test_async_event(self):
+    async def test_async_event(self):
         result = {}
 
         class MyNamespace(async_namespace.AsyncNamespace):
@@ -50,10 +49,10 @@ class TestAsyncNamespace:
 
         ns = MyNamespace('/foo')
         ns._set_server(mock.MagicMock())
-        _run(ns.trigger_event('custom_message', 'sid', {'data': 'data'}))
+        await ns.trigger_event('custom_message', 'sid', {'data': 'data'})
         assert result['result'] == ('sid', {'data': 'data'})
 
-    def test_event_not_found(self):
+    async def test_event_not_found(self):
         result = {}
 
         class MyNamespace(async_namespace.AsyncNamespace):
@@ -62,20 +61,17 @@ class TestAsyncNamespace:
 
         ns = MyNamespace('/foo')
         ns._set_server(mock.MagicMock())
-        _run(
-            ns.trigger_event('another_custom_message', 'sid', {'data': 'data'})
-        )
+        await ns.trigger_event('another_custom_message', 'sid',
+                               {'data': 'data'})
         assert result == {}
 
-    def test_emit(self):
+    async def test_emit(self):
         ns = async_namespace.AsyncNamespace('/foo')
         mock_server = mock.MagicMock()
         mock_server.emit = mock.AsyncMock()
         ns._set_server(mock_server)
-        _run(
-            ns.emit(
-                'ev', data='data', to='room', skip_sid='skip', callback='cb'
-            )
+        await ns.emit(
+            'ev', data='data', to='room', skip_sid='skip', callback='cb'
         )
         ns.server.emit.assert_awaited_with(
             'ev',
@@ -87,16 +83,14 @@ class TestAsyncNamespace:
             callback='cb',
             ignore_queue=False,
         )
-        _run(
-            ns.emit(
-                'ev',
-                data='data',
-                room='room',
-                skip_sid='skip',
-                namespace='/bar',
-                callback='cb',
-                ignore_queue=True,
-            )
+        await ns.emit(
+            'ev',
+            data='data',
+            room='room',
+            skip_sid='skip',
+            namespace='/bar',
+            callback='cb',
+            ignore_queue=True,
         )
         ns.server.emit.assert_awaited_with(
             'ev',
@@ -109,12 +103,12 @@ class TestAsyncNamespace:
             ignore_queue=True,
         )
 
-    def test_send(self):
+    async def test_send(self):
         ns = async_namespace.AsyncNamespace('/foo')
         mock_server = mock.MagicMock()
         mock_server.send = mock.AsyncMock()
         ns._set_server(mock_server)
-        _run(ns.send(data='data', to='room', skip_sid='skip', callback='cb'))
+        await ns.send(data='data', to='room', skip_sid='skip', callback='cb')
         ns.server.send.assert_awaited_with(
             'data',
             to='room',
@@ -124,15 +118,13 @@ class TestAsyncNamespace:
             callback='cb',
             ignore_queue=False,
         )
-        _run(
-            ns.send(
-                data='data',
-                room='room',
-                skip_sid='skip',
-                namespace='/bar',
-                callback='cb',
-                ignore_queue=True,
-            )
+        await ns.send(
+            data='data',
+            room='room',
+            skip_sid='skip',
+            namespace='/bar',
+            callback='cb',
+            ignore_queue=True,
         )
         ns.server.send.assert_awaited_with(
             'data',
@@ -144,12 +136,12 @@ class TestAsyncNamespace:
             ignore_queue=True,
         )
 
-    def test_call(self):
+    async def test_call(self):
         ns = async_namespace.AsyncNamespace('/foo')
         mock_server = mock.MagicMock()
         mock_server.call = mock.AsyncMock()
         ns._set_server(mock_server)
-        _run(ns.call('ev', data='data', to='sid'))
+        await ns.call('ev', data='data', to='sid')
         ns.server.call.assert_awaited_with(
             'ev',
             data='data',
@@ -159,8 +151,8 @@ class TestAsyncNamespace:
             timeout=None,
             ignore_queue=False,
         )
-        _run(ns.call('ev', data='data', sid='sid', namespace='/bar',
-                     timeout=45, ignore_queue=True))
+        await ns.call('ev', data='data', sid='sid', namespace='/bar',
+                      timeout=45, ignore_queue=True)
         ns.server.call.assert_awaited_with(
             'ev',
             data='data',
@@ -171,45 +163,45 @@ class TestAsyncNamespace:
             ignore_queue=True,
         )
 
-    def test_enter_room(self):
+    async def test_enter_room(self):
         ns = async_namespace.AsyncNamespace('/foo')
         mock_server = mock.MagicMock()
         mock_server.enter_room = mock.AsyncMock()
         ns._set_server(mock_server)
-        _run(ns.enter_room('sid', 'room'))
+        await ns.enter_room('sid', 'room')
         ns.server.enter_room.assert_awaited_with(
             'sid', 'room', namespace='/foo'
         )
-        _run(ns.enter_room('sid', 'room', namespace='/bar'))
+        await ns.enter_room('sid', 'room', namespace='/bar')
         ns.server.enter_room.assert_awaited_with(
             'sid', 'room', namespace='/bar'
         )
 
-    def test_leave_room(self):
+    async def test_leave_room(self):
         ns = async_namespace.AsyncNamespace('/foo')
         mock_server = mock.MagicMock()
         mock_server.leave_room = mock.AsyncMock()
         ns._set_server(mock_server)
-        _run(ns.leave_room('sid', 'room'))
+        await ns.leave_room('sid', 'room')
         ns.server.leave_room.assert_awaited_with(
             'sid', 'room', namespace='/foo'
         )
-        _run(ns.leave_room('sid', 'room', namespace='/bar'))
+        await ns.leave_room('sid', 'room', namespace='/bar')
         ns.server.leave_room.assert_awaited_with(
             'sid', 'room', namespace='/bar'
         )
 
-    def test_close_room(self):
+    async def test_close_room(self):
         ns = async_namespace.AsyncNamespace('/foo')
         mock_server = mock.MagicMock()
         mock_server.close_room = mock.AsyncMock()
         ns._set_server(mock_server)
-        _run(ns.close_room('room'))
+        await ns.close_room('room')
         ns.server.close_room.assert_awaited_with('room', namespace='/foo')
-        _run(ns.close_room('room', namespace='/bar'))
+        await ns.close_room('room', namespace='/bar')
         ns.server.close_room.assert_awaited_with('room', namespace='/bar')
 
-    def test_rooms(self):
+    async def test_rooms(self):
         ns = async_namespace.AsyncNamespace('/foo')
         ns._set_server(mock.MagicMock())
         ns.rooms('sid')
@@ -217,21 +209,21 @@ class TestAsyncNamespace:
         ns.rooms('sid', namespace='/bar')
         ns.server.rooms.assert_called_with('sid', namespace='/bar')
 
-    def test_session(self):
+    async def test_session(self):
         ns = async_namespace.AsyncNamespace('/foo')
         mock_server = mock.MagicMock()
         mock_server.get_session = mock.AsyncMock()
         mock_server.save_session = mock.AsyncMock()
         ns._set_server(mock_server)
-        _run(ns.get_session('sid'))
+        await ns.get_session('sid')
         ns.server.get_session.assert_awaited_with('sid', namespace='/foo')
-        _run(ns.get_session('sid', namespace='/bar'))
+        await ns.get_session('sid', namespace='/bar')
         ns.server.get_session.assert_awaited_with('sid', namespace='/bar')
-        _run(ns.save_session('sid', {'a': 'b'}))
+        await ns.save_session('sid', {'a': 'b'})
         ns.server.save_session.assert_awaited_with(
             'sid', {'a': 'b'}, namespace='/foo'
         )
-        _run(ns.save_session('sid', {'a': 'b'}, namespace='/bar'))
+        await ns.save_session('sid', {'a': 'b'}, namespace='/bar')
         ns.server.save_session.assert_awaited_with(
             'sid', {'a': 'b'}, namespace='/bar'
         )
@@ -240,17 +232,17 @@ class TestAsyncNamespace:
         ns.session('sid', namespace='/bar')
         ns.server.session.assert_called_with('sid', namespace='/bar')
 
-    def test_disconnect(self):
+    async def test_disconnect(self):
         ns = async_namespace.AsyncNamespace('/foo')
         mock_server = mock.MagicMock()
         mock_server.disconnect = mock.AsyncMock()
         ns._set_server(mock_server)
-        _run(ns.disconnect('sid'))
+        await ns.disconnect('sid')
         ns.server.disconnect.assert_awaited_with('sid', namespace='/foo')
-        _run(ns.disconnect('sid', namespace='/bar'))
+        await ns.disconnect('sid', namespace='/bar')
         ns.server.disconnect.assert_awaited_with('sid', namespace='/bar')
 
-    def test_sync_event_client(self):
+    async def test_sync_event_client(self):
         result = {}
 
         class MyNamespace(async_namespace.AsyncClientNamespace):
@@ -259,10 +251,10 @@ class TestAsyncNamespace:
 
         ns = MyNamespace('/foo')
         ns._set_client(mock.MagicMock())
-        _run(ns.trigger_event('custom_message', 'sid', {'data': 'data'}))
+        await ns.trigger_event('custom_message', 'sid', {'data': 'data'})
         assert result['result'] == ('sid', {'data': 'data'})
 
-    def test_async_event_client(self):
+    async def test_async_event_client(self):
         result = {}
 
         class MyNamespace(async_namespace.AsyncClientNamespace):
@@ -271,10 +263,10 @@ class TestAsyncNamespace:
 
         ns = MyNamespace('/foo')
         ns._set_client(mock.MagicMock())
-        _run(ns.trigger_event('custom_message', 'sid', {'data': 'data'}))
+        await ns.trigger_event('custom_message', 'sid', {'data': 'data'})
         assert result['result'] == ('sid', {'data': 'data'})
 
-    def test_event_not_found_client(self):
+    async def test_event_not_found_client(self):
         result = {}
 
         class MyNamespace(async_namespace.AsyncClientNamespace):
@@ -283,57 +275,56 @@ class TestAsyncNamespace:
 
         ns = MyNamespace('/foo')
         ns._set_client(mock.MagicMock())
-        _run(
-            ns.trigger_event('another_custom_message', 'sid', {'data': 'data'})
-        )
+        await ns.trigger_event('another_custom_message', 'sid',
+                               {'data': 'data'})
         assert result == {}
 
-    def test_emit_client(self):
+    async def test_emit_client(self):
         ns = async_namespace.AsyncClientNamespace('/foo')
         mock_client = mock.MagicMock()
         mock_client.emit = mock.AsyncMock()
         ns._set_client(mock_client)
-        _run(ns.emit('ev', data='data', callback='cb'))
+        await ns.emit('ev', data='data', callback='cb')
         ns.client.emit.assert_awaited_with(
             'ev', data='data', namespace='/foo', callback='cb'
         )
-        _run(ns.emit('ev', data='data', namespace='/bar', callback='cb'))
+        await ns.emit('ev', data='data', namespace='/bar', callback='cb')
         ns.client.emit.assert_awaited_with(
             'ev', data='data', namespace='/bar', callback='cb'
         )
 
-    def test_send_client(self):
+    async def test_send_client(self):
         ns = async_namespace.AsyncClientNamespace('/foo')
         mock_client = mock.MagicMock()
         mock_client.send = mock.AsyncMock()
         ns._set_client(mock_client)
-        _run(ns.send(data='data', callback='cb'))
+        await ns.send(data='data', callback='cb')
         ns.client.send.assert_awaited_with(
             'data', namespace='/foo', callback='cb'
         )
-        _run(ns.send(data='data', namespace='/bar', callback='cb'))
+        await ns.send(data='data', namespace='/bar', callback='cb')
         ns.client.send.assert_awaited_with(
             'data', namespace='/bar', callback='cb'
         )
 
-    def test_call_client(self):
+    async def test_call_client(self):
         ns = async_namespace.AsyncClientNamespace('/foo')
         mock_client = mock.MagicMock()
         mock_client.call = mock.AsyncMock()
         ns._set_client(mock_client)
-        _run(ns.call('ev', data='data'))
+        await ns.call('ev', data='data')
         ns.client.call.assert_awaited_with(
             'ev', data='data', namespace='/foo', timeout=None
         )
-        _run(ns.call('ev', data='data', namespace='/bar', timeout=45))
+        await ns.call('ev', data='data', namespace='/bar', timeout=45)
         ns.client.call.assert_awaited_with(
             'ev', data='data', namespace='/bar', timeout=45
         )
 
-    def test_disconnect_client(self):
+    async def test_disconnect_client(self):
         ns = async_namespace.AsyncClientNamespace('/foo')
         mock_client = mock.MagicMock()
         mock_client.disconnect = mock.AsyncMock()
         ns._set_client(mock_client)
-        _run(ns.disconnect())
+        await ns.disconnect()
         ns.client.disconnect.assert_awaited_with()

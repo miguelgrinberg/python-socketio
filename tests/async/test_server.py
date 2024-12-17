@@ -11,7 +11,6 @@ from socketio import async_namespace
 from socketio import exceptions
 from socketio import namespace
 from socketio import packet
-from .helpers import _run
 
 
 @mock.patch('socketio.server.engineio.AsyncServer', **{
@@ -32,25 +31,25 @@ class TestAsyncServer:
         mgr.trigger_callback = mock.AsyncMock()
         return mgr
 
-    def test_create(self, eio):
+    async def test_create(self, eio):
         eio.return_value.handle_request = mock.AsyncMock()
         mgr = self._get_mock_manager()
         s = async_server.AsyncServer(
             client_manager=mgr, async_handlers=True, foo='bar'
         )
-        _run(s.handle_request({}))
-        _run(s.handle_request({}))
+        await s.handle_request({})
+        await s.handle_request({})
         eio.assert_called_once_with(**{'foo': 'bar', 'async_handlers': False})
         assert s.manager == mgr
         assert s.eio.on.call_count == 3
         assert s.async_handlers
 
-    def test_attach(self, eio):
+    async def test_attach(self, eio):
         s = async_server.AsyncServer()
         s.attach('app', 'path')
         eio.return_value.attach.assert_called_once_with('app', 'path')
 
-    def test_on_event(self, eio):
+    async def test_on_event(self, eio):
         s = async_server.AsyncServer()
 
         @s.on('connect')
@@ -67,18 +66,16 @@ class TestAsyncServer:
         assert s.handlers['/']['disconnect'] == bar
         assert s.handlers['/foo']['disconnect'] == bar
 
-    def test_emit(self, eio):
+    async def test_emit(self, eio):
         mgr = self._get_mock_manager()
         s = async_server.AsyncServer(client_manager=mgr)
-        _run(
-            s.emit(
-                'my event',
-                {'foo': 'bar'},
-                to='room',
-                skip_sid='123',
-                namespace='/foo',
-                callback='cb',
-            )
+        await s.emit(
+            'my event',
+            {'foo': 'bar'},
+            to='room',
+            skip_sid='123',
+            namespace='/foo',
+            callback='cb',
         )
         s.manager.emit.assert_awaited_once_with(
             'my event',
@@ -89,16 +86,14 @@ class TestAsyncServer:
             callback='cb',
             ignore_queue=False,
         )
-        _run(
-            s.emit(
-                'my event',
-                {'foo': 'bar'},
-                room='room',
-                skip_sid='123',
-                namespace='/foo',
-                callback='cb',
-                ignore_queue=True,
-            )
+        await s.emit(
+            'my event',
+            {'foo': 'bar'},
+            room='room',
+            skip_sid='123',
+            namespace='/foo',
+            callback='cb',
+            ignore_queue=True,
         )
         s.manager.emit.assert_awaited_with(
             'my event',
@@ -110,17 +105,15 @@ class TestAsyncServer:
             ignore_queue=True,
         )
 
-    def test_emit_default_namespace(self, eio):
+    async def test_emit_default_namespace(self, eio):
         mgr = self._get_mock_manager()
         s = async_server.AsyncServer(client_manager=mgr)
-        _run(
-            s.emit(
-                'my event',
-                {'foo': 'bar'},
-                to='room',
-                skip_sid='123',
-                callback='cb',
-            )
+        await s.emit(
+            'my event',
+            {'foo': 'bar'},
+            to='room',
+            skip_sid='123',
+            callback='cb',
         )
         s.manager.emit.assert_awaited_once_with(
             'my event',
@@ -131,15 +124,13 @@ class TestAsyncServer:
             callback='cb',
             ignore_queue=False,
         )
-        _run(
-            s.emit(
-                'my event',
-                {'foo': 'bar'},
-                room='room',
-                skip_sid='123',
-                callback='cb',
-                ignore_queue=True,
-            )
+        await s.emit(
+            'my event',
+            {'foo': 'bar'},
+            room='room',
+            skip_sid='123',
+            callback='cb',
+            ignore_queue=True,
         )
         s.manager.emit.assert_awaited_with(
             'my event',
@@ -151,17 +142,15 @@ class TestAsyncServer:
             ignore_queue=True,
         )
 
-    def test_send(self, eio):
+    async def test_send(self, eio):
         mgr = self._get_mock_manager()
         s = async_server.AsyncServer(client_manager=mgr)
-        _run(
-            s.send(
-                'foo',
-                to='room',
-                skip_sid='123',
-                namespace='/foo',
-                callback='cb',
-            )
+        await s.send(
+            'foo',
+            to='room',
+            skip_sid='123',
+            namespace='/foo',
+            callback='cb',
         )
         s.manager.emit.assert_awaited_once_with(
             'message',
@@ -172,15 +161,13 @@ class TestAsyncServer:
             callback='cb',
             ignore_queue=False,
         )
-        _run(
-            s.send(
-                'foo',
-                room='room',
-                skip_sid='123',
-                namespace='/foo',
-                callback='cb',
-                ignore_queue=True,
-            )
+        await s.send(
+            'foo',
+            room='room',
+            skip_sid='123',
+            namespace='/foo',
+            callback='cb',
+            ignore_queue=True,
         )
         s.manager.emit.assert_awaited_with(
             'message',
@@ -192,7 +179,7 @@ class TestAsyncServer:
             ignore_queue=True,
         )
 
-    def test_call(self, eio):
+    async def test_call(self, eio):
         mgr = self._get_mock_manager()
         s = async_server.AsyncServer(client_manager=mgr)
 
@@ -201,9 +188,9 @@ class TestAsyncServer:
             return True
 
         s.eio.create_event.return_value.wait = fake_event_wait
-        assert _run(s.call('foo', sid='123')) == ('foo', 321)
+        assert await s.call('foo', sid='123') == ('foo', 321)
 
-    def test_call_with_timeout(self, eio):
+    async def test_call_with_timeout(self, eio):
         mgr = self._get_mock_manager()
         s = async_server.AsyncServer(client_manager=mgr)
 
@@ -212,253 +199,253 @@ class TestAsyncServer:
 
         s.eio.create_event.return_value.wait = fake_event_wait
         with pytest.raises(exceptions.TimeoutError):
-            _run(s.call('foo', sid='123', timeout=0.01))
+            await s.call('foo', sid='123', timeout=0.01)
 
-    def test_call_with_broadcast(self, eio):
+    async def test_call_with_broadcast(self, eio):
         s = async_server.AsyncServer()
         with pytest.raises(ValueError):
-            _run(s.call('foo'))
+            await s.call('foo')
 
-    def test_call_without_async_handlers(self, eio):
+    async def test_call_without_async_handlers(self, eio):
         mgr = self._get_mock_manager()
         s = async_server.AsyncServer(
             client_manager=mgr, async_handlers=False
         )
         with pytest.raises(RuntimeError):
-            _run(s.call('foo', sid='123', timeout=12))
+            await s.call('foo', sid='123', timeout=12)
 
-    def test_enter_room(self, eio):
+    async def test_enter_room(self, eio):
         mgr = self._get_mock_manager()
         s = async_server.AsyncServer(client_manager=mgr)
-        _run(s.enter_room('123', 'room', namespace='/foo'))
+        await s.enter_room('123', 'room', namespace='/foo')
         s.manager.enter_room.assert_awaited_once_with('123', '/foo', 'room')
 
-    def test_enter_room_default_namespace(self, eio):
+    async def test_enter_room_default_namespace(self, eio):
         mgr = self._get_mock_manager()
         s = async_server.AsyncServer(client_manager=mgr)
-        _run(s.enter_room('123', 'room'))
+        await s.enter_room('123', 'room')
         s.manager.enter_room.assert_awaited_once_with('123', '/', 'room')
 
-    def test_leave_room(self, eio):
+    async def test_leave_room(self, eio):
         mgr = self._get_mock_manager()
         s = async_server.AsyncServer(client_manager=mgr)
-        _run(s.leave_room('123', 'room', namespace='/foo'))
+        await s.leave_room('123', 'room', namespace='/foo')
         s.manager.leave_room.assert_awaited_once_with('123', '/foo', 'room')
 
-    def test_leave_room_default_namespace(self, eio):
+    async def test_leave_room_default_namespace(self, eio):
         mgr = self._get_mock_manager()
         s = async_server.AsyncServer(client_manager=mgr)
-        _run(s.leave_room('123', 'room'))
+        await s.leave_room('123', 'room')
         s.manager.leave_room.assert_awaited_once_with('123', '/', 'room')
 
-    def test_close_room(self, eio):
+    async def test_close_room(self, eio):
         mgr = self._get_mock_manager()
         s = async_server.AsyncServer(client_manager=mgr)
-        _run(s.close_room('room', namespace='/foo'))
+        await s.close_room('room', namespace='/foo')
         s.manager.close_room.assert_awaited_once_with('room', '/foo')
 
-    def test_close_room_default_namespace(self, eio):
+    async def test_close_room_default_namespace(self, eio):
         mgr = self._get_mock_manager()
         s = async_server.AsyncServer(client_manager=mgr)
-        _run(s.close_room('room'))
+        await s.close_room('room')
         s.manager.close_room.assert_awaited_once_with('room', '/')
 
-    def test_rooms(self, eio):
+    async def test_rooms(self, eio):
         mgr = self._get_mock_manager()
         s = async_server.AsyncServer(client_manager=mgr)
         s.rooms('123', namespace='/foo')
         s.manager.get_rooms.assert_called_once_with('123', '/foo')
 
-    def test_rooms_default_namespace(self, eio):
+    async def test_rooms_default_namespace(self, eio):
         mgr = self._get_mock_manager()
         s = async_server.AsyncServer(client_manager=mgr)
         s.rooms('123')
         s.manager.get_rooms.assert_called_once_with('123', '/')
 
-    def test_handle_request(self, eio):
+    async def test_handle_request(self, eio):
         eio.return_value.handle_request = mock.AsyncMock()
         s = async_server.AsyncServer()
-        _run(s.handle_request('environ'))
+        await s.handle_request('environ')
         s.eio.handle_request.assert_awaited_once_with('environ')
 
-    def test_send_packet(self, eio):
+    async def test_send_packet(self, eio):
         eio.return_value.send = mock.AsyncMock()
         s = async_server.AsyncServer()
-        _run(s._send_packet('123', packet.Packet(
-            packet.EVENT, ['my event', 'my data'], namespace='/foo')))
+        await s._send_packet('123', packet.Packet(
+            packet.EVENT, ['my event', 'my data'], namespace='/foo'))
         s.eio.send.assert_awaited_once_with(
             '123', '2/foo,["my event","my data"]'
         )
 
-    def test_send_eio_packet(self, eio):
+    async def test_send_eio_packet(self, eio):
         eio.return_value.send = mock.AsyncMock()
         s = async_server.AsyncServer()
-        _run(s._send_eio_packet('123', eio_packet.Packet(
-            eio_packet.MESSAGE, 'hello')))
+        await s._send_eio_packet('123', eio_packet.Packet(
+            eio_packet.MESSAGE, 'hello'))
         assert s.eio.send_packet.await_count == 1
         assert s.eio.send_packet.await_args_list[0][0][0] == '123'
         pkt = s.eio.send_packet.await_args_list[0][0][1]
         assert pkt.encode() == '4hello'
 
-    def test_transport(self, eio):
+    async def test_transport(self, eio):
         eio.return_value.send = mock.AsyncMock()
         s = async_server.AsyncServer()
         s.eio.transport = mock.MagicMock(return_value='polling')
-        sid_foo = _run(s.manager.connect('123', '/foo'))
+        sid_foo = await s.manager.connect('123', '/foo')
         assert s.transport(sid_foo, '/foo') == 'polling'
         s.eio.transport.assert_called_once_with('123')
 
-    def test_handle_connect(self, eio):
+    async def test_handle_connect(self, eio):
         eio.return_value.send = mock.AsyncMock()
         s = async_server.AsyncServer()
         s.manager.initialize = mock.MagicMock()
         handler = mock.MagicMock()
         s.on('connect', handler)
-        _run(s._handle_eio_connect('123', 'environ'))
-        _run(s._handle_eio_message('123', '0'))
+        await s._handle_eio_connect('123', 'environ')
+        await s._handle_eio_message('123', '0')
         assert s.manager.is_connected('1', '/')
         handler.assert_called_once_with('1', 'environ')
         s.eio.send.assert_awaited_once_with('123', '0{"sid":"1"}')
         assert s.manager.initialize.call_count == 1
-        _run(s._handle_eio_connect('456', 'environ'))
-        _run(s._handle_eio_message('456', '0'))
+        await s._handle_eio_connect('456', 'environ')
+        await s._handle_eio_message('456', '0')
         assert s.manager.initialize.call_count == 1
 
-    def test_handle_connect_with_auth(self, eio):
+    async def test_handle_connect_with_auth(self, eio):
         eio.return_value.send = mock.AsyncMock()
         s = async_server.AsyncServer()
         s.manager.initialize = mock.MagicMock()
         handler = mock.MagicMock()
         s.on('connect', handler)
-        _run(s._handle_eio_connect('123', 'environ'))
-        _run(s._handle_eio_message('123', '0{"token":"abc"}'))
+        await s._handle_eio_connect('123', 'environ')
+        await s._handle_eio_message('123', '0{"token":"abc"}')
         assert s.manager.is_connected('1', '/')
         handler.assert_called_once_with('1', 'environ', {'token': 'abc'})
         s.eio.send.assert_awaited_once_with('123', '0{"sid":"1"}')
         assert s.manager.initialize.call_count == 1
-        _run(s._handle_eio_connect('456', 'environ'))
-        _run(s._handle_eio_message('456', '0'))
+        await s._handle_eio_connect('456', 'environ')
+        await s._handle_eio_message('456', '0')
         assert s.manager.initialize.call_count == 1
 
-    def test_handle_connect_with_auth_none(self, eio):
+    async def test_handle_connect_with_auth_none(self, eio):
         eio.return_value.send = mock.AsyncMock()
         s = async_server.AsyncServer()
         s.manager.initialize = mock.MagicMock()
         handler = mock.MagicMock(side_effect=[TypeError, None, None])
         s.on('connect', handler)
-        _run(s._handle_eio_connect('123', 'environ'))
-        _run(s._handle_eio_message('123', '0'))
+        await s._handle_eio_connect('123', 'environ')
+        await s._handle_eio_message('123', '0')
         assert s.manager.is_connected('1', '/')
         handler.assert_called_with('1', 'environ', None)
         s.eio.send.assert_awaited_once_with('123', '0{"sid":"1"}')
         assert s.manager.initialize.call_count == 1
-        _run(s._handle_eio_connect('456', 'environ'))
-        _run(s._handle_eio_message('456', '0'))
+        await s._handle_eio_connect('456', 'environ')
+        await s._handle_eio_message('456', '0')
         assert s.manager.initialize.call_count == 1
 
-    def test_handle_connect_async(self, eio):
+    async def test_handle_connect_async(self, eio):
         eio.return_value.send = mock.AsyncMock()
         s = async_server.AsyncServer()
         s.manager.initialize = mock.MagicMock()
         handler = mock.AsyncMock()
         s.on('connect', handler)
-        _run(s._handle_eio_connect('123', 'environ'))
-        _run(s._handle_eio_message('123', '0'))
+        await s._handle_eio_connect('123', 'environ')
+        await s._handle_eio_message('123', '0')
         assert s.manager.is_connected('1', '/')
         handler.assert_awaited_once_with('1', 'environ')
         s.eio.send.assert_awaited_once_with('123', '0{"sid":"1"}')
         assert s.manager.initialize.call_count == 1
-        _run(s._handle_eio_connect('456', 'environ'))
-        _run(s._handle_eio_message('456', '0'))
+        await s._handle_eio_connect('456', 'environ')
+        await s._handle_eio_message('456', '0')
         assert s.manager.initialize.call_count == 1
 
-    def test_handle_connect_with_default_implied_namespaces(self, eio):
+    async def test_handle_connect_with_default_implied_namespaces(self, eio):
         eio.return_value.send = mock.AsyncMock()
         s = async_server.AsyncServer()
-        _run(s._handle_eio_connect('123', 'environ'))
-        _run(s._handle_eio_message('123', '0'))
-        _run(s._handle_eio_message('123', '0/foo,'))
+        await s._handle_eio_connect('123', 'environ')
+        await s._handle_eio_message('123', '0')
+        await s._handle_eio_message('123', '0/foo,')
         assert s.manager.is_connected('1', '/')
         assert not s.manager.is_connected('2', '/foo')
 
-    def test_handle_connect_with_implied_namespaces(self, eio):
+    async def test_handle_connect_with_implied_namespaces(self, eio):
         eio.return_value.send = mock.AsyncMock()
         s = async_server.AsyncServer(namespaces=['/foo'])
-        _run(s._handle_eio_connect('123', 'environ'))
-        _run(s._handle_eio_message('123', '0'))
-        _run(s._handle_eio_message('123', '0/foo,'))
+        await s._handle_eio_connect('123', 'environ')
+        await s._handle_eio_message('123', '0')
+        await s._handle_eio_message('123', '0/foo,')
         assert not s.manager.is_connected('1', '/')
         assert s.manager.is_connected('1', '/foo')
 
-    def test_handle_connect_with_all_implied_namespaces(self, eio):
+    async def test_handle_connect_with_all_implied_namespaces(self, eio):
         eio.return_value.send = mock.AsyncMock()
         s = async_server.AsyncServer(namespaces='*')
-        _run(s._handle_eio_connect('123', 'environ'))
-        _run(s._handle_eio_message('123', '0'))
-        _run(s._handle_eio_message('123', '0/foo,'))
+        await s._handle_eio_connect('123', 'environ')
+        await s._handle_eio_message('123', '0')
+        await s._handle_eio_message('123', '0/foo,')
         assert s.manager.is_connected('1', '/')
         assert s.manager.is_connected('2', '/foo')
 
-    def test_handle_connect_namespace(self, eio):
+    async def test_handle_connect_namespace(self, eio):
         eio.return_value.send = mock.AsyncMock()
         s = async_server.AsyncServer()
         handler = mock.MagicMock()
         s.on('connect', handler, namespace='/foo')
-        _run(s._handle_eio_connect('123', 'environ'))
-        _run(s._handle_eio_message('123', '0/foo,'))
+        await s._handle_eio_connect('123', 'environ')
+        await s._handle_eio_message('123', '0/foo,')
         assert s.manager.is_connected('1', '/foo')
         handler.assert_called_once_with('1', 'environ')
         s.eio.send.assert_awaited_once_with('123', '0/foo,{"sid":"1"}')
 
-    def test_handle_connect_always_connect(self, eio):
+    async def test_handle_connect_always_connect(self, eio):
         eio.return_value.send = mock.AsyncMock()
         s = async_server.AsyncServer(always_connect=True)
         s.manager.initialize = mock.MagicMock()
         handler = mock.MagicMock()
         s.on('connect', handler)
-        _run(s._handle_eio_connect('123', 'environ'))
-        _run(s._handle_eio_message('123', '0'))
+        await s._handle_eio_connect('123', 'environ')
+        await s._handle_eio_message('123', '0')
         assert s.manager.is_connected('1', '/')
         handler.assert_called_once_with('1', 'environ')
         s.eio.send.assert_awaited_once_with('123', '0{"sid":"1"}')
         assert s.manager.initialize.call_count == 1
-        _run(s._handle_eio_connect('456', 'environ'))
-        _run(s._handle_eio_message('456', '0'))
+        await s._handle_eio_connect('456', 'environ')
+        await s._handle_eio_message('456', '0')
         assert s.manager.initialize.call_count == 1
 
-    def test_handle_connect_rejected(self, eio):
+    async def test_handle_connect_rejected(self, eio):
         eio.return_value.send = mock.AsyncMock()
         s = async_server.AsyncServer()
         handler = mock.MagicMock(return_value=False)
         s.on('connect', handler)
-        _run(s._handle_eio_connect('123', 'environ'))
-        _run(s._handle_eio_message('123', '0'))
+        await s._handle_eio_connect('123', 'environ')
+        await s._handle_eio_message('123', '0')
         assert not s.manager.is_connected('1', '/foo')
         handler.assert_called_once_with('1', 'environ')
         s.eio.send.assert_awaited_once_with(
             '123', '4{"message":"Connection rejected by server"}')
         assert s.environ == {'123': 'environ'}
 
-    def test_handle_connect_namespace_rejected(self, eio):
+    async def test_handle_connect_namespace_rejected(self, eio):
         eio.return_value.send = mock.AsyncMock()
         s = async_server.AsyncServer()
         handler = mock.MagicMock(return_value=False)
         s.on('connect', handler, namespace='/foo')
-        _run(s._handle_eio_connect('123', 'environ'))
-        _run(s._handle_eio_message('123', '0/foo,'))
+        await s._handle_eio_connect('123', 'environ')
+        await s._handle_eio_message('123', '0/foo,')
         assert not s.manager.is_connected('1', '/foo')
         handler.assert_called_once_with('1', 'environ')
         s.eio.send.assert_any_await(
             '123', '4/foo,{"message":"Connection rejected by server"}')
         assert s.environ == {'123': 'environ'}
 
-    def test_handle_connect_rejected_always_connect(self, eio):
+    async def test_handle_connect_rejected_always_connect(self, eio):
         eio.return_value.send = mock.AsyncMock()
         s = async_server.AsyncServer(always_connect=True)
         handler = mock.MagicMock(return_value=False)
         s.on('connect', handler)
-        _run(s._handle_eio_connect('123', 'environ'))
-        _run(s._handle_eio_message('123', '0'))
+        await s._handle_eio_connect('123', 'environ')
+        await s._handle_eio_message('123', '0')
         assert not s.manager.is_connected('1', '/')
         handler.assert_called_once_with('1', 'environ')
         s.eio.send.assert_any_await('123', '0{"sid":"1"}')
@@ -466,13 +453,13 @@ class TestAsyncServer:
             '123', '1{"message":"Connection rejected by server"}')
         assert s.environ == {'123': 'environ'}
 
-    def test_handle_connect_namespace_rejected_always_connect(self, eio):
+    async def test_handle_connect_namespace_rejected_always_connect(self, eio):
         eio.return_value.send = mock.AsyncMock()
         s = async_server.AsyncServer(always_connect=True)
         handler = mock.MagicMock(return_value=False)
         s.on('connect', handler, namespace='/foo')
-        _run(s._handle_eio_connect('123', 'environ'))
-        _run(s._handle_eio_message('123', '0/foo,'))
+        await s._handle_eio_connect('123', 'environ')
+        await s._handle_eio_message('123', '0/foo,')
         assert not s.manager.is_connected('1', '/foo')
         handler.assert_called_once_with('1', 'environ')
         s.eio.send.assert_any_await('123', '0/foo,{"sid":"1"}')
@@ -480,37 +467,37 @@ class TestAsyncServer:
             '123', '1/foo,{"message":"Connection rejected by server"}')
         assert s.environ == {'123': 'environ'}
 
-    def test_handle_connect_rejected_with_exception(self, eio):
+    async def test_handle_connect_rejected_with_exception(self, eio):
         eio.return_value.send = mock.AsyncMock()
         s = async_server.AsyncServer()
         handler = mock.MagicMock(
             side_effect=exceptions.ConnectionRefusedError('fail_reason')
         )
         s.on('connect', handler)
-        _run(s._handle_eio_connect('123', 'environ'))
-        _run(s._handle_eio_message('123', '0'))
+        await s._handle_eio_connect('123', 'environ')
+        await s._handle_eio_message('123', '0')
         assert not s.manager.is_connected('1', '/')
         handler.assert_called_once_with('1', 'environ')
         s.eio.send.assert_awaited_once_with(
             '123', '4{"message":"fail_reason"}')
         assert s.environ == {'123': 'environ'}
 
-    def test_handle_connect_rejected_with_empty_exception(self, eio):
+    async def test_handle_connect_rejected_with_empty_exception(self, eio):
         eio.return_value.send = mock.AsyncMock()
         s = async_server.AsyncServer()
         handler = mock.MagicMock(
             side_effect=exceptions.ConnectionRefusedError()
         )
         s.on('connect', handler)
-        _run(s._handle_eio_connect('123', 'environ'))
-        _run(s._handle_eio_message('123', '0'))
+        await s._handle_eio_connect('123', 'environ')
+        await s._handle_eio_message('123', '0')
         assert not s.manager.is_connected('1', '/')
         handler.assert_called_once_with('1', 'environ')
         s.eio.send.assert_awaited_once_with(
             '123', '4{"message":"Connection rejected by server"}')
         assert s.environ == {'123': 'environ'}
 
-    def test_handle_connect_namespace_rejected_with_exception(self, eio):
+    async def test_handle_connect_namespace_rejected_with_exception(self, eio):
         eio.return_value.send = mock.AsyncMock()
         s = async_server.AsyncServer()
         handler = mock.MagicMock(
@@ -518,109 +505,110 @@ class TestAsyncServer:
                 'fail_reason', 1, '2')
         )
         s.on('connect', handler, namespace='/foo')
-        _run(s._handle_eio_connect('123', 'environ'))
-        _run(s._handle_eio_message('123', '0/foo,'))
+        await s._handle_eio_connect('123', 'environ')
+        await s._handle_eio_message('123', '0/foo,')
         assert not s.manager.is_connected('1', '/foo')
         handler.assert_called_once_with('1', 'environ')
         s.eio.send.assert_awaited_once_with(
             '123', '4/foo,{"message":"fail_reason","data":[1,"2"]}')
         assert s.environ == {'123': 'environ'}
 
-    def test_handle_connect_namespace_rejected_with_empty_exception(self, eio):
+    async def test_handle_connect_namespace_rejected_with_empty_exception(
+            self, eio):
         eio.return_value.send = mock.AsyncMock()
         s = async_server.AsyncServer()
         handler = mock.MagicMock(
             side_effect=exceptions.ConnectionRefusedError()
         )
         s.on('connect', handler, namespace='/foo')
-        _run(s._handle_eio_connect('123', 'environ'))
-        _run(s._handle_eio_message('123', '0/foo,'))
+        await s._handle_eio_connect('123', 'environ')
+        await s._handle_eio_message('123', '0/foo,')
         assert not s.manager.is_connected('1', '/foo')
         handler.assert_called_once_with('1', 'environ')
         s.eio.send.assert_awaited_once_with(
             '123', '4/foo,{"message":"Connection rejected by server"}')
         assert s.environ == {'123': 'environ'}
 
-    def test_handle_disconnect(self, eio):
+    async def test_handle_disconnect(self, eio):
         eio.return_value.send = mock.AsyncMock()
         s = async_server.AsyncServer()
         s.manager.disconnect = mock.AsyncMock()
         handler = mock.MagicMock()
         s.on('disconnect', handler)
-        _run(s._handle_eio_connect('123', 'environ'))
-        _run(s._handle_eio_message('123', '0'))
-        _run(s._handle_eio_disconnect('123'))
+        await s._handle_eio_connect('123', 'environ')
+        await s._handle_eio_message('123', '0')
+        await s._handle_eio_disconnect('123')
         handler.assert_called_once_with('1')
         s.manager.disconnect.assert_awaited_once_with(
             '1', '/', ignore_queue=True)
         assert s.environ == {}
 
-    def test_handle_disconnect_namespace(self, eio):
+    async def test_handle_disconnect_namespace(self, eio):
         eio.return_value.send = mock.AsyncMock()
         s = async_server.AsyncServer()
         handler = mock.MagicMock()
         s.on('disconnect', handler)
         handler_namespace = mock.MagicMock()
         s.on('disconnect', handler_namespace, namespace='/foo')
-        _run(s._handle_eio_connect('123', 'environ'))
-        _run(s._handle_eio_message('123', '0/foo,'))
-        _run(s._handle_eio_disconnect('123'))
+        await s._handle_eio_connect('123', 'environ')
+        await s._handle_eio_message('123', '0/foo,')
+        await s._handle_eio_disconnect('123')
         handler.assert_not_called()
         handler_namespace.assert_called_once_with('1')
         assert s.environ == {}
 
-    def test_handle_disconnect_only_namespace(self, eio):
+    async def test_handle_disconnect_only_namespace(self, eio):
         eio.return_value.send = mock.AsyncMock()
         s = async_server.AsyncServer()
         handler = mock.MagicMock()
         s.on('disconnect', handler)
         handler_namespace = mock.MagicMock()
         s.on('disconnect', handler_namespace, namespace='/foo')
-        _run(s._handle_eio_connect('123', 'environ'))
-        _run(s._handle_eio_message('123', '0/foo,'))
-        _run(s._handle_eio_message('123', '1/foo,'))
+        await s._handle_eio_connect('123', 'environ')
+        await s._handle_eio_message('123', '0/foo,')
+        await s._handle_eio_message('123', '1/foo,')
         assert handler.call_count == 0
         handler_namespace.assert_called_once_with('1')
         assert s.environ == {'123': 'environ'}
 
-    def test_handle_disconnect_unknown_client(self, eio):
+    async def test_handle_disconnect_unknown_client(self, eio):
         mgr = self._get_mock_manager()
         s = async_server.AsyncServer(client_manager=mgr)
-        _run(s._handle_eio_disconnect('123'))
+        await s._handle_eio_disconnect('123')
 
-    def test_handle_event(self, eio):
+    async def test_handle_event(self, eio):
         eio.return_value.send = mock.AsyncMock()
         s = async_server.AsyncServer(async_handlers=False)
-        sid = _run(s.manager.connect('123', '/'))
+        sid = await s.manager.connect('123', '/')
         handler = mock.AsyncMock()
         catchall_handler = mock.AsyncMock()
         s.on('msg', handler)
         s.on('*', catchall_handler)
-        _run(s._handle_eio_message('123', '2["msg","a","b"]'))
-        _run(s._handle_eio_message('123', '2["my message","a","b","c"]'))
+        await s._handle_eio_message('123', '2["msg","a","b"]')
+        await s._handle_eio_message('123', '2["my message","a","b","c"]')
         handler.assert_awaited_once_with(sid, 'a', 'b')
         catchall_handler.assert_awaited_once_with(
             'my message', sid, 'a', 'b', 'c')
 
-    def test_handle_event_with_namespace(self, eio):
+    async def test_handle_event_with_namespace(self, eio):
         eio.return_value.send = mock.AsyncMock()
         s = async_server.AsyncServer(async_handlers=False)
-        sid = _run(s.manager.connect('123', '/foo'))
+        sid = await s.manager.connect('123', '/foo')
         handler = mock.MagicMock()
         catchall_handler = mock.MagicMock()
         s.on('msg', handler, namespace='/foo')
         s.on('*', catchall_handler, namespace='/foo')
-        _run(s._handle_eio_message('123', '2/foo,["msg","a","b"]'))
-        _run(s._handle_eio_message('123', '2/foo,["my message","a","b","c"]'))
+        await s._handle_eio_message('123', '2/foo,["msg","a","b"]')
+        await s._handle_eio_message('123', '2/foo,["my message","a","b","c"]')
         handler.assert_called_once_with(sid, 'a', 'b')
         catchall_handler.assert_called_once_with(
             'my message', sid, 'a', 'b', 'c')
 
-    def test_handle_event_with_catchall_namespace(self, eio):
+    async def test_handle_event_with_catchall_namespace(self, eio):
         eio.return_value.send = mock.AsyncMock()
         s = async_server.AsyncServer(async_handlers=False)
-        sid_foo = _run(s.manager.connect('123', '/foo'))
-        sid_bar = _run(s.manager.connect('123', '/bar'))
+        sid_foo = await s.manager.connect('123', '/foo')
+        sid_bar = await s.manager.connect('123', '/bar')
         connect_star_handler = mock.MagicMock()
         msg_foo_handler = mock.MagicMock()
         msg_star_handler = mock.MagicMock()
@@ -631,12 +619,12 @@ class TestAsyncServer:
         s.on('msg', msg_star_handler, namespace='*')
         s.on('*', star_foo_handler, namespace='/foo')
         s.on('*', star_star_handler, namespace='*')
-        _run(s._trigger_event('connect', '/bar', sid_bar))
-        _run(s._handle_eio_message('123', '2/foo,["msg","a","b"]'))
-        _run(s._handle_eio_message('123', '2/bar,["msg","a","b"]'))
-        _run(s._handle_eio_message('123', '2/foo,["my message","a","b","c"]'))
-        _run(s._handle_eio_message('123', '2/bar,["my message","a","b","c"]'))
-        _run(s._trigger_event('disconnect', '/bar', sid_bar))
+        await s._trigger_event('connect', '/bar', sid_bar)
+        await s._handle_eio_message('123', '2/foo,["msg","a","b"]')
+        await s._handle_eio_message('123', '2/bar,["msg","a","b"]')
+        await s._handle_eio_message('123', '2/foo,["my message","a","b","c"]')
+        await s._handle_eio_message('123', '2/bar,["my message","a","b","c"]')
+        await s._trigger_event('disconnect', '/bar', sid_bar)
         connect_star_handler.assert_called_once_with('/bar', sid_bar)
         msg_foo_handler.assert_called_once_with(sid_foo, 'a', 'b')
         msg_star_handler.assert_called_once_with('/bar', sid_bar, 'a', 'b')
@@ -645,157 +633,151 @@ class TestAsyncServer:
         star_star_handler.assert_called_once_with(
             'my message', '/bar', sid_bar, 'a', 'b', 'c')
 
-    def test_handle_event_with_disconnected_namespace(self, eio):
+    async def test_handle_event_with_disconnected_namespace(self, eio):
         eio.return_value.send = mock.AsyncMock()
         s = async_server.AsyncServer(async_handlers=False)
-        _run(s.manager.connect('123', '/foo'))
+        await s.manager.connect('123', '/foo')
         handler = mock.MagicMock()
         s.on('my message', handler, namespace='/bar')
-        _run(s._handle_eio_message('123', '2/bar,["my message","a","b","c"]'))
+        await s._handle_eio_message('123', '2/bar,["my message","a","b","c"]')
         handler.assert_not_called()
 
-    def test_handle_event_binary(self, eio):
+    async def test_handle_event_binary(self, eio):
         eio.return_value.send = mock.AsyncMock()
         s = async_server.AsyncServer(async_handlers=False)
-        sid = _run(s.manager.connect('123', '/'))
+        sid = await s.manager.connect('123', '/')
         handler = mock.MagicMock()
         s.on('my message', handler)
-        _run(
-            s._handle_eio_message(
-                '123',
-                '52-["my message","a",'
-                '{"_placeholder":true,"num":1},'
-                '{"_placeholder":true,"num":0}]',
-            )
+        await s._handle_eio_message(
+            '123',
+            '52-["my message","a",'
+            '{"_placeholder":true,"num":1},'
+            '{"_placeholder":true,"num":0}]',
         )
-        _run(s._handle_eio_message('123', b'foo'))
-        _run(s._handle_eio_message('123', b'bar'))
+        await s._handle_eio_message('123', b'foo')
+        await s._handle_eio_message('123', b'bar')
         handler.assert_called_once_with(sid, 'a', b'bar', b'foo')
 
-    def test_handle_event_binary_ack(self, eio):
+    async def test_handle_event_binary_ack(self, eio):
         eio.return_value.send = mock.AsyncMock()
         s = async_server.AsyncServer(async_handlers=False)
         s.manager.trigger_callback = mock.AsyncMock()
-        sid = _run(s.manager.connect('123', '/'))
-        _run(
-            s._handle_eio_message(
-                '123',
-                '61-321["my message","a",' '{"_placeholder":true,"num":0}]',
-            )
+        sid = await s.manager.connect('123', '/')
+        await s._handle_eio_message(
+            '123',
+            '61-321["my message","a",' '{"_placeholder":true,"num":0}]',
         )
-        _run(s._handle_eio_message('123', b'foo'))
+        await s._handle_eio_message('123', b'foo')
         s.manager.trigger_callback.assert_awaited_once_with(
             sid, 321, ['my message', 'a', b'foo']
         )
 
-    def test_handle_event_with_ack(self, eio):
+    async def test_handle_event_with_ack(self, eio):
         eio.return_value.send = mock.AsyncMock()
         s = async_server.AsyncServer(async_handlers=False)
-        sid = _run(s.manager.connect('123', '/'))
+        sid = await s.manager.connect('123', '/')
         handler = mock.MagicMock(return_value='foo')
         s.on('my message', handler)
-        _run(s._handle_eio_message('123', '21000["my message","foo"]'))
+        await s._handle_eio_message('123', '21000["my message","foo"]')
         handler.assert_called_once_with(sid, 'foo')
         s.eio.send.assert_awaited_once_with(
             '123', '31000["foo"]'
         )
 
-    def test_handle_unknown_event_with_ack(self, eio):
+    async def test_handle_unknown_event_with_ack(self, eio):
         eio.return_value.send = mock.AsyncMock()
         s = async_server.AsyncServer(async_handlers=False)
-        _run(s.manager.connect('123', '/'))
+        await s.manager.connect('123', '/')
         handler = mock.MagicMock(return_value='foo')
         s.on('my message', handler)
-        _run(s._handle_eio_message('123', '21000["another message","foo"]'))
+        await s._handle_eio_message('123', '21000["another message","foo"]')
         s.eio.send.assert_not_awaited()
 
-    def test_handle_event_with_ack_none(self, eio):
+    async def test_handle_event_with_ack_none(self, eio):
         eio.return_value.send = mock.AsyncMock()
         s = async_server.AsyncServer(async_handlers=False)
-        sid = _run(s.manager.connect('123', '/'))
+        sid = await s.manager.connect('123', '/')
         handler = mock.MagicMock(return_value=None)
         s.on('my message', handler)
-        _run(s._handle_eio_message('123', '21000["my message","foo"]'))
+        await s._handle_eio_message('123', '21000["my message","foo"]')
         handler.assert_called_once_with(sid, 'foo')
         s.eio.send.assert_awaited_once_with('123', '31000[]')
 
-    def test_handle_event_with_ack_tuple(self, eio):
+    async def test_handle_event_with_ack_tuple(self, eio):
         eio.return_value.send = mock.AsyncMock()
         s = async_server.AsyncServer(async_handlers=False)
-        sid = _run(s.manager.connect('123', '/'))
+        sid = await s.manager.connect('123', '/')
         handler = mock.MagicMock(return_value=(1, '2', True))
         s.on('my message', handler)
-        _run(s._handle_eio_message('123', '21000["my message","a","b","c"]'))
+        await s._handle_eio_message('123', '21000["my message","a","b","c"]')
         handler.assert_called_once_with(sid, 'a', 'b', 'c')
         s.eio.send.assert_awaited_once_with(
             '123', '31000[1,"2",true]'
         )
 
-    def test_handle_event_with_ack_list(self, eio):
+    async def test_handle_event_with_ack_list(self, eio):
         eio.return_value.send = mock.AsyncMock()
         s = async_server.AsyncServer(async_handlers=False)
-        sid = _run(s.manager.connect('123', '/'))
+        sid = await s.manager.connect('123', '/')
         handler = mock.MagicMock(return_value=[1, '2', True])
         s.on('my message', handler)
-        _run(s._handle_eio_message('123', '21000["my message","a","b","c"]'))
+        await s._handle_eio_message('123', '21000["my message","a","b","c"]')
         handler.assert_called_once_with(sid, 'a', 'b', 'c')
         s.eio.send.assert_awaited_once_with(
             '123', '31000[[1,"2",true]]'
         )
 
-    def test_handle_event_with_ack_binary(self, eio):
+    async def test_handle_event_with_ack_binary(self, eio):
         eio.return_value.send = mock.AsyncMock()
         s = async_server.AsyncServer(async_handlers=False)
-        sid = _run(s.manager.connect('123', '/'))
+        sid = await s.manager.connect('123', '/')
         handler = mock.MagicMock(return_value=b'foo')
         s.on('my message', handler)
-        _run(s._handle_eio_message('123', '21000["my message","foo"]'))
+        await s._handle_eio_message('123', '21000["my message","foo"]')
         handler.assert_any_call(sid, 'foo')
 
-    def test_handle_error_packet(self, eio):
+    async def test_handle_error_packet(self, eio):
         s = async_server.AsyncServer()
         with pytest.raises(ValueError):
-            _run(s._handle_eio_message('123', '4'))
+            await s._handle_eio_message('123', '4')
 
-    def test_handle_invalid_packet(self, eio):
+    async def test_handle_invalid_packet(self, eio):
         s = async_server.AsyncServer()
         with pytest.raises(ValueError):
-            _run(s._handle_eio_message('123', '9'))
+            await s._handle_eio_message('123', '9')
 
-    def test_send_with_ack(self, eio):
+    async def test_send_with_ack(self, eio):
         eio.return_value.send = mock.AsyncMock()
         s = async_server.AsyncServer()
         s.handlers['/'] = {}
-        _run(s._handle_eio_connect('123', 'environ'))
-        _run(s._handle_eio_message('123', '0'))
+        await s._handle_eio_connect('123', 'environ')
+        await s._handle_eio_message('123', '0')
         cb = mock.MagicMock()
         id1 = s.manager._generate_ack_id('1', cb)
         id2 = s.manager._generate_ack_id('1', cb)
-        _run(s._send_packet('123', packet.Packet(
-            packet.EVENT, ['my event', 'foo'], id=id1)))
-        _run(s._send_packet('123', packet.Packet(
-            packet.EVENT, ['my event', 'bar'], id=id2)))
-        _run(s._handle_eio_message('123', '31["foo",2]'))
+        await s._send_packet('123', packet.Packet(
+            packet.EVENT, ['my event', 'foo'], id=id1))
+        await s._send_packet('123', packet.Packet(
+            packet.EVENT, ['my event', 'bar'], id=id2))
+        await s._handle_eio_message('123', '31["foo",2]')
         cb.assert_called_once_with('foo', 2)
 
-    def test_send_with_ack_namespace(self, eio):
+    async def test_send_with_ack_namespace(self, eio):
         eio.return_value.send = mock.AsyncMock()
         s = async_server.AsyncServer()
         s.handlers['/foo'] = {}
-        _run(s._handle_eio_connect('123', 'environ'))
-        _run(s._handle_eio_message('123', '0/foo,'))
+        await s._handle_eio_connect('123', 'environ')
+        await s._handle_eio_message('123', '0/foo,')
         cb = mock.MagicMock()
         id = s.manager._generate_ack_id('1', cb)
-        _run(
-            s._send_packet(
-                '123', packet.Packet(packet.EVENT, ['my event', 'foo'],
-                                     namespace='/foo', id=id)
-            )
+        await s._send_packet(
+            '123', packet.Packet(packet.EVENT, ['my event', 'foo'],
+                                 namespace='/foo', id=id)
         )
-        _run(s._handle_eio_message('123', '3/foo,1["foo",2]'))
+        await s._handle_eio_message('123', '3/foo,1["foo",2]')
         cb.assert_called_once_with('foo', 2)
 
-    def test_session(self, eio):
+    async def test_session(self, eio):
         fake_session = {}
 
         async def fake_get_session(eio_sid):
@@ -836,65 +818,65 @@ class TestAsyncServer:
                 '/ns': {'a': 'b'},
             }
 
-        _run(_test())
+        await _test()
 
-    def test_disconnect(self, eio):
+    async def test_disconnect(self, eio):
         eio.return_value.send = mock.AsyncMock()
         eio.return_value.disconnect = mock.AsyncMock()
         s = async_server.AsyncServer()
         s.handlers['/'] = {}
-        _run(s._handle_eio_connect('123', 'environ'))
-        _run(s._handle_eio_message('123', '0'))
-        _run(s.disconnect('1'))
+        await s._handle_eio_connect('123', 'environ')
+        await s._handle_eio_message('123', '0')
+        await s.disconnect('1')
         s.eio.send.assert_any_await('123', '1')
         assert not s.manager.is_connected('1', '/')
 
-    def test_disconnect_ignore_queue(self, eio):
+    async def test_disconnect_ignore_queue(self, eio):
         eio.return_value.send = mock.AsyncMock()
         eio.return_value.disconnect = mock.AsyncMock()
         s = async_server.AsyncServer()
         s.handlers['/'] = {}
-        _run(s._handle_eio_connect('123', 'environ'))
-        _run(s._handle_eio_message('123', '0'))
-        _run(s.disconnect('1', ignore_queue=True))
+        await s._handle_eio_connect('123', 'environ')
+        await s._handle_eio_message('123', '0')
+        await s.disconnect('1', ignore_queue=True)
         s.eio.send.assert_any_await('123', '1')
         assert not s.manager.is_connected('1', '/')
 
-    def test_disconnect_namespace(self, eio):
+    async def test_disconnect_namespace(self, eio):
         eio.return_value.send = mock.AsyncMock()
         eio.return_value.disconnect = mock.AsyncMock()
         s = async_server.AsyncServer()
         s.handlers['/foo'] = {}
-        _run(s._handle_eio_connect('123', 'environ'))
-        _run(s._handle_eio_message('123', '0/foo,'))
-        _run(s.disconnect('1', namespace='/foo'))
+        await s._handle_eio_connect('123', 'environ')
+        await s._handle_eio_message('123', '0/foo,')
+        await s.disconnect('1', namespace='/foo')
         s.eio.send.assert_any_await('123', '1/foo,')
         assert not s.manager.is_connected('1', '/foo')
 
-    def test_disconnect_twice(self, eio):
+    async def test_disconnect_twice(self, eio):
         eio.return_value.send = mock.AsyncMock()
         eio.return_value.disconnect = mock.AsyncMock()
         s = async_server.AsyncServer()
-        _run(s._handle_eio_connect('123', 'environ'))
-        _run(s._handle_eio_message('123', '0'))
-        _run(s.disconnect('1'))
+        await s._handle_eio_connect('123', 'environ')
+        await s._handle_eio_message('123', '0')
+        await s.disconnect('1')
         calls = s.eio.send.await_count
         assert not s.manager.is_connected('1', '/')
-        _run(s.disconnect('1'))
+        await s.disconnect('1')
         assert calls == s.eio.send.await_count
 
-    def test_disconnect_twice_namespace(self, eio):
+    async def test_disconnect_twice_namespace(self, eio):
         eio.return_value.send = mock.AsyncMock()
         s = async_server.AsyncServer()
-        _run(s._handle_eio_connect('123', 'environ'))
-        _run(s._handle_eio_message('123', '0/foo,'))
-        _run(s.disconnect('1', namespace='/foo'))
+        await s._handle_eio_connect('123', 'environ')
+        await s._handle_eio_message('123', '0/foo,')
+        await s.disconnect('1', namespace='/foo')
         calls = s.eio.send.await_count
         assert not s.manager.is_connected('1', '/foo')
-        _run(s.disconnect('1', namespace='/foo'))
+        await s.disconnect('1', namespace='/foo')
         assert calls == s.eio.send.await_count
 
-    def test_namespace_handler(self, eio):
+    async def test_namespace_handler(self, eio):
         eio.return_value.send = mock.AsyncMock()
         result = {}
 
@@ -916,19 +898,19 @@ class TestAsyncServer:
 
         s = async_server.AsyncServer(async_handlers=False)
         s.register_namespace(MyNamespace('/foo'))
-        _run(s._handle_eio_connect('123', 'environ'))
-        _run(s._handle_eio_message('123', '0/foo,'))
+        await s._handle_eio_connect('123', 'environ')
+        await s._handle_eio_message('123', '0/foo,')
         assert result['result'] == ('1', 'environ')
-        _run(s._handle_eio_message('123', '2/foo,["foo","a"]'))
+        await s._handle_eio_message('123', '2/foo,["foo","a"]')
         assert result['result'] == ('1', 'a')
-        _run(s._handle_eio_message('123', '2/foo,["bar"]'))
+        await s._handle_eio_message('123', '2/foo,["bar"]')
         assert result['result'] == 'bar'
-        _run(s._handle_eio_message('123', '2/foo,["baz","a","b"]'))
+        await s._handle_eio_message('123', '2/foo,["baz","a","b"]')
         assert result['result'] == ('a', 'b')
-        _run(s.disconnect('1', '/foo'))
+        await s.disconnect('1', '/foo')
         assert result['result'] == ('disconnect', '1')
 
-    def test_catchall_namespace_handler(self, eio):
+    async def test_catchall_namespace_handler(self, eio):
         eio.return_value.send = mock.AsyncMock()
         result = {}
 
@@ -950,19 +932,19 @@ class TestAsyncServer:
 
         s = async_server.AsyncServer(async_handlers=False, namespaces='*')
         s.register_namespace(MyNamespace('*'))
-        _run(s._handle_eio_connect('123', 'environ'))
-        _run(s._handle_eio_message('123', '0/foo,'))
+        await s._handle_eio_connect('123', 'environ')
+        await s._handle_eio_message('123', '0/foo,')
         assert result['result'] == ('1', '/foo', 'environ')
-        _run(s._handle_eio_message('123', '2/foo,["foo","a"]'))
+        await s._handle_eio_message('123', '2/foo,["foo","a"]')
         assert result['result'] == ('1', '/foo', 'a')
-        _run(s._handle_eio_message('123', '2/foo,["bar"]'))
+        await s._handle_eio_message('123', '2/foo,["bar"]')
         assert result['result'] == 'bar/foo'
-        _run(s._handle_eio_message('123', '2/foo,["baz","a","b"]'))
+        await s._handle_eio_message('123', '2/foo,["baz","a","b"]')
         assert result['result'] == ('/foo', 'a', 'b')
-        _run(s.disconnect('1', '/foo'))
+        await s.disconnect('1', '/foo')
         assert result['result'] == ('disconnect', '1', '/foo')
 
-    def test_bad_namespace_handler(self, eio):
+    async def test_bad_namespace_handler(self, eio):
         class Dummy:
             pass
 
@@ -981,7 +963,7 @@ class TestAsyncServer:
         with pytest.raises(ValueError):
             s.register_namespace(SyncNS())
 
-    def test_logger(self, eio):
+    async def test_logger(self, eio):
         s = async_server.AsyncServer(logger=False)
         assert s.logger.getEffectiveLevel() == logging.ERROR
         s.logger.setLevel(logging.NOTSET)
@@ -994,13 +976,13 @@ class TestAsyncServer:
         s = async_server.AsyncServer(logger='foo')
         assert s.logger == 'foo'
 
-    def test_engineio_logger(self, eio):
+    async def test_engineio_logger(self, eio):
         async_server.AsyncServer(engineio_logger='foo')
         eio.assert_called_once_with(
             **{'logger': 'foo', 'async_handlers': False}
         )
 
-    def test_custom_json(self, eio):
+    async def test_custom_json(self, eio):
         # Warning: this test cannot run in parallel with other tests, as it
         # changes the JSON encoding/decoding functions
 
@@ -1029,10 +1011,10 @@ class TestAsyncServer:
         # restore the default JSON module
         packet.Packet.json = json
 
-    def test_async_handlers(self, eio):
+    async def test_async_handlers(self, eio):
         s = async_server.AsyncServer(async_handlers=True)
-        _run(s.manager.connect('123', '/'))
-        _run(s._handle_eio_message('123', '2["my message","a","b","c"]'))
+        await s.manager.connect('123', '/')
+        await s._handle_eio_message('123', '2["my message","a","b","c"]')
         s.eio.start_background_task.assert_called_once_with(
             s._handle_event_internal,
             s,
@@ -1043,21 +1025,21 @@ class TestAsyncServer:
             None,
         )
 
-    def test_shutdown(self, eio):
+    async def test_shutdown(self, eio):
         s = async_server.AsyncServer()
         s.eio.shutdown = mock.AsyncMock()
-        _run(s.shutdown())
+        await s.shutdown()
         s.eio.shutdown.assert_awaited_once_with()
 
-    def test_start_background_task(self, eio):
+    async def test_start_background_task(self, eio):
         s = async_server.AsyncServer()
         s.start_background_task('foo', 'bar', baz='baz')
         s.eio.start_background_task.assert_called_once_with(
             'foo', 'bar', baz='baz'
         )
 
-    def test_sleep(self, eio):
+    async def test_sleep(self, eio):
         eio.return_value.sleep = mock.AsyncMock()
         s = async_server.AsyncServer()
-        _run(s.sleep(1.23))
+        await s.sleep(1.23)
         s.eio.sleep.assert_awaited_once_with(1.23)
