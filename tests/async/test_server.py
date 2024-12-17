@@ -653,7 +653,8 @@ class TestAsyncServer:
         await s._handle_eio_message('123', '2/bar,["msg","a","b"]')
         await s._handle_eio_message('123', '2/foo,["my message","a","b","c"]')
         await s._handle_eio_message('123', '2/bar,["my message","a","b","c"]')
-        await s._trigger_event('disconnect', '/bar', sid_bar, s.reason.UNKNOWN)
+        await s._trigger_event('disconnect', '/bar', sid_bar,
+                               s.reason.CLIENT_DISCONNECT)
         connect_star_handler.assert_called_once_with('/bar', sid_bar)
         msg_foo_handler.assert_called_once_with(sid_foo, 'a', 'b')
         msg_star_handler.assert_called_once_with('/bar', sid_bar, 'a', 'b')

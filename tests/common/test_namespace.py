@@ -252,7 +252,6 @@ class TestNamespace:
         ns.trigger_event('disconnect', 'foo')
         assert result['result'] == 'ok'
 
-
     def test_event_not_found_client(self):
         result = {}
 

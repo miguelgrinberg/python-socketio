@@ -566,7 +566,7 @@ class Server(base_server.BaseServer):
             return
         self.manager.pre_disconnect(sid, namespace=namespace)
         self._trigger_event('disconnect', namespace, sid,
-                            reason or self.reason.UNKNOWN)
+                            reason or self.reason.CLIENT_DISCONNECT)
         self.manager.disconnect(sid, namespace, ignore_queue=True)
 
     def _handle_event(self, eio_sid, namespace, id, data):
