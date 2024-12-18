@@ -11,8 +11,8 @@
             socket.on('connect', function() {
                 socket.emit('my_event', {data: 'I\'m connected!'});
             });
-            socket.on('disconnect', function() {
-                $('#log').append('<br>Disconnected');
+            socket.on('disconnect', function(reason) {
+                $('#log').append('<br>Disconnected: ' + reason);
             });
             socket.on('my_response', function(msg) {
                 $('#log').append('<br>Received: ' + msg.data);

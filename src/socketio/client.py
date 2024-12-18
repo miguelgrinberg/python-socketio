@@ -377,8 +377,9 @@ class Client(base_client.BaseClient):
         if not self.connected:
             return
         namespace = namespace or '/'
-        self._trigger_event('disconnect', namespace=namespace)
-        self._trigger_event('__disconnect_final', namespace=namespace)
+        self._trigger_event('disconnect', namespace,
+                            self.reason.SERVER_DISCONNECT)
+        self._trigger_event('__disconnect_final', namespace)
         if namespace in self.namespaces:
             del self.namespaces[namespace]
         if not self.namespaces:
@@ -436,7 +437,14 @@ class Client(base_client.BaseClient):
         # first see if we have an explicit handler for the event
         handler, args = self._get_event_handler(event, namespace, args)
         if handler:
-            return handler(*args)
+            try:
+                return handler(*args)
+            except TypeError:
+                # the legacy disconnect event does not take a reason argument
+                if event == 'disconnect':
+                    return handler(*args[:-1])
+                else:  # pragma: no cover
+                    raise
 
         # or else, forward the event to a namespace handler if one exists
         handler, args = self._get_namespace_handler(namespace, args)
@@ -525,15 +533,15 @@ class Client(base_client.BaseClient):
             else:
                 raise ValueError('Unknown packet type.')
 
-    def _handle_eio_disconnect(self):
+    def _handle_eio_disconnect(self, reason):
         """Handle the Engine.IO disconnection event."""
         self.logger.info('Engine.IO connection dropped')
         will_reconnect = self.reconnection and self.eio.state == 'connected'
         if self.connected:
             for n in self.namespaces:
-                self._trigger_event('disconnect', namespace=n)
+                self._trigger_event('disconnect', n, reason)
                 if not will_reconnect:
-                    self._trigger_event('__disconnect_final', namespace=n)
+                    self._trigger_event('__disconnect_final', n)
             self.namespaces = {}
             self.connected = False
         self.callbacks = {}

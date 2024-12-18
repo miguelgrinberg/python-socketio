@@ -88,8 +88,8 @@ async def test_connect(sid, environ):
 
 
 @sio.on('disconnect')
-def test_disconnect(sid):
-    print('Client disconnected')
+def test_disconnect(sid, reason):
+    print('Client disconnected, reason:', reason)
 
 
 if __name__ == '__main__':

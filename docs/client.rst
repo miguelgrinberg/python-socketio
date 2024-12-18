@@ -312,8 +312,8 @@ server::
         print("The connection failed!")
 
     @sio.event
-    def disconnect():
-        print("I'm disconnected!")
+    def disconnect(reason):
+        print("I'm disconnected! reason:", reason)
 
 The ``connect_error`` handler is invoked when a connection attempt fails. If
 the server provides arguments, these are passed on to the handler. The server
@@ -325,7 +325,20 @@ server initiated disconnects, or accidental disconnects, for example due to
 networking failures. In the case of an accidental disconnection, the client is
 going to attempt to reconnect immediately after invoking the disconnect
 handler. As soon as the connection is re-established the connect handler will
-be invoked once again.
+be invoked once again. The handler receives a ``reason`` argument which
+provides the cause of the disconnection::
+
+    @sio.event
+    def disconnect(reason):
+        if reason == sio.reason.CLIENT_DISCONNECT:
+            print('the client disconnected')
+        elif reason == sio.reason.SERVER_DISCONNECT:
+            print('the server disconnected the client')
+        else:
+            print('disconnect reason:', reason)
+
+See the The :attr:`socketio.Client.reason` attribute for a list of possible
+disconnection reasons.
 
 The ``connect``, ``connect_error`` and ``disconnect`` events have to be
 defined explicitly and are not invoked on a catch-all event handler.
@@ -509,7 +522,7 @@ that belong to a namespace can be created as methods of a subclass of
         def on_connect(self):
             pass
 
-        def on_disconnect(self):
+        def on_disconnect(self, reason):
             pass
 
         def on_my_event(self, data):
@@ -525,7 +538,7 @@ coroutines if desired::
         def on_connect(self):
             pass
 
-        def on_disconnect(self):
+        def on_disconnect(self, reason):
             pass
 
         async def on_my_event(self, data):

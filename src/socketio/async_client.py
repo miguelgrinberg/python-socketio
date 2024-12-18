@@ -338,7 +338,6 @@ class AsyncClient(base_client.BaseClient):
             await self.disconnect()
         elif self._reconnect_task:  # pragma: no branch
             self._reconnect_abort.set()
-            print(self._reconnect_task)
             await self._reconnect_task
 
     def start_background_task(self, target, *args, **kwargs):
@@ -398,8 +397,9 @@ class AsyncClient(base_client.BaseClient):
         if not self.connected:
             return
         namespace = namespace or '/'
-        await self._trigger_event('disconnect', namespace=namespace)
-        await self._trigger_event('__disconnect_final', namespace=namespace)
+        await self._trigger_event('disconnect', namespace,
+                                  self.reason.SERVER_DISCONNECT)
+        await self._trigger_event('__disconnect_final', namespace)
         if namespace in self.namespaces:
             del self.namespaces[namespace]
         if not self.namespaces:
@@ -462,11 +462,27 @@ class AsyncClient(base_client.BaseClient):
         if handler:
             if asyncio.iscoroutinefunction(handler):
                 try:
-                    ret = await handler(*args)
+                    try:
+                        ret = await handler(*args)
+                    except TypeError:
+                        # the legacy disconnect event does not take a reason
+                        # argument
+                        if event == 'disconnect':
+                            ret = await handler(*args[:-1])
+                        else:  # pragma: no cover
+                            raise
                 except asyncio.CancelledError:  # pragma: no cover
                     ret = None
             else:
-                ret = handler(*args)
+                try:
+                    ret = handler(*args)
+                except TypeError:
+                    # the legacy disconnect event does not take a reason
+                    # argument
+                    if event == 'disconnect':
+                        ret = handler(*args[:-1])
+                    else:  # pragma: no cover
+                        raise
             return ret
 
         # or else, forward the event to a namepsace handler if one exists
@@ -566,16 +582,15 @@ class AsyncClient(base_client.BaseClient):
             else:
                 raise ValueError('Unknown packet type.')
 
-    async def _handle_eio_disconnect(self):
+    async def _handle_eio_disconnect(self, reason):
         """Handle the Engine.IO disconnection event."""
         self.logger.info('Engine.IO connection dropped')
         will_reconnect = self.reconnection and self.eio.state == 'connected'
         if self.connected:
             for n in self.namespaces:
-                await self._trigger_event('disconnect', namespace=n)
+                await self._trigger_event('disconnect', n, reason)
                 if not will_reconnect:
-                    await self._trigger_event('__disconnect_final',
-                                              namespace=n)
+                    await self._trigger_event('__disconnect_final', n)
             self.namespaces = {}
             self.connected = False
         self.callbacks = {}

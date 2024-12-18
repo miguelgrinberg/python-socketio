@@ -39,7 +39,7 @@ class TestServer:
         def foo():
             pass
 
-        def bar():
+        def bar(reason):
             pass
 
         s.on('disconnect', bar)
@@ -510,8 +510,21 @@ class TestServer:
         s.on('disconnect', handler)
         s._handle_eio_connect('123', 'environ')
         s._handle_eio_message('123', '0')
-        s._handle_eio_disconnect('123')
-        handler.assert_called_once_with('1')
+        s._handle_eio_disconnect('123', 'foo')
+        handler.assert_called_once_with('1', 'foo')
+        s.manager.disconnect.assert_called_once_with('1', '/',
+                                                     ignore_queue=True)
+        assert s.environ == {}
+
+    def test_handle_legacy_disconnect(self, eio):
+        s = server.Server()
+        s.manager.disconnect = mock.MagicMock()
+        handler = mock.MagicMock(side_effect=[TypeError, None])
+        s.on('disconnect', handler)
+        s._handle_eio_connect('123', 'environ')
+        s._handle_eio_message('123', '0')
+        s._handle_eio_disconnect('123', 'foo')
+        handler.assert_called_with('1')
         s.manager.disconnect.assert_called_once_with('1', '/',
                                                      ignore_queue=True)
         assert s.environ == {}
@@ -524,9 +537,9 @@ class TestServer:
         s.on('disconnect', handler_namespace, namespace='/foo')
         s._handle_eio_connect('123', 'environ')
         s._handle_eio_message('123', '0/foo,')
-        s._handle_eio_disconnect('123')
+        s._handle_eio_disconnect('123', 'foo')
         handler.assert_not_called()
-        handler_namespace.assert_called_once_with('1')
+        handler_namespace.assert_called_once_with('1', 'foo')
         assert s.environ == {}
 
     def test_handle_disconnect_only_namespace(self, eio):
@@ -539,13 +552,14 @@ class TestServer:
         s._handle_eio_message('123', '0/foo,')
         s._handle_eio_message('123', '1/foo,')
         assert handler.call_count == 0
-        handler_namespace.assert_called_once_with('1')
+        handler_namespace.assert_called_once_with(
+            '1', s.reason.CLIENT_DISCONNECT)
         assert s.environ == {'123': 'environ'}
 
     def test_handle_disconnect_unknown_client(self, eio):
         mgr = mock.MagicMock()
         s = server.Server(client_manager=mgr)
-        s._handle_eio_disconnect('123')
+        s._handle_eio_disconnect('123', 'foo')
 
     def test_handle_event(self, eio):
         s = server.Server(async_handlers=False)
@@ -596,7 +610,8 @@ class TestServer:
         s._handle_eio_message('123', '2/bar,["msg","a","b"]')
         s._handle_eio_message('123', '2/foo,["my message","a","b","c"]')
         s._handle_eio_message('123', '2/bar,["my message","a","b","c"]')
-        s._trigger_event('disconnect', '/bar', sid_bar)
+        s._trigger_event('disconnect', '/bar', sid_bar,
+                         s.reason.CLIENT_DISCONNECT)
         connect_star_handler.assert_called_once_with('/bar', sid_bar)
         msg_foo_handler.assert_called_once_with(sid_foo, 'a', 'b')
         msg_star_handler.assert_called_once_with('/bar', sid_bar, 'a', 'b')
@@ -825,8 +840,8 @@ class TestServer:
             def on_connect(self, sid, environ):
                 result['result'] = (sid, environ)
 
-            def on_disconnect(self, sid):
-                result['result'] = ('disconnect', sid)
+            def on_disconnect(self, sid, reason):
+                result['result'] = ('disconnect', sid, reason)
 
             def on_foo(self, sid, data):
                 result['result'] = (sid, data)
@@ -849,7 +864,8 @@ class TestServer:
         s._handle_eio_message('123', '2/foo,["baz","a","b"]')
         assert result['result'] == ('a', 'b')
         s.disconnect('1', '/foo')
-        assert result['result'] == ('disconnect', '1')
+        assert result['result'] == ('disconnect', '1',
+                                    s.reason.SERVER_DISCONNECT)
 
     def test_catchall_namespace_handler(self, eio):
         result = {}

@@ -19,8 +19,8 @@ io.on('connection', socket => {
     hello: 'you'
   });
 
-  socket.on('disconnect', () => {
-    console.log(`disconnect ${socket.id}`);
+  socket.on('disconnect', (reason) => {
+    console.log(`disconnect ${socket.id}, reason: ${reason}`);
   });
 });
 

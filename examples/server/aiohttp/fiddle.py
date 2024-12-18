@@ -19,8 +19,8 @@ async def connect(sid, environ, auth):
 
 
 @sio.event
-def disconnect(sid):
-    print('disconnected', sid)
+def disconnect(sid, reason):
+    print('disconnected', sid, reason)
 
 
 app.router.add_static('/static', 'static')
@@ -28,4 +28,4 @@ app.router.add_get('/', index)
 
 
 if __name__ == '__main__':
-    web.run_app(app)
+    web.run_app(app, port=5000)

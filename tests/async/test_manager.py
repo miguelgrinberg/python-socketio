@@ -183,8 +183,6 @@ class TestAsyncManager:
         await self.bm.enter_room(sid, '/foo', 'bar')
         await self.bm.enter_room(sid, '/foo', 'bar')
         await self.bm.close_room('bar', '/foo')
-        from pprint import pprint
-        pprint(self.bm.rooms)
         assert 'bar' not in self.bm.rooms['/foo']
 
     async def test_close_invalid_room(self):

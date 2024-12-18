@@ -10,8 +10,8 @@ async def connect():
 
 
 @sio.event
-async def disconnect():
-    print('disconnected from server')
+async def disconnect(reason):
+    print('disconnected from server, reason:', reason)
 
 
 @sio.event

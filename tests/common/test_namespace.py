@@ -20,12 +20,24 @@ class TestNamespace:
         result = {}
 
         class MyNamespace(namespace.Namespace):
+            def on_disconnect(self, sid, reason):
+                result['result'] = (sid, reason)
+
+        ns = MyNamespace('/foo')
+        ns._set_server(mock.MagicMock())
+        ns.trigger_event('disconnect', 'sid', 'foo')
+        assert result['result'] == ('sid', 'foo')
+
+    def test_legacy_disconnect_event(self):
+        result = {}
+
+        class MyNamespace(namespace.Namespace):
             def on_disconnect(self, sid):
                 result['result'] = sid
 
         ns = MyNamespace('/foo')
         ns._set_server(mock.MagicMock())
-        ns.trigger_event('disconnect', 'sid')
+        ns.trigger_event('disconnect', 'sid', 'foo')
         assert result['result'] == 'sid'
 
     def test_event(self):
@@ -215,6 +227,30 @@ class TestNamespace:
         ns.server.disconnect.assert_called_with('sid', namespace='/foo')
         ns.disconnect('sid', namespace='/bar')
         ns.server.disconnect.assert_called_with('sid', namespace='/bar')
+
+    def test_disconnect_event_client(self):
+        result = {}
+
+        class MyNamespace(namespace.ClientNamespace):
+            def on_disconnect(self, reason):
+                result['result'] = reason
+
+        ns = MyNamespace('/foo')
+        ns._set_client(mock.MagicMock())
+        ns.trigger_event('disconnect', 'foo')
+        assert result['result'] == 'foo'
+
+    def test_legacy_disconnect_event_client(self):
+        result = {}
+
+        class MyNamespace(namespace.ClientNamespace):
+            def on_disconnect(self):
+                result['result'] = 'ok'
+
+        ns = MyNamespace('/foo')
+        ns._set_client(mock.MagicMock())
+        ns.trigger_event('disconnect', 'foo')
+        assert result['result'] == 'ok'
 
     def test_event_not_found_client(self):
         result = {}

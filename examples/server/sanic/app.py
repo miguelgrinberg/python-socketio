@@ -77,8 +77,8 @@ async def connect(sid, environ):
 
 
 @sio.event
-def disconnect(sid):
-    print('Client disconnected')
+def disconnect(sid, reason):
+    print('Client disconnected, reason:', reason)
 
 
 app.static('/static', './static')
