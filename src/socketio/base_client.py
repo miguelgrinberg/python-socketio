@@ -33,7 +33,6 @@ original_signal_handler = None
 class BaseClient:
     reserved_events = ['connect', 'connect_error', 'disconnect',
                        '__disconnect_final']
-    print(dir(engineio.Client))
     reason = engineio.Client.reason
 
     def __init__(self, reconnection=True, reconnection_attempts=0,

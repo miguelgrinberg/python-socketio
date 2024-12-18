@@ -232,8 +232,8 @@ automatically when a client connects or disconnects from the server::
         print('connect ', sid)
 
     @sio.event
-    def disconnect(sid):
-        print('disconnect ', sid)
+    def disconnect(sid, reason):
+        print('disconnect ', sid, reason)
 
 The ``connect`` event is an ideal place to perform user authentication, and
 any necessary mapping between user entities in the application and the ``sid``
@@ -255,6 +255,21 @@ message::
     @sio.event
     def connect(sid, environ, auth):
         raise ConnectionRefusedError('authentication failed')
+
+The disconnect handler receives the ``sid`` assigned to the client and a
+``reason``, which provides the cause of the disconnection::
+
+    @sio.event
+    def disconnect(sid, reason):
+        if reason == sio.reason.CLIENT_DISCONNECT:
+            print('the client disconnected')
+        elif reason == sio.reason.SERVER_DISCONNECT:
+            print('the server disconnected the client')
+        else:
+            print('disconnect reason:', reason)
+
+See the The :attr:`socketio.Server.reason` attribute for a list of possible
+disconnection reasons.
 
 Catch-All Event Handlers
 ~~~~~~~~~~~~~~~~~~~~~~~~
@@ -433,7 +448,7 @@ belong to a namespace can be created as methods in a subclass of
         def on_connect(self, sid, environ):
             pass
 
-        def on_disconnect(self, sid):
+        def on_disconnect(self, sid, reason):
             pass
 
         def on_my_event(self, sid, data):
@@ -449,7 +464,7 @@ if desired::
         def on_connect(self, sid, environ):
             pass
 
-        def on_disconnect(self, sid):
+        def on_disconnect(self, sid, reason):
             pass
 
         async def on_my_event(self, sid, data):

@@ -338,7 +338,6 @@ class AsyncClient(base_client.BaseClient):
             await self.disconnect()
         elif self._reconnect_task:  # pragma: no branch
             self._reconnect_abort.set()
-            print(self._reconnect_task)
             await self._reconnect_task
 
     def start_background_task(self, target, *args, **kwargs):

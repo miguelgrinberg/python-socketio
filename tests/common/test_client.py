@@ -795,7 +795,6 @@ class TestClient:
         c.namespaces = {'/foo': '1', '/bar': '2'}
         c._trigger_event = mock.MagicMock()
         c._handle_disconnect('/')
-        print(c._trigger_event.call_args_list)
         c._trigger_event.assert_any_call('disconnect', '/',
                                          c.reason.SERVER_DISCONNECT)
         c._trigger_event.assert_any_call('__disconnect_final', '/')
