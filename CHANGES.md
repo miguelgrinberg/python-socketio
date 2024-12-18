@@ -1,5 +1,19 @@
 # python-socketio change log
 
+**Release 5.12.0** - 2024-12-18
+
+- Added a `reason` argument to the disconnect handler [#1422](https://github.com/miguelgrinberg/python-socketio/issues/1422) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/bd8555da8523d1a73432685a00eb5acb4d2261f5))
+- Prevented starting multiple tasks for reconnection [#1369](https://github.com/miguelgrinberg/python-socketio/issues/1369) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/b6ee33e56cf2679664c1b894bf7e5d33a30976db)) (thanks **humayunsr**!)
+- Fixed `AsyncClient::wait()` unexpected return after success reconnect [#1407](https://github.com/miguelgrinberg/python-socketio/issues/1407) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/78d1124c50cff149051fb89bf6f08000bf184da5)) (thanks **Arseny**!)
+- Removed old constructs from old and unsupported Python versions ([commit](https://github.com/miguelgrinberg/python-socketio/commit/db642bb2bd9794eeceddd54abc47665c69e85406))
+- Removed dependency on unittest.TestCase base class in unit tests ([commit](https://github.com/miguelgrinberg/python-socketio/commit/abf336e108b01f44afb473eb86c1dece6360195c))
+- Adopted pyenv-asyncio for async unit tests ([commit](https://github.com/miguelgrinberg/python-socketio/commit/0b5c4638e5e4bff06fcf46476d218ae5ad4ada14))
+- Adopted unittest.mock.AsyncMock in async unit tests ([commit](https://github.com/miguelgrinberg/python-socketio/commit/8f0e66c1cd1cd63dcef703576cc9cb9c99104df7))
+- Fix typo with `AsyncClient.connect` example [#1403](https://github.com/miguelgrinberg/python-socketio/issues/1403) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/72d37ea79f4cf6076591782e4781fd4868a7e0d6)) (thanks **Peter Bierma**!)
+- Documentation typo [#1421](https://github.com/miguelgrinberg/python-socketio/issues/1421) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/bf5a05ae9bf94b2fbd1367a04884ef5a39cd2671)) (thanks **Masen Furer**!)
+- Renamed flask-socketio references to python-socketio in documentation [#1377](https://github.com/miguelgrinberg/python-socketio/issues/1377) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/5f83cd0f7b2911705eaf1a8cb9060afbee6eb456))
+- Added Python 3.13 CI builds ([commit](https://github.com/miguelgrinberg/python-socketio/commit/42da5d2f5426e812fd37d4cabcb9277810cae9c1))
+
 **Release 5.11.4** - 2024-09-02
 
 - Prevent crash when client sends empty event ([commit](https://github.com/miguelgrinberg/python-socketio/commit/1b901de0077322eedb3509318ccba939f5f0bf10))
