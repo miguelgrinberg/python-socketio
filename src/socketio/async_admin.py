@@ -204,12 +204,12 @@ class InstrumentedAsyncServer:
         ), namespace=self.admin_namespace)
         return sid
 
-    async def _disconnect(self, sid, namespace, **kwargs):
+    async def _disconnect(self, sid, namespace, reason, **kwargs):
         del self.sio.manager._timestamps[sid]
         await self.sio.emit('socket_disconnected', (
             namespace,
             sid,
-            'N/A',
+            reason or 'N/A',
             datetime.utcnow().isoformat() + 'Z',
         ), namespace=self.admin_namespace)
         return await self.sio.manager.__disconnect(sid, namespace, **kwargs)
@@ -292,9 +292,9 @@ class InstrumentedAsyncServer:
         self.event_buffer.push('rawConnection')
         return await self.sio._handle_eio_connect(eio_sid, environ)
 
-    async def _handle_eio_disconnect(self, eio_sid):
+    async def _handle_eio_disconnect(self, eio_sid, reason):
         self.event_buffer.push('rawDisconnection')
-        return await self.sio._handle_eio_disconnect(eio_sid)
+        return await self.sio._handle_eio_disconnect(eio_sid, reason)
 
     def _eio_http_response(self, packets=None, headers=None, jsonp_index=None):
         ret = self.sio.eio.__ok(packets=packets, headers=headers,
