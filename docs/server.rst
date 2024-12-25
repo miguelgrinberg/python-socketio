@@ -838,7 +838,7 @@ Gevent
 
 When a multi-threaded web server is unable to satisfy the concurrency and
 scalability requirements of the application, an option to try is
-`Gevent <http://gevent.org>`_. Gevent is a coroutine-based concurrency library
+`Gevent <http://www.gevent.org>`_. Gevent is a coroutine-based concurrency library
 based on greenlets, which are significantly lighter than threads.
 
 Instances of class ``socketio.Server`` will automatically use Gevent if the
