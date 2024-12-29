@@ -585,7 +585,7 @@ class AsyncServer(base_server.BaseServer):
         self.manager.pre_disconnect(sid, namespace=namespace)
         await self._trigger_event('disconnect', namespace, sid,
                                   reason or self.reason.CLIENT_DISCONNECT)
-        await self.manager.disconnect(sid, namespace, reason=reason or self.reason.CLIENT_DISCONNECT, ignore_queue=True)
+        await self.manager.disconnect(sid, namespace, ignore_queue=True)
 
     async def _handle_event(self, eio_sid, namespace, id, data):
         """Handle an incoming client event."""
