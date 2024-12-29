@@ -1,5 +1,5 @@
 import asyncio
-from datetime import datetime
+from datetime import datetime, timezone
 import functools
 import os
 import socket
@@ -192,7 +192,7 @@ class InstrumentedAsyncServer:
             serialized_socket = self.serialize_socket(sid, namespace, eio_sid)
             await self.sio.emit('socket_connected', (
                 serialized_socket,
-                datetime.utcfromtimestamp(t).isoformat() + 'Z',
+                datetime.fromtimestamp(t, timezone.utc).isoformat(),
             ), namespace=self.admin_namespace)
         elif event == 'disconnect':
             del self.sio.manager._timestamps[sid]
@@ -201,14 +201,14 @@ class InstrumentedAsyncServer:
                 namespace,
                 sid,
                 reason,
-                datetime.utcfromtimestamp(t).isoformat() + 'Z',
+                datetime.fromtimestamp(t, timezone.utc).isoformat(),
             ), namespace=self.admin_namespace)
         else:
             await self.sio.emit('event_received', (
                 namespace,
                 sid,
                 (event, *args[1:]),
-                datetime.utcfromtimestamp(t).isoformat() + 'Z',
+                datetime.fromtimestamp(t, timezone.utc).isoformat(),
             ), namespace=self.admin_namespace)
         return await self.sio.__trigger_event(event, namespace, *args)
 
@@ -235,7 +235,7 @@ class InstrumentedAsyncServer:
                 namespace,
                 room,
                 sid,
-                datetime.utcnow().isoformat() + 'Z',
+                datetime.now(timezone.utc).isoformat(),
             )))
         return ret
 
@@ -245,7 +245,7 @@ class InstrumentedAsyncServer:
                 namespace,
                 room,
                 sid,
-                datetime.utcnow().isoformat() + 'Z',
+                datetime.now(timezone.utc).isoformat(),
             )))
         return self.sio.manager.__basic_leave_room(sid, namespace, room)
 
@@ -265,7 +265,7 @@ class InstrumentedAsyncServer:
                         namespace,
                         sid,
                         event_data,
-                        datetime.utcnow().isoformat() + 'Z',
+                        datetime.now(timezone.utc).isoformat(),
                     ), namespace=self.admin_namespace)
         return ret
 
@@ -324,7 +324,7 @@ class InstrumentedAsyncServer:
                                                           eio_sid)
                 await self.sio.emit('socket_connected', (
                     serialized_socket,
-                    datetime.utcfromtimestamp(t).isoformat() + 'Z',
+                    datetime.fromtimestamp(t, timezone.utc).isoformat(),
                 ), namespace=self.admin_namespace)
         return await socket.__send_ping()
 
@@ -377,7 +377,7 @@ class InstrumentedAsyncServer:
                 'secure': environ.get('wsgi.url_scheme', '') == 'https',
                 'url': environ.get('PATH_INFO', ''),
                 'issued': tm * 1000,
-                'time': datetime.utcfromtimestamp(tm).isoformat() + 'Z'
+                'time': datetime.fromtimestamp(tm, timezone.utc).isoformat()
                 if tm else '',
             },
             'rooms': self.sio.manager.get_rooms(sid, namespace),

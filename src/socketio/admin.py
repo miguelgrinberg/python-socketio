@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 import functools
 import os
 import socket
@@ -204,7 +204,7 @@ class InstrumentedServer:
             serialized_socket = self.serialize_socket(sid, namespace, eio_sid)
             self.sio.emit('socket_connected', (
                 serialized_socket,
-                datetime.utcfromtimestamp(t).isoformat() + 'Z',
+                datetime.fromtimestamp(t, timezone.utc).isoformat(),
             ), namespace=self.admin_namespace)
         elif event == 'disconnect':
             del self.sio.manager._timestamps[sid]
@@ -213,14 +213,14 @@ class InstrumentedServer:
                 namespace,
                 sid,
                 reason,
-                datetime.utcfromtimestamp(t).isoformat() + 'Z',
+                datetime.fromtimestamp(t, timezone.utc).isoformat(),
             ), namespace=self.admin_namespace)
         else:
             self.sio.emit('event_received', (
                 namespace,
                 sid,
                 (event, *args[1:]),
-                datetime.utcfromtimestamp(t).isoformat() + 'Z',
+                datetime.fromtimestamp(t, timezone.utc).isoformat(),
             ), namespace=self.admin_namespace)
         return self.sio.__trigger_event(event, namespace, *args)
 
@@ -246,7 +246,7 @@ class InstrumentedServer:
                 namespace,
                 room,
                 sid,
-                datetime.utcnow().isoformat() + 'Z',
+                datetime.now(timezone.utc).isoformat(),
             ), namespace=self.admin_namespace)
         return ret
 
@@ -256,7 +256,7 @@ class InstrumentedServer:
                 namespace,
                 room,
                 sid,
-                datetime.utcnow().isoformat() + 'Z',
+                datetime.now(timezone.utc).isoformat(),
             ), namespace=self.admin_namespace)
         return self.sio.manager.__basic_leave_room(sid, namespace, room)
 
@@ -276,7 +276,7 @@ class InstrumentedServer:
                         namespace,
                         sid,
                         event_data,
-                        datetime.utcnow().isoformat() + 'Z',
+                        datetime.now(timezone.utc).isoformat(),
                     ), namespace=self.admin_namespace)
         return ret
 
@@ -335,7 +335,7 @@ class InstrumentedServer:
                                                           eio_sid)
                 self.sio.emit('socket_connected', (
                     serialized_socket,
-                    datetime.utcfromtimestamp(t).isoformat() + 'Z',
+                    datetime.fromtimestamp(t, timezone.utc).isoformat(),
                 ), namespace=self.admin_namespace)
         return socket.__send_ping()
 
@@ -384,7 +384,7 @@ class InstrumentedServer:
                 'secure': environ.get('wsgi.url_scheme', '') == 'https',
                 'url': environ.get('PATH_INFO', ''),
                 'issued': tm * 1000,
-                'time': datetime.utcfromtimestamp(tm).isoformat() + 'Z'
+                'time': datetime.fromtimestamp(tm, timezone.utc).isoformat()
                 if tm else '',
             },
             'rooms': self.sio.manager.get_rooms(sid, namespace),
