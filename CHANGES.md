@@ -1,5 +1,12 @@
 # python-socketio change log
 
+**Release 5.12.1** - 2024-12-29
+
+- Fix admin instrumentation support of disconnect reasons [#1423](https://github.com/miguelgrinberg/python-socketio/issues/1423) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/b75fd31625cfea0d8c67d776070e4f8de99c1e45))
+- Stop using deprecated datetime functions ([commit](https://github.com/miguelgrinberg/python-socketio/commit/8fe012abbb350107b742ab2cf9aa44d328bc23e9))
+- Enable admin instrumentation by default in WSGI and ASGI examples ([commit](https://github.com/miguelgrinberg/python-socketio/commit/269332da8041df115e3a1e2ca04808c3179a72e1))
+- Fixed broken gevent URL in documentation [#1427](https://github.com/miguelgrinberg/python-socketio/issues/1427) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/8964dab9d545333646fafad9aae0becd761a1045)) (thanks **Carlos Guerrero**!)
+
 **Release 5.12.0** - 2024-12-18
 
 - Added a `reason` argument to the disconnect handler [#1422](https://github.com/miguelgrinberg/python-socketio/issues/1422) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/bd8555da8523d1a73432685a00eb5acb4d2261f5))
