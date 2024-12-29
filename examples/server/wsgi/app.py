@@ -5,7 +5,7 @@ async_mode = None
 
 # set instrument to `True` to accept connections from the official Socket.IO
 # Admin UI hosted at https://admin.socket.io
-instrument = False
+instrument = True
 admin_login = {
     'username': 'admin',
     'password': 'python',  # change this to a strong secret for production use!
@@ -99,6 +99,16 @@ def disconnect(sid, reason):
 
 
 if __name__ == '__main__':
+    if instrument:
+        print('The server is instrumented for remote administration.')
+        print(
+            'Use the official Socket.IO Admin UI at https://admin.socket.io '
+            'with the following connection details:'
+        )
+        print(' - Server URL: http://localhost:5000')
+        print(' - Username:', admin_login['username'])
+        print(' - Password:', admin_login['password'])
+        print('')
     if sio.async_mode == 'threading':
         # deploy with Werkzeug
         app.run(threaded=True)
