@@ -12,6 +12,8 @@ class SimpleClient:
     The positional and keyword arguments given in the constructor are passed
     to the underlying :func:`socketio.Client` object.
     """
+    client_class = Client
+
     def __init__(self, *args, **kwargs):
         self.client_args = args
         self.client_kwargs = kwargs
@@ -58,7 +60,8 @@ class SimpleClient:
         self.namespace = namespace
         self.input_buffer = []
         self.input_event.clear()
-        self.client = Client(*self.client_args, **self.client_kwargs)
+        self.client = self.client_class(
+            *self.client_args, **self.client_kwargs)
 
         @self.client.event(namespace=self.namespace)
         def connect():  # pragma: no cover

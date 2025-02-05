@@ -14,10 +14,34 @@ class TestSimpleClient:
         assert not client.connected
 
     def test_connect(self):
+        mock_client = mock.MagicMock()
+        original_client_class = SimpleClient.client_class
+        SimpleClient.client_class = mock_client
+
         client = SimpleClient(123, a='b')
-        with mock.patch('socketio.simple_client.Client') as mock_client:
+        client.connect('url', headers='h', auth='a', transports='t',
+                       namespace='n', socketio_path='s', wait_timeout='w')
+        mock_client.assert_called_once_with(123, a='b')
+        assert client.client == mock_client()
+        mock_client().connect.assert_called_once_with(
+            'url', headers='h', auth='a', transports='t',
+            namespaces=['n'], socketio_path='s', wait_timeout='w')
+        mock_client().event.call_count == 3
+        mock_client().on.assert_called_once_with('*', namespace='n')
+        assert client.namespace == 'n'
+        assert not client.input_event.is_set()
+
+        SimpleClient.client_class = original_client_class
+
+    def test_connect_context_manager(self):
+        mock_client = mock.MagicMock()
+        original_client_class = SimpleClient.client_class
+        SimpleClient.client_class = mock_client
+
+        with SimpleClient(123, a='b') as client:
             client.connect('url', headers='h', auth='a', transports='t',
-                           namespace='n', socketio_path='s', wait_timeout='w')
+                           namespace='n', socketio_path='s',
+                           wait_timeout='w')
             mock_client.assert_called_once_with(123, a='b')
             assert client.client == mock_client()
             mock_client().connect.assert_called_once_with(
@@ -28,21 +52,7 @@ class TestSimpleClient:
             assert client.namespace == 'n'
             assert not client.input_event.is_set()
 
-    def test_connect_context_manager(self):
-        with SimpleClient(123, a='b') as client:
-            with mock.patch('socketio.simple_client.Client') as mock_client:
-                client.connect('url', headers='h', auth='a', transports='t',
-                               namespace='n', socketio_path='s',
-                               wait_timeout='w')
-                mock_client.assert_called_once_with(123, a='b')
-                assert client.client == mock_client()
-                mock_client().connect.assert_called_once_with(
-                    'url', headers='h', auth='a', transports='t',
-                    namespaces=['n'], socketio_path='s', wait_timeout='w')
-                mock_client().event.call_count == 3
-                mock_client().on.assert_called_once_with('*', namespace='n')
-                assert client.namespace == 'n'
-                assert not client.input_event.is_set()
+        SimpleClient.client_class = original_client_class
 
     def test_connect_twice(self):
         client = SimpleClient(123, a='b')

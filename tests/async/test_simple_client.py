@@ -16,46 +16,51 @@ class TestAsyncAsyncSimpleClient:
         assert not client.connected
 
     async def test_connect(self):
+        mock_client = mock.MagicMock()
+        original_client_class = AsyncSimpleClient.client_class
+        AsyncSimpleClient.client_class = mock_client
+
         client = AsyncSimpleClient(123, a='b')
-        with mock.patch('socketio.async_simple_client.AsyncClient') \
-                as mock_client:
+        mock_client.return_value.connect = mock.AsyncMock()
+
+        await client.connect('url', headers='h', auth='a', transports='t',
+                             namespace='n', socketio_path='s',
+                             wait_timeout='w')
+        mock_client.assert_called_once_with(123, a='b')
+        assert client.client == mock_client()
+        mock_client().connect.assert_awaited_once_with(
+            'url', headers='h', auth='a', transports='t',
+            namespaces=['n'], socketio_path='s', wait_timeout='w')
+        mock_client().event.call_count == 3
+        mock_client().on.assert_called_once_with('*', namespace='n')
+        assert client.namespace == 'n'
+        assert not client.input_event.is_set()
+
+        AsyncSimpleClient.client_class = original_client_class
+
+    async def test_connect_context_manager(self):
+        mock_client = mock.MagicMock()
+        original_client_class = AsyncSimpleClient.client_class
+        AsyncSimpleClient.client_class = mock_client
+
+        async with AsyncSimpleClient(123, a='b') as client:
             mock_client.return_value.connect = mock.AsyncMock()
 
-            await client.connect('url', headers='h', auth='a', transports='t',
-                                 namespace='n', socketio_path='s',
-                                 wait_timeout='w')
+            await client.connect('url', headers='h', auth='a',
+                                 transports='t', namespace='n',
+                                 socketio_path='s', wait_timeout='w')
             mock_client.assert_called_once_with(123, a='b')
             assert client.client == mock_client()
             mock_client().connect.assert_awaited_once_with(
                 'url', headers='h', auth='a', transports='t',
                 namespaces=['n'], socketio_path='s', wait_timeout='w')
             mock_client().event.call_count == 3
-            mock_client().on.assert_called_once_with('*', namespace='n')
+            mock_client().on.assert_called_once_with(
+                '*', namespace='n')
             assert client.namespace == 'n'
             assert not client.input_event.is_set()
 
-    async def test_connect_context_manager(self):
-        async def _t():
-            async with AsyncSimpleClient(123, a='b') as client:
-                with mock.patch('socketio.async_simple_client.AsyncClient') \
-                        as mock_client:
-                    mock_client.return_value.connect = mock.AsyncMock()
-
-                    await client.connect('url', headers='h', auth='a',
-                                         transports='t', namespace='n',
-                                         socketio_path='s', wait_timeout='w')
-                    mock_client.assert_called_once_with(123, a='b')
-                    assert client.client == mock_client()
-                    mock_client().connect.assert_awaited_once_with(
-                        'url', headers='h', auth='a', transports='t',
-                        namespaces=['n'], socketio_path='s', wait_timeout='w')
-                    mock_client().event.call_count == 3
-                    mock_client().on.assert_called_once_with(
-                        '*', namespace='n')
-                    assert client.namespace == 'n'
-                    assert not client.input_event.is_set()
-
-        await _t()
+        AsyncSimpleClient.client_class = original_client_class
 
     async def test_connect_twice(self):
         client = AsyncSimpleClient(123, a='b')
