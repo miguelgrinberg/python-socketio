@@ -191,6 +191,7 @@ class AsyncClient(base_client.BaseClient):
             if not self._reconnect_task:
                 if self.eio.state == 'connected':  # pragma: no cover
                     # connected while sleeping above
+                    print('oops')
                     continue
                 break
             await self._reconnect_task
@@ -324,7 +325,7 @@ class AsyncClient(base_client.BaseClient):
         for n in self.namespaces:
             await self._send_packet(self.packet_class(packet.DISCONNECT,
                                     namespace=n))
-        await self.eio.disconnect(abort=True)
+        await self.eio.disconnect()
 
     async def shutdown(self):
         """Stop the client.

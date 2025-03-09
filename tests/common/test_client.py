@@ -633,7 +633,7 @@ class TestClient:
             c._send_packet.call_args_list[0][0][0].encode()
             == expected_packet.encode()
         )
-        c.eio.disconnect.assert_called_once_with(abort=True)
+        c.eio.disconnect.assert_called_once_with()
 
     def test_disconnect_namespaces(self):
         c = client.Client()
@@ -1138,7 +1138,7 @@ class TestClient:
             c._send_packet.call_args_list[0][0][0].encode()
             == expected_packet.encode()
         )
-        c.eio.disconnect.assert_called_once_with(abort=True)
+        c.eio.disconnect.assert_called_once_with()
 
     def test_shutdown_disconnect_namespaces(self):
         c = client.Client()

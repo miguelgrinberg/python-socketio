@@ -475,7 +475,7 @@ class TestAsyncClient:
             c._send_packet.await_args_list[0][0][0].encode()
             == expected_packet.encode()
         )
-        c.eio.disconnect.assert_awaited_once_with(abort=True)
+        c.eio.disconnect.assert_awaited_once_with()
 
     async def test_disconnect_namespaces(self):
         c = async_client.AsyncClient()
@@ -993,7 +993,7 @@ class TestAsyncClient:
             c._send_packet.await_args_list[0][0][0].encode()
             == expected_packet.encode()
         )
-        c.eio.disconnect.assert_awaited_once_with(abort=True)
+        c.eio.disconnect.assert_awaited_once_with()
 
     async def test_shutdown_disconnect_namespaces(self):
         c = async_client.AsyncClient()

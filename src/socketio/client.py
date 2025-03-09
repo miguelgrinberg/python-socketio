@@ -306,7 +306,7 @@ class Client(base_client.BaseClient):
         for n in self.namespaces:
             self._send_packet(self.packet_class(
                 packet.DISCONNECT, namespace=n))
-        self.eio.disconnect(abort=True)
+        self.eio.disconnect()
 
     def shutdown(self):
         """Stop the client.
