@@ -29,15 +29,12 @@ def parse_redis_sentinel_url(url):
         kwargs['username'] = parsed_url.username
     if parsed_url.password:
         kwargs['password'] = parsed_url.password
-    if parsed_url.query:
-        for key, value in urlparse.parse_qs(parsed_url.query).items():
-            kwargs[key] = value[0]
     service_name = None
     if parsed_url.path:
         parts = parsed_url.path.split('/')
-        if len(parts) >= 2:
+        if len(parts) >= 2 and parts[1] != '':
             kwargs['db'] = int(parts[1])
-        if len(parts) >= 3:
+        if len(parts) >= 3 and parts[2] != '':
             service_name = parts[2]
     return sentinels, service_name, kwargs
 
