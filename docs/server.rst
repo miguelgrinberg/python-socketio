@@ -19,12 +19,6 @@ command::
 
     pip install python-socketio
 
-If you plan to build an asynchronous web server based on the ``asyncio``
-package, then you can install this package and some additional dependencies
-that are needed with::
-
-    pip install "python-socketio[asyncio]"
-
 Creating a Server Instance
 --------------------------
 
