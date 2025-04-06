@@ -1,6 +1,7 @@
 import logging
 import pickle
 import time
+from urllib.parse import urlparse
 
 try:
     import redis
@@ -10,6 +11,32 @@ except ImportError:
 from .pubsub_manager import PubSubManager
 
 logger = logging.getLogger('socketio')
+
+
+def parse_redis_sentinel_url(url):
+    """Parse a Redis Sentinel URL with the format:
+    redis+sentinel://[:password]@host1:port1,host2:port2,.../db/service_name
+    """
+    parsed_url = urlparse(url)
+    if parsed_url.scheme != 'redis+sentinel':
+        raise ValueError('Invalid Redis Sentinel URL')
+    sentinels = []
+    for host_port in parsed_url.netloc.split('@')[-1].split(','):
+        host, port = host_port.rsplit(':', 1)
+        sentinels.append((host, int(port)))
+    kwargs = {}
+    if parsed_url.username:
+        kwargs['username'] = parsed_url.username
+    if parsed_url.password:
+        kwargs['password'] = parsed_url.password
+    service_name = None
+    if parsed_url.path:
+        parts = parsed_url.path.split('/')
+        if len(parts) >= 2 and parts[1] != '':
+            kwargs['db'] = int(parts[1])
+        if len(parts) >= 3 and parts[2] != '':
+            service_name = parts[2]
+    return sentinels, service_name, kwargs
 
 
 class RedisManager(PubSubManager):  # pragma: no cover
@@ -27,15 +54,18 @@ class RedisManager(PubSubManager):  # pragma: no cover
         server = socketio.Server(client_manager=socketio.RedisManager(url))
 
     :param url: The connection URL for the Redis server. For a default Redis
-                store running on the same host, use ``redis://``.  To use an
-                SSL connection, use ``rediss://``.
+                store running on the same host, use ``redis://``.  To use a
+                TLS connection, use ``rediss://``. To use Redis Sentinel, use
+                ``redis+sentinel://`` with a comma-separated list of hosts
+                and the service name after the db in the URL path. Example:
+                ``redis+sentinel://user:pw@host1:1234,host2:2345/0/myredis``.
     :param channel: The channel name on which the server sends and receives
                     notifications. Must be the same in all the servers.
     :param write_only: If set to ``True``, only initialize to emit events. The
                        default of ``False`` initializes the class for emitting
                        and receiving.
     :param redis_options: additional keyword arguments to be passed to
-                          ``Redis.from_url()``.
+                          ``Redis.from_url()`` or ``Sentinel()``.
     """
     name = 'redis'
 
@@ -66,8 +96,16 @@ class RedisManager(PubSubManager):  # pragma: no cover
                 'with ' + self.server.async_mode)
 
     def _redis_connect(self):
-        self.redis = redis.Redis.from_url(self.redis_url,
-                                          **self.redis_options)
+        if not self.redis_url.startswith('redis+sentinel://'):
+            self.redis = redis.Redis.from_url(self.redis_url,
+                                              **self.redis_options)
+        else:
+            sentinels, service_name, connection_kwargs = \
+                parse_redis_sentinel_url(self.redis_url)
+            kwargs = self.redis_options
+            kwargs.update(connection_kwargs)
+            sentinel = redis.sentinel.Sentinel(sentinels, **kwargs)
+            self.redis = sentinel.master_for(service_name or self.channel)
         self.pubsub = self.redis.pubsub(ignore_subscribe_messages=True)
 
     def _publish(self, data):
