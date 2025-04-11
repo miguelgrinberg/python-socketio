@@ -158,7 +158,7 @@ class AsyncClient(base_client.BaseClient):
                 await self._handle_reconnect()
                 if self.eio.state == 'connected':
                     return
-            raise exceptions.ConnectionError(exc.args[0]) from None
+            raise exceptions.ConnectionError(exc.args[0]) from exc
 
         if wait:
             try:
