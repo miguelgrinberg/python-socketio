@@ -1,5 +1,13 @@
 # python-socketio change log
 
+**Release 5.13.0** - 2025-04-12
+
+- Eliminate race conditions on disconnect [#1441](https://github.com/miguelgrinberg/python-socketio/issues/1441) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/288ebb189d799a05bbc5979a834433034ea2939f))
+- Preserve exception context in `Client.connect` and `AsyncClient.connect` [#1450](https://github.com/miguelgrinberg/python-socketio/issues/1450) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/5c93c59648358862514f317838f61498a101ba54)) (thanks **Tim Van Baak**!)
+- Allow custom client subclasses to be used in SimpleClient and AsyncSimpleClient [#1432](https://github.com/miguelgrinberg/python-socketio/issues/1432) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/7605630bb236b4baf98574ca2a8f0cdba2696ef4))
+- Add support for Redis Sentinel URLs in `RedisManager` and `AsyncRedisManager` [#1448](https://github.com/miguelgrinberg/python-socketio/issues/1448) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/6a52e8b50274a7524fadcd2633eb819811a63734))
+- Remove incorrect reference to an `asyncio` installation extra in documentation [#1449](https://github.com/miguelgrinberg/python-socketio/issues/1449) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/537630b983245cc137f609c3e6247d6d68ebdea5))
+
 **Release 5.12.1** - 2024-12-29
 
 - Fix admin instrumentation support of disconnect reasons [#1423](https://github.com/miguelgrinberg/python-socketio/issues/1423) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/b75fd31625cfea0d8c67d776070e4f8de99c1e45))
