@@ -19,7 +19,6 @@ def connect():
 
 @sio.event
 def pong_from_server():
-    global start_timer
     latency = time.time() - start_timer
     print(f'latency is {latency * 1000:.2f} ms')
     sio.sleep(1)
