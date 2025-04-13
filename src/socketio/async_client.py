@@ -191,7 +191,6 @@ class AsyncClient(base_client.BaseClient):
             if not self._reconnect_task:
                 if self.eio.state == 'connected':  # pragma: no cover
                     # connected while sleeping above
-                    print('oops')
                     continue
                 break
             await self._reconnect_task
