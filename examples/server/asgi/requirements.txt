@@ -1,5 +1,5 @@
 Click==7.1.2
-h11==0.11.0
+h11==0.16.0
 httptools==0.1.1
 python-engineio
 python_socketio
