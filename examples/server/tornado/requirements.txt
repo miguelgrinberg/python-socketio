@@ -1,4 +1,4 @@
-tornado==6.4.2
+tornado==6.5.1
 python-engineio
 python_socketio
 six==1.10.0
