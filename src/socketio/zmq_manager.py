@@ -57,6 +57,7 @@ class ZmqManager(PubSubManager):  # pragma: no cover
         if not (url.startswith('zmq+tcp://') and r.search(url)):
             raise RuntimeError('unexpected connection string: ' + url)
 
+        super().__init__(channel=channel, write_only=write_only, logger=logger)
         url = url.replace('zmq+', '')
         (sink_url, sub_port) = url.split('+')
         sink_port = sink_url.split(':')[-1]
@@ -72,7 +73,6 @@ class ZmqManager(PubSubManager):  # pragma: no cover
         self.sink = sink
         self.sub = sub
         self.channel = channel
-        super().__init__(channel=channel, write_only=write_only, logger=logger)
 
     def _publish(self, data):
         pickled_data = pickle.dumps(

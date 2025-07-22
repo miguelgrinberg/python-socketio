@@ -52,9 +52,9 @@ class AsyncRedisManager(AsyncPubSubManager):  # pragma: no cover
                                '(Run "pip install redis" in your virtualenv).')
         if not hasattr(aioredis.Redis, 'from_url'):
             raise RuntimeError('Version 2 of aioredis package is required.')
+        super().__init__(channel=channel, write_only=write_only, logger=logger)
         self.redis_url = url
         self.redis_options = redis_options or {}
-        super().__init__(channel=channel, write_only=write_only, logger=logger)
         self._redis_connect()
 
     def _redis_connect(self):

@@ -75,10 +75,10 @@ class RedisManager(PubSubManager):  # pragma: no cover
             raise RuntimeError('Redis package is not installed '
                                '(Run "pip install redis" in your '
                                'virtualenv).')
+        super().__init__(channel=channel, write_only=write_only, logger=logger)
         self.redis_url = url
         self.redis_options = redis_options or {}
         self._redis_connect()
-        super().__init__(channel=channel, write_only=write_only, logger=logger)
 
     def initialize(self):
         super().initialize()

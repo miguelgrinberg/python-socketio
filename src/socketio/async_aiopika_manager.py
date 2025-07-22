@@ -43,12 +43,12 @@ class AsyncAioPikaManager(AsyncPubSubManager):  # pragma: no cover
             raise RuntimeError('aio_pika package is not installed '
                                '(Run "pip install aio_pika" in your '
                                'virtualenv).')
+        super().__init__(channel=channel, write_only=write_only, logger=logger)
         self.url = url
         self._lock = asyncio.Lock()
         self.publisher_connection = None
         self.publisher_channel = None
         self.publisher_exchange = None
-        super().__init__(channel=channel, write_only=write_only, logger=logger)
 
     async def _connection(self):
         return await aio_pika.connect_robust(self.url)
