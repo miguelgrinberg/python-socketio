@@ -54,8 +54,8 @@ class AsyncRedisManager(AsyncPubSubManager):  # pragma: no cover
             raise RuntimeError('Version 2 of aioredis package is required.')
         self.redis_url = url
         self.redis_options = redis_options or {}
-        self._redis_connect()
         super().__init__(channel=channel, write_only=write_only, logger=logger)
+        self._redis_connect()
 
     def _redis_connect(self):
         if not self.redis_url.startswith('redis+sentinel://'):
