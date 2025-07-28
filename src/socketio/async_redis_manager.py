@@ -78,14 +78,19 @@ class AsyncRedisManager(AsyncPubSubManager):  # pragma: no cover
                     self._redis_connect()
                 return await self.redis.publish(
                     self.channel, pickle.dumps(data))
-            except RedisError:
+            except RedisError as exc:
                 if retry:
-                    self._get_logger().error('Cannot publish to redis... '
-                                             'retrying')
+                    self._get_logger().error(
+                        'Cannot publish to redis... '
+                        'retrying',
+                        extra={"redis_exception": str(exc)})
                     retry = False
                 else:
-                    self._get_logger().error('Cannot publish to redis... '
-                                             'giving up')
+                    self._get_logger().error(
+                        'Cannot publish to redis... '
+                        'giving up',
+                        extra={"redis_exception": str(exc)})
+
                     break
 
     async def _redis_listen_with_retries(self):
@@ -99,10 +104,11 @@ class AsyncRedisManager(AsyncPubSubManager):  # pragma: no cover
                     retry_sleep = 1
                 async for message in self.pubsub.listen():
                     yield message
-            except RedisError:
+            except RedisError as exc:
                 self._get_logger().error('Cannot receive from redis... '
                                          'retrying in '
-                                         '{} secs'.format(retry_sleep))
+                                         '{} secs'.format(retry_sleep),
+                                         extra={"redis_exception": str(exc)})
                 connect = True
                 await asyncio.sleep(retry_sleep)
                 retry_sleep *= 2
