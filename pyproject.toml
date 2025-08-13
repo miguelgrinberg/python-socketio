@@ -1,6 +1,6 @@
 [project]
 name = "fastsio"
-version = "0.0.0"
+version = "0.0.1"
 description = "light and typization Socket.IO server and client for Python"
 license = "MIT"
 readme = "README.md"
@@ -16,7 +16,7 @@ authors = [
 
 [tool.poetry]
 name = "fastsio"
-version = "0.0.0"
+version = "0.0.1"
 description = "light and typization Socket.IO server and client for Python"
 license = "MIT"
 readme = "README.md"
