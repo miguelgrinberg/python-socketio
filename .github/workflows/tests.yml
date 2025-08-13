@@ -1,47 +1,47 @@
-#name: build
-#on: [push, pull_request, workflow_dispatch]
-#jobs:
-#  lint:
-#    name: lint
-#    runs-on: ubuntu-latest
-#    steps:
-#      - uses: actions/checkout@v4
-#      - uses: actions/setup-python@v5
-#      - run: python -m pip install --upgrade pip wheel
-#      - run: pip install tox tox-gh-actions
-#      - run: tox -eflake8
-#      - run: tox -edocs
-#  tests:
-#    name: tests
-#    strategy:
-#      matrix:
-#        os: [windows-latest, macos-latest, ubuntu-latest]
-#        python: ['3.8', '3.9', '3.10', '3.11', '3.12', '3.13', 'pypy-3.10']
-#        exclude:
-#          # pypy3 currently fails to run on Windows
-#          - os: windows-latest
-#            python: pypy-3.10
-#      fail-fast: false
-#    runs-on: ${{ matrix.os }}
-#    steps:
-#      - uses: actions/checkout@v4
-#      - uses: actions/setup-python@v5
-#        with:
-#          python-version: ${{ matrix.python }}
-#      - run: python -m pip install --upgrade pip wheel
-#      - run: pip install tox tox-gh-actions
-#      - run: tox
-#  coverage:
-#    name: coverage
-#    runs-on: ubuntu-latest
-#    steps:
-#      - uses: actions/checkout@v4
-#      - uses: actions/setup-python@v5
-#      - run: python -m pip install --upgrade pip wheel
-#      - run: pip install tox tox-gh-actions
-#      - run: tox
-#      - uses: codecov/codecov-action@v3
-#        with:
-#          files: ./coverage.xml
-#          fail_ci_if_error: true
-#          token: ${{ secrets.CODECOV_TOKEN }}
+name: build
+on: [push, pull_request, workflow_dispatch]
+jobs:
+  lint:
+    name: lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+      - run: python -m pip install --upgrade pip wheel
+      - run: pip install tox tox-gh-actions
+      - run: tox -eflake8
+      - run: tox -edocs
+  tests:
+    name: tests
+    strategy:
+      matrix:
+        os: [windows-latest, macos-latest, ubuntu-latest]
+        python: ['3.8', '3.9', '3.10', '3.11', '3.12', '3.13', 'pypy-3.10']
+        exclude:
+          # pypy3 currently fails to run on Windows
+          - os: windows-latest
+            python: pypy-3.10
+      fail-fast: false
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - run: python -m pip install --upgrade pip wheel
+      - run: pip install tox tox-gh-actions
+      - run: tox
+  coverage:
+    name: coverage
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+      - run: python -m pip install --upgrade pip wheel
+      - run: pip install tox tox-gh-actions
+      - run: tox
+      - uses: codecov/codecov-action@v3
+        with:
+          files: ./coverage.xml
+          fail_ci_if_error: true
+          token: ${{ secrets.CODECOV_TOKEN }}
