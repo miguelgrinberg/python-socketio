@@ -3,7 +3,6 @@ name = "fastsio"
 version = "5.13.1.dev0"
 description = "light and typization Socket.IO server and client for Python"
 license = "MIT"
-license-files = ["LICEN[CS]E*"]
 readme = "README.md"
 homepage = "https://github.com/cicwak/fastsio"
 repository = "https://github.com/cicwak/fastsio"

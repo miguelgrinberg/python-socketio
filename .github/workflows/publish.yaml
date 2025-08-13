@@ -1,0 +1,82 @@
+name: Publish to (Test)PyPI via Poetry
+
+on:
+  push:
+    tags:
+      - "test/*.*.*"
+      - "test/v*.*.*"
+      - "*.*.*"
+      - "v*.*.*"
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+
+    env:
+      PYTHON_VERSION: "3.12"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set release variables from tag
+        id: tag
+        run: |
+          RAW_TAG="${GITHUB_REF_NAME}"  # examples: 0.1.0, v0.1.0, test/0.1.0, test/v0.1.0
+          # detect target (testpypi or pypi)
+          if [[ "$RAW_TAG" == test/* ]]; then
+            echo "target_repo=testpypi" >> "$GITHUB_OUTPUT"
+          else
+            echo "target_repo=pypi" >> "$GITHUB_OUTPUT"
+          fi
+          # strip possible prefixes 'test/' and optional leading 'v'
+          STRIPPED="${RAW_TAG#test/}"
+          STRIPPED="${STRIPPED#v}"
+          echo "version=$STRIPPED" >> "$GITHUB_OUTPUT"
+          echo "Resolved version: $STRIPPED, target: $(cat $GITHUB_OUTPUT | grep target_repo | cut -d= -f2)"
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install Poetry
+        run: pipx install poetry
+
+      - name: Cache Poetry and pip
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/pypoetry
+            ~/.cache/pip
+          key: poetry-${{ runner.os }}-${{ env.PYTHON_VERSION }}-${{ hashFiles('**/poetry.lock') }}
+          restore-keys: |
+            poetry-${{ runner.os }}-${{ env.PYTHON_VERSION }}-
+
+      - name: Install project deps (no dev)
+        run: poetry install --no-interaction --no-root --only main
+
+      - name: Sync version from tag into pyproject.toml
+        run: poetry version ${{ steps.tag.outputs.version }}
+
+      - name: Build distributions
+        run: poetry build --no-interaction
+
+      - name: Configure Poetry repositories and tokens
+        if: ${{ steps.tag.outputs.target_repo == 'testpypi' }}
+        run: |
+          poetry config repositories.testpypi https://test.pypi.org/legacy/
+          poetry config pypi-token.testpypi ${{ secrets.TEST_PYPI_API_TOKEN }}
+
+      - name: Configure Poetry token for PyPI
+        if: ${{ steps.tag.outputs.target_repo == 'pypi' }}
+        run: |
+          poetry config pypi-token.pypi ${{ secrets.PYPI_API_TOKEN }}
+
+      - name: Publish to TestPyPI
+        if: ${{ steps.tag.outputs.target_repo == 'testpypi' }}
+        run: poetry publish -r testpypi --no-interaction
+
+      - name: Publish to PyPI
+        if: ${{ steps.tag.outputs.target_repo == 'pypi' }}
+        run: poetry publish --no-interaction
