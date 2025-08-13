@@ -1,10 +1,25 @@
 import functools
+
 from engineio import json as _json
 
-(CONNECT, DISCONNECT, EVENT, ACK, CONNECT_ERROR, BINARY_EVENT, BINARY_ACK) = \
-    (0, 1, 2, 3, 4, 5, 6)
-packet_names = ['CONNECT', 'DISCONNECT', 'EVENT', 'ACK', 'CONNECT_ERROR',
-                'BINARY_EVENT', 'BINARY_ACK']
+(CONNECT, DISCONNECT, EVENT, ACK, CONNECT_ERROR, BINARY_EVENT, BINARY_ACK) = (
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+)
+packet_names = [
+    "CONNECT",
+    "DISCONNECT",
+    "EVENT",
+    "ACK",
+    "CONNECT_ERROR",
+    "BINARY_EVENT",
+    "BINARY_ACK",
+]
 
 
 class Packet:
@@ -22,21 +37,28 @@ class Packet:
     uses_binary_events = True
     json = _json
 
-    def __init__(self, packet_type=EVENT, data=None, namespace=None, id=None,
-                 binary=None, encoded_packet=None):
+    def __init__(
+        self,
+        packet_type=EVENT,
+        data=None,
+        namespace=None,
+        id=None,
+        binary=None,
+        encoded_packet=None,
+    ):
         self.packet_type = packet_type
         self.data = data
         self.namespace = namespace
         self.id = id
-        if self.uses_binary_events and \
-                (binary or (binary is None and self._data_is_binary(
-                    self.data))):
+        if self.uses_binary_events and (
+            binary or (binary is None and self._data_is_binary(self.data))
+        ):
             if self.packet_type == EVENT:
                 self.packet_type = BINARY_EVENT
             elif self.packet_type == ACK:
                 self.packet_type = BINARY_ACK
             else:
-                raise ValueError('Packet does not support binary payload.')
+                raise ValueError("Packet does not support binary payload.")
         self.attachment_count = 0
         self.attachments = []
         if encoded_packet:
@@ -52,16 +74,16 @@ class Packet:
         encoded_packet = str(self.packet_type)
         if self.packet_type == BINARY_EVENT or self.packet_type == BINARY_ACK:
             data, attachments = self._deconstruct_binary(self.data)
-            encoded_packet += str(len(attachments)) + '-'
+            encoded_packet += str(len(attachments)) + "-"
         else:
             data = self.data
             attachments = None
-        if self.namespace is not None and self.namespace != '/':
-            encoded_packet += self.namespace + ','
+        if self.namespace is not None and self.namespace != "/":
+            encoded_packet += self.namespace + ","
         if self.id is not None:
             encoded_packet += str(self.id)
         if data is not None:
-            encoded_packet += self.json.dumps(data, separators=(',', ':'))
+            encoded_packet += self.json.dumps(data, separators=(",", ":"))
         if attachments is not None:
             encoded_packet = [encoded_packet] + attachments
         return encoded_packet
@@ -77,26 +99,26 @@ class Packet:
             self.packet_type = int(ep[0:1])
         except TypeError:
             self.packet_type = ep
-            ep = ''
+            ep = ""
         self.namespace = None
         self.data = None
         ep = ep[1:]
-        dash = ep.find('-')
+        dash = ep.find("-")
         attachment_count = 0
         if dash > 0 and ep[0:dash].isdigit():
             if dash > 10:
-                raise ValueError('too many attachments')
+                raise ValueError("too many attachments")
             attachment_count = int(ep[0:dash])
-            ep = ep[dash + 1:]
-        if ep and ep[0:1] == '/':
-            sep = ep.find(',')
+            ep = ep[dash + 1 :]
+        if ep and ep[0:1] == "/":
+            sep = ep.find(",")
             if sep == -1:
                 self.namespace = ep
-                ep = ''
+                ep = ""
             else:
                 self.namespace = ep[0:sep]
-                ep = ep[sep + 1:]
-            q = self.namespace.find('?')
+                ep = ep[sep + 1 :]
+            q = self.namespace.find("?")
             if q != -1:
                 self.namespace = self.namespace[0:q]
         if ep and ep[0].isdigit():
@@ -109,14 +131,14 @@ class Packet:
             self.id = int(ep[:i])
             ep = ep[i:]
             if len(ep) > 0 and ep[0].isdigit():
-                raise ValueError('id field is too long')
+                raise ValueError("id field is too long")
         if ep:
             self.data = self.json.loads(ep)
         return attachment_count
 
     def add_attachment(self, attachment):
         if self.attachment_count <= len(self.attachments):
-            raise ValueError('Unexpected binary attachment')
+            raise ValueError("Unexpected binary attachment")
         self.attachments.append(attachment)
         if self.attachment_count == len(self.attachments):
             self.reconstruct_binary(self.attachments)
@@ -127,22 +149,21 @@ class Packet:
         """Reconstruct a decoded packet using the given list of binary
         attachments.
         """
-        self.data = self._reconstruct_binary_internal(self.data,
-                                                      self.attachments)
+        self.data = self._reconstruct_binary_internal(self.data, self.attachments)
 
     def _reconstruct_binary_internal(self, data, attachments):
         if isinstance(data, list):
-            return [self._reconstruct_binary_internal(item, attachments)
-                    for item in data]
-        elif isinstance(data, dict):
-            if data.get('_placeholder') and 'num' in data:
-                return attachments[data['num']]
-            else:
-                return {key: self._reconstruct_binary_internal(value,
-                                                               attachments)
-                        for key, value in data.items()}
-        else:
-            return data
+            return [
+                self._reconstruct_binary_internal(item, attachments) for item in data
+            ]
+        if isinstance(data, dict):
+            if data.get("_placeholder") and "num" in data:
+                return attachments[data["num"]]
+            return {
+                key: self._reconstruct_binary_internal(value, attachments)
+                for key, value in data.items()
+            }
+        return data
 
     def _deconstruct_binary(self, data):
         """Extract binary components in the packet."""
@@ -153,38 +174,42 @@ class Packet:
     def _deconstruct_binary_internal(self, data, attachments):
         if isinstance(data, bytes):
             attachments.append(data)
-            return {'_placeholder': True, 'num': len(attachments) - 1}
-        elif isinstance(data, list):
-            return [self._deconstruct_binary_internal(item, attachments)
-                    for item in data]
-        elif isinstance(data, dict):
-            return {key: self._deconstruct_binary_internal(value, attachments)
-                    for key, value in data.items()}
-        else:
-            return data
+            return {"_placeholder": True, "num": len(attachments) - 1}
+        if isinstance(data, list):
+            return [
+                self._deconstruct_binary_internal(item, attachments) for item in data
+            ]
+        if isinstance(data, dict):
+            return {
+                key: self._deconstruct_binary_internal(value, attachments)
+                for key, value in data.items()
+            }
+        return data
 
     def _data_is_binary(self, data):
         """Check if the data contains binary components."""
         if isinstance(data, bytes):
             return True
-        elif isinstance(data, list):
+        if isinstance(data, list):
             return functools.reduce(
-                lambda a, b: a or b, [self._data_is_binary(item)
-                                      for item in data], False)
-        elif isinstance(data, dict):
+                lambda a, b: a or b,
+                [self._data_is_binary(item) for item in data],
+                False,
+            )
+        if isinstance(data, dict):
             return functools.reduce(
-                lambda a, b: a or b, [self._data_is_binary(item)
-                                      for item in data.values()],
-                False)
-        else:
-            return False
+                lambda a, b: a or b,
+                [self._data_is_binary(item) for item in data.values()],
+                False,
+            )
+        return False
 
     def _to_dict(self):
         d = {
-            'type': self.packet_type,
-            'data': self.data,
-            'nsp': self.namespace,
+            "type": self.packet_type,
+            "data": self.data,
+            "nsp": self.namespace,
         }
         if self.id is not None:
-            d['id'] = self.id
+            d["id"] = self.id
         return d

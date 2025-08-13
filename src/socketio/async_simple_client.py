@@ -1,6 +1,7 @@
 import asyncio
+
 from socketio import AsyncClient
-from socketio.exceptions import SocketIOError, TimeoutError, DisconnectedError
+from socketio.exceptions import DisconnectedError, SocketIOError, TimeoutError
 
 
 class AsyncSimpleClient:
@@ -12,21 +13,29 @@ class AsyncSimpleClient:
     The positional and keyword arguments given in the constructor are passed
     to the underlying :func:`socketio.AsyncClient` object.
     """
+
     client_class = AsyncClient
 
     def __init__(self, *args, **kwargs):
         self.client_args = args
         self.client_kwargs = kwargs
         self.client = None
-        self.namespace = '/'
+        self.namespace = "/"
         self.connected_event = asyncio.Event()
         self.connected = False
         self.input_event = asyncio.Event()
         self.input_buffer = []
 
-    async def connect(self, url, headers={}, auth=None, transports=None,
-                      namespace='/', socketio_path='socket.io',
-                      wait_timeout=5):
+    async def connect(
+        self,
+        url,
+        headers={},
+        auth=None,
+        transports=None,
+        namespace="/",
+        socketio_path="socket.io",
+        wait_timeout=5,
+    ):
         """Connect to a Socket.IO server.
 
         :param url: The URL of the Socket.IO server. It can include custom
@@ -58,12 +67,11 @@ class AsyncSimpleClient:
         Note: this method is a coroutine.
         """
         if self.connected:
-            raise RuntimeError('Already connected')
+            raise RuntimeError("Already connected")
         self.namespace = namespace
         self.input_buffer = []
         self.input_event.clear()
-        self.client = self.client_class(
-            *self.client_args, **self.client_kwargs)
+        self.client = self.client_class(*self.client_args, **self.client_kwargs)
 
         @self.client.event(namespace=self.namespace)
         def connect():  # pragma: no cover
@@ -79,15 +87,20 @@ class AsyncSimpleClient:
             self.connected = False
             self.connected_event.set()
 
-        @self.client.on('*', namespace=self.namespace)
+        @self.client.on("*", namespace=self.namespace)
         def on_event(event, *args):  # pragma: no cover
             self.input_buffer.append([event, *args])
             self.input_event.set()
 
         await self.client.connect(
-            url, headers=headers, auth=auth, transports=transports,
-            namespaces=[namespace], socketio_path=socketio_path,
-            wait_timeout=wait_timeout)
+            url,
+            headers=headers,
+            auth=auth,
+            transports=transports,
+            namespaces=[namespace],
+            socketio_path=socketio_path,
+            wait_timeout=wait_timeout,
+        )
 
     @property
     def sid(self):
@@ -105,7 +118,7 @@ class AsyncSimpleClient:
         The transport is returned as a string and can be one of ``polling``
         and ``websocket``.
         """
-        return self.client.transport if self.client else ''
+        return self.client.transport if self.client else ""
 
     async def emit(self, event, data=None):
         """Emit an event to the server.
@@ -130,8 +143,7 @@ class AsyncSimpleClient:
             if not self.connected:
                 raise DisconnectedError()
             try:
-                return await self.client.emit(event, data,
-                                              namespace=self.namespace)
+                return await self.client.emit(event, data, namespace=self.namespace)
             except SocketIOError:
                 pass
 
@@ -160,9 +172,9 @@ class AsyncSimpleClient:
             if not self.connected:
                 raise DisconnectedError()
             try:
-                return await self.client.call(event, data,
-                                              namespace=self.namespace,
-                                              timeout=timeout)
+                return await self.client.call(
+                    event, data, namespace=self.namespace, timeout=timeout
+                )
             except SocketIOError:
                 pass
 
@@ -181,15 +193,13 @@ class AsyncSimpleClient:
         """
         while not self.input_buffer:
             try:
-                await asyncio.wait_for(self.connected_event.wait(),
-                                       timeout=timeout)
+                await asyncio.wait_for(self.connected_event.wait(), timeout=timeout)
             except asyncio.TimeoutError:  # pragma: no cover
                 raise TimeoutError()
             if not self.connected:
                 raise DisconnectedError()
             try:
-                await asyncio.wait_for(self.input_event.wait(),
-                                       timeout=timeout)
+                await asyncio.wait_for(self.input_event.wait(), timeout=timeout)
             except asyncio.TimeoutError:
                 raise TimeoutError()
             self.input_event.clear()

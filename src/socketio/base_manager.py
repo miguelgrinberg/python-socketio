@@ -1,9 +1,9 @@
 import itertools
 import logging
 
-from bidict import bidict, ValueDuplicationError
+from bidict import ValueDuplicationError, bidict
 
-default_logger = logging.getLogger('socketio')
+default_logger = logging.getLogger("socketio")
 
 
 class BaseManager:
@@ -31,7 +31,7 @@ class BaseManager:
     def get_participants(self, namespace, room):
         """Return an iterable with the active participants in a room."""
         ns = self.rooms.get(namespace, {})
-        if hasattr(room, '__len__') and not isinstance(room, str):
+        if hasattr(room, "__len__") and not isinstance(room, str):
             participants = ns[room[0]]._fwdm.copy() if room[0] in ns else {}
             for r in room[1:]:
                 participants.update(ns[r]._fwdm if r in ns else {})
@@ -51,8 +51,10 @@ class BaseManager:
         return sid
 
     def is_connected(self, sid, namespace):
-        if namespace in self.pending_disconnect and \
-                sid in self.pending_disconnect[namespace]:
+        if (
+            namespace in self.pending_disconnect
+            and sid in self.pending_disconnect[namespace]
+        ):
             # the client is in the process of being disconnected
             return False
         try:
@@ -94,15 +96,17 @@ class BaseManager:
             self.basic_leave_room(sid, namespace, room)
         if sid in self.callbacks:
             del self.callbacks[sid]
-        if namespace in self.pending_disconnect and \
-                sid in self.pending_disconnect[namespace]:
+        if (
+            namespace in self.pending_disconnect
+            and sid in self.pending_disconnect[namespace]
+        ):
             self.pending_disconnect[namespace].remove(sid)
             if len(self.pending_disconnect[namespace]) == 0:
                 del self.pending_disconnect[namespace]
 
     def basic_enter_room(self, sid, namespace, room, eio_sid=None):
         if eio_sid is None and namespace not in self.rooms:
-            raise ValueError('sid is not connected to requested namespace')
+            raise ValueError("sid is not connected to requested namespace")
         if namespace not in self.rooms:
             self.rooms[namespace] = {}
         if room not in self.rooms[namespace]:
@@ -152,10 +156,8 @@ class BaseManager:
 
         Prevents uninitialized servers in write-only mode from failing.
         """
-
         if self.logger:
             return self.logger
-        elif self.server:
+        if self.server:
             return self.server.logger
-        else:
-            return default_logger
+        return default_logger

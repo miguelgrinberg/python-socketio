@@ -2,39 +2,46 @@ import logging
 
 import engineio
 
-from . import manager
-from . import base_namespace
-from . import packet
+from . import base_namespace, manager, packet
 
-default_logger = logging.getLogger('socketio.server')
+default_logger = logging.getLogger("socketio.server")
 
 
 class BaseServer:
-    reserved_events = ['connect', 'disconnect']
+    reserved_events = ["connect", "disconnect"]
     reason = engineio.Server.reason
 
-    def __init__(self, client_manager=None, logger=False, serializer='default',
-                 json=None, async_handlers=True, always_connect=False,
-                 namespaces=None, **kwargs):
+    def __init__(
+        self,
+        client_manager=None,
+        logger=False,
+        serializer="default",
+        json=None,
+        async_handlers=True,
+        always_connect=False,
+        namespaces=None,
+        **kwargs,
+    ):
         engineio_options = kwargs
-        engineio_logger = engineio_options.pop('engineio_logger', None)
+        engineio_logger = engineio_options.pop("engineio_logger", None)
         if engineio_logger is not None:
-            engineio_options['logger'] = engineio_logger
-        if serializer == 'default':
+            engineio_options["logger"] = engineio_logger
+        if serializer == "default":
             self.packet_class = packet.Packet
-        elif serializer == 'msgpack':
+        elif serializer == "msgpack":
             from . import msgpack_packet
+
             self.packet_class = msgpack_packet.MsgPackPacket
         else:
             self.packet_class = serializer
         if json is not None:
             self.packet_class.json = json
-            engineio_options['json'] = json
-        engineio_options['async_handlers'] = False
+            engineio_options["json"] = json
+        engineio_options["async_handlers"] = False
         self.eio = self._engineio_server_class()(**engineio_options)
-        self.eio.on('connect', self._handle_eio_connect)
-        self.eio.on('message', self._handle_eio_message)
-        self.eio.on('disconnect', self._handle_eio_disconnect)
+        self.eio.on("connect", self._handle_eio_connect)
+        self.eio.on("message", self._handle_eio_message)
+        self.eio.on("disconnect", self._handle_eio_disconnect)
 
         self.environ = {}
         self.handlers = {}
@@ -62,7 +69,7 @@ class BaseServer:
 
         self.async_handlers = async_handlers
         self.always_connect = always_connect
-        self.namespaces = namespaces or ['/']
+        self.namespaces = namespaces or ["/"]
 
         self.async_mode = self.eio.async_mode
 
@@ -87,17 +94,20 @@ class BaseServer:
         Example usage::
 
             # as a decorator:
-            @sio.on('connect', namespace='/chat')
+            @sio.on("connect", namespace="/chat")
             def connect_handler(sid, environ):
-                print('Connection request')
-                if environ['REMOTE_ADDR'] in blacklisted:
+                print("Connection request")
+                if environ["REMOTE_ADDR"] in blacklisted:
                     return False  # reject
+
 
             # as a method:
             def message_handler(sid, msg):
-                print('Received message: ', msg)
-                sio.send(sid, 'response')
-            socket_io.on('message', namespace='/chat', handler=message_handler)
+                print("Received message: ", msg)
+                sio.send(sid, "response")
+
+
+            socket_io.on("message", namespace="/chat", handler=message_handler)
 
         The arguments passed to the handler function depend on the event type:
 
@@ -117,7 +127,7 @@ class BaseServer:
           the event name as first argument and the namespace as second
           argument, followed by any arguments specific to the event.
         """
-        namespace = namespace or '/'
+        namespace = namespace or "/"
 
         def set_handler(handler):
             if namespace not in self.handlers:
@@ -139,30 +149,30 @@ class BaseServer:
 
             @sio.event
             def my_event(data):
-                print('Received data: ', data)
+                print("Received data: ", data)
 
         The above example is equivalent to::
 
-            @sio.on('my_event')
+            @sio.on("my_event")
             def my_event(data):
-                print('Received data: ', data)
+                print("Received data: ", data)
 
         A custom namespace can be given as an argument to the decorator::
 
-            @sio.event(namespace='/test')
+            @sio.event(namespace="/test")
             def my_event(data):
-                print('Received data: ', data)
+                print("Received data: ", data)
         """
         if len(args) == 1 and len(kwargs) == 0 and callable(args[0]):
             # the decorator was invoked without arguments
             # args[0] is the decorated function
             return self.on(args[0].__name__)(args[0])
-        else:
-            # the decorator was invoked with arguments
-            def set_handler(handler):
-                return self.on(handler.__name__, *args, **kwargs)(handler)
 
-            return set_handler
+        # the decorator was invoked with arguments
+        def set_handler(handler):
+            return self.on(handler.__name__, *args, **kwargs)(handler)
+
+        return set_handler
 
     def register_namespace(self, namespace_handler):
         """Register a namespace handler object.
@@ -171,14 +181,12 @@ class BaseServer:
                                   subclass that handles all the event traffic
                                   for a namespace.
         """
-        if not isinstance(namespace_handler,
-                          base_namespace.BaseServerNamespace):
-            raise ValueError('Not a namespace instance')
+        if not isinstance(namespace_handler, base_namespace.BaseServerNamespace):
+            raise ValueError("Not a namespace instance")
         if self.is_asyncio_based() != namespace_handler.is_asyncio_based():
-            raise ValueError('Not a valid namespace class for this server')
+            raise ValueError("Not a valid namespace class for this server")
         namespace_handler._set_server(self)
-        self.namespace_handlers[namespace_handler.namespace] = \
-            namespace_handler
+        self.namespace_handlers[namespace_handler.namespace] = namespace_handler
 
     def rooms(self, sid, namespace=None):
         """Return the rooms a client is in.
@@ -187,7 +195,7 @@ class BaseServer:
         :param namespace: The Socket.IO namespace for the event. If this
                           argument is omitted the default namespace is used.
         """
-        namespace = namespace or '/'
+        namespace = namespace or "/"
         return self.manager.get_rooms(sid, namespace)
 
     def transport(self, sid, namespace=None):
@@ -200,7 +208,7 @@ class BaseServer:
         :param namespace: The Socket.IO namespace. If this argument is omitted
                           the default namespace is used.
         """
-        eio_sid = self.manager.eio_sid_from_sid(sid, namespace or '/')
+        eio_sid = self.manager.eio_sid_from_sid(sid, namespace or "/")
         return self.eio.transport(eio_sid)
 
     def get_environ(self, sid, namespace=None):
@@ -210,7 +218,7 @@ class BaseServer:
         :param namespace: The Socket.IO namespace. If this argument is omitted
                           the default namespace is used.
         """
-        eio_sid = self.manager.eio_sid_from_sid(sid, namespace or '/')
+        eio_sid = self.manager.eio_sid_from_sid(sid, namespace or "/")
         return self.environ.get(eio_sid)
 
     def _get_event_handler(self, event, namespace, args):
@@ -225,17 +233,15 @@ class BaseServer:
         if namespace in self.handlers:
             if event in self.handlers[namespace]:
                 handler = self.handlers[namespace][event]
-            elif event not in self.reserved_events and \
-                    '*' in self.handlers[namespace]:
-                handler = self.handlers[namespace]['*']
+            elif event not in self.reserved_events and "*" in self.handlers[namespace]:
+                handler = self.handlers[namespace]["*"]
                 args = (event, *args)
-        if handler is None and '*' in self.handlers:
-            if event in self.handlers['*']:
-                handler = self.handlers['*'][event]
+        if handler is None and "*" in self.handlers:
+            if event in self.handlers["*"]:
+                handler = self.handlers["*"][event]
                 args = (namespace, *args)
-            elif event not in self.reserved_events and \
-                    '*' in self.handlers['*']:
-                handler = self.handlers['*']['*']
+            elif event not in self.reserved_events and "*" in self.handlers["*"]:
+                handler = self.handlers["*"]["*"]
                 args = (event, namespace, *args)
         return handler, args
 
@@ -248,19 +254,19 @@ class BaseServer:
         handler = None
         if namespace in self.namespace_handlers:
             handler = self.namespace_handlers[namespace]
-        if handler is None and '*' in self.namespace_handlers:
-            handler = self.namespace_handlers['*']
+        if handler is None and "*" in self.namespace_handlers:
+            handler = self.namespace_handlers["*"]
             args = (namespace, *args)
         return handler, args
 
     def _handle_eio_connect(self):  # pragma: no cover
-        raise NotImplementedError()
+        raise NotImplementedError
 
     def _handle_eio_message(self, data):  # pragma: no cover
-        raise NotImplementedError()
+        raise NotImplementedError
 
     def _handle_eio_disconnect(self):  # pragma: no cover
-        raise NotImplementedError()
+        raise NotImplementedError
 
     def _engineio_server_class(self):  # pragma: no cover
-        raise NotImplementedError('Must be implemented in subclasses')
+        raise NotImplementedError("Must be implemented in subclasses")

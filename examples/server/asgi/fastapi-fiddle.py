@@ -1,37 +1,38 @@
 #!/usr/bin/env python
+import uvicorn
 from fastapi import FastAPI
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
+
 import socketio
-import uvicorn
 
 app = FastAPI()
-app.mount('/static', StaticFiles(directory='static'), name='static')
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
-sio = socketio.AsyncServer(async_mode='asgi')
+sio = socketio.AsyncServer(async_mode="asgi")
 combined_asgi_app = socketio.ASGIApp(sio, app)
 
 
-@app.get('/')
+@app.get("/")
 async def index():
-    return FileResponse('fiddle.html')
+    return FileResponse("fiddle.html")
 
 
-@app.get('/hello')
+@app.get("/hello")
 async def hello():
-    return {'message': 'Hello, World!'}
+    return {"message": "Hello, World!"}
 
 
 @sio.event
 async def connect(sid, environ, auth):
-    print(f'connected auth={auth} sid={sid}')
-    await sio.emit('hello', (1, 2, {'hello': 'you'}), to=sid)
+    print(f"connected auth={auth} sid={sid}")
+    await sio.emit("hello", (1, 2, {"hello": "you"}), to=sid)
 
 
 @sio.event
 def disconnect(sid):
-    print('disconnected', sid)
+    print("disconnected", sid)
 
 
-if __name__ == '__main__':
-    uvicorn.run(combined_asgi_app, host='127.0.0.1', port=5000)
+if __name__ == "__main__":
+    uvicorn.run(combined_asgi_app, host="127.0.0.1", port=5000)

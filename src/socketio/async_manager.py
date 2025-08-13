@@ -1,17 +1,29 @@
 import asyncio
 
 from engineio import packet as eio_packet
+
 from socketio import packet
+
 from .base_manager import BaseManager
 
 
 class AsyncManager(BaseManager):
     """Manage a client list for an asyncio server."""
+
     async def can_disconnect(self, sid, namespace):
         return self.is_connected(sid, namespace)
 
-    async def emit(self, event, data, namespace, room=None, skip_sid=None,
-                   callback=None, to=None, **kwargs):
+    async def emit(
+        self,
+        event,
+        data,
+        namespace,
+        room=None,
+        skip_sid=None,
+        callback=None,
+        to=None,
+        **kwargs,
+    ):
         """Emit a message to a single client, a room, or all the clients
         connected to the namespace.
 
@@ -35,17 +47,20 @@ class AsyncManager(BaseManager):
             # when callbacks aren't used the packets sent to each recipient are
             # identical, so they can be generated once and reused
             pkt = self.server.packet_class(
-                packet.EVENT, namespace=namespace, data=[event] + data)
+                packet.EVENT, namespace=namespace, data=[event] + data
+            )
             encoded_packet = pkt.encode()
             if not isinstance(encoded_packet, list):
                 encoded_packet = [encoded_packet]
-            eio_pkt = [eio_packet.Packet(eio_packet.MESSAGE, p)
-                       for p in encoded_packet]
+            eio_pkt = [eio_packet.Packet(eio_packet.MESSAGE, p) for p in encoded_packet]
             for sid, eio_sid in self.get_participants(namespace, room):
                 if sid not in skip_sid:
                     for p in eio_pkt:
-                        tasks.append(asyncio.create_task(
-                            self.server._send_eio_packet(eio_sid, p)))
+                        tasks.append(
+                            asyncio.create_task(
+                                self.server._send_eio_packet(eio_sid, p)
+                            )
+                        )
         else:
             # callbacks are used, so each recipient must be sent a packet that
             # contains a unique callback id
@@ -55,10 +70,11 @@ class AsyncManager(BaseManager):
                 if sid not in skip_sid:  # pragma: no branch
                     id = self._generate_ack_id(sid, callback)
                     pkt = self.server.packet_class(
-                        packet.EVENT, namespace=namespace, data=[event] + data,
-                        id=id)
-                    tasks.append(asyncio.create_task(
-                        self.server._send_packet(eio_sid, pkt)))
+                        packet.EVENT, namespace=namespace, data=[event] + data, id=id
+                    )
+                    tasks.append(
+                        asyncio.create_task(self.server._send_packet(eio_sid, pkt))
+                    )
         if tasks == []:  # pragma: no cover
             return
         await asyncio.wait(tasks)
@@ -108,7 +124,7 @@ class AsyncManager(BaseManager):
             callback = self.callbacks[sid][id]
         except KeyError:
             # if we get an unknown callback we just ignore it
-            self._get_logger().warning('Unknown callback received, ignoring.')
+            self._get_logger().warning("Unknown callback received, ignoring.")
         else:
             del self.callbacks[sid][id]
         if callback is not None:

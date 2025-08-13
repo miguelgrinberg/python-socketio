@@ -1,4 +1,5 @@
 import time
+
 import socketio
 
 
@@ -15,16 +16,16 @@ def test():
     start = time.time()
     count = 0
     for i in range(100):
-        s._handle_eio_connect(str(i), 'environ')
-        s._handle_eio_message(str(i), '0')
+        s._handle_eio_connect(str(i), "environ")
+        s._handle_eio_message(str(i), "0")
     while True:
-        s.emit('test', 'hello')
+        s.emit("test", "hello")
         count += 1
         if time.time() - start >= 5:
             break
     return count
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     count = test()
-    print('server_send:', count, 'packets received.')
+    print("server_send:", count, "packets received.")

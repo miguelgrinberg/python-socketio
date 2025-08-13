@@ -1,10 +1,10 @@
 import logging
 
 from engineio import packet as eio_packet
-from . import base_manager
-from . import packet
 
-default_logger = logging.getLogger('socketio')
+from . import base_manager, packet
+
+default_logger = logging.getLogger("socketio")
 
 
 class Manager(base_manager.BaseManager):
@@ -16,13 +16,24 @@ class Manager(base_manager.BaseManager):
     services. More sophisticated storage backends can be implemented by
     subclasses.
     """
+
     def can_disconnect(self, sid, namespace):
         return self.is_connected(sid, namespace)
 
-    def emit(self, event, data, namespace, room=None, skip_sid=None,
-             callback=None, to=None, **kwargs):
+    def emit(
+        self,
+        event,
+        data,
+        namespace,
+        room=None,
+        skip_sid=None,
+        callback=None,
+        to=None,
+        **kwargs,
+    ):
         """Emit a message to a single client, a room, or all the clients
-        connected to the namespace."""
+        connected to the namespace.
+        """
         room = to or room
         if namespace not in self.rooms:
             return
@@ -40,12 +51,12 @@ class Manager(base_manager.BaseManager):
             # when callbacks aren't used the packets sent to each recipient are
             # identical, so they can be generated once and reused
             pkt = self.server.packet_class(
-                packet.EVENT, namespace=namespace, data=[event] + data)
+                packet.EVENT, namespace=namespace, data=[event] + data
+            )
             encoded_packet = pkt.encode()
             if not isinstance(encoded_packet, list):
                 encoded_packet = [encoded_packet]
-            eio_pkt = [eio_packet.Packet(eio_packet.MESSAGE, p)
-                       for p in encoded_packet]
+            eio_pkt = [eio_packet.Packet(eio_packet.MESSAGE, p) for p in encoded_packet]
             for sid, eio_sid in self.get_participants(namespace, room):
                 if sid not in skip_sid:
                     for p in eio_pkt:
@@ -59,8 +70,8 @@ class Manager(base_manager.BaseManager):
                 if sid not in skip_sid:  # pragma: no branch
                     id = self._generate_ack_id(sid, callback)
                     pkt = self.server.packet_class(
-                        packet.EVENT, namespace=namespace, data=[event] + data,
-                        id=id)
+                        packet.EVENT, namespace=namespace, data=[event] + data, id=id
+                    )
                     self.server._send_packet(eio_sid, pkt)
 
     def disconnect(self, sid, namespace, **kwargs):
@@ -86,7 +97,7 @@ class Manager(base_manager.BaseManager):
             callback = self.callbacks[sid][id]
         except KeyError:
             # if we get an unknown callback we just ignore it
-            self._get_logger().warning('Unknown callback received, ignoring.')
+            self._get_logger().warning("Unknown callback received, ignoring.")
         else:
             del self.callbacks[sid][id]
         if callback is not None:

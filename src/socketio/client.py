@@ -2,9 +2,7 @@ import random
 
 import engineio
 
-from . import base_client
-from . import exceptions
-from . import packet
+from . import base_client, exceptions, packet
 
 
 class Client(base_client.BaseClient):
@@ -70,9 +68,19 @@ class Client(base_client.BaseClient):
                             fatal errors are logged even when
                             ``engineio_logger`` is ``False``.
     """
-    def connect(self, url, headers={}, auth=None, transports=None,
-                namespaces=None, socketio_path='socket.io', wait=True,
-                wait_timeout=1, retry=False):
+
+    def connect(
+        self,
+        url,
+        headers={},
+        auth=None,
+        transports=None,
+        namespaces=None,
+        socketio_path="socket.io",
+        wait=True,
+        wait_timeout=1,
+        retry=False,
+    ):
         """Connect to a Socket.IO server.
 
         :param url: The URL of the Socket.IO server. It can include custom
@@ -114,10 +122,10 @@ class Client(base_client.BaseClient):
         Example usage::
 
             sio = socketio.Client()
-            sio.connect('http://localhost:5000')
+            sio.connect("http://localhost:5000")
         """
         if self.connected:
-            raise exceptions.ConnectionError('Already connected')
+            raise exceptions.ConnectionError("Already connected")
 
         self.connection_url = url
         self.connection_headers = headers
@@ -127,12 +135,13 @@ class Client(base_client.BaseClient):
         self.socketio_path = socketio_path
 
         if namespaces is None:
-            namespaces = list(set(self.handlers.keys()).union(
-                set(self.namespace_handlers.keys())))
-            if '*' in namespaces:
-                namespaces.remove('*')
+            namespaces = list(
+                set(self.handlers.keys()).union(set(self.namespace_handlers.keys()))
+            )
+            if "*" in namespaces:
+                namespaces.remove("*")
             if len(namespaces) == 0:
-                namespaces = ['/']
+                namespaces = ["/"]
         elif isinstance(namespaces, str):
             namespaces = [namespaces]
         self.connection_namespaces = namespaces
@@ -144,17 +153,22 @@ class Client(base_client.BaseClient):
         real_url = self._get_real_value(self.connection_url)
         real_headers = self._get_real_value(self.connection_headers)
         try:
-            self.eio.connect(real_url, headers=real_headers,
-                             transports=transports,
-                             engineio_path=socketio_path)
+            self.eio.connect(
+                real_url,
+                headers=real_headers,
+                transports=transports,
+                engineio_path=socketio_path,
+            )
         except engineio.exceptions.ConnectionError as exc:
             for n in self.connection_namespaces:
                 self._trigger_event(
-                    'connect_error', n,
-                    exc.args[1] if len(exc.args) > 1 else exc.args[0])
+                    "connect_error",
+                    n,
+                    exc.args[1] if len(exc.args) > 1 else exc.args[0],
+                )
             if retry:  # pragma: no cover
                 self._handle_reconnect()
-                if self.eio.state == 'connected':
+                if self.eio.state == "connected":
                     return
             raise exceptions.ConnectionError(exc.args[0]) from exc
 
@@ -166,7 +180,8 @@ class Client(base_client.BaseClient):
             if set(self.namespaces) != set(self.connection_namespaces):
                 self.disconnect()
                 raise exceptions.ConnectionError(
-                    'One or more namespaces failed to connect')
+                    "One or more namespaces failed to connect"
+                )
 
         self.connected = True
 
@@ -180,14 +195,13 @@ class Client(base_client.BaseClient):
             self.eio.wait()
             self.sleep(1)  # give the reconnect task time to start up
             if not self._reconnect_task:
-                if self.eio.state == 'connected':  # pragma: no cover
+                if self.eio.state == "connected":  # pragma: no cover
                     # connected while sleeping above
                     continue
-                else:
-                    # the reconnect task gave up
-                    break
+                # the reconnect task gave up
+                break
             self._reconnect_task.join()
-            if self.eio.state != 'connected':
+            if self.eio.state != "connected":
                 break
 
     def emit(self, event, data=None, namespace=None, callback=None):
@@ -214,10 +228,11 @@ class Client(base_client.BaseClient):
         standard concurrency solutions (such as a Lock object) to prevent this
         situation.
         """
-        namespace = namespace or '/'
+        namespace = namespace or "/"
         if namespace not in self.namespaces:
             raise exceptions.BadNamespaceError(
-                namespace + ' is not a connected namespace.')
+                namespace + " is not a connected namespace."
+            )
         self.logger.info('Emitting event "%s" [%s]', event, namespace)
         if callback is not None:
             id = self._generate_ack_id(namespace, callback)
@@ -231,8 +246,11 @@ class Client(base_client.BaseClient):
             data = [data]
         else:
             data = []
-        self._send_packet(self.packet_class(packet.EVENT, namespace=namespace,
-                                            data=[event] + data, id=id))
+        self._send_packet(
+            self.packet_class(
+                packet.EVENT, namespace=namespace, data=[event] + data, id=id
+            )
+        )
 
     def send(self, data, namespace=None, callback=None):
         """Send a message to the server.
@@ -252,8 +270,7 @@ class Client(base_client.BaseClient):
                          that will be passed to the function are those provided
                          by the server.
         """
-        self.emit('message', data=data, namespace=namespace,
-                  callback=callback)
+        self.emit("message", data=data, namespace=namespace, callback=callback)
 
     def call(self, event, data=None, namespace=None, timeout=60):
         """Emit a custom event to the server and wait for the response.
@@ -291,21 +308,23 @@ class Client(base_client.BaseClient):
             callback_args.append(args)
             callback_event.set()
 
-        self.emit(event, data=data, namespace=namespace,
-                  callback=event_callback)
+        self.emit(event, data=data, namespace=namespace, callback=event_callback)
         if not callback_event.wait(timeout=timeout):
             raise exceptions.TimeoutError()
-        return callback_args[0] if len(callback_args[0]) > 1 \
-            else callback_args[0][0] if len(callback_args[0]) == 1 \
+        return (
+            callback_args[0]
+            if len(callback_args[0]) > 1
+            else callback_args[0][0]
+            if len(callback_args[0]) == 1
             else None
+        )
 
     def disconnect(self):
         """Disconnect from the server."""
         # here we just request the disconnection
         # later in _handle_eio_disconnect we invoke the disconnect handler
         for n in self.namespaces:
-            self._send_packet(self.packet_class(
-                packet.DISCONNECT, namespace=n))
+            self._send_packet(self.packet_class(packet.DISCONNECT, namespace=n))
         self.eio.disconnect()
 
     def shutdown(self):
@@ -351,7 +370,8 @@ class Client(base_client.BaseClient):
 
     def _get_real_value(self, value):
         """Return the actual value, for parameters that can also be given as
-        callables."""
+        callables.
+        """
         if not callable(value):
             return value
         return value()
@@ -366,20 +386,19 @@ class Client(base_client.BaseClient):
             self.eio.send(encoded_packet)
 
     def _handle_connect(self, namespace, data):
-        namespace = namespace or '/'
+        namespace = namespace or "/"
         if namespace not in self.namespaces:
-            self.logger.info(f'Namespace {namespace} is connected')
-            self.namespaces[namespace] = (data or {}).get('sid', self.sid)
-            self._trigger_event('connect', namespace=namespace)
+            self.logger.info(f"Namespace {namespace} is connected")
+            self.namespaces[namespace] = (data or {}).get("sid", self.sid)
+            self._trigger_event("connect", namespace=namespace)
             self._connect_event.set()
 
     def _handle_disconnect(self, namespace):
         if not self.connected:
             return
-        namespace = namespace or '/'
-        self._trigger_event('disconnect', namespace,
-                            self.reason.SERVER_DISCONNECT)
-        self._trigger_event('__disconnect_final', namespace)
+        namespace = namespace or "/"
+        self._trigger_event("disconnect", namespace, self.reason.SERVER_DISCONNECT)
+        self._trigger_event("__disconnect_final", namespace)
         if namespace in self.namespaces:
             del self.namespaces[namespace]
         if not self.namespaces:
@@ -387,7 +406,7 @@ class Client(base_client.BaseClient):
             self.eio.disconnect(abort=True)
 
     def _handle_event(self, namespace, id, data):
-        namespace = namespace or '/'
+        namespace = namespace or "/"
         self.logger.info('Received event "%s" [%s]', data[0], namespace)
         r = self._trigger_event(data[0], namespace, *data[1:])
         if id is not None:
@@ -399,36 +418,36 @@ class Client(base_client.BaseClient):
                 data = list(r)
             else:
                 data = [r]
-            self._send_packet(self.packet_class(
-                packet.ACK, namespace=namespace, id=id, data=data))
+            self._send_packet(
+                self.packet_class(packet.ACK, namespace=namespace, id=id, data=data)
+            )
 
     def _handle_ack(self, namespace, id, data):
-        namespace = namespace or '/'
-        self.logger.info('Received ack [%s]', namespace)
+        namespace = namespace or "/"
+        self.logger.info("Received ack [%s]", namespace)
         callback = None
         try:
             callback = self.callbacks[namespace][id]
         except KeyError:
             # if we get an unknown callback we just ignore it
-            self.logger.warning('Unknown callback received, ignoring.')
+            self.logger.warning("Unknown callback received, ignoring.")
         else:
             del self.callbacks[namespace][id]
         if callback is not None:
             callback(*data)
 
     def _handle_error(self, namespace, data):
-        namespace = namespace or '/'
-        self.logger.info('Connection to namespace {} was rejected'.format(
-            namespace))
+        namespace = namespace or "/"
+        self.logger.info(f"Connection to namespace {namespace} was rejected")
         if data is None:
             data = tuple()
         elif not isinstance(data, (tuple, list)):
             data = (data,)
-        self._trigger_event('connect_error', namespace, *data)
+        self._trigger_event("connect_error", namespace, *data)
         self._connect_event.set()
         if namespace in self.namespaces:
             del self.namespaces[namespace]
-        if namespace == '/':
+        if namespace == "/":
             self.namespaces = {}
             self.connected = False
 
@@ -441,10 +460,10 @@ class Client(base_client.BaseClient):
                 return handler(*args)
             except TypeError:
                 # the legacy disconnect event does not take a reason argument
-                if event == 'disconnect':
+                if event == "disconnect":
                     return handler(*args[:-1])
-                else:  # pragma: no cover
-                    raise
+                # pragma: no cover
+                raise
 
         # or else, forward the event to a namespace handler if one exists
         handler, args = self._get_namespace_handler(namespace, args)
@@ -464,46 +483,48 @@ class Client(base_client.BaseClient):
             if delay > self.reconnection_delay_max:
                 delay = self.reconnection_delay_max
             delay += self.randomization_factor * (2 * random.random() - 1)
-            self.logger.info(
-                'Connection failed, new attempt in {:.02f} seconds'.format(
-                    delay))
+            self.logger.info(f"Connection failed, new attempt in {delay:.02f} seconds")
             if self._reconnect_abort.wait(delay):
-                self.logger.info('Reconnect task aborted')
+                self.logger.info("Reconnect task aborted")
                 for n in self.connection_namespaces:
-                    self._trigger_event('__disconnect_final', namespace=n)
+                    self._trigger_event("__disconnect_final", namespace=n)
                 break
             attempt_count += 1
             try:
-                self.connect(self.connection_url,
-                             headers=self.connection_headers,
-                             auth=self.connection_auth,
-                             transports=self.connection_transports,
-                             namespaces=self.connection_namespaces,
-                             socketio_path=self.socketio_path,
-                             retry=False)
+                self.connect(
+                    self.connection_url,
+                    headers=self.connection_headers,
+                    auth=self.connection_auth,
+                    transports=self.connection_transports,
+                    namespaces=self.connection_namespaces,
+                    socketio_path=self.socketio_path,
+                    retry=False,
+                )
             except (exceptions.ConnectionError, ValueError):
                 pass
             else:
-                self.logger.info('Reconnection successful')
+                self.logger.info("Reconnection successful")
                 self._reconnect_task = None
                 break
-            if self.reconnection_attempts and \
-                    attempt_count >= self.reconnection_attempts:
-                self.logger.info(
-                    'Maximum reconnection attempts reached, giving up')
+            if (
+                self.reconnection_attempts
+                and attempt_count >= self.reconnection_attempts
+            ):
+                self.logger.info("Maximum reconnection attempts reached, giving up")
                 for n in self.connection_namespaces:
-                    self._trigger_event('__disconnect_final', namespace=n)
+                    self._trigger_event("__disconnect_final", namespace=n)
                 break
         base_client.reconnecting_clients.remove(self)
 
     def _handle_eio_connect(self):
         """Handle the Engine.IO connection event."""
-        self.logger.info('Engine.IO connection established')
+        self.logger.info("Engine.IO connection established")
         self.sid = self.eio.sid
         real_auth = self._get_real_value(self.connection_auth) or {}
         for n in self.connection_namespaces:
-            self._send_packet(self.packet_class(
-                packet.CONNECT, data=real_auth, namespace=n))
+            self._send_packet(
+                self.packet_class(packet.CONNECT, data=real_auth, namespace=n)
+            )
 
     def _handle_eio_message(self, data):
         """Dispatch Engine.IO messages."""
@@ -525,31 +546,32 @@ class Client(base_client.BaseClient):
                 self._handle_event(pkt.namespace, pkt.id, pkt.data)
             elif pkt.packet_type == packet.ACK:
                 self._handle_ack(pkt.namespace, pkt.id, pkt.data)
-            elif pkt.packet_type == packet.BINARY_EVENT or \
-                    pkt.packet_type == packet.BINARY_ACK:
+            elif (
+                pkt.packet_type == packet.BINARY_EVENT
+                or pkt.packet_type == packet.BINARY_ACK
+            ):
                 self._binary_packet = pkt
             elif pkt.packet_type == packet.CONNECT_ERROR:
                 self._handle_error(pkt.namespace, pkt.data)
             else:
-                raise ValueError('Unknown packet type.')
+                raise ValueError("Unknown packet type.")
 
     def _handle_eio_disconnect(self, reason):
         """Handle the Engine.IO disconnection event."""
-        self.logger.info('Engine.IO connection dropped')
-        will_reconnect = self.reconnection and self.eio.state == 'connected'
+        self.logger.info("Engine.IO connection dropped")
+        will_reconnect = self.reconnection and self.eio.state == "connected"
         if self.connected:
             for n in self.namespaces:
-                self._trigger_event('disconnect', n, reason)
+                self._trigger_event("disconnect", n, reason)
                 if not will_reconnect:
-                    self._trigger_event('__disconnect_final', n)
+                    self._trigger_event("__disconnect_final", n)
             self.namespaces = {}
             self.connected = False
         self.callbacks = {}
         self._binary_packet = None
         self.sid = None
         if will_reconnect and not self._reconnect_task:
-            self._reconnect_task = self.start_background_task(
-                self._handle_reconnect)
+            self._reconnect_task = self.start_background_task(self._handle_reconnect)
 
     def _engineio_client_class(self):
         return engineio.Client

@@ -2,10 +2,7 @@ import asyncio
 
 import engineio
 
-from . import async_manager
-from . import base_server
-from . import exceptions
-from . import packet
+from . import async_manager, base_server, exceptions, packet
 
 # this set is used to keep references to background tasks to prevent them from
 # being garbage collected mid-execution. Solution taken from
@@ -111,23 +108,45 @@ class AsyncServer(base_server.BaseServer):
                             fatal errors are logged even when
                             ``engineio_logger`` is ``False``.
     """
-    def __init__(self, client_manager=None, logger=False, json=None,
-                 async_handlers=True, namespaces=None, **kwargs):
+
+    def __init__(
+        self,
+        client_manager=None,
+        logger=False,
+        json=None,
+        async_handlers=True,
+        namespaces=None,
+        **kwargs,
+    ):
         if client_manager is None:
             client_manager = async_manager.AsyncManager()
-        super().__init__(client_manager=client_manager, logger=logger,
-                         json=json, async_handlers=async_handlers,
-                         namespaces=namespaces, **kwargs)
+        super().__init__(
+            client_manager=client_manager,
+            logger=logger,
+            json=json,
+            async_handlers=async_handlers,
+            namespaces=namespaces,
+            **kwargs,
+        )
 
     def is_asyncio_based(self):
         return True
 
-    def attach(self, app, socketio_path='socket.io'):
+    def attach(self, app, socketio_path="socket.io"):
         """Attach the Socket.IO server to an application."""
         self.eio.attach(app, socketio_path)
 
-    async def emit(self, event, data=None, to=None, room=None, skip_sid=None,
-                   namespace=None, callback=None, ignore_queue=False):
+    async def emit(
+        self,
+        event,
+        data=None,
+        to=None,
+        room=None,
+        skip_sid=None,
+        namespace=None,
+        callback=None,
+        ignore_queue=False,
+    ):
         """Emit a custom event to one or more connected clients.
 
         :param event: The event name. It can be any string. The event names
@@ -171,16 +190,31 @@ class AsyncServer(base_server.BaseServer):
 
         Note 2: this method is a coroutine.
         """
-        namespace = namespace or '/'
+        namespace = namespace or "/"
         room = to or room
-        self.logger.info('emitting event "%s" to %s [%s]', event,
-                         room or 'all', namespace)
-        await self.manager.emit(event, data, namespace, room=room,
-                                skip_sid=skip_sid, callback=callback,
-                                ignore_queue=ignore_queue)
+        self.logger.info(
+            'emitting event "%s" to %s [%s]', event, room or "all", namespace
+        )
+        await self.manager.emit(
+            event,
+            data,
+            namespace,
+            room=room,
+            skip_sid=skip_sid,
+            callback=callback,
+            ignore_queue=ignore_queue,
+        )
 
-    async def send(self, data, to=None, room=None, skip_sid=None,
-                   namespace=None, callback=None, ignore_queue=False):
+    async def send(
+        self,
+        data,
+        to=None,
+        room=None,
+        skip_sid=None,
+        namespace=None,
+        callback=None,
+        ignore_queue=False,
+    ):
         """Send a message to one or more connected clients.
 
         This function emits an event with the name ``'message'``. Use
@@ -218,12 +252,27 @@ class AsyncServer(base_server.BaseServer):
 
         Note: this method is a coroutine.
         """
-        await self.emit('message', data=data, to=to, room=room,
-                        skip_sid=skip_sid, namespace=namespace,
-                        callback=callback, ignore_queue=ignore_queue)
+        await self.emit(
+            "message",
+            data=data,
+            to=to,
+            room=room,
+            skip_sid=skip_sid,
+            namespace=namespace,
+            callback=callback,
+            ignore_queue=ignore_queue,
+        )
 
-    async def call(self, event, data=None, to=None, sid=None, namespace=None,
-                   timeout=60, ignore_queue=False):
+    async def call(
+        self,
+        event,
+        data=None,
+        to=None,
+        sid=None,
+        namespace=None,
+        timeout=60,
+        ignore_queue=False,
+    ):
         """Emit a custom event to a client and wait for the response.
 
         This method issues an emit with a callback and waits for the callback
@@ -264,10 +313,9 @@ class AsyncServer(base_server.BaseServer):
         Note 2: this method is a coroutine.
         """
         if to is None and sid is None:
-            raise ValueError('Cannot use call() to broadcast.')
+            raise ValueError("Cannot use call() to broadcast.")
         if not self.async_handlers:
-            raise RuntimeError(
-                'Cannot use call() when async_handlers is False.')
+            raise RuntimeError("Cannot use call() when async_handlers is False.")
         callback_event = self.eio.create_event()
         callback_args = []
 
@@ -275,15 +323,25 @@ class AsyncServer(base_server.BaseServer):
             callback_args.append(args)
             callback_event.set()
 
-        await self.emit(event, data=data, room=to or sid, namespace=namespace,
-                        callback=event_callback, ignore_queue=ignore_queue)
+        await self.emit(
+            event,
+            data=data,
+            room=to or sid,
+            namespace=namespace,
+            callback=event_callback,
+            ignore_queue=ignore_queue,
+        )
         try:
             await asyncio.wait_for(callback_event.wait(), timeout)
         except asyncio.TimeoutError:
             raise exceptions.TimeoutError() from None
-        return callback_args[0] if len(callback_args[0]) > 1 \
-            else callback_args[0][0] if len(callback_args[0]) == 1 \
+        return (
+            callback_args[0]
+            if len(callback_args[0]) > 1
+            else callback_args[0][0]
+            if len(callback_args[0]) == 1
             else None
+        )
 
     async def enter_room(self, sid, room, namespace=None):
         """Enter a room.
@@ -299,8 +357,8 @@ class AsyncServer(base_server.BaseServer):
 
         Note: this method is a coroutine.
         """
-        namespace = namespace or '/'
-        self.logger.info('%s is entering room %s [%s]', sid, room, namespace)
+        namespace = namespace or "/"
+        self.logger.info("%s is entering room %s [%s]", sid, room, namespace)
         await self.manager.enter_room(sid, namespace, room)
 
     async def leave_room(self, sid, room, namespace=None):
@@ -315,8 +373,8 @@ class AsyncServer(base_server.BaseServer):
 
         Note: this method is a coroutine.
         """
-        namespace = namespace or '/'
-        self.logger.info('%s is leaving room %s [%s]', sid, room, namespace)
+        namespace = namespace or "/"
+        self.logger.info("%s is leaving room %s [%s]", sid, room, namespace)
         await self.manager.leave_room(sid, namespace, room)
 
     async def close_room(self, room, namespace=None):
@@ -330,8 +388,8 @@ class AsyncServer(base_server.BaseServer):
 
         Note: this method is a coroutine.
         """
-        namespace = namespace or '/'
-        self.logger.info('room %s is closing [%s]', room, namespace)
+        namespace = namespace or "/"
+        self.logger.info("room %s is closing [%s]", room, namespace)
         await self.manager.close_room(room, namespace)
 
     async def get_session(self, sid, namespace=None):
@@ -345,7 +403,7 @@ class AsyncServer(base_server.BaseServer):
         dictionary are not guaranteed to be preserved. If you want to modify
         the user session, use the ``session`` context manager instead.
         """
-        namespace = namespace or '/'
+        namespace = namespace or "/"
         eio_sid = self.manager.eio_sid_from_sid(sid, namespace)
         eio_session = await self.eio.get_session(eio_sid)
         return eio_session.setdefault(namespace, {})
@@ -358,7 +416,7 @@ class AsyncServer(base_server.BaseServer):
         :param namespace: The Socket.IO namespace. If this argument is omitted
                           the default namespace is used.
         """
-        namespace = namespace or '/'
+        namespace = namespace or "/"
         eio_sid = self.manager.eio_sid_from_sid(sid, namespace)
         eio_session = await self.eio.get_session(eio_sid)
         eio_session[namespace] = session
@@ -372,19 +430,21 @@ class AsyncServer(base_server.BaseServer):
         the client. Any changes that are made to this dictionary inside the
         context manager block are saved back to the session. Example usage::
 
-            @eio.on('connect')
+            @eio.on("connect")
             async def on_connect(sid, environ):
                 username = authenticate_user(environ)
                 if not username:
                     return False
                 async with eio.session(sid) as session:
-                    session['username'] = username
+                    session["username"] = username
 
-            @eio.on('message')
+
+            @eio.on("message")
             async def on_message(sid, msg):
                 async with eio.session(sid) as session:
-                    print('received message from ', session['username'])
+                    print("received message from ", session["username"])
         """
+
         class _session_context_manager:
             def __init__(self, server, sid, namespace):
                 self.server = server
@@ -394,12 +454,14 @@ class AsyncServer(base_server.BaseServer):
 
             async def __aenter__(self):
                 self.session = await self.server.get_session(
-                    sid, namespace=self.namespace)
+                    sid, namespace=self.namespace
+                )
                 return self.session
 
             async def __aexit__(self, *args):
-                await self.server.save_session(sid, self.session,
-                                               namespace=self.namespace)
+                await self.server.save_session(
+                    sid, self.session, namespace=self.namespace
+                )
 
         return _session_context_manager(self, sid, namespace)
 
@@ -417,20 +479,21 @@ class AsyncServer(base_server.BaseServer):
 
         Note: this method is a coroutine.
         """
-        namespace = namespace or '/'
+        namespace = namespace or "/"
         if ignore_queue:
             delete_it = self.manager.is_connected(sid, namespace)
         else:
             delete_it = await self.manager.can_disconnect(sid, namespace)
         if delete_it:
-            self.logger.info('Disconnecting %s [%s]', sid, namespace)
+            self.logger.info("Disconnecting %s [%s]", sid, namespace)
             eio_sid = self.manager.pre_disconnect(sid, namespace=namespace)
-            await self._send_packet(eio_sid, self.packet_class(
-                packet.DISCONNECT, namespace=namespace))
-            await self._trigger_event('disconnect', namespace, sid,
-                                      self.reason.SERVER_DISCONNECT)
-            await self.manager.disconnect(sid, namespace=namespace,
-                                          ignore_queue=True)
+            await self._send_packet(
+                eio_sid, self.packet_class(packet.DISCONNECT, namespace=namespace)
+            )
+            await self._trigger_event(
+                "disconnect", namespace, sid, self.reason.SERVER_DISCONNECT
+            )
+            await self.manager.disconnect(sid, namespace=namespace, ignore_queue=True)
 
     async def shutdown(self):
         """Stop Socket.IO background tasks.
@@ -438,7 +501,7 @@ class AsyncServer(base_server.BaseServer):
         This method stops all background activity initiated by the Socket.IO
         server. It must be called before shutting down the web server.
         """
-        self.logger.info('Socket.IO is shutting down')
+        self.logger.info("Socket.IO is shutting down")
         await self.eio.shutdown()
 
     async def handle_request(self, *args, **kwargs):
@@ -478,9 +541,15 @@ class AsyncServer(base_server.BaseServer):
         """
         return await self.eio.sleep(seconds)
 
-    def instrument(self, auth=None, mode='development', read_only=False,
-                   server_id=None, namespace='/admin',
-                   server_stats_interval=2):
+    def instrument(
+        self,
+        auth=None,
+        mode="development",
+        read_only=False,
+        server_id=None,
+        namespace="/admin",
+        server_stats_interval=2,
+    ):
         """Instrument the Socket.IO server for monitoring with the `Socket.IO
         Admin UI <https://socket.io/docs/v4/admin-ui/>`_.
 
@@ -512,10 +581,16 @@ class AsyncServer(base_server.BaseServer):
                                       connected admins.
         """
         from .async_admin import InstrumentedAsyncServer
+
         return InstrumentedAsyncServer(
-            self, auth=auth, mode=mode, read_only=read_only,
-            server_id=server_id, namespace=namespace,
-            server_stats_interval=server_stats_interval)
+            self,
+            auth=auth,
+            mode=mode,
+            read_only=read_only,
+            server_id=server_id,
+            namespace=namespace,
+            server_stats_interval=server_stats_interval,
+        )
 
     async def _send_packet(self, eio_sid, pkt):
         """Send a Socket.IO packet to a client."""
@@ -532,32 +607,44 @@ class AsyncServer(base_server.BaseServer):
 
     async def _handle_connect(self, eio_sid, namespace, data):
         """Handle a client connection request."""
-        namespace = namespace or '/'
+        namespace = namespace or "/"
         sid = None
-        if namespace in self.handlers or namespace in self.namespace_handlers \
-                or self.namespaces == '*' or namespace in self.namespaces:
+        if (
+            namespace in self.handlers
+            or namespace in self.namespace_handlers
+            or self.namespaces == "*"
+            or namespace in self.namespaces
+        ):
             sid = await self.manager.connect(eio_sid, namespace)
         if sid is None:
-            await self._send_packet(eio_sid, self.packet_class(
-                packet.CONNECT_ERROR, data='Unable to connect',
-                namespace=namespace))
+            await self._send_packet(
+                eio_sid,
+                self.packet_class(
+                    packet.CONNECT_ERROR, data="Unable to connect", namespace=namespace
+                ),
+            )
             return
 
         if self.always_connect:
-            await self._send_packet(eio_sid, self.packet_class(
-                packet.CONNECT, {'sid': sid}, namespace=namespace))
+            await self._send_packet(
+                eio_sid,
+                self.packet_class(packet.CONNECT, {"sid": sid}, namespace=namespace),
+            )
         fail_reason = exceptions.ConnectionRefusedError().error_args
         try:
             if data:
                 success = await self._trigger_event(
-                    'connect', namespace, sid, self.environ[eio_sid], data)
+                    "connect", namespace, sid, self.environ[eio_sid], data
+                )
             else:
                 try:
                     success = await self._trigger_event(
-                        'connect', namespace, sid, self.environ[eio_sid])
+                        "connect", namespace, sid, self.environ[eio_sid]
+                    )
                 except TypeError:
                     success = await self._trigger_event(
-                        'connect', namespace, sid, self.environ[eio_sid], None)
+                        "connect", namespace, sid, self.environ[eio_sid], None
+                    )
         except exceptions.ConnectionRefusedError as exc:
             fail_reason = exc.error_args
             success = False
@@ -565,50 +652,56 @@ class AsyncServer(base_server.BaseServer):
         if success is False:
             if self.always_connect:
                 self.manager.pre_disconnect(sid, namespace)
-                await self._send_packet(eio_sid, self.packet_class(
-                    packet.DISCONNECT, data=fail_reason, namespace=namespace))
+                await self._send_packet(
+                    eio_sid,
+                    self.packet_class(
+                        packet.DISCONNECT, data=fail_reason, namespace=namespace
+                    ),
+                )
             else:
-                await self._send_packet(eio_sid, self.packet_class(
-                    packet.CONNECT_ERROR, data=fail_reason,
-                    namespace=namespace))
+                await self._send_packet(
+                    eio_sid,
+                    self.packet_class(
+                        packet.CONNECT_ERROR, data=fail_reason, namespace=namespace
+                    ),
+                )
             await self.manager.disconnect(sid, namespace, ignore_queue=True)
         elif not self.always_connect:
-            await self._send_packet(eio_sid, self.packet_class(
-                packet.CONNECT, {'sid': sid}, namespace=namespace))
+            await self._send_packet(
+                eio_sid,
+                self.packet_class(packet.CONNECT, {"sid": sid}, namespace=namespace),
+            )
 
     async def _handle_disconnect(self, eio_sid, namespace, reason=None):
         """Handle a client disconnect."""
-        namespace = namespace or '/'
+        namespace = namespace or "/"
         sid = self.manager.sid_from_eio_sid(eio_sid, namespace)
         if not self.manager.is_connected(sid, namespace):  # pragma: no cover
             return
         self.manager.pre_disconnect(sid, namespace=namespace)
-        await self._trigger_event('disconnect', namespace, sid,
-                                  reason or self.reason.CLIENT_DISCONNECT)
+        await self._trigger_event(
+            "disconnect", namespace, sid, reason or self.reason.CLIENT_DISCONNECT
+        )
         await self.manager.disconnect(sid, namespace, ignore_queue=True)
 
     async def _handle_event(self, eio_sid, namespace, id, data):
         """Handle an incoming client event."""
-        namespace = namespace or '/'
+        namespace = namespace or "/"
         sid = self.manager.sid_from_eio_sid(eio_sid, namespace)
-        self.logger.info('received event "%s" from %s [%s]', data[0], sid,
-                         namespace)
+        self.logger.info('received event "%s" from %s [%s]', data[0], sid, namespace)
         if not self.manager.is_connected(sid, namespace):
-            self.logger.warning('%s is not connected to namespace %s',
-                                sid, namespace)
+            self.logger.warning("%s is not connected to namespace %s", sid, namespace)
             return
         if self.async_handlers:
             task = self.start_background_task(
-                self._handle_event_internal, self, sid, eio_sid, data,
-                namespace, id)
+                self._handle_event_internal, self, sid, eio_sid, data, namespace, id
+            )
             task_reference_holder.add(task)
             task.add_done_callback(task_reference_holder.discard)
         else:
-            await self._handle_event_internal(self, sid, eio_sid, data,
-                                              namespace, id)
+            await self._handle_event_internal(self, sid, eio_sid, data, namespace, id)
 
-    async def _handle_event_internal(self, server, sid, eio_sid, data,
-                                     namespace, id):
+    async def _handle_event_internal(self, server, sid, eio_sid, data, namespace, id):
         r = await server._trigger_event(data[0], namespace, sid, *data[1:])
         if r != self.not_handled and id is not None:
             # send ACK packet with the response returned by the handler
@@ -619,14 +712,16 @@ class AsyncServer(base_server.BaseServer):
                 data = list(r)
             else:
                 data = [r]
-            await server._send_packet(eio_sid, self.packet_class(
-                packet.ACK, namespace=namespace, id=id, data=data))
+            await server._send_packet(
+                eio_sid,
+                self.packet_class(packet.ACK, namespace=namespace, id=id, data=data),
+            )
 
     async def _handle_ack(self, eio_sid, namespace, id, data):
         """Handle ACK packets from the client."""
-        namespace = namespace or '/'
+        namespace = namespace or "/"
         sid = self.manager.sid_from_eio_sid(eio_sid, namespace)
-        self.logger.info('received ack from %s [%s]', sid, namespace)
+        self.logger.info("received ack from %s [%s]", sid, namespace)
         await self.manager.trigger_callback(sid, id, data)
 
     async def _trigger_event(self, event, namespace, *args):
@@ -640,7 +735,7 @@ class AsyncServer(base_server.BaseServer):
                         ret = await handler(*args)
                     except TypeError:
                         # legacy disconnect events use only one argument
-                        if event == 'disconnect':
+                        if event == "disconnect":
                             ret = await handler(*args[:-1])
                         else:  # pragma: no cover
                             raise
@@ -651,7 +746,7 @@ class AsyncServer(base_server.BaseServer):
                     ret = handler(*args)
                 except TypeError:
                     # legacy disconnect events use only one argument
-                    if event == 'disconnect':
+                    if event == "disconnect":
                         ret = handler(*args[:-1])
                     else:  # pragma: no cover
                         raise
@@ -660,8 +755,7 @@ class AsyncServer(base_server.BaseServer):
         handler, args = self._get_namespace_handler(namespace, args)
         if handler:
             return await handler.trigger_event(event, *args)
-        else:
-            return self.not_handled
+        return self.not_handled
 
     async def _handle_eio_connect(self, eio_sid, environ):
         """Handle the Engine.IO connection event."""
@@ -677,31 +771,30 @@ class AsyncServer(base_server.BaseServer):
             if pkt.add_attachment(data):
                 del self._binary_packet[eio_sid]
                 if pkt.packet_type == packet.BINARY_EVENT:
-                    await self._handle_event(eio_sid, pkt.namespace, pkt.id,
-                                             pkt.data)
+                    await self._handle_event(eio_sid, pkt.namespace, pkt.id, pkt.data)
                 else:
-                    await self._handle_ack(eio_sid, pkt.namespace, pkt.id,
-                                           pkt.data)
+                    await self._handle_ack(eio_sid, pkt.namespace, pkt.id, pkt.data)
         else:
             pkt = self.packet_class(encoded_packet=data)
             if pkt.packet_type == packet.CONNECT:
                 await self._handle_connect(eio_sid, pkt.namespace, pkt.data)
             elif pkt.packet_type == packet.DISCONNECT:
-                await self._handle_disconnect(eio_sid, pkt.namespace,
-                                              self.reason.CLIENT_DISCONNECT)
+                await self._handle_disconnect(
+                    eio_sid, pkt.namespace, self.reason.CLIENT_DISCONNECT
+                )
             elif pkt.packet_type == packet.EVENT:
-                await self._handle_event(eio_sid, pkt.namespace, pkt.id,
-                                         pkt.data)
+                await self._handle_event(eio_sid, pkt.namespace, pkt.id, pkt.data)
             elif pkt.packet_type == packet.ACK:
-                await self._handle_ack(eio_sid, pkt.namespace, pkt.id,
-                                       pkt.data)
-            elif pkt.packet_type == packet.BINARY_EVENT or \
-                    pkt.packet_type == packet.BINARY_ACK:
+                await self._handle_ack(eio_sid, pkt.namespace, pkt.id, pkt.data)
+            elif (
+                pkt.packet_type == packet.BINARY_EVENT
+                or pkt.packet_type == packet.BINARY_ACK
+            ):
                 self._binary_packet[eio_sid] = pkt
             elif pkt.packet_type == packet.CONNECT_ERROR:
-                raise ValueError('Unexpected CONNECT_ERROR packet.')
+                raise ValueError("Unexpected CONNECT_ERROR packet.")
             else:
-                raise ValueError('Unknown packet type.')
+                raise ValueError("Unknown packet type.")
 
     async def _handle_eio_disconnect(self, eio_sid, reason):
         """Handle Engine.IO disconnect event."""
@@ -710,5 +803,5 @@ class AsyncServer(base_server.BaseServer):
         if eio_sid in self.environ:
             del self.environ[eio_sid]
 
-    def _engineio_server_class(self):
+    def _engineio_server_class(self) -> engineio.AsyncServer:
         return engineio.AsyncServer

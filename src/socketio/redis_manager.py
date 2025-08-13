@@ -10,7 +10,7 @@ except ImportError:
 
 from .pubsub_manager import PubSubManager
 
-logger = logging.getLogger('socketio')
+logger = logging.getLogger("socketio")
 
 
 def parse_redis_sentinel_url(url):
@@ -18,23 +18,23 @@ def parse_redis_sentinel_url(url):
     redis+sentinel://[:password]@host1:port1,host2:port2,.../db/service_name
     """
     parsed_url = urlparse(url)
-    if parsed_url.scheme != 'redis+sentinel':
-        raise ValueError('Invalid Redis Sentinel URL')
+    if parsed_url.scheme != "redis+sentinel":
+        raise ValueError("Invalid Redis Sentinel URL")
     sentinels = []
-    for host_port in parsed_url.netloc.split('@')[-1].split(','):
-        host, port = host_port.rsplit(':', 1)
+    for host_port in parsed_url.netloc.split("@")[-1].split(","):
+        host, port = host_port.rsplit(":", 1)
         sentinels.append((host, int(port)))
     kwargs = {}
     if parsed_url.username:
-        kwargs['username'] = parsed_url.username
+        kwargs["username"] = parsed_url.username
     if parsed_url.password:
-        kwargs['password'] = parsed_url.password
+        kwargs["password"] = parsed_url.password
     service_name = None
     if parsed_url.path:
-        parts = parsed_url.path.split('/')
-        if len(parts) >= 2 and parts[1] != '':
-            kwargs['db'] = int(parts[1])
-        if len(parts) >= 3 and parts[2] != '':
+        parts = parsed_url.path.split("/")
+        if len(parts) >= 2 and parts[1] != "":
+            kwargs["db"] = int(parts[1])
+        if len(parts) >= 3 and parts[2] != "":
             service_name = parts[2]
     return sentinels, service_name, kwargs
 
@@ -50,7 +50,7 @@ class RedisManager(PubSubManager):  # pragma: no cover
     To use a Redis backend, initialize the :class:`Server` instance as
     follows::
 
-        url = 'redis://hostname:port/0'
+        url = "redis://hostname:port/0"
         server = socketio.Server(client_manager=socketio.RedisManager(url))
 
     :param url: The connection URL for the Redis server. For a default Redis
@@ -67,14 +67,23 @@ class RedisManager(PubSubManager):  # pragma: no cover
     :param redis_options: additional keyword arguments to be passed to
                           ``Redis.from_url()`` or ``Sentinel()``.
     """
-    name = 'redis'
 
-    def __init__(self, url='redis://localhost:6379/0', channel='socketio',
-                 write_only=False, logger=None, redis_options=None):
+    name = "redis"
+
+    def __init__(
+        self,
+        url="redis://localhost:6379/0",
+        channel="socketio",
+        write_only=False,
+        logger=None,
+        redis_options=None,
+    ):
         if redis is None:
-            raise RuntimeError('Redis package is not installed '
-                               '(Run "pip install redis" in your '
-                               'virtualenv).')
+            raise RuntimeError(
+                "Redis package is not installed "
+                '(Run "pip install redis" in your '
+                "virtualenv)."
+            )
         super().__init__(channel=channel, write_only=write_only, logger=logger)
         self.redis_url = url
         self.redis_options = redis_options or {}
@@ -84,24 +93,27 @@ class RedisManager(PubSubManager):  # pragma: no cover
         super().initialize()
 
         monkey_patched = True
-        if self.server.async_mode == 'eventlet':
+        if self.server.async_mode == "eventlet":
             from eventlet.patcher import is_monkey_patched
-            monkey_patched = is_monkey_patched('socket')
-        elif 'gevent' in self.server.async_mode:
+
+            monkey_patched = is_monkey_patched("socket")
+        elif "gevent" in self.server.async_mode:
             from gevent.monkey import is_module_patched
-            monkey_patched = is_module_patched('socket')
+
+            monkey_patched = is_module_patched("socket")
         if not monkey_patched:
             raise RuntimeError(
-                'Redis requires a monkey patched socket library to work '
-                'with ' + self.server.async_mode)
+                "Redis requires a monkey patched socket library to work "
+                "with " + self.server.async_mode
+            )
 
     def _redis_connect(self):
-        if not self.redis_url.startswith('redis+sentinel://'):
-            self.redis = redis.Redis.from_url(self.redis_url,
-                                              **self.redis_options)
+        if not self.redis_url.startswith("redis+sentinel://"):
+            self.redis = redis.Redis.from_url(self.redis_url, **self.redis_options)
         else:
-            sentinels, service_name, connection_kwargs = \
-                parse_redis_sentinel_url(self.redis_url)
+            sentinels, service_name, connection_kwargs = parse_redis_sentinel_url(
+                self.redis_url
+            )
             kwargs = self.redis_options
             kwargs.update(connection_kwargs)
             sentinel = redis.sentinel.Sentinel(sentinels, **kwargs)
@@ -117,10 +129,10 @@ class RedisManager(PubSubManager):  # pragma: no cover
                 return self.redis.publish(self.channel, pickle.dumps(data))
             except redis.exceptions.RedisError:
                 if retry:
-                    logger.error('Cannot publish to redis... retrying')
+                    logger.error("Cannot publish to redis... retrying")
                     retry = False
                 else:
-                    logger.error('Cannot publish to redis... giving up')
+                    logger.error("Cannot publish to redis... giving up")
                     break
 
     def _redis_listen_with_retries(self):
@@ -134,8 +146,9 @@ class RedisManager(PubSubManager):  # pragma: no cover
                     retry_sleep = 1
                 yield from self.pubsub.listen()
             except redis.exceptions.RedisError:
-                logger.error('Cannot receive from redis... '
-                             'retrying in {} secs'.format(retry_sleep))
+                logger.error(
+                    "Cannot receive from redis... " f"retrying in {retry_sleep} secs"
+                )
                 connect = True
                 time.sleep(retry_sleep)
                 retry_sleep *= 2
@@ -143,10 +156,13 @@ class RedisManager(PubSubManager):  # pragma: no cover
                     retry_sleep = 60
 
     def _listen(self):
-        channel = self.channel.encode('utf-8')
+        channel = self.channel.encode("utf-8")
         self.pubsub.subscribe(self.channel)
         for message in self._redis_listen_with_retries():
-            if message['channel'] == channel and \
-                    message['type'] == 'message' and 'data' in message:
-                yield message['data']
+            if (
+                message["channel"] == channel
+                and message["type"] == "message"
+                and "data" in message
+            ):
+                yield message["data"]
         self.pubsub.unsubscribe(self.channel)

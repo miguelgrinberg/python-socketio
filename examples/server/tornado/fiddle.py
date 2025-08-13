@@ -1,15 +1,15 @@
 import os
 
 import tornado.ioloop
-from tornado.options import define, options, parse_command_line
 import tornado.web
+from tornado.options import define, options, parse_command_line
 
 import socketio
 
 define("port", default=5000, help="run on the given port", type=int)
 define("debug", default=False, help="run in debug mode")
 
-sio = socketio.AsyncServer(async_mode='tornado')
+sio = socketio.AsyncServer(async_mode="tornado")
 
 
 class MainHandler(tornado.web.RequestHandler):
@@ -19,13 +19,13 @@ class MainHandler(tornado.web.RequestHandler):
 
 @sio.event
 async def connect(sid, environ, auth):
-    print(f'connected auth={auth} sid={sid}')
-    await sio.emit('hello', (1, 2, {'hello': 'you'}), to=sid)
+    print(f"connected auth={auth} sid={sid}")
+    await sio.emit("hello", (1, 2, {"hello": "you"}), to=sid)
 
 
 @sio.event
 def disconnect(sid, reason):
-    print('disconnected', sid, reason)
+    print("disconnected", sid, reason)
 
 
 def main():

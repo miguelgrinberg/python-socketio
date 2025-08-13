@@ -44,16 +44,26 @@ class KombuManager(PubSubManager):  # pragma: no cover
     :param producer_options: additional keyword arguments to be passed to
                              ``kombu.Producer()``.
     """
-    name = 'kombu'
 
-    def __init__(self, url='amqp://guest:guest@localhost:5672//',
-                 channel='socketio', write_only=False, logger=None,
-                 connection_options=None, exchange_options=None,
-                 queue_options=None, producer_options=None):
+    name = "kombu"
+
+    def __init__(
+        self,
+        url="amqp://guest:guest@localhost:5672//",
+        channel="socketio",
+        write_only=False,
+        logger=None,
+        connection_options=None,
+        exchange_options=None,
+        queue_options=None,
+        producer_options=None,
+    ):
         if kombu is None:
-            raise RuntimeError('Kombu package is not installed '
-                               '(Run "pip install kombu" in your '
-                               'virtualenv).')
+            raise RuntimeError(
+                "Kombu package is not installed "
+                '(Run "pip install kombu" in your '
+                "virtualenv)."
+            )
         super().__init__(channel=channel, write_only=write_only, logger=logger)
         self.url = url
         self.connection_options = connection_options or {}
@@ -66,52 +76,55 @@ class KombuManager(PubSubManager):  # pragma: no cover
         super().initialize()
 
         monkey_patched = True
-        if self.server.async_mode == 'eventlet':
+        if self.server.async_mode == "eventlet":
             from eventlet.patcher import is_monkey_patched
-            monkey_patched = is_monkey_patched('socket')
-        elif 'gevent' in self.server.async_mode:
+
+            monkey_patched = is_monkey_patched("socket")
+        elif "gevent" in self.server.async_mode:
             from gevent.monkey import is_module_patched
-            monkey_patched = is_module_patched('socket')
+
+            monkey_patched = is_module_patched("socket")
         if not monkey_patched:
             raise RuntimeError(
-                'Kombu requires a monkey patched socket library to work '
-                'with ' + self.server.async_mode)
+                "Kombu requires a monkey patched socket library to work "
+                "with " + self.server.async_mode
+            )
 
     def _connection(self):
         return kombu.Connection(self.url, **self.connection_options)
 
     def _exchange(self):
-        options = {'type': 'fanout', 'durable': False}
+        options = {"type": "fanout", "durable": False}
         options.update(self.exchange_options)
         return kombu.Exchange(self.channel, **options)
 
     def _queue(self):
-        queue_name = 'python-socketio.' + str(uuid.uuid4())
-        options = {'durable': False, 'queue_arguments': {'x-expires': 300000}}
+        queue_name = "python-socketio." + str(uuid.uuid4())
+        options = {"durable": False, "queue_arguments": {"x-expires": 300000}}
         options.update(self.queue_options)
         return kombu.Queue(queue_name, self._exchange(), **options)
 
     def _producer_publish(self, connection):
-        producer = connection.Producer(exchange=self._exchange(),
-                                       **self.producer_options)
+        producer = connection.Producer(
+            exchange=self._exchange(), **self.producer_options
+        )
         return connection.ensure(producer, producer.publish)
 
     def _publish(self, data):
         retry = True
         while True:
             try:
-                producer_publish = self._producer_publish(
-                    self.publisher_connection)
+                producer_publish = self._producer_publish(self.publisher_connection)
                 producer_publish(pickle.dumps(data))
                 break
             except (OSError, kombu.exceptions.KombuError):
                 if retry:
-                    self._get_logger().error('Cannot publish to rabbitmq... '
-                                             'retrying')
+                    self._get_logger().error(
+                        "Cannot publish to rabbitmq... " "retrying"
+                    )
                     retry = False
                 else:
-                    self._get_logger().error(
-                        'Cannot publish to rabbitmq... giving up')
+                    self._get_logger().error("Cannot publish to rabbitmq... giving up")
                     break
 
     def _listen(self):
@@ -128,7 +141,7 @@ class KombuManager(PubSubManager):  # pragma: no cover
                             retry_sleep = 1
             except (OSError, kombu.exceptions.KombuError):
                 self._get_logger().error(
-                    'Cannot receive from rabbitmq... '
-                    'retrying in {} secs'.format(retry_sleep))
+                    "Cannot receive from rabbitmq... " f"retrying in {retry_sleep} secs"
+                )
                 time.sleep(retry_sleep)
                 retry_sleep = min(retry_sleep * 2, 60)

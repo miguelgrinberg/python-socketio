@@ -1,6 +1,7 @@
 from threading import Event
+
 from socketio import Client
-from socketio.exceptions import SocketIOError, TimeoutError, DisconnectedError
+from socketio.exceptions import DisconnectedError, SocketIOError, TimeoutError
 
 
 class SimpleClient:
@@ -12,20 +13,29 @@ class SimpleClient:
     The positional and keyword arguments given in the constructor are passed
     to the underlying :func:`socketio.Client` object.
     """
+
     client_class = Client
 
     def __init__(self, *args, **kwargs):
         self.client_args = args
         self.client_kwargs = kwargs
         self.client = None
-        self.namespace = '/'
+        self.namespace = "/"
         self.connected_event = Event()
         self.connected = False
         self.input_event = Event()
         self.input_buffer = []
 
-    def connect(self, url, headers={}, auth=None, transports=None,
-                namespace='/', socketio_path='socket.io', wait_timeout=5):
+    def connect(
+        self,
+        url,
+        headers={},
+        auth=None,
+        transports=None,
+        namespace="/",
+        socketio_path="socket.io",
+        wait_timeout=5,
+    ):
         """Connect to a Socket.IO server.
 
         :param url: The URL of the Socket.IO server. It can include custom
@@ -56,12 +66,11 @@ class SimpleClient:
                              seconds.
         """
         if self.connected:
-            raise RuntimeError('Already connected')
+            raise RuntimeError("Already connected")
         self.namespace = namespace
         self.input_buffer = []
         self.input_event.clear()
-        self.client = self.client_class(
-            *self.client_args, **self.client_kwargs)
+        self.client = self.client_class(*self.client_args, **self.client_kwargs)
 
         @self.client.event(namespace=self.namespace)
         def connect():  # pragma: no cover
@@ -77,15 +86,20 @@ class SimpleClient:
             self.connected = False
             self.connected_event.set()
 
-        @self.client.on('*', namespace=self.namespace)
+        @self.client.on("*", namespace=self.namespace)
         def on_event(event, *args):  # pragma: no cover
             self.input_buffer.append([event, *args])
             self.input_event.set()
 
-        self.client.connect(url, headers=headers, auth=auth,
-                            transports=transports, namespaces=[namespace],
-                            socketio_path=socketio_path,
-                            wait_timeout=wait_timeout)
+        self.client.connect(
+            url,
+            headers=headers,
+            auth=auth,
+            transports=transports,
+            namespaces=[namespace],
+            socketio_path=socketio_path,
+            wait_timeout=wait_timeout,
+        )
 
     @property
     def sid(self):
@@ -103,7 +117,7 @@ class SimpleClient:
         The transport is returned as a string and can be one of ``polling``
         and ``websocket``.
         """
-        return self.client.transport if self.client else ''
+        return self.client.transport if self.client else ""
 
     def emit(self, event, data=None):
         """Emit an event to the server.
@@ -153,8 +167,9 @@ class SimpleClient:
             if not self.connected:
                 raise DisconnectedError()
             try:
-                return self.client.call(event, data, namespace=self.namespace,
-                                        timeout=timeout)
+                return self.client.call(
+                    event, data, namespace=self.namespace, timeout=timeout
+                )
             except SocketIOError:
                 pass
 
@@ -170,8 +185,7 @@ class SimpleClient:
         additional list elements.
         """
         while not self.input_buffer:
-            if not self.connected_event.wait(
-                    timeout=timeout):  # pragma: no cover
+            if not self.connected_event.wait(timeout=timeout):  # pragma: no cover
                 raise TimeoutError()
             if not self.connected:
                 raise DisconnectedError()

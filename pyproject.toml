@@ -1,21 +1,17 @@
-[project]
-name = "python-socketio"
+[tool.poetry]
+name = "fast-socketio"
 version = "5.13.1.dev0"
-license = {text = "MIT"}
+description = "light and typization Socket.IO server and client for Python"
+license = "MIT"
+readme = "README.md"
+homepage = "https://github.com/cicwak/fast-socketio"
+repository = "https://github.com/cicwak/fast-socketio"
+packages = [
+    { include = "socketio", from = "src" },
+]
 authors = [
-    { name = "Miguel Grinberg", email = "miguel.grinberg@gmail.com" },
-]
-description = "Socket.IO server and client for Python"
-classifiers = [
-    "Environment :: Web Environment",
-    "Intended Audience :: Developers",
-    "Programming Language :: Python :: 3",
-    "Operating System :: OS Independent",
-]
-requires-python = ">=3.8"
-dependencies = [
-    "bidict >= 0.21.0",
-    "python-engineio >= 4.11.0",
+    "Miguel Grinberg <miguel.grinberg@gmail.com>",
+    "Konstantin Ponomarev <cicwak@gmail.com>",
 ]
 
 [project.readme]
@@ -23,8 +19,8 @@ file = "README.md"
 content-type = "text/markdown"
 
 [project.urls]
-Homepage = "https://github.com/miguelgrinberg/python-socketio"
-"Bug Tracker" = "https://github.com/miguelgrinberg/python-socketio/issues"
+Homepage = "https://github.com/cicwak/fast-socketio"
+#"Bug Tracker" = "https://github.com/miguelgrinberg/python-socketio/issues"
 
 [project.optional-dependencies]
 client = [
@@ -37,6 +33,20 @@ asyncio_client = [
 docs = [
     "sphinx",
 ]
+
+[tool.poetry.dependencies]
+python = ">=3.8"
+bidict = ">=0.21.0"
+python-engineio = "^4.12.2"
+requests = { version = ">=2.21.0", optional = true }
+websocket-client = { version = ">=0.54.0", optional = true }
+aiohttp = { version = ">=3.4", optional = true }
+sphinx = { version = "*", optional = true }
+
+[tool.poetry.extras]
+client = ["requests", "websocket-client"]
+asyncio_client = ["aiohttp"]
+docs = ["sphinx"]
 
 [tool.setuptools]
 zip-safe = false
@@ -58,3 +68,61 @@ build-backend = "setuptools.build_meta"
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "session"
+
+[tool.mypy]
+plugins = ["pydantic.mypy"]
+ignore_missing_imports = true
+disallow_untyped_calls = false
+exclude = "(venv|migrations|start_service\\.dist|start_service\\.build|start_service\\.onefile-build)"
+
+[tool.ruff]
+line-length = 88
+exclude = [
+    "migrations",
+    "venv",
+    "start_service.dist",
+    "start_service.build",
+    "start_service.onefile-build",
+]
+
+
+[tool.ruff.lint]
+select = [
+  "F", "E", "W", "I", "UP", "N", "Q",
+  "B", "BLE", "ARG", "SIM", "C4", "PERF",
+  "A", "DTZ", "TCH", "TRY",
+  "RUF", "D", "ANN",
+  "RET", "RSE", "TID",
+]
+# Столкновения стилей докстрингов: выберем Google и заглушим конфликтующие правила
+ignore = ["D203", "D213"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.lint.isort]
+known-first-party = ["fast_socketio"]
+combine-as-imports = true
+
+[tool.ruff.lint.flake8-tidy-imports]
+ban-relative-imports = "parents"
+
+[tool.ruff.format]
+docstring-code-format = true
+
+[tool.ruff.lint.pep8-naming]
+classmethod-decorators = [
+    "pydantic.validator",
+    "declared_attr",
+]
+
+[tool.ruff.lint.mccabe]
+max-complexity = 10
+
+[tool.ruff.lint.per-file-ignores]
+# Тестам позволяем послабления: assert, отсутствие докстрингов и Any
+"tests/**" = ["S101", "D", "ANN401", "ARG002", "PT009", "PT011"]
+# В __init__ обычно реэкспорт, без докстрингов — не ругаемся
+"**/__init__.py" = ["D104", "F401"]
+# Скрипты/пример использования (если есть): можно Any и без докстрингов
+"examples/**" = ["D", "ANN401"]
