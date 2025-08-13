@@ -1,13 +1,14 @@
 [tool.poetry]
-name = "fast-socketio"
+name = "fastsio"
 version = "5.13.1.dev0"
 description = "light and typization Socket.IO server and client for Python"
 license = "MIT"
+license-files = ["LICEN[CS]E*"]
 readme = "README.md"
-homepage = "https://github.com/cicwak/fast-socketio"
-repository = "https://github.com/cicwak/fast-socketio"
+homepage = "https://github.com/cicwak/fastsio"
+repository = "https://github.com/cicwak/fastsio"
 packages = [
-    { include = "socketio", from = "src" },
+    { include = "fastsio", from = "src" },
 ]
 authors = [
     "Miguel Grinberg <miguel.grinberg@gmail.com>",
@@ -19,8 +20,8 @@ file = "README.md"
 content-type = "text/markdown"
 
 [project.urls]
-Homepage = "https://github.com/cicwak/fast-socketio"
-#"Bug Tracker" = "https://github.com/miguelgrinberg/python-socketio/issues"
+Homepage = "https://github.com/cicwak/fastsio"
+"Bug Tracker" = "https://github.com/cicwak/fastsio/issues"
 
 [project.optional-dependencies]
 client = [
@@ -62,7 +63,7 @@ where = [
 namespaces = false
 
 [build-system]
-requires = ["setuptools>=61.2"]
+requires = ["setuptools >= 77.0.3"]
 build-backend = "setuptools.build_meta"
 
 [tool.pytest.ini_options]
@@ -80,9 +81,6 @@ line-length = 88
 exclude = [
     "migrations",
     "venv",
-    "start_service.dist",
-    "start_service.build",
-    "start_service.onefile-build",
 ]
 
 

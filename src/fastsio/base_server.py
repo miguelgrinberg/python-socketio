@@ -5,6 +5,7 @@ from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 import engineio
 
 from . import base_namespace, manager, packet
+from .router import RouterSIO
 
 default_logger = logging.getLogger("socketio.server")
 
@@ -194,14 +195,25 @@ class BaseServer:
             raise ValueError("Not a namespace instance")
         if self.is_asyncio_based() != namespace_handler.is_asyncio_based():
             raise ValueError("Not a valid namespace class for this server")
-        namespace_handler._set_server(self)
-        self.namespace_handlers[namespace_handler.namespace] = namespace_handler
         namespace_handler._set_server(self)  # type: ignore[misc]
         ns: str = str(namespace_handler.namespace or "/")
         self.namespace_handlers[ns] = namespace_handler
 
+    def add_router(self, router: RouterSIO) -> None:
+        """Attach a RouterSIO to this server.
 
-    def rooms(self, sid, namespace=None):
+        This will register all function-based handlers and any queued
+        class-based namespace handlers contained in the router.
+        """
+        # function-based
+        for ns, event, handler in router.iter_function_handlers():
+            if ns not in self.handlers:
+                self.handlers[ns] = {}
+            self.handlers[ns][event] = handler
+        # class-based namespaces
+        for ns_handler in router.iter_namespace_handlers():
+            self.register_namespace(ns_handler)
+
     def rooms(self, sid: str, namespace: Optional[str] = None) -> List[str]:
         """Return the rooms a client is in.
 
