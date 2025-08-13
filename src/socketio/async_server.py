@@ -1,16 +1,30 @@
 import asyncio
+# pyright: reportMissingImports=false, reportUnknownMemberType=false, reportUnknownArgumentType=false, reportUnknownVariableType=false, reportUnknownParameterType=false
+from typing import Any, AsyncContextManager, Callable, Dict, List, Optional, Set, Union, TYPE_CHECKING, Coroutine
 
 import engineio
 
 from . import async_manager, base_server, exceptions, packet
 
+if TYPE_CHECKING:  # pragma: no cover
+    from .async_admin import InstrumentedAsyncServer
+
 # this set is used to keep references to background tasks to prevent them from
 # being garbage collected mid-execution. Solution taken from
 # https://docs.python.org/3/library/asyncio-task.html#asyncio.create_task
-task_reference_holder = set()
+task_reference_holder: Set[asyncio.Task[Any]] = set()
 
 
 class AsyncServer(base_server.BaseServer):
+    # Attribute type hints to aid static type checkers
+    manager: async_manager.AsyncManager
+    eio: Any
+    packet_class: Any
+    handlers: Dict[str, Dict[str, Any]]
+    namespace_handlers: Dict[str, Any]
+    namespaces: Union[List[str], str]
+    environ: Dict[str, Any]
+    _binary_packet: Dict[str, Any]
     """A Socket.IO server for asyncio.
 
     This class implements a fully compliant Socket.IO web server with support
@@ -111,13 +125,13 @@ class AsyncServer(base_server.BaseServer):
 
     def __init__(
         self,
-        client_manager=None,
-        logger=False,
-        json=None,
-        async_handlers=True,
-        namespaces=None,
-        **kwargs,
-    ):
+        client_manager: Optional[async_manager.AsyncManager] = None,
+        logger: Union[bool, Any] = False,
+        json: Optional[Any] = None,
+        async_handlers: bool = True,
+        namespaces: Optional[Union[List[str], str]] = None,
+        **kwargs: Any,
+    ) -> None:
         if client_manager is None:
             client_manager = async_manager.AsyncManager()
         super().__init__(
@@ -128,25 +142,26 @@ class AsyncServer(base_server.BaseServer):
             namespaces=namespaces,
             **kwargs,
         )
+        # attributes are provided by the base class; runtime types are ensured
 
-    def is_asyncio_based(self):
+    def is_asyncio_based(self):  # type: ignore[override]
         return True
 
-    def attach(self, app, socketio_path="socket.io"):
+    def attach(self, app: Any, socketio_path: str = "socket.io") -> None:
         """Attach the Socket.IO server to an application."""
         self.eio.attach(app, socketio_path)
 
     async def emit(
         self,
-        event,
-        data=None,
-        to=None,
-        room=None,
-        skip_sid=None,
-        namespace=None,
-        callback=None,
-        ignore_queue=False,
-    ):
+        event: str,
+        data: Optional[Any] = None,
+        to: Optional[Union[str, List[str]]] = None,
+        room: Optional[Union[str, List[str]]] = None,
+        skip_sid: Optional[Union[str, List[str]]] = None,
+        namespace: Optional[str] = None,
+        callback: Optional[Callable[..., Any]] = None,
+        ignore_queue: bool = False,
+    ) -> None:
         """Emit a custom event to one or more connected clients.
 
         :param event: The event name. It can be any string. The event names
@@ -207,14 +222,14 @@ class AsyncServer(base_server.BaseServer):
 
     async def send(
         self,
-        data,
-        to=None,
-        room=None,
-        skip_sid=None,
-        namespace=None,
-        callback=None,
-        ignore_queue=False,
-    ):
+        data: Any,
+        to: Optional[Union[str, List[str]]] = None,
+        room: Optional[Union[str, List[str]]] = None,
+        skip_sid: Optional[Union[str, List[str]]] = None,
+        namespace: Optional[str] = None,
+        callback: Optional[Callable[..., Any]] = None,
+        ignore_queue: bool = False,
+    ) -> None:
         """Send a message to one or more connected clients.
 
         This function emits an event with the name ``'message'``. Use
@@ -265,14 +280,14 @@ class AsyncServer(base_server.BaseServer):
 
     async def call(
         self,
-        event,
-        data=None,
-        to=None,
-        sid=None,
-        namespace=None,
-        timeout=60,
-        ignore_queue=False,
-    ):
+        event: str,
+        data: Optional[Any] = None,
+        to: Optional[str] = None,
+        sid: Optional[str] = None,
+        namespace: Optional[str] = None,
+        timeout: float = 60,
+        ignore_queue: bool = False,
+    ) -> Any:
         """Emit a custom event to a client and wait for the response.
 
         This method issues an emit with a callback and waits for the callback
@@ -319,7 +334,7 @@ class AsyncServer(base_server.BaseServer):
         callback_event = self.eio.create_event()
         callback_args = []
 
-        def event_callback(*args):
+        def event_callback(*args: Any) -> None:
             callback_args.append(args)
             callback_event.set()
 
@@ -343,7 +358,7 @@ class AsyncServer(base_server.BaseServer):
             else None
         )
 
-    async def enter_room(self, sid, room, namespace=None):
+    async def enter_room(self, sid: str, room: str, namespace: Optional[str] = None) -> None:
         """Enter a room.
 
         This function adds the client to a room. The :func:`emit` and
@@ -361,7 +376,7 @@ class AsyncServer(base_server.BaseServer):
         self.logger.info("%s is entering room %s [%s]", sid, room, namespace)
         await self.manager.enter_room(sid, namespace, room)
 
-    async def leave_room(self, sid, room, namespace=None):
+    async def leave_room(self, sid: str, room: str, namespace: Optional[str] = None) -> None:
         """Leave a room.
 
         This function removes the client from a room.
@@ -377,7 +392,7 @@ class AsyncServer(base_server.BaseServer):
         self.logger.info("%s is leaving room %s [%s]", sid, room, namespace)
         await self.manager.leave_room(sid, namespace, room)
 
-    async def close_room(self, room, namespace=None):
+    async def close_room(self, room: str, namespace: Optional[str] = None) -> None:
         """Close a room.
 
         This function removes all the clients from the given room.
@@ -392,7 +407,7 @@ class AsyncServer(base_server.BaseServer):
         self.logger.info("room %s is closing [%s]", room, namespace)
         await self.manager.close_room(room, namespace)
 
-    async def get_session(self, sid, namespace=None):
+    async def get_session(self, sid: str, namespace: Optional[str] = None) -> Dict[str, Any]:
         """Return the user session for a client.
 
         :param sid: The session id of the client.
@@ -408,7 +423,7 @@ class AsyncServer(base_server.BaseServer):
         eio_session = await self.eio.get_session(eio_sid)
         return eio_session.setdefault(namespace, {})
 
-    async def save_session(self, sid, session, namespace=None):
+    async def save_session(self, sid: str, session: Dict[str, Any], namespace: Optional[str] = None) -> None:
         """Store the user session for a client.
 
         :param sid: The session id of the client.
@@ -421,7 +436,7 @@ class AsyncServer(base_server.BaseServer):
         eio_session = await self.eio.get_session(eio_sid)
         eio_session[namespace] = session
 
-    def session(self, sid, namespace=None):
+    def session(self, sid: str, namespace: Optional[str] = None) -> AsyncContextManager[Dict[str, Any]]:
         """Return the user session for a client with context manager syntax.
 
         :param sid: The session id of the client.
@@ -446,26 +461,26 @@ class AsyncServer(base_server.BaseServer):
         """
 
         class _session_context_manager:
-            def __init__(self, server, sid, namespace):
+            def __init__(self, server: "AsyncServer", sid: str, namespace: Optional[str]):
                 self.server = server
                 self.sid = sid
                 self.namespace = namespace
-                self.session = None
+                self.session: Optional[Dict[str, Any]] = None
 
-            async def __aenter__(self):
+            async def __aenter__(self) -> Dict[str, Any]:
                 self.session = await self.server.get_session(
                     sid, namespace=self.namespace
                 )
                 return self.session
 
-            async def __aexit__(self, *args):
+            async def __aexit__(self, *args: Any) -> None:
                 await self.server.save_session(
-                    sid, self.session, namespace=self.namespace
+                    sid, self.session or {}, namespace=self.namespace
                 )
 
         return _session_context_manager(self, sid, namespace)
 
-    async def disconnect(self, sid, namespace=None, ignore_queue=False):
+    async def disconnect(self, sid: str, namespace: Optional[str] = None, ignore_queue: bool = False) -> None:
         """Disconnect a client.
 
         :param sid: Session ID of the client.
@@ -495,7 +510,7 @@ class AsyncServer(base_server.BaseServer):
             )
             await self.manager.disconnect(sid, namespace=namespace, ignore_queue=True)
 
-    async def shutdown(self):
+    async def shutdown(self) -> None:
         """Stop Socket.IO background tasks.
 
         This method stops all background activity initiated by the Socket.IO
@@ -504,7 +519,7 @@ class AsyncServer(base_server.BaseServer):
         self.logger.info("Socket.IO is shutting down")
         await self.eio.shutdown()
 
-    async def handle_request(self, *args, **kwargs):
+    async def handle_request(self, *args: Any, **kwargs: Any) -> Any:
         """Handle an HTTP request from the client.
 
         This is the entry point of the Socket.IO application. This function
@@ -514,7 +529,7 @@ class AsyncServer(base_server.BaseServer):
         """
         return await self.eio.handle_request(*args, **kwargs)
 
-    def start_background_task(self, target, *args, **kwargs):
+    def start_background_task(self, target: Callable[..., Coroutine[Any, Any, Any]], *args: Any, **kwargs: Any) -> asyncio.Task[Any]:
         """Start a background task using the appropriate async model.
 
         This is a utility function that applications can use to start a
@@ -529,7 +544,7 @@ class AsyncServer(base_server.BaseServer):
         """
         return self.eio.start_background_task(target, *args, **kwargs)
 
-    async def sleep(self, seconds=0):
+    async def sleep(self, seconds: float = 0) -> None:
         """Sleep for the requested amount of time using the appropriate async
         model.
 
@@ -543,13 +558,13 @@ class AsyncServer(base_server.BaseServer):
 
     def instrument(
         self,
-        auth=None,
-        mode="development",
-        read_only=False,
-        server_id=None,
-        namespace="/admin",
-        server_stats_interval=2,
-    ):
+        auth: Optional[Union[bool, Dict[str, Any], List[Dict[str, Any]], Callable[[Dict[str, Any]], bool]]] = None,
+        mode: str = "development",
+        read_only: bool = False,
+        server_id: Optional[str] = None,
+        namespace: str = "/admin",
+        server_stats_interval: int = 2,
+    ) -> "InstrumentedAsyncServer":
         """Instrument the Socket.IO server for monitoring with the `Socket.IO
         Admin UI <https://socket.io/docs/v4/admin-ui/>`_.
 
@@ -592,7 +607,7 @@ class AsyncServer(base_server.BaseServer):
             server_stats_interval=server_stats_interval,
         )
 
-    async def _send_packet(self, eio_sid, pkt):
+    async def _send_packet(self, eio_sid: str, pkt: packet.Packet) -> None:
         """Send a Socket.IO packet to a client."""
         encoded_packet = pkt.encode()
         if isinstance(encoded_packet, list):
@@ -601,11 +616,11 @@ class AsyncServer(base_server.BaseServer):
         else:
             await self.eio.send(eio_sid, encoded_packet)
 
-    async def _send_eio_packet(self, eio_sid, eio_pkt):
+    async def _send_eio_packet(self, eio_sid: str, eio_pkt: Any) -> None:
         """Send a raw Engine.IO packet to a client."""
         await self.eio.send_packet(eio_sid, eio_pkt)
 
-    async def _handle_connect(self, eio_sid, namespace, data):
+    async def _handle_connect(self, eio_sid: str, namespace: Optional[str], data: Optional[Any]) -> None:
         """Handle a client connection request."""
         namespace = namespace or "/"
         sid = None
@@ -672,7 +687,7 @@ class AsyncServer(base_server.BaseServer):
                 self.packet_class(packet.CONNECT, {"sid": sid}, namespace=namespace),
             )
 
-    async def _handle_disconnect(self, eio_sid, namespace, reason=None):
+    async def _handle_disconnect(self, eio_sid: str, namespace: Optional[str], reason: Optional[str] = None) -> None:
         """Handle a client disconnect."""
         namespace = namespace or "/"
         sid = self.manager.sid_from_eio_sid(eio_sid, namespace)
@@ -684,10 +699,12 @@ class AsyncServer(base_server.BaseServer):
         )
         await self.manager.disconnect(sid, namespace, ignore_queue=True)
 
-    async def _handle_event(self, eio_sid, namespace, id, data):
+    async def _handle_event(self, eio_sid: str, namespace: Optional[str], id: Optional[int], data: Any) -> None:
         """Handle an incoming client event."""
         namespace = namespace or "/"
         sid = self.manager.sid_from_eio_sid(eio_sid, namespace)
+        if sid is None:
+            return
         self.logger.info('received event "%s" from %s [%s]', data[0], sid, namespace)
         if not self.manager.is_connected(sid, namespace):
             self.logger.warning("%s is not connected to namespace %s", sid, namespace)
@@ -701,7 +718,15 @@ class AsyncServer(base_server.BaseServer):
         else:
             await self._handle_event_internal(self, sid, eio_sid, data, namespace, id)
 
-    async def _handle_event_internal(self, server, sid, eio_sid, data, namespace, id):
+    async def _handle_event_internal(
+        self,
+        server: "AsyncServer",
+        sid: str,
+        eio_sid: str,
+        data: Any,
+        namespace: Optional[str],
+        id: Optional[int],
+    ) -> None:
         r = await server._trigger_event(data[0], namespace, sid, *data[1:])
         if r != self.not_handled and id is not None:
             # send ACK packet with the response returned by the handler
@@ -717,14 +742,14 @@ class AsyncServer(base_server.BaseServer):
                 self.packet_class(packet.ACK, namespace=namespace, id=id, data=data),
             )
 
-    async def _handle_ack(self, eio_sid, namespace, id, data):
+    async def _handle_ack(self, eio_sid: str, namespace: Optional[str], id: Optional[int], data: Any) -> None:
         """Handle ACK packets from the client."""
         namespace = namespace or "/"
         sid = self.manager.sid_from_eio_sid(eio_sid, namespace)
         self.logger.info("received ack from %s [%s]", sid, namespace)
         await self.manager.trigger_callback(sid, id, data)
 
-    async def _trigger_event(self, event, namespace, *args):
+    async def _trigger_event(self, event: str, namespace: Optional[str], *args: Any) -> Any:
         """Invoke an application event handler."""
         # first see if we have an explicit handler for the event
         handler, args = self._get_event_handler(event, namespace, args)
@@ -757,14 +782,14 @@ class AsyncServer(base_server.BaseServer):
             return await handler.trigger_event(event, *args)
         return self.not_handled
 
-    async def _handle_eio_connect(self, eio_sid, environ):
+    async def _handle_eio_connect(self, eio_sid: str, environ: Dict[str, Any]) -> None:  # type: ignore[override]
         """Handle the Engine.IO connection event."""
         if not self.manager_initialized:
             self.manager_initialized = True
             self.manager.initialize()
         self.environ[eio_sid] = environ
 
-    async def _handle_eio_message(self, eio_sid, data):
+    async def _handle_eio_message(self, eio_sid: str, data: Union[bytes, str]) -> None:  # type: ignore[override]
         """Dispatch Engine.IO messages."""
         if eio_sid in self._binary_packet:
             pkt = self._binary_packet[eio_sid]
@@ -796,12 +821,12 @@ class AsyncServer(base_server.BaseServer):
             else:
                 raise ValueError("Unknown packet type.")
 
-    async def _handle_eio_disconnect(self, eio_sid, reason):
+    async def _handle_eio_disconnect(self, eio_sid: str, reason: str) -> None:  # type: ignore[override]
         """Handle Engine.IO disconnect event."""
         for n in list(self.manager.get_namespaces()).copy():
             await self._handle_disconnect(eio_sid, n, reason)
         if eio_sid in self.environ:
             del self.environ[eio_sid]
 
-    def _engineio_server_class(self) -> engineio.AsyncServer:
+    def _engineio_server_class(self) -> Any:
         return engineio.AsyncServer

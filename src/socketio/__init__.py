@@ -17,6 +17,7 @@ from .redis_manager import RedisManager
 from .server import Server
 from .simple_client import SimpleClient
 from .tornado import get_tornado_handler
+from .router import RouterSocketIO
 from .zmq_manager import ZmqManager
 
 __all__ = [
@@ -43,4 +44,5 @@ __all__ = [
     "WSGIApp",
     "ZmqManager",
     "get_tornado_handler",
+    "RouterSocketIO",
 ]
