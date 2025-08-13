@@ -1,17 +1,12 @@
-name: Publish to (Test)PyPI via Poetry
+name: Release → (Test)PyPI + GitHub Assets
 
 on:
-  push:
-    tags:
-      - "test/*.*.*"
-      - "test/v*.*.*"
-      - "*.*.*"
-      - "v*.*.*"
+  release:
+    types: [released, prereleased]  # published normal release и pre-release
 
 jobs:
   build-and-publish:
     runs-on: ubuntu-latest
-
     env:
       PYTHON_VERSION: "3.12"
 
@@ -19,21 +14,18 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set release variables from tag
-        id: tag
+      - name: Set variables from Release tag
+        id: meta
         run: |
-          RAW_TAG="${GITHUB_REF_NAME}"  # examples: 0.1.0, v0.1.0, test/0.1.0, test/v0.1.0
-          # detect target (testpypi or pypi)
-          if [[ "$RAW_TAG" == test/* ]]; then
-            echo "target_repo=testpypi" >> "$GITHUB_OUTPUT"
+          TAG="${{ github.event.release.tag_name }}"     # e.g. v0.1.0 or 0.1.0
+          VERSION="${TAG#v}"                             # strip leading 'v' if present
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          if [[ "${{ github.event.release.prerelease }}" == "true" ]]; then
+            echo "repo=testpypi" >> $GITHUB_OUTPUT
           else
-            echo "target_repo=pypi" >> "$GITHUB_OUTPUT"
+            echo "repo=pypi" >> $GITHUB_OUTPUT
           fi
-          # strip possible prefixes 'test/' and optional leading 'v'
-          STRIPPED="${RAW_TAG#test/}"
-          STRIPPED="${STRIPPED#v}"
-          echo "version=$STRIPPED" >> "$GITHUB_OUTPUT"
-          echo "Resolved version: $STRIPPED, target: $(cat $GITHUB_OUTPUT | grep target_repo | cut -d= -f2)"
+          echo "Resolved: version=$VERSION repo=$(cat $GITHUB_OUTPUT | grep repo | cut -d= -f2)"
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -43,7 +35,7 @@ jobs:
       - name: Install Poetry
         run: pipx install poetry
 
-      - name: Cache Poetry and pip
+      - name: Cache Poetry & pip
         uses: actions/cache@v4
         with:
           path: |
@@ -53,30 +45,55 @@ jobs:
           restore-keys: |
             poetry-${{ runner.os }}-${{ env.PYTHON_VERSION }}-
 
-      - name: Install project deps (no dev)
+      - name: Install deps (no dev)
         run: poetry install --no-interaction --no-root --only main
 
-      - name: Sync version from tag into pyproject.toml
-        run: poetry version ${{ steps.tag.outputs.version }}
+      - name: Sync version into pyproject.toml
+        run: poetry version ${{ steps.meta.outputs.version }}
 
-      - name: Build distributions
+      - name: Build sdist + wheel
         run: poetry build --no-interaction
 
-      - name: Configure Poetry repositories and tokens
-        if: ${{ steps.tag.outputs.target_repo == 'testpypi' }}
+      # (опционально) Быстрая проверка метаданных пакета перед публикацией
+      - name: Twine check
+        run: |
+          python -m pip install --upgrade twine
+          twine check dist/*
+
+      # Настройка репозиториев/токенов Poetry
+      - name: Configure TestPyPI
+        if: ${{ steps.meta.outputs.repo == 'testpypi' }}
         run: |
           poetry config repositories.testpypi https://test.pypi.org/legacy/
           poetry config pypi-token.testpypi ${{ secrets.TEST_PYPI_API_TOKEN }}
 
-      - name: Configure Poetry token for PyPI
-        if: ${{ steps.tag.outputs.target_repo == 'pypi' }}
+      - name: Configure PyPI
+        if: ${{ steps.meta.outputs.repo == 'pypi' }}
         run: |
           poetry config pypi-token.pypi ${{ secrets.PYPI_API_TOKEN }}
 
+      # Публикация
       - name: Publish to TestPyPI
-        if: ${{ steps.tag.outputs.target_repo == 'testpypi' }}
+        if: ${{ steps.meta.outputs.repo == 'testpypi' }}
         run: poetry publish -r testpypi --no-interaction
 
       - name: Publish to PyPI
-        if: ${{ steps.tag.outputs.target_repo == 'pypi' }}
+        if: ${{ steps.meta.outputs.repo == 'pypi' }}
         run: poetry publish --no-interaction
+
+      # Прикрепляем артефакты к странице GitHub Release
+      - name: Upload artifacts to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.event.release.tag_name }}
+          files: |
+            dist/*.whl
+            dist/*.tar.gz
+
+      # (опционально) также сохраняем артефакты в job artifacts
+      - name: Upload build artifacts (job)
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist-${{ steps.meta.outputs.version }}
+          path: dist/
+          if-no-files-found: error
