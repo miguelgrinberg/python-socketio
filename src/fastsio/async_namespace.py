@@ -1,6 +1,6 @@
 import asyncio
 
-from socketio import base_namespace
+from . import base_namespace
 
 
 class AsyncNamespace(base_namespace.BaseServerNamespace):

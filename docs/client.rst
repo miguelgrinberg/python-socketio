@@ -150,7 +150,7 @@ With the usage shown above, the ``receive()`` method will return only when an
 event is received from the server. An optional timeout in seconds can be passed
 to prevent the client from waiting forever::
 
-    from socketio.exceptions import TimeoutError
+    from fastsio.exceptions import TimeoutError
 
     try:
         event = sio.receive(timeout=5)
@@ -161,7 +161,7 @@ to prevent the client from waiting forever::
 
 Or with ``asyncio``::
 
-    from socketio.exceptions import TimeoutError
+    from fastsio.exceptions import TimeoutError
 
     try:
         event = await sio.receive(timeout=5)

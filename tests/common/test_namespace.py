@@ -1,6 +1,6 @@
 from unittest import mock
 
-from socketio import namespace
+from fastsio import namespace
 
 
 class TestNamespace:

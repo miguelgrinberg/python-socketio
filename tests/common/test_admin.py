@@ -7,7 +7,7 @@ import pytest
 from engineio.socket import Socket as EngineIOSocket
 
 import socketio
-from socketio.exceptions import ConnectionError
+from fastsio.exceptions import ConnectionError
 from tests.web_server import SocketIOWebServer
 
 

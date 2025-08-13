@@ -1,6 +1,6 @@
 from unittest import mock
 
-from socketio import async_manager, packet
+from fastsio import async_manager, packet
 
 
 class TestAsyncManager:

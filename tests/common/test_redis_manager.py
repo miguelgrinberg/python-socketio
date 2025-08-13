@@ -1,6 +1,6 @@
 import pytest
 
-from socketio.redis_manager import parse_redis_sentinel_url
+from fastsio.redis_manager import parse_redis_sentinel_url
 
 
 class TestPubSubManager:

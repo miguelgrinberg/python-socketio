@@ -1,7 +1,7 @@
 import asyncio
 
-from socketio import AsyncClient
-from socketio.exceptions import DisconnectedError, SocketIOError, TimeoutError
+from . import AsyncClient
+from .exceptions import DisconnectedError, SocketIOError, TimeoutError
 
 
 class AsyncSimpleClient:

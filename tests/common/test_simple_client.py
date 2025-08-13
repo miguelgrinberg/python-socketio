@@ -2,8 +2,8 @@ from unittest import mock
 
 import pytest
 
-from socketio import SimpleClient
-from socketio.exceptions import DisconnectedError, SocketIOError, TimeoutError
+from fastsio import SimpleClient
+from fastsio.exceptions import DisconnectedError, SocketIOError, TimeoutError
 
 
 class TestSimpleClient:

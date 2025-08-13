@@ -1,6 +1,6 @@
 import pytest
 
-from socketio import packet
+from fastsio import packet
 
 
 class TestPacket:

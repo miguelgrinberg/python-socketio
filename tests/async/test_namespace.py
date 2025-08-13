@@ -1,6 +1,6 @@
 from unittest import mock
 
-from socketio import async_namespace
+from fastsio import async_namespace
 
 
 class TestAsyncNamespace:

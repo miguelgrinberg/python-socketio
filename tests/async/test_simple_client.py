@@ -3,8 +3,8 @@ from unittest import mock
 
 import pytest
 
-from socketio import AsyncSimpleClient
-from socketio.exceptions import DisconnectedError, SocketIOError, TimeoutError
+from fastsio import AsyncSimpleClient
+from fastsio.exceptions import DisconnectedError, SocketIOError, TimeoutError
 
 
 class TestAsyncAsyncSimpleClient:

@@ -1,6 +1,6 @@
 from unittest import mock
 
-from socketio import middleware
+from fastsio import middleware
 
 
 class TestMiddleware:

@@ -1,7 +1,7 @@
 from threading import Event
 
-from socketio import Client
-from socketio.exceptions import DisconnectedError, SocketIOError, TimeoutError
+from . import Client
+from .exceptions import DisconnectedError, SocketIOError, TimeoutError
 
 
 class SimpleClient:

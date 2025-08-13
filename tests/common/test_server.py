@@ -4,7 +4,7 @@ from unittest import mock
 import pytest
 from engineio import json, packet as eio_packet
 
-from socketio import exceptions, msgpack_packet, namespace, packet, server
+from fastsio import exceptions, msgpack_packet, namespace, packet, server
 
 
 @mock.patch(

@@ -1,4 +1,4 @@
-from socketio import msgpack_packet, packet
+from fastsio import msgpack_packet, packet
 
 
 class TestMsgPackPacket:

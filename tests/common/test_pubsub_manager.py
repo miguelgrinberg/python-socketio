@@ -4,7 +4,7 @@ from unittest import mock
 
 import pytest
 
-from socketio import manager, packet, pubsub_manager
+from fastsio import manager, packet, pubsub_manager
 
 
 class TestPubSubManager:

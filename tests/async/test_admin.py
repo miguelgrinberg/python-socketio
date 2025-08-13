@@ -10,7 +10,7 @@ try:
 except ImportError:
     from engineio.asyncio_socket import AsyncSocket as EngineIOSocket
 import socketio
-from socketio.exceptions import ConnectionError
+from fastsio.exceptions import ConnectionError
 from tests.asyncio_web_server import SocketIOWebServer
 
 

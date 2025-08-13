@@ -2,7 +2,7 @@ from unittest import mock
 
 import pytest
 
-from socketio import manager, packet
+from fastsio import manager, packet
 
 
 class TestBaseManager:

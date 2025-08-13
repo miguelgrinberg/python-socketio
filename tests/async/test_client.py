@@ -4,7 +4,7 @@ from unittest import mock
 import pytest
 from engineio import exceptions as engineio_exceptions
 
-from socketio import async_client, async_namespace, exceptions, packet
+from fastsio import async_client, async_namespace, exceptions, packet
 
 
 class TestAsyncClient:

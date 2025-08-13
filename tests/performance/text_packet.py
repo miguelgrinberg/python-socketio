@@ -1,6 +1,6 @@
 import time
 
-from socketio import packet
+from fastsio import packet
 
 
 def test():

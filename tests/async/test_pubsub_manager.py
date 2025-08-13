@@ -4,7 +4,7 @@ from unittest import mock
 
 import pytest
 
-from socketio import async_manager, async_pubsub_manager, packet
+from fastsio import async_manager, async_pubsub_manager, packet
 
 
 class TestAsyncPubSubManager:

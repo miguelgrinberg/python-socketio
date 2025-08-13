@@ -5,7 +5,7 @@ from unittest import mock
 import pytest
 from engineio import exceptions as engineio_exceptions, json, packet as engineio_packet
 
-from socketio import (
+from fastsio import (
     async_namespace,
     client,
     exceptions,
