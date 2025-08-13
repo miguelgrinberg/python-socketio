@@ -33,7 +33,10 @@ jobs:
           python-version: ${{ env.PYTHON_VERSION }}
 
       - name: Install Poetry
-        run: pipx install poetry
+        run: pipx install "poetry==1.8.3"
+
+      - name: Show Poetry version
+        run: poetry --version
 
       - name: Cache Poetry & pip
         uses: actions/cache@v4
@@ -41,9 +44,9 @@ jobs:
           path: |
             ~/.cache/pypoetry
             ~/.cache/pip
-          key: poetry-${{ runner.os }}-${{ env.PYTHON_VERSION }}-${{ hashFiles('**/poetry.lock') }}
+          key: poetry-${{ runner.os }}-${{ env.PYTHON_VERSION }}-**1.8.3**-${{ hashFiles('**/poetry.lock') }}
           restore-keys: |
-            poetry-${{ runner.os }}-${{ env.PYTHON_VERSION }}-
+            poetry-${{ runner.os }}-${{ env.PYTHON_VERSION }}-**1.8.3**-
 
       - name: Install deps (no dev)
         run: poetry install --no-interaction --no-root --only main
