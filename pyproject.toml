@@ -1,5 +1,18 @@
 [project]
+name = "fastsio"
 version = "0.0.0"
+description = "light and typization Socket.IO server and client for Python"
+license = "MIT"
+readme = "README.md"
+homepage = "https://github.com/cicwak/fastsio"
+repository = "https://github.com/cicwak/fastsio"
+packages = [
+    { include = "fastsio", from = "src" },
+]
+authors = [
+    "Miguel Grinberg <miguel.grinberg@gmail.com>",
+    "Konstantin Ponomarev <cicwak@gmail.com>",
+]
 
 [tool.poetry]
 name = "fastsio"
