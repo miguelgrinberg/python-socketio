@@ -1,34 +1,16 @@
-[project]
-name = "fastsio"
-version = "0.0.1"
-description = "light and typization Socket.IO server and client for Python"
-license = "MIT"
-readme = "README.md"
-homepage = "https://github.com/cicwak/fastsio"
-repository = "https://github.com/cicwak/fastsio"
-packages = [
-    { include = "fastsio", from = "src" },
-]
-authors = [
-    "Miguel Grinberg <miguel.grinberg@gmail.com>",
-    "Konstantin Ponomarev <cicwak@gmail.com>",
-]
-
 [tool.poetry]
 name = "fastsio"
-version = "0.0.1"
+version = "0.0.1"  # будет перезаписываться GitHub Actions по тегу
 description = "light and typization Socket.IO server and client for Python"
 license = "MIT"
 readme = "README.md"
 homepage = "https://github.com/cicwak/fastsio"
 repository = "https://github.com/cicwak/fastsio"
-packages = [
-    { include = "fastsio", from = "src" },
-]
 authors = [
-    "Miguel Grinberg <miguel.grinberg@gmail.com>",
-    "Konstantin Ponomarev <cicwak@gmail.com>",
+  "Miguel Grinberg <miguel.grinberg@gmail.com>",
+  "Konstantin Ponomarev <cicwak@gmail.com>",
 ]
+packages = [{ include = "fastsio", from = "src" }]
 
 [project.readme]
 file = "README.md"
@@ -78,8 +60,8 @@ where = [
 namespaces = false
 
 [build-system]
-requires = ["setuptools >= 77.0.3"]
-build-backend = "setuptools.build_meta"
+requires = ["poetry-core>=1.8.0"]
+build-backend = "poetry.core.masonry.api"
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
@@ -114,7 +96,7 @@ ignore = ["D203", "D213"]
 convention = "google"
 
 [tool.ruff.lint.isort]
-known-first-party = ["fast_socketio"]
+known-first-party = ["fastsio"]
 combine-as-imports = true
 
 [tool.ruff.lint.flake8-tidy-imports]
