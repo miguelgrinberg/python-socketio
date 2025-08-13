@@ -1,6 +1,9 @@
+[project]
+version = "0.0.0"
+
 [tool.poetry]
 name = "fastsio"
-version = "5.13.1.dev0"
+version = "0.0.0"
 description = "light and typization Socket.IO server and client for Python"
 license = "MIT"
 readme = "README.md"
