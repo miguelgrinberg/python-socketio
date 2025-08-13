@@ -214,6 +214,10 @@ class BaseServer:
         for ns_handler in router.iter_namespace_handlers():
             self.register_namespace(ns_handler)
 
+    def add_routers(self, *routers: RouterSIO) -> None:
+        for router in routers:
+            self.add_router(router)
+
     def rooms(self, sid: str, namespace: Optional[str] = None) -> List[str]:
         """Return the rooms a client is in.
 
