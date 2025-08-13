@@ -2,7 +2,7 @@ import asyncio
 
 from engineio import packet as eio_packet
 
-from socketio import packet
+from . import packet
 
 from .base_manager import BaseManager
 
