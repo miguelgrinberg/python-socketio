@@ -82,7 +82,8 @@ class RedisManager(PubSubManager):  # pragma: no cover
                  write_only=False, logger=None, redis_options=None):
         if redis is None and valkey is None:
             raise RuntimeError('Redis package is not installed '
-                               '(Run "pip install redis" or "pip install valkey" '
+                               '(Run "pip install redis" '
+                               'or "pip install valkey" '
                                'in your virtualenv).')
         super().__init__(channel=channel, write_only=write_only, logger=logger)
         self.redis_url = url
@@ -110,12 +111,14 @@ class RedisManager(PubSubManager):  # pragma: no cover
         if schema == 'redis':
             if redis is None or RedisError is None:
                 raise RuntimeError('Redis package is not installed '
-                                   '(Run "pip install redis" in your virtualenv).')
+                                   '(Run "pip install redis" '
+                                   'in your virtualenv).')
             return redis, RedisError
         if schema == 'valkey':
             if valkey is None or ValkeyError is None:
                 raise RuntimeError('Valkey package is not installed '
-                                   '(Run "pip install valkey" in your virtualenv).')
+                                   '(Run "pip install valkey" '
+                                   'in your virtualenv).')
             return valkey, ValkeyError
         error_msg = f'Unsupported Redis URL schema: {schema}'
         raise ValueError(error_msg)

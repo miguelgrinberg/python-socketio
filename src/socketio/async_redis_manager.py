@@ -20,8 +20,6 @@ except ImportError:  # pragma: no cover
     valkey = None
     ValkeyError = None
 
-
-
 from .async_pubsub_manager import AsyncPubSubManager
 from .redis_manager import parse_redis_sentinel_url
 
@@ -59,7 +57,8 @@ class AsyncRedisManager(AsyncPubSubManager):  # pragma: no cover
                  write_only=False, logger=None, redis_options=None):
         if aioredis is None and valkey is None:
             raise RuntimeError('Redis package is not installed '
-                               '(Run "pip install redis" or "pip install valkey" '
+                               '(Run "pip install redis" or '
+                               '"pip install valkey" '
                                'in your virtualenv).')
         if aioredis and not hasattr(aioredis.Redis, 'from_url'):
             raise RuntimeError('Version 2 of aioredis package is required.')
@@ -74,12 +73,14 @@ class AsyncRedisManager(AsyncPubSubManager):  # pragma: no cover
         if schema == 'redis':
             if aioredis is None or RedisError is None:
                 raise RuntimeError('Redis package is not installed '
-                                   '(Run "pip install redis" in your virtualenv).')
+                                   '(Run "pip install redis" '
+                                   'in your virtualenv).')
             return aioredis, RedisError
         if schema == 'valkey':
             if valkey is None or ValkeyError is None:
                 raise RuntimeError('Valkey package is not installed '
-                                   '(Run "pip install valkey" in your virtualenv).')
+                                   '(Run "pip install valkey" '
+                                   'in your virtualenv).')
             return valkey, ValkeyError
         error_msg = f'Unsupported Redis URL schema: {schema}'
         raise ValueError(error_msg)
