@@ -31,7 +31,8 @@ class TestPubSubManager:
             {'db': 0}
         )
         assert parse_redis_sentinel_url(
-            f'{rtype}+sentinel://user:password@h1:6379,h2:6379,h1:6380/0/myredis'
+            f'{rtype}+sentinel://'
+            'user:password@h1:6379,h2:6379,h1:6380/0/myredis'
         ) == (
             [('h1', 6379), ('h2', 6379), ('h1', 6380)],
             'myredis',
