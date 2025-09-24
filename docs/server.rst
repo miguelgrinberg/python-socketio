@@ -1089,6 +1089,25 @@ The RabbitMQ queue is configured through the
     mgr = socketio.AsyncAioPikaManager('amqp://')
     sio = socketio.AsyncServer(client_manager=mgr)
 
+Deploying the Message Queue for Production
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+For a production deployment there are a few recommendations to keep your
+application secure.
+
+First of all, the message queue should never be listening on a public network
+interface, to ensure that external clients never connect to it. The use of a
+private network (VPC), where the communication between servers can happen
+privately is highly recommended.
+
+In addition, all message queues support authentication and encryption.
+Authentication ensures that only the Socket.IO servers and related processes
+have access, while encryption prevents data to be collected by a third-party
+listening on the network.
+
+Access credentials can be included in the connection URLs that are passed to the
+client managers.
+
 Horizontal Scaling
 ~~~~~~~~~~~~~~~~~~
 
