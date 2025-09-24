@@ -1,5 +1,6 @@
 import asyncio
 import functools
+import json
 from unittest import mock
 
 import pytest
@@ -482,22 +483,20 @@ class TestAsyncPubSubManager:
         host_id = self.pm.host_id
 
         async def messages():
-            import pickle
-
             yield {'method': 'emit', 'value': 'foo', 'host_id': 'x'}
             yield {'missing': 'method', 'host_id': 'x'}
             yield '{"method": "callback", "value": "bar", "host_id": "x"}'
             yield {'method': 'disconnect', 'sid': '123', 'namespace': '/foo',
                    'host_id': 'x'}
             yield {'method': 'bogus', 'host_id': 'x'}
-            yield pickle.dumps({'method': 'close_room', 'value': 'baz',
-                                'host_id': 'x'})
+            yield json.dumps({'method': 'close_room', 'value': 'baz',
+                              'host_id': 'x'})
             yield {'method': 'enter_room', 'sid': '123', 'namespace': '/foo',
                    'room': 'room', 'host_id': 'x'}
             yield {'method': 'leave_room', 'sid': '123', 'namespace': '/foo',
                    'room': 'room', 'host_id': 'x'}
             yield 'bad json'
-            yield b'bad pickled'
+            yield b'bad data'
 
             # these should not publish anything on the queue, as they come from
             # the same host
@@ -505,8 +504,8 @@ class TestAsyncPubSubManager:
             yield {'method': 'callback', 'value': 'bar', 'host_id': host_id}
             yield {'method': 'disconnect', 'sid': '123', 'namespace': '/foo',
                    'host_id': host_id}
-            yield pickle.dumps({'method': 'close_room', 'value': 'baz',
-                                'host_id': host_id})
+            yield json.dumps({'method': 'close_room', 'value': 'baz',
+                              'host_id': host_id})
 
         self.pm._listen = messages
         await self.pm._thread()

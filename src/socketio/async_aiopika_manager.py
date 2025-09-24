@@ -1,6 +1,6 @@
 import asyncio
-import pickle
 
+from engineio import json
 from .async_pubsub_manager import AsyncPubSubManager
 
 try:
@@ -82,7 +82,7 @@ class AsyncAioPikaManager(AsyncPubSubManager):  # pragma: no cover
             try:
                 await self.publisher_exchange.publish(
                     aio_pika.Message(
-                        body=pickle.dumps(data),
+                        body=json.dumps(data),
                         delivery_mode=aio_pika.DeliveryMode.PERSISTENT
                     ), routing_key='*',
                 )
@@ -113,7 +113,7 @@ class AsyncAioPikaManager(AsyncPubSubManager):  # pragma: no cover
                     async with queue.iterator() as queue_iter:
                         async for message in queue_iter:
                             async with message.process():
-                                yield pickle.loads(message.body)
+                                yield message.body
                                 retry_sleep = 1
                 except aio_pika.AMQPException:
                     self._get_logger().error(

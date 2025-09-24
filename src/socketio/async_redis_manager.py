@@ -1,5 +1,4 @@
 import asyncio
-import pickle
 from urllib.parse import urlparse
 
 try:  # pragma: no cover
@@ -20,6 +19,7 @@ except ImportError:  # pragma: no cover
     valkey = None
     ValkeyError = None
 
+from engineio import json
 from .async_pubsub_manager import AsyncPubSubManager
 from .redis_manager import parse_redis_sentinel_url
 
@@ -108,7 +108,7 @@ class AsyncRedisManager(AsyncPubSubManager):  # pragma: no cover
                 if not retry:
                     self._redis_connect()
                 return await self.redis.publish(
-                    self.channel, pickle.dumps(data))
+                    self.channel, json.dumps(data))
             except error as exc:
                 if retry:
                     self._get_logger().error(

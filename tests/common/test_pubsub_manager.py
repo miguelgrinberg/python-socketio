@@ -1,4 +1,5 @@
 import functools
+import json
 import logging
 from unittest import mock
 
@@ -465,22 +466,20 @@ class TestPubSubManager:
         host_id = self.pm.host_id
 
         def messages():
-            import pickle
-
             yield {'method': 'emit', 'value': 'foo', 'host_id': 'x'}
             yield {'missing': 'method', 'host_id': 'x'}
             yield '{"method": "callback", "value": "bar", "host_id": "x"}'
             yield {'method': 'disconnect', 'sid': '123', 'namespace': '/foo',
                    'host_id': 'x'}
             yield {'method': 'bogus', 'host_id': 'x'}
-            yield pickle.dumps({'method': 'close_room', 'value': 'baz',
-                                'host_id': 'x'})
+            yield json.dumps({'method': 'close_room', 'value': 'baz',
+                              'host_id': 'x'})
             yield {'method': 'enter_room', 'sid': '123', 'namespace': '/foo',
                    'room': 'room', 'host_id': 'x'}
             yield {'method': 'leave_room', 'sid': '123', 'namespace': '/foo',
                    'room': 'room', 'host_id': 'x'}
             yield 'bad json'
-            yield b'bad pickled'
+            yield b'bad data'
 
             # these should not publish anything on the queue, as they come from
             # the same host
@@ -488,8 +487,8 @@ class TestPubSubManager:
             yield {'method': 'callback', 'value': 'bar', 'host_id': host_id}
             yield {'method': 'disconnect', 'sid': '123', 'namespace': '/foo',
                    'host_id': host_id}
-            yield pickle.dumps({'method': 'close_room', 'value': 'baz',
-                                'host_id': host_id})
+            yield json.dumps({'method': 'close_room', 'value': 'baz',
+                              'host_id': host_id})
 
         self.pm._listen = mock.MagicMock(side_effect=messages)
         try:

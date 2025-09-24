@@ -1,6 +1,6 @@
-import pickle
 import re
 
+from engineio import json
 from .pubsub_manager import PubSubManager
 
 
@@ -75,14 +75,14 @@ class ZmqManager(PubSubManager):  # pragma: no cover
         self.channel = channel
 
     def _publish(self, data):
-        pickled_data = pickle.dumps(
+        packed_data = json.dumps(
             {
                 'type': 'message',
                 'channel': self.channel,
                 'data': data
             }
-        )
-        return self.sink.send(pickled_data)
+        ).encode()
+        return self.sink.send(packed_data)
 
     def zmq_listen(self):
         while True:
@@ -94,7 +94,7 @@ class ZmqManager(PubSubManager):  # pragma: no cover
         for message in self.zmq_listen():
             if isinstance(message, bytes):
                 try:
-                    message = pickle.loads(message)
+                    message = json.loads(message)
                 except Exception:
                     pass
             if isinstance(message, dict) and \
