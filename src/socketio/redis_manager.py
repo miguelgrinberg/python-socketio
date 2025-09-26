@@ -3,14 +3,14 @@ import pickle
 import time
 from urllib.parse import urlparse
 
-try:
+try:  # pragma: no cover
     import redis
     from redis.exceptions import RedisError
 except ImportError:
     redis = None
     RedisError = None
 
-try:
+try:  # pragma: no cover
     import valkey
     from valkey.exceptions import ValkeyError
 except ImportError:
