@@ -47,7 +47,7 @@ class SocketIOWebServer:
                 env['gunicorn.socket'] = self.connection
                 return env
 
-        self.httpd = make_server('', port, self._app_wrapper,
+        self.httpd = make_server('localhost', port, self._app_wrapper,
                                  ThreadingWSGIServer, WebSocketRequestHandler)
         self.thread = threading.Thread(target=self.httpd.serve_forever)
         self.thread.start()
