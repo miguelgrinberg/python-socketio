@@ -21,8 +21,7 @@ def with_instrumented_server(auth=False, **ikwargs):
     def decorator(f):
         @wraps(f)
         def wrapped(self, *args, **kwargs):
-            sio = socketio.AsyncServer(async_mode='asgi', ping_interval=5,
-                                       ping_timeout=4)
+            sio = socketio.AsyncServer(async_mode='asgi')
 
             @sio.event
             async def enter_room(sid, data):
