@@ -18,7 +18,8 @@ def with_instrumented_server(auth=False, **ikwargs):
     def decorator(f):
         @wraps(f)
         def wrapped(self, *args, **kwargs):
-            sio = socketio.Server(async_mode='threading')
+            sio = socketio.Server(async_mode='threading', ping_interval=10,
+                                  ping_timeout=10)
 
             @sio.event
             def enter_room(sid, data):
@@ -49,10 +50,10 @@ def with_instrumented_server(auth=False, **ikwargs):
             try:
                 ret = f(self, *args, **kwargs)
             finally:
-                server.stop()
                 self.isvr.shutdown()
                 self.isvr.uninstrument()
                 self.isvr = None
+                server.stop()
 
             EngineIOSocket.schedule_ping = original_schedule_ping
 

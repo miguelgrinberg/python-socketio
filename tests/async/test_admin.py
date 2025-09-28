@@ -21,7 +21,8 @@ def with_instrumented_server(auth=False, **ikwargs):
     def decorator(f):
         @wraps(f)
         def wrapped(self, *args, **kwargs):
-            sio = socketio.AsyncServer(async_mode='asgi')
+            sio = socketio.AsyncServer(async_mode='asgi', ping_interval=10,
+                                       ping_timeout=10)
 
             @sio.event
             async def enter_room(sid, data):
@@ -37,6 +38,7 @@ def with_instrumented_server(auth=False, **ikwargs):
 
             async def shutdown():
                 await self.isvr.shutdown()
+                self.isvr.uninstrument()
                 await sio.shutdown()
 
             if 'server_stats_interval' not in ikwargs:
@@ -57,7 +59,6 @@ def with_instrumented_server(auth=False, **ikwargs):
                 ret = f(self, *args, **kwargs)
             finally:
                 server.stop()
-                self.isvr.uninstrument()
                 self.isvr = None
 
             EngineIOSocket.schedule_ping = original_schedule_ping
