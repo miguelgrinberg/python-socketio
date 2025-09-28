@@ -139,6 +139,7 @@ class AsyncClient(base_client.BaseClient):
             namespaces = [namespaces]
         self.connection_namespaces = namespaces
         self.namespaces = {}
+        self.failed_namespaces = []
         if self._connect_event is None:
             self._connect_event = self.eio.create_event()
         else:
@@ -166,14 +167,16 @@ class AsyncClient(base_client.BaseClient):
                     await asyncio.wait_for(self._connect_event.wait(),
                                            wait_timeout)
                     self._connect_event.clear()
-                    if set(self.namespaces) == set(self.connection_namespaces):
+                    if len(self.namespaces) + len(self.failed_namespaces) == \
+                            len(self.connection_namespaces):
                         break
             except asyncio.TimeoutError:
                 pass
             if set(self.namespaces) != set(self.connection_namespaces):
                 await self.disconnect()
                 raise exceptions.ConnectionError(
-                    'One or more namespaces failed to connect')
+                    'One or more namespaces failed to connect'
+                    ', '.join(self.failed_namespaces))
 
         self.connected = True
 
@@ -448,6 +451,7 @@ class AsyncClient(base_client.BaseClient):
         elif not isinstance(data, (tuple, list)):
             data = (data,)
         await self._trigger_event('connect_error', namespace, *data)
+        self.failed_namespaces.append(namespace)
         self._connect_event.set()
         if namespace in self.namespaces:
             del self.namespaces[namespace]

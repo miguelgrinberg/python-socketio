@@ -137,6 +137,7 @@ class Client(base_client.BaseClient):
             namespaces = [namespaces]
         self.connection_namespaces = namespaces
         self.namespaces = {}
+        self.failed_namespaces = []
         if self._connect_event is None:
             self._connect_event = self.eio.create_event()
         else:
@@ -161,12 +162,14 @@ class Client(base_client.BaseClient):
         if wait:
             while self._connect_event.wait(timeout=wait_timeout):
                 self._connect_event.clear()
-                if set(self.namespaces) == set(self.connection_namespaces):
+                if len(self.namespaces) + len(self.failed_namespaces) == \
+                        len(self.connection_namespaces):
                     break
             if set(self.namespaces) != set(self.connection_namespaces):
                 self.disconnect()
                 raise exceptions.ConnectionError(
-                    'One or more namespaces failed to connect')
+                    'One or more namespaces failed to connect: '
+                    ', '.join(self.failed_namespaces))
 
         self.connected = True
 
@@ -425,6 +428,7 @@ class Client(base_client.BaseClient):
         elif not isinstance(data, (tuple, list)):
             data = (data,)
         self._trigger_event('connect_error', namespace, *data)
+        self.failed_namespaces.append(namespace)
         self._connect_event.set()
         if namespace in self.namespaces:
             del self.namespaces[namespace]
@@ -439,7 +443,7 @@ class Client(base_client.BaseClient):
         if handler:
             try:
                 return handler(*args)
-            except TypeError:
+            except TypeError:  # pragma: no cover
                 # the legacy disconnect event does not take a reason argument
                 if event == 'disconnect':
                     return handler(*args[:-1])
