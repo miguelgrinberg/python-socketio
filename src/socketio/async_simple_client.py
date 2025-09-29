@@ -105,7 +105,7 @@ class AsyncSimpleClient:
         The transport is returned as a string and can be one of ``polling``
         and ``websocket``.
         """
-        return self.client.transport if self.client else ''
+        return self.client.transport() if self.client else ''
 
     async def emit(self, event, data=None):
         """Emit an event to the server.

@@ -64,7 +64,7 @@ class TestSimpleClient:
 
     def test_properties(self):
         client = SimpleClient()
-        client.client = mock.MagicMock(transport='websocket')
+        client.client = mock.MagicMock(transport=lambda: 'websocket')
         client.client.get_sid.return_value = 'sid'
         client.connected_event.set()
         client.connected = True
