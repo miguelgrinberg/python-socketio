@@ -142,6 +142,17 @@ class TestAsyncAsyncSimpleClient:
         client.client.call.assert_awaited_with('foo', 'bar', namespace='/',
                                                timeout=60)
 
+    async def test_call_timeout(self):
+        client = AsyncSimpleClient()
+        client.connected_event.set()
+        client.connected = True
+        client.client = mock.MagicMock()
+        client.client.call = mock.AsyncMock()
+        client.client.call.side_effect = TimeoutError()
+
+        with pytest.raises(TimeoutError):
+            await client.call('foo', 'bar')
+
     async def test_receive_with_input_buffer(self):
         client = AsyncSimpleClient()
         client.input_buffer = ['foo', 'bar']

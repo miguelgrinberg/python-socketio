@@ -163,6 +163,8 @@ class AsyncSimpleClient:
                 return await self.client.call(event, data,
                                               namespace=self.namespace,
                                               timeout=timeout)
+            except TimeoutError:
+                raise
             except SocketIOError:
                 pass
 
