@@ -407,7 +407,7 @@ class AsyncClient(base_client.BaseClient):
             del self.namespaces[namespace]
         if not self.namespaces:
             self.connected = False
-            await self.eio.disconnect(abort=True)
+            await self.eio.disconnect()
 
     async def _handle_event(self, namespace, id, data):
         namespace = namespace or '/'
