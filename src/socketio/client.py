@@ -387,7 +387,7 @@ class Client(base_client.BaseClient):
             del self.namespaces[namespace]
         if not self.namespaces:
             self.connected = False
-            self.eio.disconnect(abort=True)
+            self.eio.disconnect()
 
     def _handle_event(self, namespace, id, data):
         namespace = namespace or '/'
