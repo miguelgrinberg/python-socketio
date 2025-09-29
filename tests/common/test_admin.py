@@ -1,4 +1,5 @@
 from functools import wraps
+import logging
 import threading
 import time
 from unittest import mock
@@ -18,8 +19,8 @@ def with_instrumented_server(auth=False, **ikwargs):
     def decorator(f):
         @wraps(f)
         def wrapped(self, *args, **kwargs):
-            sio = socketio.Server(async_mode='threading', ping_interval=10,
-                                  ping_timeout=10)
+            sio = socketio.Server(async_mode='threading', logger=True,
+                                  engineio_logger=True)
 
             @sio.event
             def enter_room(sid, data):
@@ -40,9 +41,8 @@ def with_instrumented_server(auth=False, **ikwargs):
             server = SocketIOWebServer(sio)
             server.start()
 
-            # import logging
-            # logging.getLogger('engineio.client').setLevel(logging.DEBUG)
-            # logging.getLogger('socketio.client').setLevel(logging.DEBUG)
+            logging.getLogger('engineio.client').setLevel(logging.DEBUG)
+            logging.getLogger('socketio.client').setLevel(logging.DEBUG)
 
             original_schedule_ping = EngineIOSocket.schedule_ping
             EngineIOSocket.schedule_ping = mock.MagicMock()
@@ -57,9 +57,8 @@ def with_instrumented_server(auth=False, **ikwargs):
 
             EngineIOSocket.schedule_ping = original_schedule_ping
 
-            # import logging
-            # logging.getLogger('engineio.client').setLevel(logging.NOTSET)
-            # logging.getLogger('socketio.client').setLevel(logging.NOTSET)
+            logging.getLogger('engineio.client').setLevel(logging.NOTSET)
+            logging.getLogger('socketio.client').setLevel(logging.NOTSET)
 
             return ret
         return wrapped
