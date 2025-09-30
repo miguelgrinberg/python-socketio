@@ -1,5 +1,19 @@
 # python-socketio change log
 
+**Release 5.14.0** - 2025-09-30
+
+- Replace pickle with json in message queue communications [#1502](https://github.com/miguelgrinberg/python-socketio/issues/1502) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/53f6be094257ed81476b0e212c8cddd6d06ca39a))
+- Add support for Valkey in the Redis client managers [#1488](https://github.com/miguelgrinberg/python-socketio/issues/1488) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/36a89226a2fb18f876dcba48125a8c51904586ec)) (thanks **phi-friday**!)
+- Keep track of which namespaces failed to connect [#1496](https://github.com/miguelgrinberg/python-socketio/issues/1496) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/5dc2aea077469ad318e47b28a84845c5efb6bdcf))
+- Fixed transport property of the simple clients to be a string as documented [#1499](https://github.com/miguelgrinberg/python-socketio/issues/1499) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/23556fb3dcb37074020494df40fb4495d47e7efe))
+- SimpleClient.call does not raise `TimeoutError` on timeout [#1501](https://github.com/miguelgrinberg/python-socketio/issues/1501) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/a59c6f520059eb095ab4472e5192ce3e486875d9)) (thanks **James Thistlewood**!)
+- Wait for client to end background tasks on disconnect [#1500](https://github.com/miguelgrinberg/python-socketio/issues/1500) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/f61e0bec3750a83de619db9b779f9d93e449eade))
+- Better error logging for the Redis managers [#1479](https://github.com/miguelgrinberg/python-socketio/issues/1479) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/b01b197df1ea5914fdaa2e12758e916ebd60162a)) (thanks **Eugnee**!)
+- Channel was not properly initialized in several pubsub client managers [#1476](https://github.com/miguelgrinberg/python-socketio/issues/1476) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/efd1247ed9ed61a61d6840dc2c8c92ab02031afb)) (thanks **Eugnee**!)
+- Add message queue deployment recommendations for security ([commit](https://github.com/miguelgrinberg/python-socketio/commit/b3da354ed9eb46c0fb847c628b379ccae475a970))
+- Add missing `async` on session examples for the async server [#1465](https://github.com/miguelgrinberg/python-socketio/issues/1465) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/5e04003dad0140fb1c6acff328e4215e62fbc58a)) (thanks **Func**!)
+- Add SPDX license identifier [#1453](https://github.com/miguelgrinberg/python-socketio/issues/1453) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/81c80cddde06dd9561687c74e5769e25613282d7)) (thanks **Marc Mueller**!)
+
 **Release 5.13.0** - 2025-04-12
 
 - Eliminate race conditions on disconnect [#1441](https://github.com/miguelgrinberg/python-socketio/issues/1441) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/288ebb189d799a05bbc5979a834433034ea2939f))
