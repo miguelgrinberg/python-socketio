@@ -2,7 +2,6 @@ from functools import partial
 import uuid
 
 from engineio import json
-import pickle
 
 from .manager import Manager
 
@@ -196,16 +195,10 @@ class PubSubManager(Manager):
                     if isinstance(message, dict):
                         data = message
                     else:
-                        if isinstance(message, bytes):  # pragma: no cover
-                            try:
-                                data = pickle.loads(message)
-                            except:
-                                pass
-                        if data is None:
-                            try:
-                                data = json.loads(message)
-                            except:
-                                pass
+                        try:
+                            data = json.loads(message)
+                        except:
+                            pass
                     if data and 'method' in data:
                         self._get_logger().debug('pubsub message: {}'.format(
                             data['method']))

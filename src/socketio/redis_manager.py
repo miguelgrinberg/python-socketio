@@ -1,5 +1,4 @@
 import logging
-import pickle
 import time
 from urllib.parse import urlparse
 
@@ -17,6 +16,7 @@ except ImportError:
     valkey = None
     ValkeyError = None
 
+from engineio import json
 from .pubsub_manager import PubSubManager
 
 logger = logging.getLogger('socketio')
@@ -145,7 +145,7 @@ class RedisManager(PubSubManager):  # pragma: no cover
             try:
                 if not retry:
                     self._redis_connect()
-                return self.redis.publish(self.channel, pickle.dumps(data))
+                return self.redis.publish(self.channel, json.dumps(data))
             except error as exc:
                 if retry:
                     logger.error(
