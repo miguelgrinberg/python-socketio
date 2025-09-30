@@ -130,6 +130,16 @@ class TestSimpleClient:
         client.client.call.assert_called_with('foo', 'bar', namespace='/',
                                               timeout=60)
 
+    def test_call_timeout(self):
+        client = SimpleClient()
+        client.connected_event.set()
+        client.connected = True
+        client.client = mock.MagicMock()
+        client.client.call.side_effect = TimeoutError()
+
+        with pytest.raises(TimeoutError):
+            client.call('foo', 'bar')
+
     def test_receive_with_input_buffer(self):
         client = SimpleClient()
         client.input_buffer = ['foo', 'bar']
