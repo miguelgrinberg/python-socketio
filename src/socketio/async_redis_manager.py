@@ -1,7 +1,7 @@
 import asyncio
 from urllib.parse import urlparse
 
-try:  # pragma: no cover
+try:
     from redis import asyncio as aioredis
     from redis.exceptions import RedisError
 except ImportError:  # pragma: no cover
@@ -12,11 +12,11 @@ except ImportError:  # pragma: no cover
         aioredis = None
         RedisError = None
 
-try:  # pragma: no cover
-    from valkey import asyncio as valkey
+try:
+    from valkey import asyncio as aiovalkey
     from valkey.exceptions import ValkeyError
 except ImportError:  # pragma: no cover
-    valkey = None
+    aiovalkey = None
     ValkeyError = None
 
 from engineio import json
@@ -24,7 +24,7 @@ from .async_pubsub_manager import AsyncPubSubManager
 from .redis_manager import parse_redis_sentinel_url
 
 
-class AsyncRedisManager(AsyncPubSubManager):  # pragma: no cover
+class AsyncRedisManager(AsyncPubSubManager):
     """Redis based client manager for asyncio servers.
 
     This class implements a Redis backend for event sharing across multiple
@@ -55,12 +55,8 @@ class AsyncRedisManager(AsyncPubSubManager):  # pragma: no cover
 
     def __init__(self, url='redis://localhost:6379/0', channel='socketio',
                  write_only=False, logger=None, redis_options=None):
-        if aioredis is None and valkey is None:
-            raise RuntimeError('Redis package is not installed '
-                               '(Run "pip install redis" or '
-                               '"pip install valkey" '
-                               'in your virtualenv).')
-        if aioredis and not hasattr(aioredis.Redis, 'from_url'):
+        if aioredis and \
+                not hasattr(aioredis.Redis, 'from_url'):  # pragma: no cover
             raise RuntimeError('Version 2 of aioredis package is required.')
         super().__init__(channel=channel, write_only=write_only, logger=logger)
         self.redis_url = url
@@ -69,20 +65,31 @@ class AsyncRedisManager(AsyncPubSubManager):  # pragma: no cover
 
     def _get_redis_module_and_error(self):
         parsed_url = urlparse(self.redis_url)
-        schema = parsed_url.scheme.split('+', 1)[0].lower()
-        if schema in ['redis', 'unix']:
+        scheme = parsed_url.scheme.split('+', 1)[0].lower()
+        if scheme in ['redis', 'rediss']:
             if aioredis is None or RedisError is None:
                 raise RuntimeError('Redis package is not installed '
                                    '(Run "pip install redis" '
                                    'in your virtualenv).')
             return aioredis, RedisError
-        if schema == 'valkey':
-            if valkey is None or ValkeyError is None:
+        if scheme in ['valkey', 'valkeys']:
+            if aiovalkey is None or ValkeyError is None:
                 raise RuntimeError('Valkey package is not installed '
                                    '(Run "pip install valkey" '
                                    'in your virtualenv).')
-            return valkey, ValkeyError
-        error_msg = f'Unsupported Redis URL schema: {schema}'
+            return aiovalkey, ValkeyError
+        if scheme == 'unix':
+            if aioredis is None or RedisError is None:
+                if aiovalkey is None or ValkeyError is None:
+                    raise RuntimeError('Redis package is not installed '
+                                       '(Run "pip install redis" '
+                                       'or "pip install valkey" '
+                                       'in your virtualenv).')
+                else:
+                    return aiovalkey, ValkeyError
+            else:
+                return aioredis, RedisError
+        error_msg = f'Unsupported Redis URL scheme: {scheme}'
         raise ValueError(error_msg)
 
     def _redis_connect(self):
@@ -100,7 +107,7 @@ class AsyncRedisManager(AsyncPubSubManager):  # pragma: no cover
                                                **self.redis_options)
         self.pubsub = self.redis.pubsub(ignore_subscribe_messages=True)
 
-    async def _publish(self, data):
+    async def _publish(self, data):  # pragma: no cover
         retry = True
         _, error = self._get_redis_module_and_error()
         while True:
@@ -124,7 +131,7 @@ class AsyncRedisManager(AsyncPubSubManager):  # pragma: no cover
 
                     break
 
-    async def _redis_listen_with_retries(self):
+    async def _redis_listen_with_retries(self):  # pragma: no cover
         retry_sleep = 1
         connect = False
         _, error = self._get_redis_module_and_error()
@@ -147,7 +154,7 @@ class AsyncRedisManager(AsyncPubSubManager):  # pragma: no cover
                 if retry_sleep > 60:
                     retry_sleep = 60
 
-    async def _listen(self):
+    async def _listen(self):  # pragma: no cover
         channel = self.channel.encode('utf-8')
         await self.pubsub.subscribe(self.channel)
         async for message in self._redis_listen_with_retries():

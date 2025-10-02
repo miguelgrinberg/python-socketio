@@ -2,17 +2,17 @@ import logging
 import time
 from urllib.parse import urlparse
 
-try:  # pragma: no cover
+try:
     import redis
     from redis.exceptions import RedisError
-except ImportError:
+except ImportError:  # pragma: no cover
     redis = None
     RedisError = None
 
-try:  # pragma: no cover
+try:
     import valkey
     from valkey.exceptions import ValkeyError
-except ImportError:
+except ImportError:  # pragma: no cover
     valkey = None
     ValkeyError = None
 
@@ -48,7 +48,7 @@ def parse_redis_sentinel_url(url):
     return sentinels, service_name, kwargs
 
 
-class RedisManager(PubSubManager):  # pragma: no cover
+class RedisManager(PubSubManager):
     """Redis based client manager.
 
     This class implements a Redis backend for event sharing across multiple
@@ -80,17 +80,12 @@ class RedisManager(PubSubManager):  # pragma: no cover
 
     def __init__(self, url='redis://localhost:6379/0', channel='socketio',
                  write_only=False, logger=None, redis_options=None):
-        if redis is None and valkey is None:
-            raise RuntimeError('Redis package is not installed '
-                               '(Run "pip install redis" '
-                               'or "pip install valkey" '
-                               'in your virtualenv).')
         super().__init__(channel=channel, write_only=write_only, logger=logger)
         self.redis_url = url
         self.redis_options = redis_options or {}
         self._redis_connect()
 
-    def initialize(self):
+    def initialize(self):  # pragma: no cover
         super().initialize()
 
         monkey_patched = True
@@ -107,20 +102,31 @@ class RedisManager(PubSubManager):  # pragma: no cover
 
     def _get_redis_module_and_error(self):
         parsed_url = urlparse(self.redis_url)
-        schema = parsed_url.scheme.split('+', 1)[0].lower()
-        if schema in ['redis', 'unix']:
+        scheme = parsed_url.scheme.split('+', 1)[0].lower()
+        if scheme in ['redis', 'rediss']:
             if redis is None or RedisError is None:
                 raise RuntimeError('Redis package is not installed '
                                    '(Run "pip install redis" '
                                    'in your virtualenv).')
             return redis, RedisError
-        if schema == 'valkey':
+        if scheme in ['valkey', 'valkeys']:
             if valkey is None or ValkeyError is None:
                 raise RuntimeError('Valkey package is not installed '
                                    '(Run "pip install valkey" '
                                    'in your virtualenv).')
             return valkey, ValkeyError
-        error_msg = f'Unsupported Redis URL schema: {schema}'
+        if scheme == 'unix':
+            if redis is None or RedisError is None:
+                if valkey is None or ValkeyError is None:
+                    raise RuntimeError('Redis package is not installed '
+                                       '(Run "pip install redis" '
+                                       'or "pip install valkey" '
+                                       'in your virtualenv).')
+                else:
+                    return valkey, ValkeyError
+            else:
+                return redis, RedisError
+        error_msg = f'Unsupported Redis URL scheme: {scheme}'
         raise ValueError(error_msg)
 
     def _redis_connect(self):
@@ -138,7 +144,7 @@ class RedisManager(PubSubManager):  # pragma: no cover
                                                **self.redis_options)
         self.pubsub = self.redis.pubsub(ignore_subscribe_messages=True)
 
-    def _publish(self, data):
+    def _publish(self, data):  # pragma: no cover
         retry = True
         _, error = self._get_redis_module_and_error()
         while True:
@@ -160,7 +166,7 @@ class RedisManager(PubSubManager):  # pragma: no cover
                     )
                     break
 
-    def _redis_listen_with_retries(self):
+    def _redis_listen_with_retries(self):  # pragma: no cover
         retry_sleep = 1
         connect = False
         _, error = self._get_redis_module_and_error()
@@ -181,7 +187,7 @@ class RedisManager(PubSubManager):  # pragma: no cover
                 if retry_sleep > 60:
                     retry_sleep = 60
 
-    def _listen(self):
+    def _listen(self):  # pragma: no cover
         channel = self.channel.encode('utf-8')
         self.pubsub.subscribe(self.channel)
         for message in self._redis_listen_with_retries():
