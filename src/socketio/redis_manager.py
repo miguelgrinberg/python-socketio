@@ -108,7 +108,7 @@ class RedisManager(PubSubManager):  # pragma: no cover
     def _get_redis_module_and_error(self):
         parsed_url = urlparse(self.redis_url)
         schema = parsed_url.scheme.split('+', 1)[0].lower()
-        if schema == 'redis':
+        if schema in ['redis', 'unix']:
             if redis is None or RedisError is None:
                 raise RuntimeError('Redis package is not installed '
                                    '(Run "pip install redis" '
