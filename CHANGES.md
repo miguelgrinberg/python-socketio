@@ -1,5 +1,10 @@
 # python-socketio change log
 
+**Release 5.14.1** - 2025-10-02
+
+- Restore support for `rediss://` URLs, and add support for `valkeys://` as well ([commit](https://github.com/miguelgrinberg/python-socketio/commit/6e2d0de12bb4e4a99fdfc30bed0706ded620822c))
+- Add support for Redis connections using unix sockets [#1503](https://github.com/miguelgrinberg/python-socketio/issues/1503) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/a8deb3a8f3ee51d75c124157efa7fc9289fd592b)) (thanks **Darren Chang**!)
+
 **Release 5.14.0** - 2025-09-30
 
 - Replace pickle with json in message queue communications [#1502](https://github.com/miguelgrinberg/python-socketio/issues/1502) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/53f6be094257ed81476b0e212c8cddd6d06ca39a))
