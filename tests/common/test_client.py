@@ -350,6 +350,62 @@ class TestClient:
         assert c.connected is True
         assert c.namespaces == {'/bar': '123', '/foo': '456'}
 
+    def test_connect_wait_one_namespaces_error(self):
+        c = client.Client()
+        c.eio.connect = mock.MagicMock()
+        c._connect_event = mock.MagicMock()
+
+        def mock_connect(timeout):
+            assert timeout == 0.01
+            if c.failed_namespaces == []:
+                c.failed_namespaces = ['/foo']
+                return True
+            return False
+
+        c._connect_event.wait = mock_connect
+        with pytest.raises(exceptions.ConnectionError,
+                           match='failed to connect: /foo'):
+            c.connect(
+                'url',
+                namespaces=['/foo'],
+                wait=True,
+                wait_timeout=0.01,
+            )
+        assert c.connected is False
+        assert c.namespaces == {}
+        assert c.failed_namespaces == ['/foo']
+
+    def test_connect_wait_three_namespaces_error(self):
+        c = client.Client()
+        c.eio.connect = mock.MagicMock()
+        c._connect_event = mock.MagicMock()
+
+        def mock_connect(timeout):
+            assert timeout == 0.01
+            if c.namespaces == {}:
+                c.namespaces = {'/bar': '123'}
+                return True
+            elif c.namespaces == {'/bar': '123'} and c.failed_namespaces == []:
+                c.failed_namespaces = ['/baz']
+                return True
+            elif c.failed_namespaces == ['/baz']:
+                c.failed_namespaces = ['/baz', '/foo']
+                return True
+            return False
+
+        c._connect_event.wait = mock_connect
+        with pytest.raises(exceptions.ConnectionError,
+                           match='failed to connect: /baz, /foo'):
+            c.connect(
+                'url',
+                namespaces=['/foo', '/bar', '/baz'],
+                wait=True,
+                wait_timeout=0.01,
+            )
+        assert c.connected is False
+        assert c.namespaces == {'/bar': '123'}
+        assert c.failed_namespaces == ['/baz', '/foo']
+
     def test_connect_timeout(self):
         c = client.Client()
         c.eio.connect = mock.MagicMock()

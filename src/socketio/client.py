@@ -168,7 +168,7 @@ class Client(base_client.BaseClient):
             if set(self.namespaces) != set(self.connection_namespaces):
                 self.disconnect()
                 raise exceptions.ConnectionError(
-                    'One or more namespaces failed to connect: '
+                    'One or more namespaces failed to connect: ' +
                     ', '.join(self.failed_namespaces))
 
         self.connected = True
