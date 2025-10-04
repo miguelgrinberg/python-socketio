@@ -33,8 +33,8 @@ class BaseManager:
 
         Note that in a multi-server scenario this method only returns the
         participants connect to the server in which the method is called. There
-        is currently no functionality to assemble a complete list of users across
-        multiple servers.
+        is currently no functionality to assemble a complete list of users
+        across multiple servers.
         """
         ns = self.rooms.get(namespace, {})
         if hasattr(room, '__len__') and not isinstance(room, str):
