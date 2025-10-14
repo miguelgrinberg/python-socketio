@@ -266,16 +266,24 @@ class TestPacket:
         assert pkt.data["a"] == "0123456789-"
         assert pkt.attachment_count == 0
 
+    def test_deconstruct_binary(self):
+        datas = [b'foo', [b'foo', b'bar'], ['foo', b'bar'], {'foo': b'bar'},
+                 {'foo': 'bar', 'baz': b'qux'}, {'foo': [b'bar']}]
+        for data in datas:
+            bdata, attachments = packet.Packet.deconstruct_binary(data)
+            rdata = packet.Packet.reconstruct_binary(bdata, attachments)
+            assert data == rdata
+
     def test_data_is_binary_list(self):
         pkt = packet.Packet()
-        assert not pkt._data_is_binary(['foo'])
-        assert not pkt._data_is_binary([])
-        assert pkt._data_is_binary([b'foo'])
-        assert pkt._data_is_binary(['foo', b'bar'])
+        assert not pkt.data_is_binary(['foo'])
+        assert not pkt.data_is_binary([])
+        assert pkt.data_is_binary([b'foo'])
+        assert pkt.data_is_binary(['foo', b'bar'])
 
     def test_data_is_binary_dict(self):
         pkt = packet.Packet()
-        assert not pkt._data_is_binary({'a': 'foo'})
-        assert not pkt._data_is_binary({})
-        assert pkt._data_is_binary({'a': b'foo'})
-        assert pkt._data_is_binary({'a': 'foo', 'b': b'bar'})
+        assert not pkt.data_is_binary({'a': 'foo'})
+        assert not pkt.data_is_binary({})
+        assert pkt.data_is_binary({'a': b'foo'})
+        assert pkt.data_is_binary({'a': 'foo', 'b': b'bar'})
