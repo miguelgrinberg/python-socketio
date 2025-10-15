@@ -1,5 +1,12 @@
 # python-socketio change log
 
+**Release 5.14.2** - 2025-10-15
+
+- Restore binary message support in message queue setups [#1509](https://github.com/miguelgrinberg/python-socketio/issues/1509) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/bab4a10f48aaae11d7f832ebe5c30ad3f85d31b3))
+- Fix formatting of client connection error [#1507](https://github.com/miguelgrinberg/python-socketio/issues/1507) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/f298c9b54d76ab09ff72935937e1b9575bc45ffd))
+- Add 3.14 and pypy-3.11 CI tasks ([commit](https://github.com/miguelgrinberg/python-socketio/commit/1f4cd3b025c294f25208ec3c05b5f8df6209e403))
+- Improve documentation of the `BaseManager.get_participants()` method ([commit](https://github.com/miguelgrinberg/python-socketio/commit/33722a0d96036f005188b07b8b46a5ef091fe65f))
+
 **Release 5.14.1** - 2025-10-02
 
 - Restore support for `rediss://` URLs, and add support for `valkeys://` as well ([commit](https://github.com/miguelgrinberg/python-socketio/commit/6e2d0de12bb4e4a99fdfc30bed0706ded620822c))
