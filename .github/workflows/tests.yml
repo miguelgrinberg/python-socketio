@@ -17,10 +17,6 @@ jobs:
       matrix:
         os: [windows-latest, macos-latest, ubuntu-latest]
         python: ['3.8', '3.9', '3.10', '3.11', '3.12', '3.13', '3.14', 'pypy-3.11']
-        exclude:
-          # pypy3 currently fails to run on Windows
-          - os: windows-latest
-            python: pypy-3.11
       fail-fast: false
     runs-on: ${{ matrix.os }}
     steps:
