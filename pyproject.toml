@@ -1,6 +1,6 @@
 [project]
 name = "python-socketio"
-version = "5.14.2"
+version = "5.14.3.dev0"
 license = {text = "MIT"}
 authors = [
     { name = "Miguel Grinberg", email = "miguel.grinberg@gmail.com" },
