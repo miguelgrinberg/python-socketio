@@ -69,7 +69,38 @@ class TestPubSubManager:
             {
                 'method': 'emit',
                 'event': 'foo',
+                'binary': False,
                 'data': 'bar',
+                'namespace': '/',
+                'room': None,
+                'skip_sid': None,
+                'callback': None,
+                'host_id': '123456',
+            }
+        )
+
+    def test_emit_binary(self):
+        self.pm.emit('foo', b'bar')
+        self.pm._publish.assert_called_once_with(
+            {
+                'method': 'emit',
+                'event': 'foo',
+                'binary': True,
+                'data': [{'_placeholder': True, 'num': 0}, 'YmFy'],
+                'namespace': '/',
+                'room': None,
+                'skip_sid': None,
+                'callback': None,
+                'host_id': '123456',
+            }
+        )
+        self.pm.emit('foo', {'foo': b'bar'})
+        self.pm._publish.assert_called_with(
+            {
+                'method': 'emit',
+                'event': 'foo',
+                'binary': True,
+                'data': [{'foo': {'_placeholder': True, 'num': 0}}, 'YmFy'],
                 'namespace': '/',
                 'room': None,
                 'skip_sid': None,
@@ -85,6 +116,7 @@ class TestPubSubManager:
             {
                 'method': 'emit',
                 'event': 'foo',
+                'binary': False,
                 'data': 'bar',
                 'namespace': '/',
                 'room': sid,
@@ -100,6 +132,7 @@ class TestPubSubManager:
             {
                 'method': 'emit',
                 'event': 'foo',
+                'binary': False,
                 'data': 'bar',
                 'namespace': '/baz',
                 'room': None,
@@ -115,6 +148,7 @@ class TestPubSubManager:
             {
                 'method': 'emit',
                 'event': 'foo',
+                'binary': False,
                 'data': 'bar',
                 'namespace': '/',
                 'room': 'baz',
@@ -130,6 +164,7 @@ class TestPubSubManager:
             {
                 'method': 'emit',
                 'event': 'foo',
+                'binary': False,
                 'data': 'bar',
                 'namespace': '/',
                 'room': None,
@@ -148,6 +183,7 @@ class TestPubSubManager:
                 {
                     'method': 'emit',
                     'event': 'foo',
+                    'binary': False,
                     'data': 'bar',
                     'namespace': '/',
                     'room': 'baz',
@@ -244,6 +280,35 @@ class TestPubSubManager:
             super_emit.assert_called_once_with(
                 'foo',
                 'bar',
+                namespace=None,
+                room=None,
+                skip_sid=None,
+                callback=None,
+            )
+
+    def test_handle_emit_binary(self):
+        with mock.patch.object(manager.Manager, 'emit') as super_emit:
+            self.pm._handle_emit({
+                'event': 'foo',
+                'binary': True,
+                'data': [{'_placeholder': True, 'num': 0}, 'YmFy'],
+            })
+            super_emit.assert_called_once_with(
+                'foo',
+                b'bar',
+                namespace=None,
+                room=None,
+                skip_sid=None,
+                callback=None,
+            )
+            self.pm._handle_emit({
+                'event': 'foo',
+                'binary': True,
+                'data': [{'foo': {'_placeholder': True, 'num': 0}}, 'YmFy'],
+            })
+            super_emit.assert_called_with(
+                'foo',
+                {'foo': b'bar'},
                 namespace=None,
                 room=None,
                 skip_sid=None,

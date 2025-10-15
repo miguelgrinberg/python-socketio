@@ -57,7 +57,38 @@ class TestAsyncPubSubManager:
             {
                 'method': 'emit',
                 'event': 'foo',
+                'binary': False,
                 'data': 'bar',
+                'namespace': '/',
+                'room': None,
+                'skip_sid': None,
+                'callback': None,
+                'host_id': '123456',
+            }
+        )
+
+    async def test_emit_binary(self):
+        await self.pm.emit('foo', b'bar')
+        self.pm._publish.assert_awaited_once_with(
+            {
+                'method': 'emit',
+                'event': 'foo',
+                'binary': True,
+                'data': [{'_placeholder': True, 'num': 0}, 'YmFy'],
+                'namespace': '/',
+                'room': None,
+                'skip_sid': None,
+                'callback': None,
+                'host_id': '123456',
+            }
+        )
+        await self.pm.emit('foo', {'foo': b'bar'})
+        self.pm._publish.assert_awaited_with(
+            {
+                'method': 'emit',
+                'event': 'foo',
+                'binary': True,
+                'data': [{'foo': {'_placeholder': True, 'num': 0}}, 'YmFy'],
                 'namespace': '/',
                 'room': None,
                 'skip_sid': None,
@@ -73,6 +104,7 @@ class TestAsyncPubSubManager:
             {
                 'method': 'emit',
                 'event': 'foo',
+                'binary': False,
                 'data': 'bar',
                 'namespace': '/',
                 'room': sid,
@@ -88,6 +120,7 @@ class TestAsyncPubSubManager:
             {
                 'method': 'emit',
                 'event': 'foo',
+                'binary': False,
                 'data': 'bar',
                 'namespace': '/baz',
                 'room': None,
@@ -103,6 +136,7 @@ class TestAsyncPubSubManager:
             {
                 'method': 'emit',
                 'event': 'foo',
+                'binary': False,
                 'data': 'bar',
                 'namespace': '/',
                 'room': 'baz',
@@ -118,6 +152,7 @@ class TestAsyncPubSubManager:
             {
                 'method': 'emit',
                 'event': 'foo',
+                'binary': False,
                 'data': 'bar',
                 'namespace': '/',
                 'room': None,
@@ -136,6 +171,7 @@ class TestAsyncPubSubManager:
                 {
                     'method': 'emit',
                     'event': 'foo',
+                    'binary': False,
                     'data': 'bar',
                     'namespace': '/',
                     'room': 'baz',
@@ -235,6 +271,37 @@ class TestAsyncPubSubManager:
             super_emit.assert_awaited_once_with(
                 'foo',
                 'bar',
+                namespace=None,
+                room=None,
+                skip_sid=None,
+                callback=None,
+            )
+
+    async def test_handle_emit_binary(self):
+        with mock.patch.object(
+            async_manager.AsyncManager, 'emit'
+        ) as super_emit:
+            await self.pm._handle_emit({
+                'event': 'foo',
+                'binary': True,
+                'data': [{'_placeholder': True, 'num': 0}, 'YmFy'],
+            })
+            super_emit.assert_awaited_once_with(
+                'foo',
+                b'bar',
+                namespace=None,
+                room=None,
+                skip_sid=None,
+                callback=None,
+            )
+            await self.pm._handle_emit({
+                'event': 'foo',
+                'binary': True,
+                'data': [{'foo': {'_placeholder': True, 'num': 0}}, 'YmFy'],
+            })
+            super_emit.assert_awaited_with(
+                'foo',
+                {'foo': b'bar'},
                 namespace=None,
                 room=None,
                 skip_sid=None,

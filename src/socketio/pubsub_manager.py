@@ -1,9 +1,11 @@
+import base64
 from functools import partial
 import uuid
 
 from engineio import json
 
 from .manager import Manager
+from .packet import Packet
 
 
 class PubSubManager(Manager):
@@ -61,8 +63,12 @@ class PubSubManager(Manager):
             callback = (room, namespace, id)
         else:
             callback = None
+        binary = Packet.data_is_binary(data)
+        if binary:
+            data, attachments = Packet.deconstruct_binary(data)
+            data = [data, *[base64.b64encode(a).decode() for a in attachments]]
         message = {'method': 'emit', 'event': event, 'data': data,
-                   'namespace': namespace, 'room': room,
+                   'binary': binary, 'namespace': namespace, 'room': room,
                    'skip_sid': skip_sid, 'callback': callback,
                    'host_id': self.host_id}
         self._handle_emit(message)  # handle in this host
@@ -141,7 +147,11 @@ class PubSubManager(Manager):
                                *remote_callback)
         else:
             callback = None
-        super().emit(message['event'], message['data'],
+        data = message['data']
+        if message.get('binary'):
+            attachments = [base64.b64decode(a) for a in data[1:]]
+            data = Packet.reconstruct_binary(data[0], attachments)
+        super().emit(message['event'], data,
                      namespace=message.get('namespace'),
                      room=message.get('room'),
                      skip_sid=message.get('skip_sid'), callback=callback)
