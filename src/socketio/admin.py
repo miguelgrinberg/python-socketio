@@ -172,22 +172,48 @@ class InstrumentedServer:
 
         self.sio.start_background_task(config, sid)
 
+    def _valid_namespace(self, namespace):
+        # Check that a namespace exists and is not the admin namespace.
+        return (
+            isinstance(namespace, str)
+            and namespace
+            and namespace in self.sio.manager.get_namespaces()
+            and namespace != self.admin_namespace
+        )
+
+    def _valid_room(self, room):
+        return isinstance(room, str) and room
+
     def admin_emit(self, _, namespace, room_filter, event, *data):
+        # Validate
+        if not self._valid_namespace(namespace):
+            return
+
+        if not isinstance(event, str) or not event \
+           or event.startswith('_') or event in ['connect', 'disconnect', 'connect_error']:
+            return
+
         self.sio.emit(event, data, to=room_filter, namespace=namespace)
 
     def admin_enter_room(self, _, namespace, room, room_filter=None):
-        for sid, _ in self.sio.manager.get_participants(
-                namespace, room_filter):
+        if not self._valid_namespace(namespace) or not self._valid_room(room):
+            return
+
+        for sid, _ in self.sio.manager.get_participants(namespace, room_filter):
             self.sio.enter_room(sid, room, namespace=namespace)
 
     def admin_leave_room(self, _, namespace, room, room_filter=None):
-        for sid, _ in self.sio.manager.get_participants(
-                namespace, room_filter):
+        if not self._valid_namespace(namespace) or not self._valid_room(room):
+            return
+
+        for sid, _ in self.sio.manager.get_participants(namespace, room_filter):
             self.sio.leave_room(sid, room, namespace=namespace)
 
     def admin_disconnect(self, _, namespace, close, room_filter=None):
-        for sid, _ in self.sio.manager.get_participants(
-                namespace, room_filter):
+        if not self._valid_namespace(namespace):
+            return
+
+        for sid, _ in self.sio.manager.get_participants(namespace, room_filter):
             self.sio.disconnect(sid, namespace=namespace)
 
     def shutdown(self):
