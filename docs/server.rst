@@ -248,7 +248,7 @@ message::
 
     @sio.event
     def connect(sid, environ, auth):
-        raise ConnectionRefusedError('authentication failed')
+        raise socketio.exceptions.ConnectionRefusedError('authentication failed')
 
 The disconnect handler receives the ``sid`` assigned to the client and a
 ``reason``, which provides the cause of the disconnection::
