@@ -82,7 +82,7 @@ class AsyncAioPikaManager(AsyncPubSubManager):  # pragma: no cover
             try:
                 await self.publisher_exchange.publish(
                     aio_pika.Message(
-                        body=json.dumps(data),
+                        body=json.dumps(data).encode(),
                         delivery_mode=aio_pika.DeliveryMode.PERSISTENT
                     ), routing_key='*',
                 )
