@@ -246,6 +246,8 @@ a :class:`socketio.exceptions.ConnectionRefusedError` exception can be raised,
 and all of its arguments will be sent to the client with the rejection
 message::
 
+    from socketio.exceptions import ConnectionRefusedError
+
     @sio.event
     def connect(sid, environ, auth):
         raise ConnectionRefusedError('authentication failed')
