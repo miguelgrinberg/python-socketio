@@ -561,7 +561,7 @@ class AsyncServer(base_server.BaseServer):
         except exceptions.ConnectionRefusedError as exc:
             fail_reason = exc.error_args
             success = False
-        except ConnectionRefusedError as exc:
+        except ConnectionRefusedError:
             fail_reason = {"message": "Connection refused by server"}
             success = False
 

@@ -462,6 +462,20 @@ class TestServer:
         s.eio.send.assert_called_once_with('123', '4{"message":"fail_reason"}')
         assert s.environ == {'123': 'environ'}
 
+    def test_handle_connect_rejected_with_python_exception(self, eio):
+        s = server.Server()
+        handler = mock.MagicMock(
+            side_effect=ConnectionRefusedError()
+        )
+        s.on('connect', handler)
+        s._handle_eio_connect('123', 'environ')
+        s._handle_eio_message('123', '0')
+        assert not s.manager.is_connected('1', '/')
+        handler.assert_called_once_with('1', 'environ')
+        s.eio.send.assert_called_once_with(
+            '123', '4{"message":"Connection refused by server"}')
+        assert s.environ == {'123': 'environ'}
+
     def test_handle_connect_rejected_with_empty_exception(self, eio):
         s = server.Server()
         handler = mock.MagicMock(
