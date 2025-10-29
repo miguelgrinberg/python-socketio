@@ -1,5 +1,10 @@
 # python-socketio change log
 
+**Release 5.14.3** - 2025-10-29
+
+- Support Python's native `ConnectionRefusedError` exception to reject a connection [#1515](https://github.com/miguelgrinberg/python-socketio/issues/1515) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/f3b18bde3f16437b223491d4c3e440ea37105fe3))
+- Push binary data to the aiopika client manager [#1514](https://github.com/miguelgrinberg/python-socketio/issues/1514) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/194e1b7f277b5f72e1de78d3f614e7b8b6c788ac))
+
 **Release 5.14.2** - 2025-10-15
 
 - Restore binary message support in message queue setups [#1509](https://github.com/miguelgrinberg/python-socketio/issues/1509) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/bab4a10f48aaae11d7f832ebe5c30ad3f85d31b3))
