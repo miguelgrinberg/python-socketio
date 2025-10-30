@@ -115,10 +115,10 @@ class KombuManager(PubSubManager):  # pragma: no cover
                     break
 
     def _listen(self):
-        reader_queue = self._queue()
         retry_sleep = 1
         while True:
             try:
+                reader_queue = self._queue()
                 with self._connection() as connection:
                     with connection.SimpleQueue(reader_queue) as queue:
                         while True:
