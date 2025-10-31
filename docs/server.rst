@@ -657,9 +657,14 @@ terminal::
 
 The ``logger`` argument controls logging related to the Socket.IO protocol,
 while ``engineio_logger`` controls logs that originate in the low-level
-Engine.IO transport. These arguments can be set to ``True`` to output logs to
-``stderr``, or to an object compatible with Python's ``logging`` package
-where the logs should be emitted to. A value of ``False`` disables logging.
+Engine.IO transport. The value given to these arguments controls logging
+behavior:
+
+* ``True``: Enables log output to ``stderr`` at the ``INFO`` level.
+* ``False``: Enables log output to ``stderr`` at the ``ERROR`` level. This is
+  the default.
+* A ``logging.Logger`` instance: Uses the provided logger without additional
+  configuration.
 
 Logging can help identify the cause of connection problems, 400 responses,
 bad performance and other issues.
