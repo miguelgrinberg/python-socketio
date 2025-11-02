@@ -1038,7 +1038,7 @@ class TestServer:
         args = {"foo": "bar"}
         s = server.Server(serializer_args=args)
         assert s.packet_class_args == args
-    
+
     def test_serializer_args_with_msgpack(self, eio):
         def default(o):
             if isinstance(o, datetime):
@@ -1055,7 +1055,7 @@ class TestServer:
         assert "current" in p2.data
         assert isinstance(p2.data["current"], str)
         assert default(data["current"]) == p2.data["current"]
-    
+
     def test_invalid_serializer_args(self, eio):
         args = {"invalid_arg": 123}
         s = server.Server(serializer='msgpack', serializer_args=args)

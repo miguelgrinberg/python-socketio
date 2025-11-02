@@ -1248,7 +1248,7 @@ class TestAsyncClient:
         args = {"foo": "bar"}
         c = async_client.AsyncClient(serializer_args=args)
         assert c.packet_class_args == args
-    
+
     def test_serializer_args_with_msgpack(self):
         def default(o):
             if isinstance(o, datetime):
@@ -1256,7 +1256,8 @@ class TestAsyncClient:
             raise TypeError("Unknown type")
         args = {"dumps_default": default}
         data = {"current": datetime.now(timezone(timedelta(0)))}
-        c = async_client.AsyncClient(serializer='msgpack', serializer_args=args)
+        c = async_client.AsyncClient(serializer='msgpack',
+                                     serializer_args=args)
         p = c._create_packet(data=data)
         p2 = c._create_packet(encoded_packet=p.encode())
 
@@ -1265,9 +1266,10 @@ class TestAsyncClient:
         assert "current" in p2.data
         assert isinstance(p2.data["current"], str)
         assert default(data["current"]) == p2.data["current"]
-    
+
     def test_invalid_serializer_args(self):
         args = {"invalid_arg": 123}
-        c = async_client.AsyncClient(serializer='msgpack', serializer_args=args)
+        c = async_client.AsyncClient(serializer='msgpack',
+                                     serializer_args=args)
         with pytest.raises(TypeError):
             c._create_packet(data={"foo": "bar"}).encode()
