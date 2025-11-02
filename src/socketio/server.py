@@ -53,6 +53,9 @@ class Server(base_server.BaseServer):
                        default is `['/']`, which always accepts connections to
                        the default namespace. Set to `'*'` to accept all
                        namespaces.
+    :param serializer_args: A mapping of additional parameters to pass to 
+                            the serializer. The content of this dictionary
+                            depends on the selected serialization method.
     :param kwargs: Connection parameters for the underlying Engine.IO server.
 
     The Engine.IO configuration supports the following settings:

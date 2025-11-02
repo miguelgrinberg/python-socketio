@@ -45,6 +45,9 @@ class AsyncClient(base_client.BaseClient):
                           leave interrupt handling to the calling application.
                           Interrupt handling can only be enabled when the
                           client instance is created in the main thread.
+    :param serializer_args: A mapping of additional parameters to pass to 
+                            the serializer. The content of this dictionary
+                            depends on the selected serialization method.
 
     The Engine.IO configuration supports the following settings:
 
