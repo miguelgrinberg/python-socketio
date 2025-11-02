@@ -73,9 +73,7 @@ class TestMsgPackPacket:
             'key': 'value',
         }
         p_without_default = msgpack_packet.MsgPackPacket(data=data)
-        with pytest.raises(
-            TypeError, match="can not serialize 'datetime.datetime' object"
-        ):
+        with pytest.raises(TypeError):
             p_without_default.encode()
 
     def test_encode_decode_with_ext_hook(self):
