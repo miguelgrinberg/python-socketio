@@ -48,7 +48,7 @@ class Client(base_client.BaseClient):
                           leave interrupt handling to the calling application.
                           Interrupt handling can only be enabled when the
                           client instance is created in the main thread.
-    :param serializer_args: A mapping of additional parameters to pass to 
+    :param serializer_args: A mapping of additional parameters to pass to
                             the serializer. The content of this dictionary
                             depends on the selected serialization method.
 
@@ -237,8 +237,9 @@ class Client(base_client.BaseClient):
             data = [data]
         else:
             data = []
-        self._send_packet(self._create_packet(packet.EVENT, namespace=namespace,
-                                            data=[event] + data, id=id))
+        self._send_packet(
+            self._create_packet(packet.EVENT, namespace=namespace,
+                                data=[event] + data, id=id))
 
     def send(self, data, namespace=None, callback=None):
         """Send a message to the server.

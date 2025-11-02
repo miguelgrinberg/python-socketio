@@ -253,7 +253,7 @@ class BaseServer:
             handler = self.namespace_handlers['*']
             args = (namespace, *args)
         return handler, args
-    
+
     def _create_packet(self, *args, **kwargs):
         return self.packet_class(*args, **kwargs,
                                  **self.packet_class_args)
