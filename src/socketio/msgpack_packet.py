@@ -16,11 +16,11 @@ class MsgPackPacket(packet.Packet):
         dumps_default=None,
         ext_hook=None,
     ):
+        self.dumps_default = dumps_default
+        self.ext_hook = ext_hook
         super().__init__(
             packet_type, data, namespace, id, binary, encoded_packet
         )
-        self.dumps_default = dumps_default
-        self.ext_hook = ext_hook
 
     def encode(self):
         """Encode the packet for transmission."""
