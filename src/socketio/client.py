@@ -234,7 +234,7 @@ class Client(base_client.BaseClient):
             data = [data]
         else:
             data = []
-        self._send_packet(self.packet_class(packet.EVENT, namespace=namespace,
+        self._send_packet(self._create_packet(packet.EVENT, namespace=namespace,
                                             data=[event] + data, id=id))
 
     def send(self, data, namespace=None, callback=None):
@@ -307,7 +307,7 @@ class Client(base_client.BaseClient):
         # here we just request the disconnection
         # later in _handle_eio_disconnect we invoke the disconnect handler
         for n in self.namespaces:
-            self._send_packet(self.packet_class(
+            self._send_packet(self._create_packet(
                 packet.DISCONNECT, namespace=n))
         self.eio.disconnect()
 
@@ -402,7 +402,7 @@ class Client(base_client.BaseClient):
                 data = list(r)
             else:
                 data = [r]
-            self._send_packet(self.packet_class(
+            self._send_packet(self._create_packet(
                 packet.ACK, namespace=namespace, id=id, data=data))
 
     def _handle_ack(self, namespace, id, data):
@@ -506,7 +506,7 @@ class Client(base_client.BaseClient):
         self.sid = self.eio.sid
         real_auth = self._get_real_value(self.connection_auth) or {}
         for n in self.connection_namespaces:
-            self._send_packet(self.packet_class(
+            self._send_packet(self._create_packet(
                 packet.CONNECT, data=real_auth, namespace=n))
 
     def _handle_eio_message(self, data):
@@ -520,7 +520,7 @@ class Client(base_client.BaseClient):
                 else:
                     self._handle_ack(pkt.namespace, pkt.id, pkt.data)
         else:
-            pkt = self.packet_class(encoded_packet=data)
+            pkt = self._create_packet(encoded_packet=data)
             if pkt.packet_type == packet.CONNECT:
                 self._handle_connect(pkt.namespace, pkt.data)
             elif pkt.packet_type == packet.DISCONNECT:

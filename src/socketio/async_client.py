@@ -243,7 +243,7 @@ class AsyncClient(base_client.BaseClient):
             data = [data]
         else:
             data = []
-        await self._send_packet(self.packet_class(
+        await self._send_packet(self._create_packet(
             packet.EVENT, namespace=namespace, data=[event] + data, id=id))
 
     async def send(self, data, namespace=None, callback=None):
@@ -325,7 +325,7 @@ class AsyncClient(base_client.BaseClient):
         # here we just request the disconnection
         # later in _handle_eio_disconnect we invoke the disconnect handler
         for n in self.namespaces:
-            await self._send_packet(self.packet_class(packet.DISCONNECT,
+            await self._send_packet(self._create_packet(packet.DISCONNECT,
                                     namespace=n))
         await self.eio.disconnect()
 
@@ -422,7 +422,7 @@ class AsyncClient(base_client.BaseClient):
                 data = list(r)
             else:
                 data = [r]
-            await self._send_packet(self.packet_class(
+            await self._send_packet(self._create_packet(
                 packet.ACK, namespace=namespace, id=id, data=data))
 
     async def _handle_ack(self, namespace, id, data):
@@ -555,7 +555,7 @@ class AsyncClient(base_client.BaseClient):
         self.sid = self.eio.sid
         real_auth = await self._get_real_value(self.connection_auth) or {}
         for n in self.connection_namespaces:
-            await self._send_packet(self.packet_class(
+            await self._send_packet(self._create_packet(
                 packet.CONNECT, data=real_auth, namespace=n))
 
     async def _handle_eio_message(self, data):
@@ -569,7 +569,7 @@ class AsyncClient(base_client.BaseClient):
                 else:
                     await self._handle_ack(pkt.namespace, pkt.id, pkt.data)
         else:
-            pkt = self.packet_class(encoded_packet=data)
+            pkt = self._create_packet(encoded_packet=data)
             if pkt.packet_type == packet.CONNECT:
                 await self._handle_connect(pkt.namespace, pkt.data)
             elif pkt.packet_type == packet.DISCONNECT:
