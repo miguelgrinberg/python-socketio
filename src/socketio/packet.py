@@ -211,7 +211,12 @@ class Packet:
             logger.debug("Using cached Packet subclass for args %s, %s",
                          args, kwargs)
             return cls._subclass_registry[args_hash]
-        return cls._configure(*args, **kwargs)
+        new = cls._configure(*args, **kwargs)
+        if args_hash is not None:
+            cls._subclass_registry[args_hash] = new
+            logger.debug("Caching Packet subclass for args %s, %s",
+                         args, kwargs)
+        return new
     
     @classmethod
     def _configure(cls, *args, **kwargs):
