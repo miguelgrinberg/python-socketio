@@ -1,5 +1,5 @@
 import functools
-import warnings
+import logging
 from engineio import json as _json
 
 (CONNECT, DISCONNECT, EVENT, ACK, CONNECT_ERROR, BINARY_EVENT, BINARY_ACK) = \
@@ -7,6 +7,7 @@ from engineio import json as _json
 packet_names = ['CONNECT', 'DISCONNECT', 'EVENT', 'ACK', 'CONNECT_ERROR',
                 'BINARY_EVENT', 'BINARY_ACK']
 
+logger = logging.getLogger('socketio.packet')
 
 class Packet:
     """Socket.IO packet."""
@@ -202,12 +203,13 @@ class Packet:
         try:
             args_hash = hash(configure_args)
         except TypeError:
-            warnings.warn('Packet.configure() called with unhashable '
-                          'arguments; subclass caching will not work.',
-                          RuntimeWarning)
+            logger.warning("Packet.configure() called with unhashable "
+                           "arguments; subclass caching will not work.")
             args_hash = None
         
         if args_hash in cls._subclass_registry:
+            logger.debug("Using cached Packet subclass for args %s, %s",
+                         args, kwargs)
             return cls._subclass_registry[args_hash]
         return cls._configure(*args, **kwargs)
     
