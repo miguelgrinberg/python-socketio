@@ -7,12 +7,33 @@ class MsgPackPacket(packet.Packet):
 
     def encode(self):
         """Encode the packet for transmission."""
-        return msgpack.dumps(self._to_dict())
+        return self._encode()
+    
+    def _encode(self, **kwargs):
+        return _msgpack.dumps(self._to_dict(), **kwargs)
 
     def decode(self, encoded_packet):
         """Decode a transmitted package."""
-        decoded = msgpack.loads(encoded_packet)
+        return self._decode(encoded_packet)
+    
+    def _decode(self, encoded_packet, **kwargs):
+        decoded = msgpack.loads(encoded_packet, **kwargs)
         self.packet_type = decoded['type']
         self.data = decoded.get('data')
         self.id = decoded.get('id')
         self.namespace = decoded['nsp']
+
+    @classmethod
+    def _configure(cls, *args, **kwargs):
+        dumps_default = kwargs.pop('dumps_default', None)
+        ext_hook = kwargs.pop('ext_hook', msgpack.ExtType)
+
+        class ConfiguredMsgPackPacket(cls):
+            def _encode(self, **kwargs):
+                kwargs.setdefault('default', dumps_default)
+                return super()._encode(**kwargs)
+            def _decode(self, encoded_packet, **kwargs):
+                kwargs.setdefault('ext_hook', ext_hook)
+                return super()._decode(encoded_packet, **kwargs)
+        
+        return ConfiguredMsgPackPacket
