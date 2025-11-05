@@ -1,4 +1,5 @@
 import functools
+import warnings
 from engineio import json as _json
 
 (CONNECT, DISCONNECT, EVENT, ACK, CONNECT_ERROR, BINARY_EVENT, BINARY_ACK) = \
@@ -21,6 +22,8 @@ class Packet:
 
     uses_binary_events = True
     json = _json
+    _configure_args = ((),())
+    _subclass_registry = {}
 
     def __init__(self, packet_type=EVENT, data=None, namespace=None, id=None,
                  binary=None, encoded_packet=None):
@@ -192,3 +195,23 @@ class Packet:
         if self.id is not None:
             d['id'] = self.id
         return d
+
+    @classmethod
+    def configure(cls, *args, **kwargs):
+        configure_args = (args, tuple(sorted(kwargs.items())))
+        try:
+            args_hash = hash(configure_args)
+        except TypeError:
+            warnings.warn('Packet.configure() called with unhashable '
+                          'arguments; subclass caching will not work.',
+                          RuntimeWarning)
+            args_hash = None
+        
+        if args_hash in cls._subclass_registry:
+            return cls._subclass_registry[args_hash]
+        return cls._configure(*args, **kwargs)
+    
+    @classmethod
+    def _configure(cls, *args, **kwargs):
+        raise NotImplementedError('Packet._configure() must be implemented '
+                                  'by subclasses.')
