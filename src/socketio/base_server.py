@@ -15,7 +15,7 @@ class BaseServer:
 
     def __init__(self, client_manager=None, logger=False, serializer='default',
                  json=None, async_handlers=True, always_connect=False,
-                 namespaces=None, serializer_args=None, **kwargs):
+                 namespaces=None, **kwargs):
         engineio_options = kwargs
         engineio_logger = engineio_options.pop('engineio_logger', None)
         if engineio_logger is not None:
@@ -27,7 +27,6 @@ class BaseServer:
             self.packet_class = msgpack_packet.MsgPackPacket
         else:
             self.packet_class = serializer
-        self.packet_class_args = serializer_args or {}
         if json is not None:
             self.packet_class.json = json
             engineio_options['json'] = json
@@ -253,10 +252,6 @@ class BaseServer:
             handler = self.namespace_handlers['*']
             args = (namespace, *args)
         return handler, args
-
-    def _create_packet(self, *args, **kwargs):
-        return self.packet_class(*args, **kwargs,
-                                 **self.packet_class_args)
 
     def _handle_eio_connect(self):  # pragma: no cover
         raise NotImplementedError()

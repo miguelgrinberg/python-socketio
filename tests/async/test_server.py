@@ -1,7 +1,6 @@
 import asyncio
 import logging
 from unittest import mock
-from datetime import datetime, timezone, timedelta
 
 from engineio import json
 from engineio import packet as eio_packet
@@ -1090,33 +1089,3 @@ class TestAsyncServer:
         s = async_server.AsyncServer()
         await s.sleep(1.23)
         s.eio.sleep.assert_awaited_once_with(1.23)
-
-    def test_serializer_args(self, eio):
-        args = {"foo": "bar"}
-        s = async_server.AsyncServer(serializer_args=args)
-        assert s.packet_class_args == args
-
-    def test_serializer_args_with_msgpack(self, eio):
-        def default(o):
-            if isinstance(o, datetime):
-                return o.isoformat()
-            raise TypeError("Unknown type")
-        args = {"dumps_default": default}
-        data = {"current": datetime.now(timezone(timedelta(0)))}
-        s = async_server.AsyncServer(serializer='msgpack',
-                                     serializer_args=args)
-        p = s._create_packet(data=data)
-        p2 = s._create_packet(encoded_packet=p.encode())
-
-        assert p.data != p2.data
-        assert isinstance(p2.data, dict)
-        assert "current" in p2.data
-        assert isinstance(p2.data["current"], str)
-        assert default(data["current"]) == p2.data["current"]
-
-    def test_invalid_serializer_args(self, eio):
-        args = {"invalid_arg": 123}
-        s = async_server.AsyncServer(serializer='msgpack',
-                                     serializer_args=args)
-        with pytest.raises(TypeError):
-            s._create_packet(data={"foo": "bar"}).encode()
