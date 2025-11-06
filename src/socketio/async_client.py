@@ -489,7 +489,7 @@ class AsyncClient(base_client.BaseClient):
                         raise
             return ret
 
-        # or else, forward the event to a namepsace handler if one exists
+        # or else, forward the event to a namespace handler if one exists
         handler, args = self._get_namespace_handler(namespace, args)
         if handler:
             return await handler.trigger_event(event, *args)
