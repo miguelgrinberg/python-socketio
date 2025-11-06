@@ -11,6 +11,7 @@ from socketio import msgpack_packet
 from socketio import namespace
 from socketio import packet
 from socketio import server
+from socketio.msgpack_packet import MsgPackPacket
 
 
 @mock.patch('socketio.server.engineio.Server', **{
@@ -1034,30 +1035,20 @@ class TestServer:
         s.sleep(1.23)
         s.eio.sleep.assert_called_once_with(1.23)
 
-    def test_serializer_args(self, eio):
-        args = {"foo": "bar"}
-        s = server.Server(serializer_args=args)
-        assert s.packet_class_args == args
-
     def test_serializer_args_with_msgpack(self, eio):
         def default(o):
             if isinstance(o, datetime):
                 return o.isoformat()
             raise TypeError("Unknown type")
-        args = {"dumps_default": default}
+
         data = {"current": datetime.now(timezone(timedelta(0)))}
-        s = server.Server(serializer='msgpack', serializer_args=args)
-        p = s._create_packet(data=data)
-        p2 = s._create_packet(encoded_packet=p.encode())
+        s = server.Server(
+            serializer=MsgPackPacket.configure(dumps_default=default))
+        p = s.packet_class(data=data)
+        p2 = s.packet_class(encoded_packet=p.encode())
 
         assert p.data != p2.data
         assert isinstance(p2.data, dict)
         assert "current" in p2.data
         assert isinstance(p2.data["current"], str)
         assert default(data["current"]) == p2.data["current"]
-
-    def test_invalid_serializer_args(self, eio):
-        args = {"invalid_arg": 123}
-        s = server.Server(serializer='msgpack', serializer_args=args)
-        with pytest.raises(TypeError):
-            s._create_packet(data={"foo": "bar"}).encode()

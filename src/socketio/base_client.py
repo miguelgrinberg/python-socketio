@@ -38,8 +38,7 @@ class BaseClient:
     def __init__(self, reconnection=True, reconnection_attempts=0,
                  reconnection_delay=1, reconnection_delay_max=5,
                  randomization_factor=0.5, logger=False, serializer='default',
-                 json=None, handle_sigint=True, serializer_args=None,
-                 **kwargs):
+                 json=None, handle_sigint=True, **kwargs):
         global original_signal_handler
         if handle_sigint and original_signal_handler is None and \
                 threading.current_thread() == threading.main_thread():
@@ -64,7 +63,6 @@ class BaseClient:
             self.packet_class = msgpack_packet.MsgPackPacket
         else:
             self.packet_class = serializer
-        self.packet_class_args = serializer_args or {}
         if json is not None:
             self.packet_class.json = json
             engineio_options['json'] = json
@@ -284,9 +282,6 @@ class BaseClient:
         id = next(self.callbacks[namespace][0])
         self.callbacks[namespace][id] = callback
         return id
-
-    def _create_packet(self, *args, **kwargs):
-        return self.packet_class(*args, **kwargs, **self.packet_class_args)
 
     def _handle_eio_connect(self):  # pragma: no cover
         raise NotImplementedError()

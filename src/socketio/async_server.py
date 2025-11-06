@@ -50,9 +50,6 @@ class AsyncServer(base_server.BaseServer):
                        default is `['/']`, which always accepts connections to
                        the default namespace. Set to `'*'` to accept all
                        namespaces.
-    :param serializer_args: A mapping of additional parameters to pass to
-                            the serializer. The content of this dictionary
-                            depends on the selected serialization method.
     :param kwargs: Connection parameters for the underlying Engine.IO server.
 
     The Engine.IO configuration supports the following settings:
@@ -428,7 +425,7 @@ class AsyncServer(base_server.BaseServer):
         if delete_it:
             self.logger.info('Disconnecting %s [%s]', sid, namespace)
             eio_sid = self.manager.pre_disconnect(sid, namespace=namespace)
-            await self._send_packet(eio_sid, self._create_packet(
+            await self._send_packet(eio_sid, self.packet_class(
                 packet.DISCONNECT, namespace=namespace))
             await self._trigger_event('disconnect', namespace, sid,
                                       self.reason.SERVER_DISCONNECT)
@@ -541,13 +538,13 @@ class AsyncServer(base_server.BaseServer):
                 or self.namespaces == '*' or namespace in self.namespaces:
             sid = await self.manager.connect(eio_sid, namespace)
         if sid is None:
-            await self._send_packet(eio_sid, self._create_packet(
+            await self._send_packet(eio_sid, self.packet_class(
                 packet.CONNECT_ERROR, data='Unable to connect',
                 namespace=namespace))
             return
 
         if self.always_connect:
-            await self._send_packet(eio_sid, self._create_packet(
+            await self._send_packet(eio_sid, self.packet_class(
                 packet.CONNECT, {'sid': sid}, namespace=namespace))
         fail_reason = exceptions.ConnectionRefusedError().error_args
         try:
@@ -571,15 +568,15 @@ class AsyncServer(base_server.BaseServer):
         if success is False:
             if self.always_connect:
                 self.manager.pre_disconnect(sid, namespace)
-                await self._send_packet(eio_sid, self._create_packet(
+                await self._send_packet(eio_sid, self.packet_class(
                     packet.DISCONNECT, data=fail_reason, namespace=namespace))
             else:
-                await self._send_packet(eio_sid, self._create_packet(
+                await self._send_packet(eio_sid, self.packet_class(
                     packet.CONNECT_ERROR, data=fail_reason,
                     namespace=namespace))
             await self.manager.disconnect(sid, namespace, ignore_queue=True)
         elif not self.always_connect:
-            await self._send_packet(eio_sid, self._create_packet(
+            await self._send_packet(eio_sid, self.packet_class(
                 packet.CONNECT, {'sid': sid}, namespace=namespace))
 
     async def _handle_disconnect(self, eio_sid, namespace, reason=None):
@@ -625,7 +622,7 @@ class AsyncServer(base_server.BaseServer):
                 data = list(r)
             else:
                 data = [r]
-            await server._send_packet(eio_sid, self._create_packet(
+            await server._send_packet(eio_sid, self.packet_class(
                 packet.ACK, namespace=namespace, id=id, data=data))
 
     async def _handle_ack(self, eio_sid, namespace, id, data):
@@ -689,7 +686,7 @@ class AsyncServer(base_server.BaseServer):
                     await self._handle_ack(eio_sid, pkt.namespace, pkt.id,
                                            pkt.data)
         else:
-            pkt = self._create_packet(encoded_packet=data)
+            pkt = self.packet_class(encoded_packet=data)
             if pkt.packet_type == packet.CONNECT:
                 await self._handle_connect(eio_sid, pkt.namespace, pkt.data)
             elif pkt.packet_type == packet.DISCONNECT:

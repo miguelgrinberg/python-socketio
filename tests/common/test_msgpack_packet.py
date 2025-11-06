@@ -10,8 +10,7 @@ from socketio import packet
 class TestMsgPackPacket:
     def test_encode_decode(self):
         p = msgpack_packet.MsgPackPacket(
-            packet.CONNECT, data={'auth': {'token': '123'}}, namespace='/foo'
-        )
+            packet.CONNECT, data={'auth': {'token': '123'}}, namespace='/foo')
         p2 = msgpack_packet.MsgPackPacket(encoded_packet=p.encode())
         assert p.packet_type == p2.packet_type
         assert p.data == p2.data
@@ -20,8 +19,7 @@ class TestMsgPackPacket:
 
     def test_encode_decode_with_id(self):
         p = msgpack_packet.MsgPackPacket(
-            packet.EVENT, data=['ev', 42], id=123, namespace='/foo'
-        )
+            packet.EVENT, data=['ev', 42], id=123, namespace='/foo')
         p2 = msgpack_packet.MsgPackPacket(encoded_packet=p.encode())
         assert p.packet_type == p2.packet_type
         assert p.data == p2.data
@@ -50,7 +48,8 @@ class TestMsgPackPacket:
             'current': datetime.now(tz=timezone(timedelta(0))),
             'key': 'value',
         }
-        p = msgpack_packet.MsgPackPacket(data=data, dumps_default=default)
+        p = msgpack_packet.MsgPackPacket.configure(dumps_default=default)(
+            data=data)
         p2 = msgpack_packet.MsgPackPacket(encoded_packet=p.encode())
         assert p.packet_type == p2.packet_type
         assert p.id == p2.id
@@ -95,9 +94,10 @@ class TestMsgPackPacket:
             raise TypeError('Unknown ext type')
 
         data = {'custom': Custom(b'custom_data'), 'key': 'value'}
-        p = msgpack_packet.MsgPackPacket(data=data, dumps_default=default)
-        p2 = msgpack_packet.MsgPackPacket(
-            encoded_packet=p.encode(), ext_hook=ext_hook
+        p = msgpack_packet.MsgPackPacket.configure(dumps_default=default)(
+            data=data)
+        p2 = msgpack_packet.MsgPackPacket.configure(ext_hook=ext_hook)(
+            encoded_packet=p.encode()
         )
         assert p.packet_type == p2.packet_type
         assert p.id == p2.id
@@ -118,7 +118,8 @@ class TestMsgPackPacket:
             raise TypeError('Unknown type')
 
         data = {'custom': Custom(b'custom_data'), 'key': 'value'}
-        p = msgpack_packet.MsgPackPacket(data=data, dumps_default=default)
+        p = msgpack_packet.MsgPackPacket.configure(dumps_default=default)(
+            data=data)
         p2 = msgpack_packet.MsgPackPacket(encoded_packet=p.encode())
         assert p.packet_type == p2.packet_type
         assert p.id == p2.id
