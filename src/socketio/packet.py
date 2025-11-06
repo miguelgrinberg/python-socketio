@@ -1,4 +1,5 @@
 import functools
+import logging
 from engineio import json as _json
 
 (CONNECT, DISCONNECT, EVENT, ACK, CONNECT_ERROR, BINARY_EVENT, BINARY_ACK) = \
@@ -6,6 +7,7 @@ from engineio import json as _json
 packet_names = ['CONNECT', 'DISCONNECT', 'EVENT', 'ACK', 'CONNECT_ERROR',
                 'BINARY_EVENT', 'BINARY_ACK']
 
+logger = logging.getLogger('socketio.packet')
 
 class Packet:
     """Socket.IO packet."""
@@ -21,6 +23,8 @@ class Packet:
 
     uses_binary_events = True
     json = _json
+    _configure_args = ((),())
+    _subclass_registry = {}
 
     def __init__(self, packet_type=EVENT, data=None, namespace=None, id=None,
                  binary=None, encoded_packet=None):
@@ -192,3 +196,29 @@ class Packet:
         if self.id is not None:
             d['id'] = self.id
         return d
+
+    @classmethod
+    def configure(cls, *args, **kwargs):
+        configure_args = (args, tuple(sorted(kwargs.items())))
+        try:
+            args_hash = hash(configure_args)
+        except TypeError:
+            logger.warning("Packet.configure() called with unhashable "
+                           "arguments; subclass caching will not work.")
+            args_hash = None
+        
+        if args_hash in cls._subclass_registry:
+            logger.debug("Using cached Packet subclass for args %s, %s",
+                         args, kwargs)
+            return cls._subclass_registry[args_hash]
+        new = cls._configure(*args, **kwargs)
+        if args_hash is not None:
+            cls._subclass_registry[args_hash] = new
+            logger.debug("Caching Packet subclass for args %s, %s",
+                         args, kwargs)
+        return new
+    
+    @classmethod
+    def _configure(cls, *args, **kwargs):
+        raise NotImplementedError('Packet._configure() must be implemented '
+                                  'by subclasses.')
