@@ -63,7 +63,7 @@ You can then access the application from your web browser at
 
 Near the top of the ``app.py``, ``latency.py`` and ``fiddle.py`` source files
 there is a ``async_mode`` variable that can be edited to switch to the other
-asynchornous modes. Accepted values for ``async_mode`` are ``'threading'``,
+asynchronous modes. Accepted values for ``async_mode`` are ``'threading'``,
 ``'eventlet'`` and ``'gevent'``. For ``django_example``, the async mode can be
 set in the ``django_example/socketio_app/views.py`` module.
 
