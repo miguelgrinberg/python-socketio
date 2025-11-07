@@ -17,7 +17,7 @@ asynchronous modes supported by the Socket.IO server.
 fiddle_client.py
 ----------------
 
-This is an extemely simple application based on the JavaScript example of the
+This is an extremely simple application based on the JavaScript example of the
 same name.
 
 Running the Examples
