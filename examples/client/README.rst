@@ -17,4 +17,4 @@ Examples that use Python's `asyncio` package for concurrency.
 javascript
 ----------
 
-Examples that use the JavaScript version of Socket.IO for compatiblity testing.
+Examples that use the JavaScript version of Socket.IO for compatibility testing.
