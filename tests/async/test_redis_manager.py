@@ -105,3 +105,38 @@ class TestAsyncRedisManager:
             assert isinstance(c.redis, valkey.asyncio.Valkey)
 
         async_redis_manager.aioredis = saved_redis
+
+    def test_channel_matches(self):
+        expected = b"socketio"
+
+        # bytes: matching and non-matching
+        assert AsyncRedisManager._channel_matches(
+            expected, b"socketio"
+        ) is True
+        assert AsyncRedisManager._channel_matches(
+            expected, b"other"
+        ) is False
+
+        # str: matching and non-matching
+        assert AsyncRedisManager._channel_matches(
+            expected, "socketio"
+        ) is True
+        assert AsyncRedisManager._channel_matches(
+            expected, "other"
+        ) is False
+
+        # str: encoding raises
+        class BadStr(str):
+            def encode(self, *_, **__):
+                raise UnicodeEncodeError(
+                    "utf-8", "x", 0, 1, "boom"
+                )
+
+        assert AsyncRedisManager._channel_matches(
+            expected, BadStr("foo")
+        ) is False
+
+        # non-string/non-bytes (int)
+        assert AsyncRedisManager._channel_matches(
+            expected, 123
+        ) is False

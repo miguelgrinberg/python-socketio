@@ -45,3 +45,5 @@ htmlcov
 *.swp
 
 node_modules
+.venv/
+.python-version
