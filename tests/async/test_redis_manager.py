@@ -105,3 +105,40 @@ class TestAsyncRedisManager:
             assert isinstance(c.redis, valkey.asyncio.Valkey)
 
         async_redis_manager.aioredis = saved_redis
+
+    def test_pubsub_defaults_pinned_for_redis(self):
+        c = AsyncRedisManager('redis://localhost:6379/0')
+        kw = c.redis.connection_pool.connection_kwargs
+        assert kw.get('decode_responses') is False
+        assert kw.get('socket_timeout') is None
+        assert kw.get('health_check_interval') == 0
+        assert kw.get('retry_on_timeout') is False
+
+    def test_pubsub_defaults_pinned_for_valkey(self):
+        saved_redis = async_redis_manager.aioredis
+        async_redis_manager.aioredis = None
+        try:
+            c = AsyncRedisManager('valkey://localhost:6379/0')
+            kw = c.redis.connection_pool.connection_kwargs
+            assert kw.get('decode_responses') is False
+            assert kw.get('socket_timeout') is None
+            assert kw.get('health_check_interval') == 0
+            assert kw.get('retry_on_timeout') is False
+        finally:
+            async_redis_manager.aioredis = saved_redis
+
+    def test_pubsub_defaults_can_be_overridden(self):
+        c = AsyncRedisManager(
+            'redis://localhost:6379/0',
+            redis_options={
+                'decode_responses': True,
+                'socket_timeout': 7,
+                'health_check_interval': 13,
+                'retry_on_timeout': True,
+            },
+        )
+        kw = c.redis.connection_pool.connection_kwargs
+        assert kw.get('decode_responses') is True
+        assert kw.get('socket_timeout') == 7
+        assert kw.get('health_check_interval') == 13
+        assert kw.get('retry_on_timeout') is True
