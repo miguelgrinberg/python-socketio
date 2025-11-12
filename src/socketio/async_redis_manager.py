@@ -1,4 +1,5 @@
 import asyncio
+import contextlib
 from urllib.parse import urlparse
 
 try:
@@ -133,32 +134,42 @@ class AsyncRedisManager(AsyncPubSubManager):
 
     async def _redis_listen_with_retries(self):  # pragma: no cover
         retry_sleep = 1
-        connect = False
-        _, error = self._get_redis_module_and_error()
-        while True:
-            try:
-                if connect:
-                    self._redis_connect()
-                    await self.pubsub.subscribe(self.channel)
-                    retry_sleep = 1
-                async for message in self.pubsub.listen():
-                    yield message
-            except error as exc:
-                self._get_logger().error('Cannot receive from redis... '
-                                         'retrying in '
-                                         f'{retry_sleep} secs',
-                                         extra={"redis_exception": str(exc)})
-                connect = True
-                await asyncio.sleep(retry_sleep)
-                retry_sleep *= 2
-                if retry_sleep > 60:
-                    retry_sleep = 60
+        connect = True
+        _, BackendError = self._get_redis_module_and_error()
+        try:
+            while True:
+                try:
+                    if connect:
+                        self._redis_connect()
+                        await self.pubsub.subscribe(self.channel)
+                        retry_sleep = 1
+                        connect = False
+                    async for message in self.pubsub.listen():
+                        yield message
+                except (BackendError, OSError, TimeoutError) as exc:
+                    self._get_logger().error(
+                        'Cannot receive from redis... '
+                        'retrying in '
+                        f'{retry_sleep} secs',
+                        extra={"redis_exception": str(exc)})
+                    connect = True
+                    await asyncio.sleep(retry_sleep)
+                    retry_sleep *= 2
+                    if retry_sleep > 60:
+                        retry_sleep = 60
+        except asyncio.CancelledError:
+            raise
+        finally:
+            with contextlib.suppress(Exception):
+                await self.pubsub.unsubscribe(self.channel)
 
     async def _listen(self):  # pragma: no cover
         channel = self.channel.encode('utf-8')
-        await self.pubsub.subscribe(self.channel)
-        async for message in self._redis_listen_with_retries():
-            if message['channel'] == channel and \
-                    message['type'] == 'message' and 'data' in message:
-                yield message['data']
-        await self.pubsub.unsubscribe(self.channel)
+        try:
+            async for message in self._redis_listen_with_retries():
+                if message['channel'] == channel and \
+                        message['type'] == 'message' and 'data' in message:
+                    yield message['data']
+        finally:
+            with contextlib.suppress(Exception):
+                await self.pubsub.unsubscribe(self.channel)
