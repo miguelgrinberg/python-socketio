@@ -154,7 +154,7 @@ class Packet:
 
     @classmethod
     def _deconstruct_binary_internal(cls, data, attachments):
-        if isinstance(data, bytes):
+        if isinstance(data, (bytes, bytearray)):
             attachments.append(data)
             return {'_placeholder': True, 'num': len(attachments) - 1}
         elif isinstance(data, list):
@@ -169,7 +169,7 @@ class Packet:
     @classmethod
     def data_is_binary(cls, data):
         """Check if the data contains binary components."""
-        if isinstance(data, bytes):
+        if isinstance(data, (bytes, bytearray)):
             return True
         elif isinstance(data, list):
             return functools.reduce(

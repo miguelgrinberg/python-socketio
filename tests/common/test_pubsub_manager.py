@@ -109,6 +109,36 @@ class TestPubSubManager:
             }
         )
 
+    def test_emit_bytearray(self):
+        self.pm.emit('foo', bytearray(b'bar'))
+        self.pm._publish.assert_called_once_with(
+            {
+                'method': 'emit',
+                'event': 'foo',
+                'binary': True,
+                'data': [{'_placeholder': True, 'num': 0}, 'YmFy'],
+                'namespace': '/',
+                'room': None,
+                'skip_sid': None,
+                'callback': None,
+                'host_id': '123456',
+            }
+        )
+        self.pm.emit('foo', {'foo': bytearray(b'bar')})
+        self.pm._publish.assert_called_with(
+            {
+                'method': 'emit',
+                'event': 'foo',
+                'binary': True,
+                'data': [{'foo': {'_placeholder': True, 'num': 0}}, 'YmFy'],
+                'namespace': '/',
+                'room': None,
+                'skip_sid': None,
+                'callback': None,
+                'host_id': '123456',
+            }
+        )
+
     def test_emit_with_to(self):
         sid = "ferris"
         self.pm.emit('foo', 'bar', to=sid)

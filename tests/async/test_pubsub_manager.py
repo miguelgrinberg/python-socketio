@@ -97,6 +97,36 @@ class TestAsyncPubSubManager:
             }
         )
 
+    async def test_emit_bytearray(self):
+        await self.pm.emit('foo', bytearray(b'bar'))
+        self.pm._publish.assert_awaited_once_with(
+            {
+                'method': 'emit',
+                'event': 'foo',
+                'binary': True,
+                'data': [{'_placeholder': True, 'num': 0}, 'YmFy'],
+                'namespace': '/',
+                'room': None,
+                'skip_sid': None,
+                'callback': None,
+                'host_id': '123456',
+            }
+        )
+        await self.pm.emit('foo', {'foo': bytearray(b'bar')})
+        self.pm._publish.assert_awaited_with(
+            {
+                'method': 'emit',
+                'event': 'foo',
+                'binary': True,
+                'data': [{'foo': {'_placeholder': True, 'num': 0}}, 'YmFy'],
+                'namespace': '/',
+                'room': None,
+                'skip_sid': None,
+                'callback': None,
+                'host_id': '123456',
+            }
+        )
+
     async def test_emit_with_to(self):
         sid = 'room-mate'
         await self.pm.emit('foo', 'bar', to=sid)

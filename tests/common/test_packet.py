@@ -279,11 +279,15 @@ class TestPacket:
         assert not pkt.data_is_binary(['foo'])
         assert not pkt.data_is_binary([])
         assert pkt.data_is_binary([b'foo'])
+        assert pkt.data_is_binary([bytearray(b'foo')])
         assert pkt.data_is_binary(['foo', b'bar'])
+        assert pkt.data_is_binary(['foo', bytearray(b'bar')])
 
     def test_data_is_binary_dict(self):
         pkt = packet.Packet()
         assert not pkt.data_is_binary({'a': 'foo'})
         assert not pkt.data_is_binary({})
         assert pkt.data_is_binary({'a': b'foo'})
+        assert pkt.data_is_binary({'a': bytearray(b'foo')})
         assert pkt.data_is_binary({'a': 'foo', 'b': b'bar'})
+        assert pkt.data_is_binary({'a': 'foo', 'b': bytearray(b'bar')})
