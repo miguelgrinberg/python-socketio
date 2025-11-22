@@ -61,7 +61,9 @@ class AsyncRedisManager(AsyncPubSubManager):
         super().__init__(channel=channel, write_only=write_only, logger=logger)
         self.redis_url = url
         self.redis_options = redis_options or {}
-        self._redis_connect()
+        self.connected = False
+        self.redis = None
+        self.pubsub = None
 
     def _get_redis_module_and_error(self):
         parsed_url = urlparse(self.redis_url)
@@ -106,23 +108,23 @@ class AsyncRedisManager(AsyncPubSubManager):
             self.redis = module.Redis.from_url(self.redis_url,
                                                **self.redis_options)
         self.pubsub = self.redis.pubsub(ignore_subscribe_messages=True)
+        self.connected = True
 
     async def _publish(self, data):  # pragma: no cover
-        retry = True
         _, error = self._get_redis_module_and_error()
-        while True:
+        for retries_left in range(1, -1, -1):  # 2 attempts
             try:
-                if not retry:
+                if not self.connected:
                     self._redis_connect()
                 return await self.redis.publish(
                     self.channel, json.dumps(data))
             except error as exc:
-                if retry:
+                if retries_left > 0:
                     self._get_logger().error(
                         'Cannot publish to redis... '
                         'retrying',
                         extra={"redis_exception": str(exc)})
-                    retry = False
+                    self.connected = False
                 else:
                     self._get_logger().error(
                         'Cannot publish to redis... '
@@ -133,11 +135,10 @@ class AsyncRedisManager(AsyncPubSubManager):
 
     async def _redis_listen_with_retries(self):  # pragma: no cover
         retry_sleep = 1
-        connect = False
         _, error = self._get_redis_module_and_error()
         while True:
             try:
-                if connect:
+                if not self.connected:
                     self._redis_connect()
                     await self.pubsub.subscribe(self.channel)
                     retry_sleep = 1
@@ -148,7 +149,7 @@ class AsyncRedisManager(AsyncPubSubManager):
                                          'retrying in '
                                          f'{retry_sleep} secs',
                                          extra={"redis_exception": str(exc)})
-                connect = True
+                self.connected = False
                 await asyncio.sleep(retry_sleep)
                 retry_sleep *= 2
                 if retry_sleep > 60:
@@ -156,7 +157,6 @@ class AsyncRedisManager(AsyncPubSubManager):
 
     async def _listen(self):  # pragma: no cover
         channel = self.channel.encode('utf-8')
-        await self.pubsub.subscribe(self.channel)
         async for message in self._redis_listen_with_retries():
             if message['channel'] == channel and \
                     message['type'] == 'message' and 'data' in message:
