@@ -1,5 +1,14 @@
 # python-socketio change log
 
+**Release 5.15.0** - 2025-11-22
+
+- Retry initial Redis connection [#1534](https://github.com/miguelgrinberg/python-socketio/issues/1536) ([commit #1](https://github.com/miguelgrinberg/python-socketio/commit/1e903e173a2d7b04599c4f7f9630c1abbb531fad) [commit #2](https://github.com/miguelgrinberg/python-socketio/commit/5e898a9b93526e6e667767e54c60f4c84589989d))
+- Correctly regenerate RabbitMQ binding after a connection failure [#1516](https://github.com/miguelgrinberg/python-socketio/issues/1516) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/c52e93b4a328d98a968bfbdec0cfd598b73ee913)) (thanks **Gritty_dev**!)
+- Support `ext_type` in the `MsgPackPacket` class [#1521](https://github.com/miguelgrinberg/python-socketio/issues/1521) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/208925344a48485d2cd56e40eb74266c3bcb5311))
+- Support sending `bytesarray`s when using pub/sub managers ([commit](https://github.com/miguelgrinberg/python-socketio/commit/6c9b9974f72e2efdf62407ecab24ee6995448098))
+- Fix typos in documentation [#1520](https://github.com/miguelgrinberg/python-socketio/issues/1520) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/db3f1c2a0105c30cb833ddfca8f05fe4320468fd)) (thanks **Lê Nam Khánh**!)
+- Improvements to the logging documentation ([commit](https://github.com/miguelgrinberg/python-socketio/commit/b423d0e38eef559b7e81acb7e32059de305f982c))
+
 **Release 5.14.3** - 2025-10-29
 
 - Support Python's native `ConnectionRefusedError` exception to reject a connection [#1515](https://github.com/miguelgrinberg/python-socketio/issues/1515) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/f3b18bde3f16437b223491d4c3e440ea37105fe3))
