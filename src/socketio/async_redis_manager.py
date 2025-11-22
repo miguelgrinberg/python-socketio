@@ -134,11 +134,12 @@ class AsyncRedisManager(AsyncPubSubManager):
                     break
 
     async def _redis_listen_with_retries(self):  # pragma: no cover
-        retry_sleep = 1
         _, error = self._get_redis_module_and_error()
+        retry_sleep = 1
+        subscribed = False
         while True:
             try:
-                if not self.connected:
+                if not subscribed:
                     self._redis_connect()
                     await self.pubsub.subscribe(self.channel)
                     retry_sleep = 1
@@ -149,7 +150,7 @@ class AsyncRedisManager(AsyncPubSubManager):
                                          'retrying in '
                                          f'{retry_sleep} secs',
                                          extra={"redis_exception": str(exc)})
-                self.connected = False
+                subscribed = False
                 await asyncio.sleep(retry_sleep)
                 retry_sleep *= 2
                 if retry_sleep > 60:

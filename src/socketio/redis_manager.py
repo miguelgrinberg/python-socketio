@@ -169,11 +169,12 @@ class RedisManager(PubSubManager):
                     break
 
     def _redis_listen_with_retries(self):  # pragma: no cover
-        retry_sleep = 1
         _, error = self._get_redis_module_and_error()
+        retry_sleep = 1
+        subscribed = False
         while True:
             try:
-                if not self.connected:
+                if not subscribed:
                     self._redis_connect()
                     self.pubsub.subscribe(self.channel)
                     retry_sleep = 1
@@ -182,7 +183,7 @@ class RedisManager(PubSubManager):
                 logger.error('Cannot receive from redis... '
                              f'retrying in {retry_sleep} secs',
                              extra={"redis_exception": str(exc)})
-                self.connected = False
+                subscribed = False
                 time.sleep(retry_sleep)
                 retry_sleep *= 2
                 if retry_sleep > 60:
