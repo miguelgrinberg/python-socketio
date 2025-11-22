@@ -12,7 +12,7 @@ class TestPubSubManager:
         redis_manager.redis = None
 
         with pytest.raises(RuntimeError):
-            RedisManager('redis://')
+            RedisManager('redis://')._redis_connect()
         assert RedisManager('unix:///var/sock/redis.sock') is not None
 
         redis_manager.redis = saved_redis
@@ -22,7 +22,7 @@ class TestPubSubManager:
         redis_manager.valkey = None
 
         with pytest.raises(RuntimeError):
-            RedisManager('valkey://')
+            RedisManager('valkey://')._redis_connect()
         assert RedisManager('unix:///var/sock/redis.sock') is not None
 
         redis_manager.valkey = saved_valkey
@@ -34,18 +34,18 @@ class TestPubSubManager:
         redis_manager.valkey = None
 
         with pytest.raises(RuntimeError):
-            RedisManager('redis://')
+            RedisManager('redis://')._redis_connect()
         with pytest.raises(RuntimeError):
-            RedisManager('valkey://')
+            RedisManager('valkey://')._redis_connect()
         with pytest.raises(RuntimeError):
-            RedisManager('unix:///var/sock/redis.sock')
+            RedisManager('unix:///var/sock/redis.sock')._redis_connect()
 
         redis_manager.redis = saved_redis
         redis_manager.valkey = saved_valkey
 
     def test_bad_url(self):
         with pytest.raises(ValueError):
-            RedisManager('http://localhost:6379')
+            RedisManager('http://localhost:6379')._redis_connect()
 
     def test_redis_connect(self):
         urls = [
@@ -72,6 +72,8 @@ class TestPubSubManager:
         ]
         for url in urls:
             c = RedisManager(url)
+            assert c.redis is None
+            c._redis_connect()
             assert isinstance(c.redis, redis.Redis)
 
     def test_valkey_connect(self):
@@ -102,6 +104,8 @@ class TestPubSubManager:
         ]
         for url in urls:
             c = RedisManager(url)
+            assert c.redis is None
+            c._redis_connect()
             assert isinstance(c.redis, valkey.Valkey)
 
         redis_manager.redis = saved_redis
