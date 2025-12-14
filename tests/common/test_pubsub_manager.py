@@ -466,6 +466,33 @@ class TestPubSubManager:
                 callback=None,
             )
 
+    def test_handle_emit_list(self):
+        with mock.patch.object(manager.Manager, 'emit') as super_emit:
+            self.pm._handle_emit({'event': 'foo', 'data': [[1, 'two']]})
+            super_emit.assert_called_once_with(
+                'foo',
+                [1, 'two'],
+                namespace=None,
+                room=None,
+                skip_sid=None,
+                callback=None,
+            )
+            self.pm._handle_emit({
+                'event': 'foo',
+                'binary': True,
+                'data': [
+                    [[1, {'_placeholder': True, 'num': 0}, 'three']], 'dHdv'
+                ],
+            })
+            super_emit.assert_called_with(
+                'foo',
+                [1, b'two', 'three'],
+                namespace=None,
+                room=None,
+                skip_sid=None,
+                callback=None,
+            )
+
     def test_handle_emit_no_arguments(self):
         with mock.patch.object(manager.Manager, 'emit') as super_emit:
             self.pm._handle_emit({'event': 'foo', 'data': []})

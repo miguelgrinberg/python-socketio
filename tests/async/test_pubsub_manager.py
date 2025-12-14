@@ -377,6 +377,20 @@ class TestAsyncPubSubManager:
         with mock.patch.object(
             async_manager.AsyncManager, 'emit'
         ) as super_emit:
+            await self.pm._handle_emit({'event': 'foo', 'data': ['bar']})
+            super_emit.assert_awaited_once_with(
+                'foo',
+                'bar',
+                namespace=None,
+                room=None,
+                skip_sid=None,
+                callback=None,
+            )
+
+    async def test_handle_legacy_emit(self):
+        with mock.patch.object(
+            async_manager.AsyncManager, 'emit'
+        ) as super_emit:
             await self.pm._handle_emit({'event': 'foo', 'data': 'bar'})
             super_emit.assert_awaited_once_with(
                 'foo',
@@ -388,6 +402,37 @@ class TestAsyncPubSubManager:
             )
 
     async def test_handle_emit_binary(self):
+        with mock.patch.object(
+            async_manager.AsyncManager, 'emit'
+        ) as super_emit:
+            await self.pm._handle_emit({
+                'event': 'foo',
+                'binary': True,
+                'data': [[{'_placeholder': True, 'num': 0}], 'YmFy'],
+            })
+            super_emit.assert_awaited_once_with(
+                'foo',
+                b'bar',
+                namespace=None,
+                room=None,
+                skip_sid=None,
+                callback=None,
+            )
+            await self.pm._handle_emit({
+                'event': 'foo',
+                'binary': True,
+                'data': [[{'foo': {'_placeholder': True, 'num': 0}}], 'YmFy'],
+            })
+            super_emit.assert_awaited_with(
+                'foo',
+                {'foo': b'bar'},
+                namespace=None,
+                room=None,
+                skip_sid=None,
+                callback=None,
+            )
+
+    async def test_handle_legacy_emit_binary(self):
         with mock.patch.object(
             async_manager.AsyncManager, 'emit'
         ) as super_emit:
@@ -412,6 +457,78 @@ class TestAsyncPubSubManager:
             super_emit.assert_awaited_with(
                 'foo',
                 {'foo': b'bar'},
+                namespace=None,
+                room=None,
+                skip_sid=None,
+                callback=None,
+            )
+
+    async def test_handle_emit_list(self):
+        with mock.patch.object(
+            async_manager.AsyncManager, 'emit'
+        ) as super_emit:
+            await self.pm._handle_emit({'event': 'foo', 'data': [[1, 'two']]})
+            super_emit.assert_awaited_once_with(
+                'foo',
+                [1, 'two'],
+                namespace=None,
+                room=None,
+                skip_sid=None,
+                callback=None,
+            )
+            await self.pm._handle_emit({
+                'event': 'foo',
+                'binary': True,
+                'data': [
+                    [[1, {'_placeholder': True, 'num': 0}, 'three']], 'dHdv'
+                ]
+            })
+            super_emit.assert_awaited_with(
+                'foo',
+                [1, b'two', 'three'],
+                namespace=None,
+                room=None,
+                skip_sid=None,
+                callback=None,
+            )
+
+    async def test_handle_emit_no_arguments(self):
+        with mock.patch.object(
+            async_manager.AsyncManager, 'emit'
+        ) as super_emit:
+            await self.pm._handle_emit({'event': 'foo', 'data': []})
+            super_emit.assert_awaited_once_with(
+                'foo',
+                (),
+                namespace=None,
+                room=None,
+                skip_sid=None,
+                callback=None,
+            )
+
+    async def test_handle_emit_multiple_arguments(self):
+        with mock.patch.object(
+            async_manager.AsyncManager, 'emit'
+        ) as super_emit:
+            await self.pm._handle_emit({'event': 'foo', 'data': [1, 'two']})
+            super_emit.assert_awaited_once_with(
+                'foo',
+                (1, 'two'),
+                namespace=None,
+                room=None,
+                skip_sid=None,
+                callback=None,
+            )
+            await self.pm._handle_emit({
+                'event': 'foo',
+                'binary': True,
+                'data': [
+                    [1, {'_placeholder': True, 'num': 0}, 'three'], 'dHdv'
+                ]
+            })
+            super_emit.assert_awaited_with(
+                'foo',
+                (1, b'two', 'three'),
                 namespace=None,
                 room=None,
                 skip_sid=None,
