@@ -63,6 +63,10 @@ class PubSubManager(Manager):
             callback = (room, namespace, id)
         else:
             callback = None
+        if isinstance(data, tuple):
+            data = list(data)
+        else:
+            data = [data]
         binary = Packet.data_is_binary(data)
         if binary:
             data, attachments = Packet.deconstruct_binary(data)
@@ -151,6 +155,11 @@ class PubSubManager(Manager):
         if message.get('binary'):
             attachments = [base64.b64decode(a) for a in data[1:]]
             data = Packet.reconstruct_binary(data[0], attachments)
+        if isinstance(data, list):
+            if len(data) == 1:
+                data = data[0]
+            else:
+                data = tuple(data)
         super().emit(message['event'], data,
                      namespace=message.get('namespace'),
                      room=message.get('room'),
