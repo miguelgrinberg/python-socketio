@@ -1,5 +1,9 @@
 # python-socketio change log
 
+**Release 5.15.1** - 2025-12-16
+
+- Restore support multiple arguments via pubsub emits [#1540](https://github.com/miguelgrinberg/python-socketio/issues/1540) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/c279f26bb8c9887c4ca99d4d81ad331c4844438c))
+
 **Release 5.15.0** - 2025-11-22
 
 - Retry initial Redis connection [#1534](https://github.com/miguelgrinberg/python-socketio/issues/1536) ([commit #1](https://github.com/miguelgrinberg/python-socketio/commit/1e903e173a2d7b04599c4f7f9630c1abbb531fad) [commit #2](https://github.com/miguelgrinberg/python-socketio/commit/5e898a9b93526e6e667767e54c60f4c84589989d))
