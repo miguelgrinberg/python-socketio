@@ -1,4 +1,5 @@
 import asyncio
+import inspect
 
 import engineio
 
@@ -637,7 +638,7 @@ class AsyncServer(base_server.BaseServer):
         # first see if we have an explicit handler for the event
         handler, args = self._get_event_handler(event, namespace, args)
         if handler:
-            if asyncio.iscoroutinefunction(handler):
+            if inspect.iscoroutinefunction(handler):
                 try:
                     try:
                         ret = await handler(*args)

@@ -1,4 +1,5 @@
 import asyncio
+import inspect
 import logging
 import random
 
@@ -375,7 +376,7 @@ class AsyncClient(base_client.BaseClient):
         callables."""
         if not callable(value):
             return value
-        if asyncio.iscoroutinefunction(value):
+        if inspect.iscoroutinefunction(value):
             return await value()
         return value()
 
@@ -437,7 +438,7 @@ class AsyncClient(base_client.BaseClient):
         else:
             del self.callbacks[namespace][id]
         if callback is not None:
-            if asyncio.iscoroutinefunction(callback):
+            if inspect.iscoroutinefunction(callback):
                 await callback(*data)
             else:
                 callback(*data)
@@ -464,7 +465,7 @@ class AsyncClient(base_client.BaseClient):
         # first see if we have an explicit handler for the event
         handler, args = self._get_event_handler(event, namespace, args)
         if handler:
-            if asyncio.iscoroutinefunction(handler):
+            if inspect.iscoroutinefunction(handler):
                 try:
                     try:
                         ret = await handler(*args)
