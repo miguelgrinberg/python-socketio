@@ -1,5 +1,10 @@
 # python-socketio change log
 
+**Release 5.16.0** - 2025-12-24
+
+- Address deprecation warnings ([commit](https://github.com/miguelgrinberg/python-socketio/commit/b235699d9b06564753c570b76055997e9d62a938))
+- Drop Python 3.8 and 3.9 from CI builds ([commit](https://github.com/miguelgrinberg/python-socketio/commit/d0728d2f74538762dd551fa9cd0cd1fd5aedfa37))
+
 **Release 5.15.1** - 2025-12-16
 
 - Restore support multiple arguments via pubsub emits [#1540](https://github.com/miguelgrinberg/python-socketio/issues/1540) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/c279f26bb8c9887c4ca99d4d81ad331c4844438c))
