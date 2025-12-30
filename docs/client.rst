@@ -280,7 +280,7 @@ remaining arguments are the same as for a regular event handler.
 The ``connect`` and ``disconnect`` events have to be defined explicitly and are
 not invoked on a catch-all event handler.
 
-Similarily, a "catch-all" namespace handler is invoked for any connected
+Similarly, a "catch-all" namespace handler is invoked for any connected
 namespaces that do not have an explicitly defined event handler. As with
 catch-all events, ``'*'`` is used in place of a namespace::
 

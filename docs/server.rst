@@ -492,7 +492,7 @@ information.
 Catch-All Namespaces
 ~~~~~~~~~~~~~~~~~~~~
 
-Similarily to catch-all event handlers, a "catch-all" namespace can be used
+Similarly to catch-all event handlers, a "catch-all" namespace can be used
 when defining event handlers for any connected namespaces that do not have an
 explicitly defined event handler. As with catch-all events, ``'*'`` is used in
 place of a namespace::
