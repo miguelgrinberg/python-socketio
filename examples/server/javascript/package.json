@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "dependencies": {
     "@socket.io/admin-ui": "^0.5.1",
-    "express": "^4.21.2",
+    "express": "^4.22.1",
     "smoothie": "1.19.0",
     "socket.io": "^4.8.0",
     "socket.io-client": "^4.6.1"
