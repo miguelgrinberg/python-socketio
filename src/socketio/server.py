@@ -5,6 +5,7 @@ import engineio
 from . import base_server
 from . import exceptions
 from . import packet
+from . import message_history
 
 default_logger = logging.getLogger('socketio.server')
 
@@ -163,6 +164,16 @@ class Server(base_server.BaseServer):
         room = to or room
         self.logger.info('emitting event "%s" to %s [%s]', event,
                          room or 'all', namespace)
+        
+        # Record message to history if room is specified
+        if room is not None and hasattr(self, '_message_history'):
+            try:
+                rooms = room if isinstance(room, (list, tuple)) else [room]
+                for r in rooms:
+                    self._message_history.record_message(event, data, namespace, r)
+            except Exception:
+                pass  # Never fail emit due to history recording
+                
         self.manager.emit(event, data, namespace, room=room,
                           skip_sid=skip_sid, callback=callback,
                           ignore_queue=ignore_queue)
@@ -459,6 +470,78 @@ class Server(base_server.BaseServer):
         selected async mode.
         """
         return self.eio.sleep(seconds)
+
+    def enable_history(self, room, namespace='/', max_entries=100,
+                      retention_seconds=None, payload_size_cap=None):
+        """Enable message history for a specific room.
+        
+        :param room: Room name to enable history for.
+        :param namespace: The Socket.IO namespace. Defaults to '/'.
+        :param max_entries: Maximum number of messages to retain (ring buffer).
+        :param retention_seconds: Time-based retention in seconds (optional).
+        :param payload_size_cap: Size cap for payloads at record time (optional).
+        """
+        if not hasattr(self, '_message_history'):
+            self._message_history = message_history.MessageHistory()
+        self._message_history.enable_history(room, namespace, max_entries,
+                                            retention_seconds, payload_size_cap)
+    
+    def disable_history(self, room, namespace='/'):
+        """Disable message history for a specific room.
+        
+        :param room: Room name to disable history for.
+        :param namespace: The Socket.IO namespace. Defaults to '/'.
+        """
+        if hasattr(self, '_message_history'):
+            self._message_history.disable_history(room, namespace)
+    
+    def set_history_config(self, room, namespace='/', enabled=None,
+                          max_entries=None, retention_seconds=None,
+                          payload_size_cap=None):
+        """Configure message history settings for a specific room.
+        
+        :param room: Room name to configure.
+        :param namespace: The Socket.IO namespace. Defaults to '/'.
+        :param enabled: Enable or disable history (optional).
+        :param max_entries: Maximum number of messages to retain (optional).
+        :param retention_seconds: Time-based retention in seconds (optional).
+        :param payload_size_cap: Size cap for payloads at record time (optional).
+        """
+        if not hasattr(self, '_message_history'):
+            self._message_history = message_history.MessageHistory()
+        self._message_history.configure_history(room, namespace, enabled,
+                                               max_entries, retention_seconds,
+                                               payload_size_cap)
+    
+    def get_history(self, room, limit=50, namespace='/',
+                   include_events=None, exclude_events=None,
+                   payload_size_cap=None):
+        """Get message history for a specific room.
+        
+        :param room: Room name to get history for.
+        :param limit: Maximum number of messages to return.
+        :param namespace: The Socket.IO namespace. Defaults to '/'.
+        :param include_events: List/set of event names to include (optional).
+        :param exclude_events: List/set of event names to exclude (optional).
+        :param payload_size_cap: Size cap for payloads at fetch time (optional).
+        :return: List of message dictionaries with 'event', 'data', 'timestamp'.
+        """
+        if not hasattr(self, '_message_history'):
+            return []
+        return self._message_history.get_history(room, limit, namespace,
+                                                 include_events, exclude_events,
+                                                 payload_size_cap)
+    
+    def get_history_stats(self, room, namespace='/'):
+        """Get statistics for a room's message history.
+        
+        :param room: Room name to get stats for.
+        :param namespace: The Socket.IO namespace. Defaults to '/'.
+        :return: Dictionary with 'entries', 'evictions_size', 'evictions_time'.
+        """
+        if not hasattr(self, '_message_history'):
+            return {'entries': 0, 'evictions_size': 0, 'evictions_time': 0}
+        return self._message_history.get_stats(room, namespace)
 
     def instrument(self, auth=None, mode='development', read_only=False,
                    server_id=None, namespace='/admin',
