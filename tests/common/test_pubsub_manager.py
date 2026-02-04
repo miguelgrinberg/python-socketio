@@ -5,9 +5,11 @@ from unittest import mock
 
 import pytest
 
+from engineio.packet import Packet as EIOPacket
 from socketio import manager
 from socketio import pubsub_manager
 from socketio import packet
+from socketio import server
 
 
 class TestPubSubManager:
@@ -822,3 +824,14 @@ class TestPubSubManager:
         self.pm._handle_emit.assert_called_with(
             {'method': 'emit', 'value': 'bar', 'host_id': 'x'}
         )
+
+    def test_custom_json(self):
+        saved_json = packet.Packet.json
+
+        cm = pubsub_manager.PubSubManager(json='foo')
+        assert cm.json == 'foo'
+        server.Server(json='bar', client_manager=cm)
+        assert cm.json == 'bar'
+
+        packet.Packet.json = saved_json
+        EIOPacket.json = saved_json
