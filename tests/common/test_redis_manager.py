@@ -2,7 +2,9 @@ import pytest
 import redis
 import valkey
 
-from socketio import redis_manager
+from engineio.packet import Packet as EIOPacket
+from socketio import redis_manager, Server
+from socketio.packet import Packet
 from socketio.redis_manager import RedisManager, parse_redis_sentinel_url
 
 
@@ -144,3 +146,14 @@ class TestPubSubManager:
             'myredis',
             {'username': 'user', 'password': 'password', 'db': 0}
         )
+
+    def test_custom_json(self):
+        saved_json = Packet.json
+
+        cm = RedisManager('redis://', json='foo')
+        assert cm.json == 'foo'
+        Server(json='bar', client_manager=cm)
+        assert cm.json == 'bar'
+
+        Packet.json = saved_json
+        EIOPacket.json = saved_json

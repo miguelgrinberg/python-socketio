@@ -2,8 +2,10 @@ import pytest
 import redis
 import valkey
 
-from socketio import async_redis_manager
+from engineio.packet import Packet as EIOPacket
+from socketio import async_redis_manager, AsyncServer
 from socketio.async_redis_manager import AsyncRedisManager
+from socketio.packet import Packet
 
 
 class TestAsyncRedisManager:
@@ -109,3 +111,14 @@ class TestAsyncRedisManager:
             assert isinstance(c.redis, valkey.asyncio.Valkey)
 
         async_redis_manager.aioredis = saved_redis
+
+    def test_custom_json(self):
+        saved_json = Packet.json
+
+        cm = AsyncRedisManager('redis://', json='foo')
+        assert cm.json == 'foo'
+        AsyncServer(json='bar', client_manager=cm)
+        assert cm.json == 'bar'
+
+        Packet.json = saved_json
+        EIOPacket.json = saved_json

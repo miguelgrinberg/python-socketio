@@ -5,8 +5,10 @@ from unittest import mock
 
 import pytest
 
+from engineio.packet import Packet as EIOPacket
 from socketio import async_manager
 from socketio import async_pubsub_manager
+from socketio import async_server
 from socketio import packet
 
 
@@ -846,3 +848,14 @@ class TestAsyncPubSubManager:
         self.pm._handle_emit.assert_awaited_with(
             {'method': 'emit', 'value': 'bar', 'host_id': 'x'}
         )
+
+    def test_custom_json(self):
+        saved_json = packet.Packet.json
+
+        cm = async_pubsub_manager.AsyncPubSubManager(json='foo')
+        assert cm.json == 'foo'
+        async_server.AsyncServer(json='bar', client_manager=cm)
+        assert cm.json == 'bar'
+
+        packet.Packet.json = saved_json
+        EIOPacket.json = saved_json
