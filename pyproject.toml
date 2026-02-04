@@ -39,6 +39,7 @@ dev = [
 ]
 docs = [
     "sphinx",
+    "furo",
 ]
 
 [tool.setuptools]

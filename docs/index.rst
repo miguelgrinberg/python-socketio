@@ -10,7 +10,7 @@ This projects implements Socket.IO clients and servers that can run standalone
 or integrated with a variety of Python web frameworks.
 
 .. toctree::
-   :maxdepth: 3
+   :maxdepth: 2
 
    intro
    client
