@@ -1,5 +1,12 @@
 # python-socketio change log
 
+**Release 5.16.1** - 2026-02-06
+
+- Use configured JSON module in managers [#1549](https://github.com/miguelgrinberg/python-socketio/issues/1549) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/6229261ae6e8c01e675097242e333ee84587a544))
+- Admin UI fixes: remove duplicate tasks, report transport upgrades ([commit](https://github.com/miguelgrinberg/python-socketio/commit/1c2eab13a92fac9e43663eb0b5f099eb1c40ea5b))
+- Switch to Furo documentation template ([commit](https://github.com/miguelgrinberg/python-socketio/commit/add47d8c7abca697a2804141bbf29bfb095f7d5e))
+- Add Python free-threading to CI [#1554](https://github.com/miguelgrinberg/python-socketio/issues/1554) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/ccdd2004a038ae4b8171a05120c5d0787332f7ee))
+
 **Release 5.16.0** - 2025-12-24
 
 - Address deprecation warnings ([commit](https://github.com/miguelgrinberg/python-socketio/commit/b235699d9b06564753c570b76055997e9d62a938))
