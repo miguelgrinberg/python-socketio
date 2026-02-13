@@ -6,5 +6,5 @@ h11==0.16.0
 python-engineio
 python-socketio
 simple-websocket
-sqlparse==0.5.0
+sqlparse==0.5.4
 wsproto==1.2.0
