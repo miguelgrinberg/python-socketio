@@ -11,7 +11,7 @@ class Client(base_client.BaseClient):
     """A Socket.IO client.
 
     This class implements a fully compliant Socket.IO web client with support
-    for websocket and long-polling transports.
+    for Engine.IO transports, including websocket and long-polling.
 
     :param reconnection: ``True`` if the client should automatically attempt to
                          reconnect to the server after an interruption, or
@@ -90,10 +90,13 @@ class Client(base_client.BaseClient):
                      more string key/value pairs. If a function is provided,
                      the client will invoke it to obtain the authentication
                      data each time a connection or reconnection is attempted.
-        :param transports: The list of allowed transports. Valid transports
-                           are ``'polling'`` and ``'websocket'``. If not
-                           given, the polling transport is connected first,
-                           then an upgrade to websocket is attempted.
+        :param transports: The list of allowed transports. Commonly
+                           ``'polling'`` and ``'websocket'`` are available.
+                           Additional transports (for example
+                           ``'webtransport'``) may be available when
+                           supported by the underlying Engine.IO client. If
+                           not given, the polling transport is connected
+                           first, then an upgrade to websocket is attempted.
         :param namespaces: The namespaces to connect as a string or list of
                            strings. If not given, the namespaces that have
                            registered event handlers are connected.

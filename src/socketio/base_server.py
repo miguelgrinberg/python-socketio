@@ -193,8 +193,9 @@ class BaseServer:
     def transport(self, sid, namespace=None):
         """Return the name of the transport used by the client.
 
-        The two possible values returned by this function are ``'polling'``
-        and ``'websocket'``.
+        Common values returned by this function are ``'polling'`` and
+        ``'websocket'``. Additional values may be possible when supported by
+        the underlying Engine.IO implementation.
 
         :param sid: The session of the client.
         :param namespace: The Socket.IO namespace. If this argument is omitted

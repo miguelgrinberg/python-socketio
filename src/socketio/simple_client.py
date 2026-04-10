@@ -7,7 +7,8 @@ class SimpleClient:
     """A Socket.IO client.
 
     This class implements a simple, yet fully compliant Socket.IO web client
-    with support for websocket and long-polling transports.
+    with support for Engine.IO transports, including websocket and
+    long-polling.
 
     The positional and keyword arguments given in the constructor are passed
     to the underlying :func:`socketio.Client` object.
@@ -42,10 +43,13 @@ class SimpleClient:
                      more string key/value pairs. If a function is provided,
                      the client will invoke it to obtain the authentication
                      data each time a connection or reconnection is attempted.
-        :param transports: The list of allowed transports. Valid transports
-                           are ``'polling'`` and ``'websocket'``. If not
-                           given, the polling transport is connected first,
-                           then an upgrade to websocket is attempted.
+        :param transports: The list of allowed transports. Commonly
+                           ``'polling'`` and ``'websocket'`` are available.
+                           Additional transports (for example
+                           ``'webtransport'``) may be available when
+                           supported by the underlying Engine.IO client. If
+                           not given, the polling transport is connected
+                           first, then an upgrade to websocket is attempted.
         :param namespace: The namespace to connect to as a string. If not
                           given, the default namespace ``/`` is used.
         :param socketio_path: The endpoint where the Socket.IO server is
@@ -100,8 +104,9 @@ class SimpleClient:
     def transport(self):
         """The name of the transport currently in use.
 
-        The transport is returned as a string and can be one of ``polling``
-        and ``websocket``.
+        Common values are ``'polling'`` and ``'websocket'``. Additional
+        values may be possible when supported by the underlying Engine.IO
+        implementation.
         """
         return self.client.transport() if self.client else ''
 

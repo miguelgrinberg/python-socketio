@@ -249,6 +249,41 @@ class TestAsyncAdmin:
             elif socket['id'] == sid3:
                 assert socket['rooms'] == [sid3]
 
+    @with_instrumented_server()
+    def test_admin_websocket_only_client_transport(self):
+        with socketio.SimpleClient(reconnection=False) as admin_client:
+            admin_client.connect(
+                'http://localhost:8900', namespace='/admin',
+                transports=['websocket'])
+            events = self._expect({'config': 1, 'all_sockets': 1,
+                                   'server_stats': 2}, admin_client)
+
+        assert events['all_sockets'][0]['transport'] == 'websocket'
+        assert events['server_stats']['pollingClientsCount'] == 0
+
+    @with_instrumented_server()
+    def test_admin_polling_count_ignores_websocket_only_clients(self):
+        with socketio.SimpleClient(reconnection=False) as ws_client, \
+                socketio.SimpleClient(reconnection=False) as polling_client, \
+                socketio.SimpleClient(reconnection=False) as admin_client:
+            ws_client.connect('http://localhost:8900',
+                              transports=['websocket'])
+
+            saved_check_for_upgrade = self.isvr._check_for_upgrade
+            self.isvr._check_for_upgrade = mock.AsyncMock()
+            polling_client.connect('http://localhost:8900',
+                                   transports=['polling'])
+            self.isvr._check_for_upgrade = saved_check_for_upgrade
+
+            admin_client.connect(
+                'http://localhost:8900', namespace='/admin',
+                transports=['websocket'])
+            events = self._expect({'config': 1, 'all_sockets': 1,
+                                   'server_stats': 2}, admin_client)
+
+        assert events['server_stats']['clientsCount'] == 3
+        assert events['server_stats']['pollingClientsCount'] == 1
+
     @with_instrumented_server(mode='production', read_only=True)
     def test_admin_connect_production(self):
         with socketio.SimpleClient(reconnection=False) as admin_client:

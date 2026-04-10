@@ -194,7 +194,7 @@ class InstrumentedAsyncServer:
                 serialized_socket,
                 datetime.fromtimestamp(t, timezone.utc).isoformat(),
             ), namespace=self.admin_namespace)
-            if not self.sio.eio._get_socket(eio_sid).upgraded:
+            if self._get_transport(eio_sid) == 'polling':
                 self.sio.start_background_task(
                     self._check_for_upgrade, eio_sid, sid, namespace)
         elif event == 'disconnect':
@@ -220,11 +220,12 @@ class InstrumentedAsyncServer:
         for _ in range(5):
             await self.sio.sleep(5)
             try:
-                if self.sio.eio._get_socket(eio_sid).upgraded:
+                transport = self._get_transport(eio_sid)
+                if transport != 'polling':
                     await self.sio.emit('socket_updated', {
                         'id': sid,
                         'nsp': namespace,
-                        'transport': 'websocket',
+                        'transport': transport,
                     }, namespace=self.admin_namespace)
                     break
             except KeyError:
@@ -332,12 +333,23 @@ class InstrumentedAsyncServer:
                 ), namespace=self.admin_namespace)
         return await socket.__send_ping()
 
+    def _get_transport(self, eio_sid, default=None):
+        transport = getattr(self.sio.eio, 'transport', None)
+        try:
+            if callable(transport):
+                return transport(eio_sid)
+            socket = self.sio.eio._get_socket(eio_sid)
+        except KeyError:
+            return default
+        return 'websocket' if socket.upgraded else 'polling'
+
     async def _emit_server_stats(self):
         start_time = time.time()
         namespaces = list(self.sio.handlers.keys())
         namespaces.sort()
         while not self.stop_stats_event.is_set():
             await self.sio.sleep(self.server_stats_interval)
+            eio_sids = list(self.sio.eio.sockets)
             await self.sio.emit('server_stats', {
                 'serverId': self.server_id,
                 'hostname': HOSTNAME,
@@ -345,8 +357,9 @@ class InstrumentedAsyncServer:
                 'uptime': time.time() - start_time,
                 'clientsCount': len(self.sio.eio.sockets),
                 'pollingClientsCount': len(
-                    [s for s in self.sio.eio.sockets.values()
-                     if not s.upgraded]),
+                    [eio_sid for eio_sid in eio_sids
+                     if self._get_transport(
+                         eio_sid, default=None) == 'polling']),
                 'aggregatedEvents': self.event_buffer.get_and_clear(),
                 'namespaces': [{
                     'name': nsp,
@@ -362,14 +375,13 @@ class InstrumentedAsyncServer:
     def serialize_socket(self, sid, namespace, eio_sid=None):
         if eio_sid is None:  # pragma: no cover
             eio_sid = self.sio.manager.eio_sid_from_sid(sid)
-        socket = self.sio.eio._get_socket(eio_sid)
         environ = self.sio.environ.get(eio_sid, {})
         tm = self.sio.manager._timestamps[sid] if sid in \
             self.sio.manager._timestamps else 0
         return {
             'id': sid,
             'clientId': eio_sid,
-            'transport': 'websocket' if socket.upgraded else 'polling',
+            'transport': self._get_transport(eio_sid),
             'nsp': namespace,
             'data': {},
             'handshake': {

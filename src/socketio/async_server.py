@@ -18,7 +18,8 @@ class AsyncServer(base_server.BaseServer):
     """A Socket.IO server for asyncio.
 
     This class implements a fully compliant Socket.IO web server with support
-    for websocket and long-polling transports, compatible with the asyncio
+    for Engine.IO transports, including websocket and long-polling, compatible
+    with the asyncio
     framework.
 
     :param client_manager: The client manager instance that will manage the
@@ -104,9 +105,10 @@ class AsyncServer(base_server.BaseServer):
                             inactive clients are closed. Set to ``False`` to
                             disable the monitoring task (not recommended). The
                             default is ``True``.
-    :param transports: The list of allowed transports. Valid transports
-                       are ``'polling'`` and ``'websocket'``. Defaults to
-                       ``['polling', 'websocket']``.
+    :param transports: The list of allowed transports. By default this is
+                       ``['polling', 'websocket']``. Additional transports
+                       (for example ``'webtransport'``) may be available when
+                       supported by the underlying Engine.IO server.
     :param engineio_logger: To enable Engine.IO logging set to ``True`` or pass
                             a logger object to use. To disable logging set to
                             ``False``. The default is ``False``. Note that

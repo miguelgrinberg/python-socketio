@@ -229,8 +229,9 @@ class BaseClient:
     def transport(self):
         """Return the name of the transport used by the client.
 
-        The two possible values returned by this function are ``'polling'``
-        and ``'websocket'``.
+        Common values returned by this function are ``'polling'`` and
+        ``'websocket'``. Additional values may be possible when supported by
+        the underlying Engine.IO implementation.
         """
         return self.eio.transport()
 
