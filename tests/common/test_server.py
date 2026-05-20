@@ -676,6 +676,19 @@ class TestServer:
             sid, 321, ['my message', 'a', b'foo']
         )
 
+    def test_handle_event_binary_from_unknown(self, eio):
+        s = server.Server(async_handlers=False)
+        s.manager.connect('123', '/')
+        handler = mock.MagicMock()
+        s.on('my message', handler)
+        with pytest.raises(ValueError):
+            s._handle_eio_message(
+                '999',
+                '52-["my message","a",'
+                '{"_placeholder":true,"num":1},'
+                '{"_placeholder":true,"num":0}]',
+            )
+
     def test_handle_event_with_ack(self, eio):
         s = server.Server(async_handlers=False)
         sid = s.manager.connect('123', '/')
@@ -848,6 +861,22 @@ class TestServer:
         calls = s.eio.send.call_count
         s.disconnect('123', namespace='/foo')
         assert calls == s.eio.send.call_count
+
+    def test_disconnect_with_partial_binary_packet(self, eio):
+        s = server.Server()
+        s._handle_eio_connect('123', 'environ')
+        s._handle_eio_message('123', '0')
+        s._handle_eio_message(
+            '123',
+            '52-["my message","a",'
+            '{"_placeholder":true,"num":1},'
+            '{"_placeholder":true,"num":0}]',
+        )
+        s._handle_eio_message('123', b'foo')
+        assert s._binary_packet['123'] is not None
+        s.disconnect('1')
+        s.eio.send.assert_any_call('123', '1')
+        assert '123' not in s._binary_packet
 
     def test_namespace_handler(self, eio):
         result = {}
