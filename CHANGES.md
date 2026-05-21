@@ -1,5 +1,10 @@
 # python-socketio change log
 
+**Release 5.16.2** - 2026-05-21
+
+- Prevent unnecessary resource allocations [#1574](https://github.com/miguelgrinberg/python-socketio/issues/1574) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/ca140fe44d0ceb3004073645222abec182d8784b))
+- Add zizmor to CI builds [#1570](https://github.com/miguelgrinberg/python-socketio/issues/1570) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/664dc27ec6f34179ed1724430eda3520627fc642))
+
 **Release 5.16.1** - 2026-02-06
 
 - Use configured JSON module in managers [#1549](https://github.com/miguelgrinberg/python-socketio/issues/1549) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/6229261ae6e8c01e675097242e333ee84587a544))
