@@ -1,5 +1,9 @@
 # python-socketio change log
 
+**Release 5.16.3** - 2026-06-15
+
+- Catch all exceptions in redis and rabbitmq client managers [#1581](https://github.com/miguelgrinberg/python-socketio/issues/1581) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/80bb5c9b07e6b53e45f610ec29a24124c539d41b))
+
 **Release 5.16.2** - 2026-05-21
 
 - Prevent unnecessary resource allocations [#1574](https://github.com/miguelgrinberg/python-socketio/issues/1574) ([commit](https://github.com/miguelgrinberg/python-socketio/commit/ca140fe44d0ceb3004073645222abec182d8784b))
