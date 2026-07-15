@@ -252,6 +252,22 @@ class TestAsyncServer:
         await s.close_room('room')
         s.manager.close_room.assert_awaited_once_with('room', '/')
 
+    async def test_enter_leave_close_room_none_rejected(self, eio):
+        # None is the reserved default room that stores the sid<->eio_sid
+        # mapping; the public room API must reject it instead of corrupting
+        # the manager's internal data structures (issue #1447).
+        mgr = self._get_mock_manager()
+        s = async_server.AsyncServer(client_manager=mgr)
+        with pytest.raises(ValueError):
+            await s.enter_room('123', None, namespace='/foo')
+        with pytest.raises(ValueError):
+            await s.leave_room('123', None, namespace='/foo')
+        with pytest.raises(ValueError):
+            await s.close_room(None, namespace='/foo')
+        s.manager.enter_room.assert_not_awaited()
+        s.manager.leave_room.assert_not_awaited()
+        s.manager.close_room.assert_not_awaited()
+
     async def test_rooms(self, eio):
         mgr = self._get_mock_manager()
         s = async_server.AsyncServer(client_manager=mgr)

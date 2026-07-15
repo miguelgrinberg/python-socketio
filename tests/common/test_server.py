@@ -254,6 +254,22 @@ class TestServer:
         s.close_room('room')
         s.manager.close_room.assert_called_once_with('room', '/')
 
+    def test_enter_leave_close_room_none_rejected(self, eio):
+        # None is the reserved default room that stores the sid<->eio_sid
+        # mapping; the public room API must reject it instead of corrupting
+        # the manager's internal data structures (issue #1447).
+        mgr = mock.MagicMock()
+        s = server.Server(client_manager=mgr)
+        with pytest.raises(ValueError):
+            s.enter_room('123', None, namespace='/foo')
+        with pytest.raises(ValueError):
+            s.leave_room('123', None, namespace='/foo')
+        with pytest.raises(ValueError):
+            s.close_room(None, namespace='/foo')
+        s.manager.enter_room.assert_not_called()
+        s.manager.leave_room.assert_not_called()
+        s.manager.close_room.assert_not_called()
+
     def test_rooms(self, eio):
         mgr = mock.MagicMock()
         s = server.Server(client_manager=mgr)

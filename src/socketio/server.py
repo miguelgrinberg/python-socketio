@@ -281,6 +281,8 @@ class Server(base_server.BaseServer):
         :param namespace: The Socket.IO namespace for the event. If this
                           argument is omitted the default namespace is used.
         """
+        if room is None:
+            raise ValueError('The room name cannot be None')
         namespace = namespace or '/'
         self.logger.info('%s is entering room %s [%s]', sid, room, namespace)
         self.manager.enter_room(sid, namespace, room)
@@ -295,6 +297,8 @@ class Server(base_server.BaseServer):
         :param namespace: The Socket.IO namespace for the event. If this
                           argument is omitted the default namespace is used.
         """
+        if room is None:
+            raise ValueError('The room name cannot be None')
         namespace = namespace or '/'
         self.logger.info('%s is leaving room %s [%s]', sid, room, namespace)
         self.manager.leave_room(sid, namespace, room)
@@ -308,6 +312,8 @@ class Server(base_server.BaseServer):
         :param namespace: The Socket.IO namespace for the event. If this
                           argument is omitted the default namespace is used.
         """
+        if room is None:
+            raise ValueError('The room name cannot be None')
         namespace = namespace or '/'
         self.logger.info('room %s is closing [%s]', room, namespace)
         self.manager.close_room(room, namespace)

@@ -301,6 +301,8 @@ class AsyncServer(base_server.BaseServer):
 
         Note: this method is a coroutine.
         """
+        if room is None:
+            raise ValueError('The room name cannot be None')
         namespace = namespace or '/'
         self.logger.info('%s is entering room %s [%s]', sid, room, namespace)
         await self.manager.enter_room(sid, namespace, room)
@@ -317,6 +319,8 @@ class AsyncServer(base_server.BaseServer):
 
         Note: this method is a coroutine.
         """
+        if room is None:
+            raise ValueError('The room name cannot be None')
         namespace = namespace or '/'
         self.logger.info('%s is leaving room %s [%s]', sid, room, namespace)
         await self.manager.leave_room(sid, namespace, room)
@@ -332,6 +336,8 @@ class AsyncServer(base_server.BaseServer):
 
         Note: this method is a coroutine.
         """
+        if room is None:
+            raise ValueError('The room name cannot be None')
         namespace = namespace or '/'
         self.logger.info('room %s is closing [%s]', room, namespace)
         await self.manager.close_room(room, namespace)
