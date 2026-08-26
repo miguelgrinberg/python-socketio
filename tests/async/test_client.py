@@ -259,6 +259,57 @@ class TestAsyncClient:
         assert c.namespaces == {'/bar': '123'}
         assert c.failed_namespaces == ['/baz', '/foo']
 
+    async def test_connect_wait_auth_callable_error(self):
+        # Regression test for #1595: when the auth callable raises, no
+        # namespace CONNECT is ever sent, so failed_namespaces stays empty.
+        # The error raised by connect() should chain the original auth
+        # exception rather than raising a message with nothing after
+        # the colon.
+        c = async_client.AsyncClient()
+        c.eio.connect = mock.AsyncMock()
+        c._connect_event = mock.MagicMock()
+        auth_error = RuntimeError('credential fetch failed')
+
+        async def mock_connect():
+            c._connect_error = auth_error
+            raise asyncio.TimeoutError()
+
+        c._connect_event.wait = mock_connect
+        with pytest.raises(
+            exceptions.ConnectionError,
+            match='Connection failed before any namespace could connect: '
+                  'credential fetch failed',
+        ) as exc_info:
+            await c.connect(
+                'url',
+                namespaces=['/foo'],
+                wait=True,
+                wait_timeout=0.01,
+            )
+        assert exc_info.value.__cause__ is auth_error
+        assert c.connected is False
+
+    async def test_connect_wait_no_namespaces_no_auth_error(self):
+        # An empty failed_namespaces with no captured auth error (e.g. a
+        # plain timeout) should still fall back to the original message.
+        c = async_client.AsyncClient()
+        c.eio.connect = mock.AsyncMock()
+        c._connect_event = mock.MagicMock()
+
+        async def mock_connect():
+            raise asyncio.TimeoutError()
+
+        c._connect_event.wait = mock_connect
+        with pytest.raises(exceptions.ConnectionError,
+                           match='One or more namespaces failed to connect'):
+            await c.connect(
+                'url',
+                namespaces=['/foo'],
+                wait=True,
+                wait_timeout=0.01,
+            )
+        assert c.connected is False
+
     async def test_connect_timeout(self):
         c = async_client.AsyncClient()
         c.eio.connect = mock.AsyncMock()

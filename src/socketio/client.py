@@ -139,6 +139,7 @@ class Client(base_client.BaseClient):
         self.connection_namespaces = namespaces
         self.namespaces = {}
         self.failed_namespaces = []
+        self._connect_error = None
         if self._connect_event is None:
             self._connect_event = self.eio.create_event()
         else:
@@ -168,6 +169,11 @@ class Client(base_client.BaseClient):
                     break
             if set(self.namespaces) != set(self.connection_namespaces):
                 self.disconnect()
+                if not self.failed_namespaces and self._connect_error:
+                    raise exceptions.ConnectionError(
+                        'Connection failed before any namespace could '
+                        'connect: ' + str(self._connect_error)
+                    ) from self._connect_error
                 raise exceptions.ConnectionError(
                     'One or more namespaces failed to connect: '
                     + ', '.join(self.failed_namespaces))
@@ -505,7 +511,14 @@ class Client(base_client.BaseClient):
         """Handle the Engine.IO connection event."""
         self.logger.info('Engine.IO connection established')
         self.sid = self.eio.sid
-        real_auth = self._get_real_value(self.connection_auth) or {}
+        try:
+            real_auth = self._get_real_value(self.connection_auth) or {}
+        except Exception as exc:
+            # engine.io does not propagate exceptions raised by connect
+            # handlers, so save this one to report a meaningful error from
+            # connect() if no namespace ends up connecting.
+            self._connect_error = exc
+            raise
         for n in self.connection_namespaces:
             self._send_packet(self.packet_class(
                 packet.CONNECT, data=real_auth, namespace=n))
