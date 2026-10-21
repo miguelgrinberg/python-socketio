@@ -1,7 +1,6 @@
 [project]
 name = "python-socketio"
 version = "5.17.1.dev0"
-license = {text = "MIT"}
 authors = [
     { name = "Miguel Grinberg", email = "miguel.grinberg@gmail.com" },
 ]
@@ -12,6 +11,7 @@ classifiers = [
     "Programming Language :: Python :: 3",
     "Operating System :: OS Independent",
 ]
+license = "MIT"
 requires-python = ">=3.8"
 dependencies = [
     "bidict >= 0.21.0",
