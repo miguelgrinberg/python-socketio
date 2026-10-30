@@ -15,7 +15,7 @@ license = "MIT"
 requires-python = ">=3.8"
 dependencies = [
     "bidict >= 0.21.0",
-    "python-engineio >= 4.13.2",
+    "python-engineio >= 4.15.1",
 ]
 
 [project.readme]
