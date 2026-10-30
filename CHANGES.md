@@ -1,5 +1,10 @@
 # python-socketio change log
 
+**Release 5.17.1** - 2026-10-30
+
+- Update lower bound version of python-engineio dependency ([commit](https://code.miguelgrinberg.com/miguelgrinberg/python-socketio.git/commit/e77d0a5e9eee4f5a1a14b440493201383f2ebe91))
+- Add Python 3.15 and PyPy 3.12 to CI builds ([commit](https://code.miguelgrinberg.com/miguelgrinberg/python-socketio.git/commit/8a52fd0b59dd0e8598dee69cdacd5f037745d73e))
+
 **Release 5.17.0** - 2026-09-14
 
 - Do not allow users to join another user's sid room [#10002](https://code.miguelgrinberg.com/miguelgrinberg/python-socketio/issues/10002) ([commit](https://code.miguelgrinberg.com/miguelgrinberg/python-socketio/commit/19ff7dc774607749124e6254d97c8e438b4584ad))
