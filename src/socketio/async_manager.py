@@ -69,6 +69,8 @@ class AsyncManager(BaseManager):
 
         The client is initially marked as pre-connected and later updated to
         fully connected once it passes authentication in the connect handler.
+
+        Note: this method is a coroutine.
         """
         return super().pre_connect(eio_sid, namespace)
 
