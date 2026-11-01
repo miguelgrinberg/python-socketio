@@ -1,5 +1,9 @@
 # python-socketio change log
 
+**Release 5.18.0** - 2026-11-01
+
+- Reject events over HTTP before the connection completes ([commit](https://code.miguelgrinberg.com/miguelgrinberg/python-socketio.git/commit/0f5f4faafd941878b7ba815d3369d01777ddd121)) (thanks **Leo Ruocco**!)
+
 **Release 5.17.1** - 2026-10-30
 
 - Update lower bound version of python-engineio dependency ([commit](https://code.miguelgrinberg.com/miguelgrinberg/python-socketio.git/commit/e77d0a5e9eee4f5a1a14b440493201383f2ebe91))
