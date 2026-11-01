@@ -14,6 +14,7 @@ class BaseManager:
         self.rooms = {}  # self.rooms[namespace][room][sio_sid] = eio_sid
         self.eio_to_sid = {}
         self.callbacks = {}
+        self.pending_connect = {}
         self.pending_disconnect = {}
         self.json = json
 
@@ -48,8 +49,12 @@ class BaseManager:
             participants = ns[room]._fwdm.copy() if room in ns else {}
         yield from participants.items()
 
-    def connect(self, eio_sid, namespace):
-        """Register a client connection to a namespace."""
+    def pre_connect(self, eio_sid, namespace):
+        """Register a client connection to a namespace.
+
+        The client is initially marked as pre-connected and later updated to
+        fully connected once it passes authentication in the connect handler.
+        """
         sid = self.server.eio.generate_id()
         try:
             self.basic_enter_room(sid, namespace, None, eio_sid=eio_sid)
@@ -57,12 +62,46 @@ class BaseManager:
             # already connected
             return None
         self.basic_enter_room(sid, namespace, sid, eio_sid=eio_sid)
+        if namespace not in self.pending_connect:  # pragma: no branch
+            self.pending_connect[namespace] = []
+        self.pending_connect[namespace].append(sid)
         return sid
 
+    def connect(self, sid, namespace):
+        """Register a connected client as fully connected.
+
+        This marks the client as having passed authentication.
+        """
+        if not self.is_pre_connected(sid, namespace):
+            # the client has not been pre-connected, this is a complete
+            # connection attempt, and sid is actually eio_sid
+            sid = self.pre_connect(sid, namespace)
+        if namespace in self.pending_connect and \
+                sid in self.pending_connect[namespace]:  # pragma: no branch
+            self.pending_connect[namespace].remove(sid)
+            if len(self.pending_connect[namespace]) == 0:  # pragma: no branch
+                del self.pending_connect[namespace]
+        return sid
+
+    def is_pre_connected(self, sid, namespace):
+        if namespace not in self.pending_connect or \
+                sid not in self.pending_connect[namespace]:
+            return False
+        try:
+            return self.rooms[namespace][None][sid] is not None
+        except KeyError:  # pragma: no cover
+            pass
+        return False  # pragma: no cover
+
     def is_connected(self, sid, namespace):
-        if namespace in self.pending_disconnect and \
-                sid in self.pending_disconnect[namespace]:
-            # the client is in the process of being disconnected
+        if (
+            namespace in self.pending_connect
+            and sid in self.pending_connect[namespace]
+        ) or (
+            namespace in self.pending_disconnect
+            and sid in self.pending_disconnect[namespace]
+        ):
+            # the client is in the process of connecting or disconnecting
             return False
         try:
             return self.rooms[namespace][None][sid] is not None
@@ -103,6 +142,11 @@ class BaseManager:
             self.basic_leave_room(sid, namespace, room)
         if sid in self.callbacks:
             del self.callbacks[sid]
+        if namespace in self.pending_connect and \
+                sid in self.pending_connect[namespace]:
+            self.pending_connect[namespace].remove(sid)
+            if len(self.pending_connect[namespace]) == 0:  # pragma: no branch
+                del self.pending_connect[namespace]
         if namespace in self.pending_disconnect and \
                 sid in self.pending_disconnect[namespace]:
             self.pending_disconnect[namespace].remove(sid)

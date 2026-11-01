@@ -540,7 +540,7 @@ class AsyncServer(base_server.BaseServer):
         sid = None
         if namespace in self.handlers or namespace in self.namespace_handlers \
                 or self.namespaces == '*' or namespace in self.namespaces:
-            sid = await self.manager.connect(eio_sid, namespace)
+            sid = await self.manager.pre_connect(eio_sid, namespace)
         if sid is None:
             await self._send_packet(eio_sid, self.packet_class(
                 packet.CONNECT_ERROR, data='Unable to connect',
@@ -550,6 +550,7 @@ class AsyncServer(base_server.BaseServer):
         if self.always_connect:
             await self._send_packet(eio_sid, self.packet_class(
                 packet.CONNECT, {'sid': sid}, namespace=namespace))
+            await self.manager.connect(sid, namespace)
         fail_reason = exceptions.ConnectionRefusedError().error_args
         try:
             if data:
@@ -593,6 +594,7 @@ class AsyncServer(base_server.BaseServer):
         elif not self.always_connect:
             await self._send_packet(eio_sid, self.packet_class(
                 packet.CONNECT, {'sid': sid}, namespace=namespace))
+            await self.manager.connect(sid, namespace)
 
     async def _handle_disconnect(self, eio_sid, namespace, reason=None):
         """Handle a client disconnect."""

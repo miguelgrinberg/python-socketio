@@ -22,6 +22,23 @@ class TestAsyncManager:
         self.bm.set_server(mock_server)
         self.bm.initialize()
 
+    async def test_pre_connect(self):
+        sid = await self.bm.pre_connect('123', '/foo')
+        assert None in self.bm.rooms['/foo']
+        assert sid in self.bm.rooms['/foo']
+        assert sid in self.bm.rooms['/foo'][None]
+        assert sid in self.bm.rooms['/foo'][sid]
+        assert dict(self.bm.rooms['/foo'][None]) == {sid: '123'}
+        assert dict(self.bm.rooms['/foo'][sid]) == {sid: '123'}
+        assert self.bm.sid_from_eio_sid('123', '/foo') == sid
+        assert self.bm.sid_from_eio_sid('1234', '/foo') is None
+        assert self.bm.sid_from_eio_sid('123', '/bar') is None
+        assert self.bm.eio_sid_from_sid(sid, '/foo') == '123'
+        assert self.bm.eio_sid_from_sid('x', '/foo') is None
+        assert self.bm.eio_sid_from_sid(sid, '/bar') is None
+        assert not self.bm.is_connected(sid, '/foo')
+        assert self.bm.is_pre_connected(sid, '/foo')
+
     async def test_connect(self):
         sid = await self.bm.connect('123', '/foo')
         assert None in self.bm.rooms['/foo']

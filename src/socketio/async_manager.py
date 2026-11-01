@@ -64,12 +64,22 @@ class AsyncManager(BaseManager):
             return
         await asyncio.wait(tasks)
 
-    async def connect(self, eio_sid, namespace):
+    async def pre_connect(self, eio_sid, namespace):
         """Register a client connection to a namespace.
+
+        The client is initially marked as pre-connected and later updated to
+        fully connected once it passes authentication in the connect handler.
+        """
+        return super().pre_connect(eio_sid, namespace)
+
+    async def connect(self, sid, namespace):
+        """Register a connected client as fully connected.
 
         Note: this method is a coroutine.
         """
-        return super().connect(eio_sid, namespace)
+        if not self.is_pre_connected(sid, namespace):
+            sid = await self.pre_connect(sid, namespace)
+        return super().connect(sid, namespace)
 
     async def disconnect(self, sid, namespace, **kwargs):
         """Disconnect a client.
