@@ -213,6 +213,14 @@ class TestAsyncManager:
         assert sid in r
         assert 'bar' in r
 
+    async def test_rooms_pre_connected(self):
+        sid = await self.bm.pre_connect('123', '/foo')
+        await self.bm.enter_room(sid, '/foo', 'bar')
+        r = self.bm.get_rooms(sid, '/foo')
+        assert len(r) == 2
+        assert sid in r
+        assert 'bar' in r
+
     async def test_emit_to_sid(self):
         sid = await self.bm.connect('123', '/foo')
         await self.bm.connect('456', '/foo')

@@ -351,8 +351,29 @@ class TestAsyncPubSubManager:
              'namespace': '/', 'host_id': '123456'}
         )
 
+    async def test_enter_room_pre_connected(self):
+        sid = await self.pm.pre_connect('123', '/')
+        await self.pm.enter_room(sid, '/', 'foo')
+        await self.pm.enter_room('456', '/', 'foo')
+        assert sid in self.pm.rooms['/']['foo']
+        assert self.pm.rooms['/']['foo'][sid] == '123'
+        self.pm._publish.assert_awaited_once_with(
+            {'method': 'enter_room', 'sid': '456', 'room': 'foo',
+             'namespace': '/', 'host_id': '123456'}
+        )
+
     async def test_leave_room(self):
         sid = await self.pm.connect('123', '/')
+        await self.pm.leave_room(sid, '/', 'foo')
+        await self.pm.leave_room('456', '/', 'foo')
+        assert 'foo' not in self.pm.rooms['/']
+        self.pm._publish.assert_awaited_once_with(
+            {'method': 'leave_room', 'sid': '456', 'room': 'foo',
+             'namespace': '/', 'host_id': '123456'}
+        )
+
+    async def test_leave_room_pre_connected(self):
+        sid = await self.pm.pre_connect('123', '/')
         await self.pm.leave_room(sid, '/', 'foo')
         await self.pm.leave_room('456', '/', 'foo')
         assert 'foo' not in self.pm.rooms['/']

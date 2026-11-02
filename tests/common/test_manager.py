@@ -231,6 +231,14 @@ class TestBaseManager:
         assert sid in r
         assert 'bar' in r
 
+    def test_rooms_pre_connected(self):
+        sid = self.bm.pre_connect('123', '/foo')
+        self.bm.enter_room(sid, '/foo', 'bar')
+        r = self.bm.get_rooms(sid, '/foo')
+        assert len(r) == 2
+        assert sid in r
+        assert 'bar' in r
+
     def test_emit_to_sid(self):
         sid = self.bm.connect('123', '/foo')
         self.bm.connect('456', '/foo')

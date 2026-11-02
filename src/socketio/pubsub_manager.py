@@ -93,7 +93,8 @@ class PubSubManager(Manager):
         self._publish(message)  # notify other hosts
 
     def can_disconnect(self, sid, namespace):
-        if self.is_connected(sid, namespace):
+        if self.is_connected(sid, namespace) \
+                or self.is_pre_connected(sid, namespace):
             # client is in this server, so we can disconnect directly
             return super().can_disconnect(sid, namespace)
         else:
@@ -112,7 +113,8 @@ class PubSubManager(Manager):
         self._publish(message)  # notify other hosts
 
     def enter_room(self, sid, namespace, room, eio_sid=None):
-        if self.is_connected(sid, namespace):
+        if self.is_connected(sid, namespace) \
+                or self.is_pre_connected(sid, namespace):
             # client is in this server, so we can add to the room directly
             return super().enter_room(sid, namespace, room, eio_sid=eio_sid)
         else:
@@ -121,7 +123,8 @@ class PubSubManager(Manager):
             self._publish(message)  # notify other hosts
 
     def leave_room(self, sid, namespace, room):
-        if self.is_connected(sid, namespace):
+        if self.is_connected(sid, namespace) \
+                or self.is_pre_connected(sid, namespace):
             # client is in this server, so we can remove from the room directly
             return super().leave_room(sid, namespace, room)
         else:
@@ -207,13 +210,15 @@ class PubSubManager(Manager):
     def _handle_enter_room(self, message):
         sid = message.get('sid')
         namespace = message.get('namespace')
-        if self.is_connected(sid, namespace):
+        if self.is_connected(sid, namespace) \
+                or self.is_pre_connected(sid, namespace):
             super().enter_room(sid, namespace, message.get('room'))
 
     def _handle_leave_room(self, message):
         sid = message.get('sid')
         namespace = message.get('namespace')
-        if self.is_connected(sid, namespace):
+        if self.is_connected(sid, namespace) \
+                or self.is_pre_connected(sid, namespace):
             super().leave_room(sid, namespace, message.get('room'))
 
     def _handle_close_room(self, message):

@@ -96,7 +96,8 @@ class AsyncPubSubManager(AsyncManager):
         await self._publish(message)  # notify other hosts
 
     async def can_disconnect(self, sid, namespace):
-        if self.is_connected(sid, namespace):
+        if self.is_connected(sid, namespace) \
+                or self.is_pre_connected(sid, namespace):
             # client is in this server, so we can disconnect directly
             return await super().can_disconnect(sid, namespace)
         else:
@@ -115,7 +116,8 @@ class AsyncPubSubManager(AsyncManager):
         await self._publish(message)  # notify other hosts
 
     async def enter_room(self, sid, namespace, room, eio_sid=None):
-        if self.is_connected(sid, namespace):
+        if self.is_connected(sid, namespace) \
+                or self.is_pre_connected(sid, namespace):
             # client is in this server, so we can disconnect directly
             return await super().enter_room(sid, namespace, room,
                                             eio_sid=eio_sid)
@@ -125,7 +127,8 @@ class AsyncPubSubManager(AsyncManager):
             await self._publish(message)  # notify other hosts
 
     async def leave_room(self, sid, namespace, room):
-        if self.is_connected(sid, namespace):
+        if self.is_connected(sid, namespace) \
+                or self.is_pre_connected(sid, namespace):
             # client is in this server, so we can disconnect directly
             return await super().leave_room(sid, namespace, room)
         else:
@@ -213,13 +216,15 @@ class AsyncPubSubManager(AsyncManager):
     async def _handle_enter_room(self, message):
         sid = message.get('sid')
         namespace = message.get('namespace')
-        if self.is_connected(sid, namespace):
+        if self.is_connected(sid, namespace) \
+                or self.is_pre_connected(sid, namespace):
             await super().enter_room(sid, namespace, message.get('room'))
 
     async def _handle_leave_room(self, message):
         sid = message.get('sid')
         namespace = message.get('namespace')
-        if self.is_connected(sid, namespace):
+        if self.is_connected(sid, namespace) \
+                or self.is_pre_connected(sid, namespace):
             await super().leave_room(sid, namespace, message.get('room'))
 
     async def _handle_close_room(self, message):

@@ -362,8 +362,30 @@ class TestPubSubManager:
              'namespace': '/', 'host_id': '123456'}
         )
 
+    def test_enter_room_pre_connected(self):
+        sid = self.pm.pre_connect('123', '/')
+        print(self.pm)
+        self.pm.enter_room(sid, '/', 'foo')
+        self.pm.enter_room('456', '/', 'foo')
+        assert sid in self.pm.rooms['/']['foo']
+        assert self.pm.rooms['/']['foo'][sid] == '123'
+        self.pm._publish.assert_called_once_with(
+            {'method': 'enter_room', 'sid': '456', 'room': 'foo',
+             'namespace': '/', 'host_id': '123456'}
+        )
+
     def test_leave_room(self):
         sid = self.pm.connect('123', '/')
+        self.pm.leave_room(sid, '/', 'foo')
+        self.pm.leave_room('456', '/', 'foo')
+        assert 'foo' not in self.pm.rooms['/']
+        self.pm._publish.assert_called_once_with(
+            {'method': 'leave_room', 'sid': '456', 'room': 'foo',
+             'namespace': '/', 'host_id': '123456'}
+        )
+
+    def test_leave_room_pre_connected(self):
+        sid = self.pm.pre_connect('123', '/')
         self.pm.leave_room(sid, '/', 'foo')
         self.pm.leave_room('456', '/', 'foo')
         assert 'foo' not in self.pm.rooms['/']
