@@ -1,5 +1,9 @@
 # python-socketio change log
 
+**Release 5.18.1** - 2026-11-03
+
+- Fix enter/leave room in connect handler, when a message queue is used (regression introduced in v5.18.0) [#10008](https://code.miguelgrinberg.com/miguelgrinberg/python-socketio.git/issues/10008) ([commit](https://code.miguelgrinberg.com/miguelgrinberg/python-socketio.git/commit/f12552a405a39f7f47e930830655f05d5e702cbb))
+
 **Release 5.18.0** - 2026-11-01
 
 - Reject events over HTTP before the connection completes ([commit](https://code.miguelgrinberg.com/miguelgrinberg/python-socketio.git/commit/0f5f4faafd941878b7ba815d3369d01777ddd121)) (thanks **Leo Ruocco**!)
